@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Sistema interno de pedidos de producción — Candela Café & Patisserie">
+  <meta name="theme-color" content="#6B3A2A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Candela — Pedidos de Producción</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Favicon (inline SVG via data URI) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
+</head>
+<body>
+
+  <!-- =========================================================
+       LOGIN SCREEN
+  ========================================================== -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <span class="brand-icon">☕</span>
+        <h1>Candela Café &amp; Patisserie</h1>
+        <p>Sistema interno de producción</p>
+      </div>
+
+      <div id="login-error" class="hidden"></div>
+
+      <div class="form-group">
+        <label for="login-role">Rol / Local</label>
+        <select id="login-role" class="form-control" autocomplete="off">
+          <!-- populated by app.js -->
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="login-password">Contraseña</label>
+        <input
+          type="password"
+          id="login-password"
+          class="form-control"
+          placeholder="Ingresá la contraseña del rol"
+          autocomplete="current-password"
+        >
+      </div>
+
+      <button id="login-btn" class="btn btn-primary btn-lg">
+        Ingresar
+      </button>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       NAVIGATION BAR
+  ========================================================== -->
+  <nav id="app-nav" class="hidden" role="navigation" aria-label="Navegación principal">
+    <span class="nav-brand" id="nav-brand">☕ Candela</span>
+    <div class="nav-links" id="nav-links" role="menubar">
+      <!-- populated by app.js -->
+    </div>
+    <button id="nav-logout" class="nav-logout" aria-label="Cerrar sesión">Salir</button>
+  </nav>
+
+  <!-- =========================================================
+       MAIN CONTENT
+  ========================================================== -->
+  <main id="app-main" class="hidden" role="main">
+    <!-- Views are rendered here by the JS modules -->
+  </main>
+
+  <!-- =========================================================
+       TOAST NOTIFICATIONS
+  ========================================================== -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- =========================================================
+       FIREBASE SDK (v9 compat — CDN)
+  ========================================================== -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <!-- =========================================================
+       APPLICATION SCRIPTS
+       Load order matters: config → auth → catalogo → modules → app
+  ========================================================== -->
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/catalogo.js"></script>
+  <script src="js/mercaderia.js"></script>
+  <script src="js/insumos.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
