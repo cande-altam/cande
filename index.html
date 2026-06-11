@@ -318,6 +318,15 @@
       color:var(--gray);padding:10px 0 4px;border-bottom:1px solid var(--cream-mid);
       margin-bottom:6px;margin-top:10px;
     }
+    .nav-hamburger { display:none; flex-direction:column; gap:4px; cursor:pointer; padding:8px; background:none; border:none; }
+    .nav-hamburger span { width:22px; height:2px; background:var(--gray); border-radius:2px; transition:all .2s; display:block; }
+    .nav-mobile-menu { display:none; position:fixed; top:72px; left:0; right:0; background:var(--black); z-index:199; padding:12px; flex-direction:column; gap:4px; border-bottom:1px solid #3a3836; }
+    .nav-mobile-menu.open { display:flex; }
+    .nav-mobile-btn { padding:14px 20px; border:none; background:transparent; color:var(--gray); cursor:pointer; font-size:15px; font-family:'DM Sans',sans-serif; font-weight:300; border-radius:7px; text-align:left; transition:all .15s; }
+    .nav-mobile-btn:hover { color:var(--cream); background:rgba(255,255,255,.08); }
+    .nav-mobile-btn.active { color:#fff; background:var(--terra); font-weight:400; }
+    @media(min-width:701px) { .nav-hamburger { display:none; } .nav-desktop { display:flex; } .nav-mobile-menu { display:none !important; } }
+    @media(max-width:700px) { .nav-desktop { display:none; } .nav-hamburger { display:flex; } }
     @media(max-width:700px){
       .area-selector{grid-template-columns:repeat(2,1fr);}
       .main{padding:16px;}
@@ -558,6 +567,9 @@ let state = {
   stockFilter: 'all',
   savingCount: 0,          // ← contador global (retrocompatibilidad)
   savingPaths: new Set(),  // ← lock granular por path: evita que onValue pise valores en vuelo
+  hasUnsavedChanges: false,
+  mobileNavOpen: false,
+  historialDate: '',
 };
 
 // ====================== HELPERS ======================
@@ -849,13 +861,20 @@ function renderHeader() {
     {key:'envio', label:'Guía de envío', alert:false},
     {key:'stock', label:'Stock cuadra', alert:false},
     {key:'insumos', label:'Pedido de insumos', alert:false},
+    {key:'historial', label:'Historial', alert:false},
     {key:'admin', label:'Admin', alert:false},
   ];
   return `<div class="header">
     <div class="logo">Candela Café <span class="logo-sub">· producción</span></div>
-    <nav class="nav">
+    <nav class="nav nav-desktop">
       ${views.map(v => `<button class="nav-btn ${state.view===v.key?'active':''}" onclick="setView('${v.key}')">${v.label}${v.alert ? '<span class="nav-alert"></span>' : ''}</button>`).join('')}
     </nav>
+    <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="nav-mobile-menu ${state.mobileNavOpen?'open':''}" id="mobile-nav">
+    ${views.map(v => `<button class="nav-mobile-btn ${state.view===v.key?'active':''}" onclick="setView('${v.key}');closeMobileNav()">${v.label}${v.alert ? ' •' : ''}</button>`).join('')}
   </div>`;
 }
 
@@ -920,7 +939,30 @@ function renderProduccion() {
     <div class="area-selector">${AREAS.map(a => `<div class="area-card ${state.areaTab===a.key?'active':''}" onclick="setAreaTab('${a.key}')"><div class="area-card-icon">${a.icon}</div><div class="area-card-name">${a.label}</div><span class="badge ${isClosed(a.key)?'badge-closed':'badge-open'}" style="font-size:10px">${isClosed(a.key)?'Cerrado':'hasta '+a.deadline}</span></div>`).join('')}</div>
     ${hasUpdates ? `<div style="background:var(--terra);color:#fff;border-radius:10px;padding:18px;margin-bottom:20px;">⚠️ Pedido modificado fuera de horario. Revisá los productos marcados.</div>` : ''}
     <div class="summary-bar"><div class="summary-card"><div class="summary-label">Área</div><div class="summary-value">${area.label}</div><div class="summary-sub">${area.icon} Límite: ${area.deadline}</div></div><div class="summary-card"><div class="summary-label">Productos pedidos</div><div class="summary-value">${items.length}</div><div class="summary-sub">de ${prods.length} en catálogo</div></div><div class="summary-card"><div class="summary-label">Estado</div><div class="summary-value" style="font-size:15px"><span class="status-dot ${closed?'dot-closed':'dot-open'}"></span>${closed?'Cerrado':'Abierto'}</div><div class="summary-sub">Pedido de hoy</div></div></div>
-    ${items.length===0 ? `<div class="empty-state">No hay productos pedidos para ${area.label} todavía.</div>` : `<div class="prod-view-grid">${items.map(p=>{const upd=updatedKeys.includes(p.id); const qty=consolidated[p.id]; const prod=prods.find(x=>x.id===p.id); return `<div class="prod-item ${upd?'updated':''}"><div class="prod-item-name">${prod?.name || p.id}${upd?' <span class="pulse" style="width:6px;height:6px;display:inline-block;vertical-align:middle;margin-left:4px"></span>':''}</div><div><div class="prod-item-qty">${fmtQty(qty)}</div><div class="prod-item-unit">${prod?.unit||''}</div></div></div>`;}).join('')}</div>`}`;
+    ${items.length===0 ? `<div class="empty-state">No hay productos pedidos para ${area.label} todavía.</div>` : `<div class="prod-view-grid">${items.map(p=>{const upd=updatedKeys.includes(p.id); const qty=consolidated[p.id]; const prod=prods.find(x=>x.id===p.id); return `<div class="prod-item ${upd?'updated':''}"><div class="prod-item-name">${prod?.name || p.id}${upd?' <span class="pulse" style="width:6px;height:6px;display:inline-block;vertical-align:middle;margin-left:4px"></span>':''}</div><div><div class="prod-item-qty">${fmtQty(qty)}</div><div class="prod-item-unit">${prod?.unit||''}</div></div></div>`;}).join('')}</div>`}
+    ${(() => {
+      const localBreakdown = LOCALES.map(loc => {
+        const activeKey = getActivePedidoKey();
+        const pedidoArea = state.pedidos?.[activeKey]?.[fbKey(loc)]?.[state.areaTab] || {};
+        const localItems = prods.filter(p => { const q = Number(pedidoArea[p.id]); return q > 0; })
+          .map(p => ({ ...p, qty: Number(pedidoArea[p.id]) }));
+        return { local: loc, items: localItems };
+      }).filter(l => l.items.length > 0);
+      if (localBreakdown.length === 0) return '';
+      return `<div style="margin-top:20px">
+        <div style="font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Desglose por local</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px">
+          ${localBreakdown.map(({ local: loc, items: litems }) => `
+            <div class="section-block" style="padding:14px 16px">
+              <div style="font-size:13px;font-weight:500;margin-bottom:10px">${loc}</div>
+              <table style="width:100%;border-collapse:collapse;font-size:12px">
+                ${litems.map(p => `<tr><td style="padding:3px 0;color:var(--black)">${p.name}</td><td style="text-align:right;color:var(--terra);font-weight:500">${fmtQty(p.qty)} ${p.unit}</td></tr>`).join('')}
+              </table>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    })()}`;
 }
 
 function renderEnvio() {
@@ -1076,6 +1118,49 @@ function renderInsumos() {
   }
 }
 
+function renderHistorial() {
+  const selectedDate = state.historialDate || todayKey();
+  return `
+    <div class="page-title">Historial de pedidos</div>
+    <div class="page-sub">Consultá pedidos por fecha</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+      <input type="date" class="form-input" style="max-width:200px" value="${selectedDate}"
+        onchange="setHistorialDate(this.value)" max="${todayKey()}">
+      <span style="font-size:13px;color:var(--gray)">${new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span>
+    </div>
+    ${renderHistorialFecha(selectedDate)}
+  `;
+}
+
+function renderHistorialFecha(dateKey) {
+  const pedidosDate = state.pedidos?.[dateKey] || {};
+  const hasData = Object.values(pedidosDate).some(localData =>
+    localData && Object.values(localData).some(areaData => areaData && Object.keys(areaData).length > 0)
+  );
+  if (!hasData) return `<div class="empty-state">No hay pedidos registrados para esta fecha.</div>`;
+
+  let html = '';
+  LOCALES.forEach(local => {
+    const localData = pedidosDate[fbKey(local)] || {};
+    const localHasData = Object.values(localData).some(a => a && Object.keys(a).length > 0);
+    if (!localHasData) return;
+    html += `<div class="section-block" style="margin-bottom:16px"><div style="font-size:16px;font-weight:500;margin-bottom:16px">${local}</div>`;
+    AREAS.forEach(area => {
+      const areaData = localData[area.key] || {};
+      const items = (state.productos[area.key] || []).filter(p => Number(areaData[p.id]) > 0);
+      if (items.length === 0) return;
+      html += `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--gray);margin-bottom:6px">${area.icon} ${area.label}</div>`;
+      html += `<div style="display:flex;flex-wrap:wrap;gap:6px">`;
+      items.forEach(p => {
+        html += `<span style="background:var(--cream);border:1px solid var(--cream-dark);border-radius:6px;padding:4px 10px;font-size:12px">${p.name}: <strong>${fmtQty(Number(areaData[p.id]))}</strong> ${p.unit}</span>`;
+      });
+      html += `</div></div>`;
+    });
+    html += `</div>`;
+  });
+  return html;
+}
+
 function renderAdmin() {
   if (!state.adminLoggedIn) {
     return `<div class="login-wrap"><div class="login-card"><div class="login-title">Administración</div><div class="login-sub">Acceso restringido al catálogo</div><div class="admin-form"><div class="form-group"><label class="form-label">Contraseña</label><input class="form-input" type="password" id="admin-pass" onkeydown="if(event.key==='Enter')adminLogin()" placeholder="••••••"></div><button class="btn btn-primary" onclick="adminLogin()">Ingresar</button><div id="login-err" style="color:var(--terra);font-size:12px;display:none">Contraseña incorrecta</div></div></div></div>`;
@@ -1095,13 +1180,19 @@ function render() {
   else if (state.view === 'stock') content = renderStock();
   else if (state.view === 'admin') content = renderAdmin();
   else if (state.view === 'insumos') content = renderInsumos();
+  else if (state.view === 'historial') content = renderHistorial();
   app.innerHTML = renderHeader() + `<div class="main">${content}</div>`;
   document.querySelectorAll('.btn-print-envio').forEach(btn => btn.addEventListener('click', () => window.printEnvio(btn.dataset.local)));
 }
 
 // ====================== HANDLERS GLOBALES ======================
-window.setView = v => { state.view = v; render(); };
-window.setLocalTab = i => { state.localTab = i; render(); };
+window.setView = v => { state.view = v; state.mobileNavOpen = false; render(); };
+window.setLocalTab = i => {
+  if (state.hasUnsavedChanges && state.localTab !== i) {
+    if (!confirm('Hay cambios sin guardar. ¿Cambiar de local de todos modos?')) return;
+  }
+  state.localTab = i; render();
+};
 window.setAreaTab = k => { state.areaTab = k; render(); };
 window.setAdminCat = c => { state.adminCategory = c; render(); };
 window.setInsumosSector = (s, v) => { state.insumosSector = s; state.insumosView = v || 'detalle'; render(); };
@@ -1135,6 +1226,14 @@ window.handleQtyChange = async function(el) {
   } finally {
     _processingQty.delete(key);
   }
+};
+const _qtyDebounceTimers = {};
+window.debouncedQtySave = function(el) {
+  const { local, area, pid } = el.dataset;
+  const key = `${local}|${area}|${pid}`;
+  clearTimeout(_qtyDebounceTimers[key]);
+  state.hasUnsavedChanges = true;
+  _qtyDebounceTimers[key] = setTimeout(() => handleQtyChange(el), 600);
 };
 window.handleQtyKeydown = function(el, e) {
   if (e.key === 'Enter') { e.preventDefault(); handleQtyChange(el); }
@@ -1316,6 +1415,42 @@ async function stockUpdateQty(pid, unit, newQty, oldQty) {
 window.stockIncrement = async function(pid, unit) { const current = state.stock[pid]?.qty || 0; await stockUpdateQty(pid, unit, current + 1, current); };
 window.stockDecrement = async function(pid, unit) { const current = state.stock[pid]?.qty || 0; if (current <= 0) return; await stockUpdateQty(pid, unit, Math.max(0, current - 1), current); };
 window.stockSetQty = async function(el) { const pid = el.dataset.pid; const unit = el.dataset.unit; const newQty = Math.max(0, parseFloat(el.value) || 0); const oldQty = state.stock[pid]?.qty || 0; if (newQty === oldQty) return; await stockUpdateQty(pid, unit, newQty, oldQty); };
+
+// Change 3: Copiar de ayer handler
+window.copiarDeAyer = async function(local, area) {
+  const yData = state.pedidos?.[yesterdayKey()]?.[fbKey(local)]?.[area] || {};
+  if (Object.keys(yData).length === 0) { showToast('No hay pedido de ayer para copiar', 'warn'); return; }
+  const promises = [];
+  Object.entries(yData).forEach(([pid, qty]) => {
+    const numQty = Number(qty);
+    if (numQty > 0) {
+      if (!state.pedidos[todayKey()]) state.pedidos[todayKey()] = {};
+      if (!state.pedidos[todayKey()][fbKey(local)]) state.pedidos[todayKey()][fbKey(local)] = {};
+      if (!state.pedidos[todayKey()][fbKey(local)][area]) state.pedidos[todayKey()][fbKey(local)][area] = {};
+      state.pedidos[todayKey()][fbKey(local)][area][pid] = numQty;
+      promises.push(saveQty(local, area, pid, String(numQty)));
+    }
+  });
+  await Promise.all(promises);
+  showToast('✓ Pedido de ayer copiado');
+};
+
+// Change 8: Historial date handler
+window.setHistorialDate = function(dateKey) {
+  state.historialDate = dateKey;
+  if (!state.pedidos[dateKey]) {
+    get(ref(db, `pedidos/${dateKey}`)).then(snap => {
+      state.pedidos[dateKey] = snap.val() || {};
+      render();
+    });
+  } else {
+    render();
+  }
+};
+
+// Change 9: Mobile nav handlers
+window.toggleMobileNav = () => { state.mobileNavOpen = !state.mobileNavOpen; render(); };
+window.closeMobileNav = () => { state.mobileNavOpen = false; };
 
 // Iniciar
 initFirebase();
