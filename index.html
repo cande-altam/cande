@@ -147,6 +147,8 @@
     }
     .qty-input:focus{border-color:var(--terra);}
     .qty-input:disabled{opacity:.4;cursor:not-allowed;}
+    .qty-input.saving { border-color: var(--terra); background: #fef5f3; }
+    .qty-input.saved  { border-color: var(--turq-dark); background: var(--turq-pale); transition: all 1.5s; }
     .unit-label{font-size:11px;color:var(--gray);width:24px;text-align:left;}
     .btn{
       padding:8px 18px;border-radius:6px;border:none;cursor:pointer;
@@ -619,6 +621,11 @@ async function saveQty(local, area, pid, val) {
 
   // Lock granular: el listener onValue no pisará este path mientras esté guardando
   state.savingPaths.add(path);
+  // Mark input as saving in DOM (if still mounted)
+  const inputEl = document.querySelector(
+    `.qty-input[data-local="${local}"][data-area="${area}"][data-pid="${pid}"]`
+  );
+  if (inputEl) { inputEl.classList.add('saving'); inputEl.classList.remove('saved'); }
   state.savingCount++;
   try {
     if (!val || isNaN(numVal) || numVal <= 0) {
@@ -654,6 +661,15 @@ async function saveQty(local, area, pid, val) {
     // Renderizar ANTES de liberar los locks para que el onValue
     // no sobrescriba el estado correcto antes del render final
     safeRender();
+    const savedEl = document.querySelector(
+      `.qty-input[data-local="${local}"][data-area="${area}"][data-pid="${pid}"]`
+    );
+    if (savedEl) {
+      savedEl.classList.remove('saving');
+      savedEl.classList.add('saved');
+      setTimeout(() => savedEl?.classList.remove('saved'), 1500);
+    }
+    state.hasUnsavedChanges = false;
     state.savingPaths.delete(path);
     state.savingCount--;
   }
@@ -862,7 +878,15 @@ function renderCarga() {
             <span class="badge ${closed?'badge-closed':'badge-open'}">${closed?'Cerrado':'Abierto'}</span>
             ${closed ? `<span class="badge badge-warn">⚠ Notifica a producción</span>` : ''}
           </div>
-          <span class="deadline-txt">Límite ${area.deadline} · ${filled}/${prods.length} productos</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="deadline-txt">Límite ${area.deadline} · ${filled}/${prods.length} productos</span>
+            ${(() => {
+              const todayFilled = prods.filter(p => { const q = state.pedidos?.[todayKey()]?.[fbKey(local)]?.[area.key]?.[p.id]; return q !== undefined && q !== null && Number(q) > 0; }).length;
+              const yData = state.pedidos?.[yesterdayKey()]?.[fbKey(local)]?.[area.key] || {};
+              const yHasData = Object.values(yData).some(v => Number(v) > 0);
+              return (todayFilled === 0 && yHasData) ? `<button class="btn btn-ghost btn-sm" onclick="copiarDeAyer('${local}', '${area.key}')">⟳ Copiar de ayer</button>` : '';
+            })()}
+          </div>
         </div>
         ${closed ? `<div class="alert-box alert-warn"><span class="pulse"></span>Horario cerrado. Cualquier cambio alertará al área de ${area.label}.</div>` : ''}
         <div class="product-grid">
@@ -871,7 +895,7 @@ function renderCarga() {
             <input class="qty-input" type="number" min="0" step="0.1"
               value="${getQty(local, area.key, p.id)}"
               data-local="${local}" data-area="${area.key}" data-pid="${p.id}"
-              onblur="handleQtyChange(this)" onkeydown="handleQtyKeydown(this, event)" placeholder="—">
+              onblur="handleQtyChange(this)" onkeydown="handleQtyKeydown(this, event)" oninput="debouncedQtySave(this)" placeholder="—">
             <span class="unit-label">${p.unit}</span>
           </div>`).join('')}
         </div>
@@ -1112,7 +1136,13 @@ window.handleQtyChange = async function(el) {
     _processingQty.delete(key);
   }
 };
-window.handleQtyKeydown = function(el, e) { if(e.key === 'Enter') { e.preventDefault(); handleQtyChange(el); } };
+window.handleQtyKeydown = function(el, e) {
+  if (e.key === 'Enter') { e.preventDefault(); handleQtyChange(el); }
+  else if (e.key === 'Tab') {
+    const originalVal = String(getQty(el.dataset.local, el.dataset.area, el.dataset.pid));
+    if (el.value.trim() !== originalVal) handleQtyChange(el);
+  }
+};
 window.adminLogin = function() {
   const input = document.getElementById('admin-pass');
   if (input && input.value === ADMIN_PASS) { state.adminLoggedIn = true; render(); }
