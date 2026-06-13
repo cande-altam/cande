@@ -536,7 +536,7 @@ const AREAS = [
   {key:'especialidades', label:'Especialidades',  icon:'🍩', deadline:'21:00'},
   {key:'factureria',     label:'Facturería',      icon:'🥐', deadline:'21:00'},
   {key:'sandwiches',     label:'Sandwiches',      icon:'🥪', deadline:'21:00'},
-  {key:'cocina_sl',      label:'Cocina San Luis', icon:'🍳', deadline:'21:00'},
+  {key:'cocina_sl',      label:'Cocina San Luis', icon:'🍳', deadline:'21:00', cuadra:false},
 ];
 const LOCALES = ['SLA 5.0', 'San Luis'];
 const ADMIN_PASS = 'candela2025';
@@ -961,7 +961,7 @@ function renderProduccion() {
     ${showingYesterday ? `<div class="alert-box alert-warn">⚠️ Mostrando pedidos del día anterior (${yesterdayKey()}). <button class="btn btn-ghost btn-sm" onclick="forceToday()">⟳ Refrescar hoy</button></div>` : ''}
     <div style="display:flex;justify-content:space-between;margin-bottom:4px"><div class="page-title">Cuadra</div><button class="btn btn-ghost" onclick="printArea(null,'${state.areaTab}')">🖨 Imprimir área</button></div>
     <div class="page-sub">Total consolidado · ${new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'})}</div>
-    <div class="area-selector">${AREAS.map(a => `<div class="area-card ${state.areaTab===a.key?'active':''}" onclick="setAreaTab('${a.key}')"><div class="area-card-icon">${a.icon}</div><div class="area-card-name">${a.label}</div><span class="badge ${isClosed(a.key)?'badge-closed':'badge-open'}" style="font-size:10px">${isClosed(a.key)?'Cerrado':'hasta '+a.deadline}</span></div>`).join('')}</div>
+    <div class="area-selector">${AREAS.filter(a=>a.cuadra!==false).map(a => `<div class="area-card ${state.areaTab===a.key?'active':''}" onclick="setAreaTab('${a.key}')"><div class="area-card-icon">${a.icon}</div><div class="area-card-name">${a.label}</div><span class="badge ${isClosed(a.key)?'badge-closed':'badge-open'}" style="font-size:10px">${isClosed(a.key)?'Cerrado':'hasta '+a.deadline}</span></div>`).join('')}</div>
     ${hasUpdates ? `<div style="background:var(--terra);color:#fff;border-radius:10px;padding:18px;margin-bottom:20px;">⚠️ Pedido modificado fuera de horario. Revisá los productos marcados.</div>` : ''}
     <div class="summary-bar"><div class="summary-card"><div class="summary-label">Área</div><div class="summary-value">${area.label}</div><div class="summary-sub">${area.icon} Límite: ${area.deadline}</div></div><div class="summary-card"><div class="summary-label">Productos pedidos</div><div class="summary-value">${items.length}</div><div class="summary-sub">de ${prods.length} en catálogo</div></div><div class="summary-card"><div class="summary-label">Estado</div><div class="summary-value" style="font-size:15px"><span class="status-dot ${closed?'dot-closed':'dot-open'}"></span>${closed?'Cerrado':'Abierto'}</div><div class="summary-sub">Pedido de hoy</div></div></div>
     ${items.length===0 ? `<div class="empty-state">No hay productos pedidos para ${area.label} todavía.</div>` : `<div class="prod-view-grid">${items.map(p=>{const upd=updatedKeys.includes(p.id); const qty=consolidated[p.id]; const prod=prods.find(x=>x.id===p.id); return `<div class="prod-item ${upd?'updated':''}"><div class="prod-item-name">${prod?.name || p.id}${upd?' <span class="pulse" style="width:6px;height:6px;display:inline-block;vertical-align:middle;margin-left:4px"></span>':''}</div><div><div class="prod-item-qty">${fmtQty(qty)}</div><div class="prod-item-unit">${prod?.unit||''}</div></div></div>`;}).join('')}</div>`}
