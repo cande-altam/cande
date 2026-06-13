@@ -640,9 +640,18 @@ async function saveQty(local, area, pid, val) {
   if (inputEl) { inputEl.classList.add('saving'); inputEl.classList.remove('saved'); }
   state.savingCount++;
   try {
-    if (!val || isNaN(numVal) || numVal <= 0) {
-      await remove(ref(db, path));
-      console.log(`🗑 Eliminado: ${path}`);
+    const isZeroOrEmpty = !val || isNaN(numVal) || numVal <= 0;
+    if (isZeroOrEmpty) {
+      // Si ayer había un valor, guardar 0 explícito para no caer al fallback de ayer.
+      // Si ayer no había nada, eliminar limpiamente.
+      const yestVal = Number(state.pedidos?.[yesterdayKey()]?.[fbKey(local)]?.[area]?.[pid]);
+      if (yestVal > 0) {
+        await set(ref(db, path), 0);
+        console.log(`⓪ Guardado 0 explícito (override ayer): ${path}`);
+      } else {
+        await remove(ref(db, path));
+        console.log(`🗑 Eliminado: ${path}`);
+      }
     } else {
       await set(ref(db, path), numVal);
       console.log(`✅ Guardado: ${path} = ${numVal}`);
@@ -661,7 +670,9 @@ async function saveQty(local, area, pid, val) {
     if (!state.pedidos[todayKey()]) state.pedidos[todayKey()] = {};
     if (!state.pedidos[todayKey()][fbKey(local)]) state.pedidos[todayKey()][fbKey(local)] = {};
     if (!state.pedidos[todayKey()][fbKey(local)][area]) state.pedidos[todayKey()][fbKey(local)][area] = {};
-    if (remoteVal !== undefined && remoteVal !== null && remoteVal > 0) {
+    const yestFallback = Number(state.pedidos?.[yesterdayKey()]?.[fbKey(local)]?.[area]?.[pid]) > 0;
+    if (remoteVal !== undefined && remoteVal !== null && (remoteVal > 0 || yestFallback)) {
+      // Guardar el valor confirmado (puede ser 0 explícito para no caer a ayer)
       state.pedidos[todayKey()][fbKey(local)][area][pid] = remoteVal;
     } else {
       delete state.pedidos[todayKey()][fbKey(local)][area][pid];
@@ -1230,8 +1241,15 @@ window.handleQtyChange = async function(el) {
     if (!state.pedidos[todayKey()]) state.pedidos[todayKey()] = {};
     if (!state.pedidos[todayKey()][fbKey(local)]) state.pedidos[todayKey()][fbKey(local)] = {};
     if (!state.pedidos[todayKey()][fbKey(local)][area]) state.pedidos[todayKey()][fbKey(local)][area] = {};
-    if (val && !isNaN(numVal) && numVal > 0) state.pedidos[todayKey()][fbKey(local)][area][pid] = numVal;
-    else delete state.pedidos[todayKey()][fbKey(local)][area][pid];
+    const yestVal = Number(state.pedidos?.[yesterdayKey()]?.[fbKey(local)]?.[area]?.[pid]);
+    if (val && !isNaN(numVal) && numVal > 0) {
+      state.pedidos[todayKey()][fbKey(local)][area][pid] = numVal;
+    } else if (yestVal > 0) {
+      // Override explícito: guardar 0 para no mostrar el valor de ayer
+      state.pedidos[todayKey()][fbKey(local)][area][pid] = 0;
+    } else {
+      delete state.pedidos[todayKey()][fbKey(local)][area][pid];
+    }
     await saveQty(local, area, pid, val);
     // No llamamos safeRender aquí porque saveQty ya lo hace al final
     const closed = isClosed(area);
