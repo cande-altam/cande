@@ -718,6 +718,7 @@ let state = {
   insumosLocalTab: 0,
   insumosView: 'detalle',
   insumosPedidos: {},
+  comprados: {},
   ventasCustomInsumos: {},
   prodCustomInsumos: {},
   loading: true,
@@ -950,6 +951,10 @@ async function initFirebase() {
   });
   onValue(ref(db, `insumosPedidos/${yesterdayKey()}`), snap => {
     state.insumosPedidos[yesterdayKey()] = snap.val() || {};
+    if (!state.loading) safeRender();
+  });
+  onValue(ref(db, `comprados/${todayKey()}`), snap => {
+    state.comprados = snap.val() || {};
     if (!state.loading) safeRender();
   });
   onValue(ref(db, 'ventasCustomInsumos'), snap => {
@@ -1260,7 +1265,7 @@ function renderInsumos() {
     const grupos = [...new Set(allRows.map(r => r.grupo))];
     const prioLabel = {verde:'Stock OK', amarillo:'Stock bajo', rojo:'Urgente'};
     const prioBg2 = {verde:'#e8f8f0', amarillo:'#fffbe6', rojo:'#fdecea'};
-    return topBar + `<div style="text-align:right;margin-bottom:12px"><button onclick="window.printResumenInsumos()" style="background:var(--black);border:none;color:var(--cream);border-radius:8px;padding:9px 20px;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif">🖨 Imprimir listado</button></div>` + (allRows.length===0 ? `<div class="empty-state">No hay insumos pedidos aún.</div>` : grupos.map(grupo => { const rows = allRows.filter(r => r.grupo === grupo).sort((a,b)=>(prioOrder[a.prioridad||'']??3)-(prioOrder[b.prioridad||'']??3)); const icon = rows[0]?.icon || ''; return `<div class="section-block"><div class="section-header"><div class="section-title">${icon} ${grupo} <span class="badge badge-open">${rows.length} insumos</span></div></div><table style="width:100%;border-collapse:collapse;"><thead><tr style="border-bottom:1.5px solid var(--black)"><th style="padding:6px 10px;text-align:left">Insumo</th><th style="padding:6px 10px;text-align:left">Cantidad</th><th style="padding:6px 10px;text-align:left">Prioridad</th><th style="padding:6px 10px;text-align:left">Aclaración</th><th style="padding:6px 10px;text-align:center">✓ Comprado</th></tr></thead><tbody>${rows.map(r => `<tr style="background:${prioBg2[r.prioridad||'']||'transparent'}"><td style="padding:8px 10px">${r.name}</td><td style="padding:8px 10px">${r.qty||'—'}</td><td style="padding:8px 10px">${r.prioridad?`<span style="background:${prioBg2[r.prioridad]};color:${prioColors[r.prioridad].dot};padding:2px 9px;border-radius:20px">${prioLabel[r.prioridad]}</span>`:''}</td><td style="padding:8px 10px">${r.nota||''}</td><td style="padding:8px 10px;text-align:center"><button onclick="marcarComprado('${r._scope}','${r.id}')" style="background:var(--turq-pale);border:1.5px solid var(--turq-dark);color:var(--turq-dark);border-radius:6px;padding:4px 12px;cursor:pointer">✓ Comprado</button></td></tr>`).join('')}</tbody></table></div>`; }).join('') + `<div style="text-align:center;margin-top:8px"><button class="btn btn-ghost" onclick="setInsumosView('detalle')">← Volver al detalle</button></div>`);
+    return topBar + `<div style="text-align:right;margin-bottom:12px"><button onclick="window.printResumenInsumos()" style="background:var(--black);border:none;color:var(--cream);border-radius:8px;padding:9px 20px;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif">🖨 Imprimir listado</button></div>` + (allRows.length===0 ? `<div class="empty-state">No hay insumos pedidos aún.</div>` : grupos.map(grupo => { const rows = allRows.filter(r => r.grupo === grupo).sort((a,b)=>(prioOrder[a.prioridad||'']??3)-(prioOrder[b.prioridad||'']??3)); const icon = rows[0]?.icon || ''; return `<div class="section-block"><div class="section-header"><div class="section-title">${icon} ${grupo} <span class="badge badge-open">${rows.length} insumos</span></div></div><table style="width:100%;border-collapse:collapse;"><thead><tr style="border-bottom:1.5px solid var(--black)"><th style="padding:6px 10px;text-align:left">Insumo</th><th style="padding:6px 10px;text-align:left">Cantidad</th><th style="padding:6px 10px;text-align:left">Prioridad</th><th style="padding:6px 10px;text-align:left">Aclaración</th><th style="padding:6px 10px;text-align:center">Comprado</th></tr></thead><tbody>${rows.map(r => { const ck = `${r._scope}__${r.id}`; const done = !!state.comprados[ck]; return `<tr style="background:${done?'#e8f8f0':prioBg2[r.prioridad||'']||'transparent'};opacity:${done?'0.6':'1'};text-decoration:${done?'line-through':'none'}"><td style="padding:8px 10px">${r.name}</td><td style="padding:8px 10px">${r.qty||'—'}</td><td style="padding:8px 10px">${r.prioridad?`<span style="background:${prioBg2[r.prioridad]};color:${prioColors[r.prioridad].dot};padding:2px 9px;border-radius:20px">${prioLabel[r.prioridad]}</span>`:''}</td><td style="padding:8px 10px">${r.nota||''}</td><td style="padding:8px 10px;text-align:center"><button onclick="toggleComprado('${r._scope}','${r.id}')" style="width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:16px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;${done?'background:var(--turq);border:2px solid var(--turq-dark);color:white':'background:white;border:2px solid var(--gray-light);color:transparent'}">✓</button></td></tr>`; }).join('')}</tbody></table></div>`; }).join('') + `<div style="text-align:center;margin-top:8px"><button class="btn btn-ghost" onclick="setInsumosView('detalle')">← Volver al detalle</button></div>`);
   }
   if (sector === 'verduleria') {
     const todayData = getMergedInsumos();
@@ -1540,12 +1545,17 @@ window.setPrioInsumo = async function(scope, id, prio) {
   state.insumosPedidos[todayKey()][scope][id] = {...current, prioridad: newPrio, ts: current.ts || Date.now()};
   render();
 };
-window.marcarComprado = async function(scope, id) {
-  await remove(ref(db, `insumosPedidos/${todayKey()}/${scope}/${id}`));
-  await remove(ref(db, `insumosPedidos/${yesterdayKey()}/${scope}/${id}`));
-  if (state.insumosPedidos[todayKey()]?.[scope]) delete state.insumosPedidos[todayKey()][scope][id];
-  if (state.insumosPedidos[yesterdayKey()]?.[scope]) delete state.insumosPedidos[yesterdayKey()][scope][id];
-  showToast('✓ Insumo marcado como comprado', 'success');
+window.toggleComprado = async function(scope, id) {
+  const ck = `${scope}__${id}`;
+  const done = !!state.comprados[ck];
+  if (done) {
+    await remove(ref(db, `comprados/${todayKey()}/${ck}`));
+    delete state.comprados[ck];
+  } else {
+    await set(ref(db, `comprados/${todayKey()}/${ck}`), true);
+    state.comprados[ck] = true;
+    showToast('✓ Marcado como comprado', 'success');
+  }
   render();
 };
 window.printVerduleria = function() {
