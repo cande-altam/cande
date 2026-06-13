@@ -1245,27 +1245,44 @@ function renderInsumos() {
   const topBar = `<div class="page-title">Pedido de insumos</div><div class="page-sub">${fecha}</div><div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap"><button class="btn ${(sector==='produccion'||sector==='ventas')&&insView!=='resumen'?'btn-primary':'btn-ghost'}" onclick="setInsumosSector('produccion')">✏️ Hace el pedido</button><button class="btn ${sector==='verduleria'?'btn-primary':'btn-ghost'}" onclick="setInsumosSector('verduleria')">🥦 Verdulería</button><button class="btn btn-ghost" onclick="setInsumosView('resumen')">📋 Ver resumen</button></div>`;
   if (insView === 'resumen') {
     const todayData = getMergedInsumos();
-    let allRows = [];
+    // Pendientes: desde insumosPedidos
+    let pendRows = [];
     AREAS.forEach(area => {
       const scope = `prod_${area.key}`;
       const pedidos = todayData[scope] || {};
-      const customItems = state.prodCustomInsumos[area.key] || [];
-      const items = [...(INSUMOS_PRODUCCION[area.key] || []), ...customItems];
-      items.forEach(p => { const item = pedidos[p.id]; if (item?.qty || item?.prioridad || item?.nota) allRows.push({...p, ...item, sector:'Producción', grupo: area.label, icon: area.icon, _scope: scope}); });
+      const items = [...(INSUMOS_PRODUCCION[area.key] || []), ...(state.prodCustomInsumos[area.key] || [])];
+      items.forEach(p => { const item = pedidos[p.id]; if (item?.qty || item?.prioridad || item?.nota) pendRows.push({...p, ...item, grupo: area.label, icon: area.icon, _scope: scope, _done: false}); });
     });
     LOCALES.forEach(local => {
       const scope = `ventas_${local.replace(/[ ./]/g,'_')}`;
       const pedidos = todayData[scope] || {};
-      const customKey = local.replace(/[ ./]/g,'_');
-      const customItems = state.ventasCustomInsumos[customKey] || [];
-      const allVentasItems = [...INSUMOS_VENTAS, ...customItems];
-      allVentasItems.forEach(p => { const item = pedidos[p.id]; if (item?.qty || item?.prioridad || item?.nota) allRows.push({...p, ...item, sector:'Ventas', grupo: local, icon:'🛒', _scope: scope}); });
+      const customItems = state.ventasCustomInsumos[local.replace(/[ ./]/g,'_')] || [];
+      [...INSUMOS_VENTAS, ...customItems].forEach(p => { const item = pedidos[p.id]; if (item?.qty || item?.prioridad || item?.nota) pendRows.push({...p, ...item, grupo: local, icon:'🛒', _scope: scope, _done: false}); });
+    });
+    // Comprados hoy: desde state.comprados
+    let doneRows = [];
+    Object.entries(state.comprados || {}).forEach(([ck, saved]) => {
+      if (!saved || typeof saved !== 'object') return;
+      const [scope, ...idParts] = ck.split('__'); const id = idParts.join('__');
+      // Buscar nombre del producto
+      let name = id;
+      AREAS.forEach(area => { [...(INSUMOS_PRODUCCION[area.key]||[]), ...(state.prodCustomInsumos[area.key]||[])].forEach(p => { if (p.id === id) name = p.name; }); });
+      INSUMOS_VENTAS.forEach(p => { if (p.id === id) name = p.name; });
+      // Determinar grupo
+      let grupo = scope; let icon = '✓';
+      if (scope.startsWith('prod_')) { const ak = scope.replace('prod_',''); const a = AREAS.find(a=>a.key===ak); if(a){grupo=a.label;icon=a.icon;} }
+      else if (scope.startsWith('ventas_')) { const lk = scope.replace('ventas_',''); const l = LOCALES.find(l=>l.replace(/[ ./]/g,'_')===lk); if(l){grupo=l;icon='🛒';} }
+      doneRows.push({id, name, qty: saved.qty||'', nota: saved.nota||'', prioridad: saved.prioridad||'', grupo, icon, _scope: scope, _done: true});
     });
     const prioOrder = {rojo:0, amarillo:1, verde:2, '':3};
-    const grupos = [...new Set(allRows.map(r => r.grupo))];
     const prioLabel = {verde:'Stock OK', amarillo:'Stock bajo', rojo:'Urgente'};
     const prioBg2 = {verde:'#e8f8f0', amarillo:'#fffbe6', rojo:'#fdecea'};
-    return topBar + `<div style="text-align:right;margin-bottom:12px"><button onclick="window.printResumenInsumos()" style="background:var(--black);border:none;color:var(--cream);border-radius:8px;padding:9px 20px;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif">🖨 Imprimir listado</button></div>` + (allRows.length===0 ? `<div class="empty-state">No hay insumos pedidos aún.</div>` : grupos.map(grupo => { const rows = allRows.filter(r => r.grupo === grupo).sort((a,b)=>(prioOrder[a.prioridad||'']??3)-(prioOrder[b.prioridad||'']??3)); const icon = rows[0]?.icon || ''; return `<div class="section-block"><div class="section-header"><div class="section-title">${icon} ${grupo} <span class="badge badge-open">${rows.length} insumos</span></div></div><table style="width:100%;border-collapse:collapse;"><thead><tr style="border-bottom:1.5px solid var(--black)"><th style="padding:6px 10px;text-align:left">Insumo</th><th style="padding:6px 10px;text-align:left">Cantidad</th><th style="padding:6px 10px;text-align:left">Prioridad</th><th style="padding:6px 10px;text-align:left">Aclaración</th><th style="padding:6px 10px;text-align:center">Comprado</th></tr></thead><tbody>${rows.map(r => { const ck = `${r._scope}__${r.id}`; const done = !!state.comprados[ck]; return `<tr style="background:${done?'#e8f8f0':prioBg2[r.prioridad||'']||'transparent'};opacity:${done?'0.6':'1'};text-decoration:${done?'line-through':'none'}"><td style="padding:8px 10px">${r.name}</td><td style="padding:8px 10px">${r.qty||'—'}</td><td style="padding:8px 10px">${r.prioridad?`<span style="background:${prioBg2[r.prioridad]};color:${prioColors[r.prioridad].dot};padding:2px 9px;border-radius:20px">${prioLabel[r.prioridad]}</span>`:''}</td><td style="padding:8px 10px">${r.nota||''}</td><td style="padding:8px 10px;text-align:center"><button onclick="toggleComprado('${r._scope}','${r.id}')" style="width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:16px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;${done?'background:var(--turq);border:2px solid var(--turq-dark);color:white':'background:white;border:2px solid var(--gray-light);color:transparent'}">✓</button></td></tr>`; }).join('')}</tbody></table></div>`; }).join('') + `<div style="text-align:center;margin-top:8px"><button class="btn btn-ghost" onclick="setInsumosView('detalle')">← Volver al detalle</button></div>`);
+    function renderTable(rows) {
+      return `<table style="width:100%;border-collapse:collapse;"><thead><tr style="border-bottom:1.5px solid var(--black)"><th style="padding:6px 10px;text-align:left">Insumo</th><th style="padding:6px 10px;text-align:left">Cantidad</th><th style="padding:6px 10px;text-align:left">Prioridad</th><th style="padding:6px 10px;text-align:left">Aclaración</th><th style="padding:6px 10px;text-align:center">Comprado</th></tr></thead><tbody>${rows.map(r => { const ck = `${r._scope}__${r.id}`; const done = r._done; return `<tr style="background:${done?'#f0faf7':prioBg2[r.prioridad||'']||'transparent'};opacity:${done?'0.55':'1'}"><td style="padding:8px 10px;${done?'text-decoration:line-through':''}">${r.name}</td><td style="padding:8px 10px">${r.qty||'—'}</td><td style="padding:8px 10px">${r.prioridad?`<span style="background:${prioBg2[r.prioridad]||''};color:${prioColors[r.prioridad]?.dot||'#666'};padding:2px 9px;border-radius:20px">${prioLabel[r.prioridad]||''}</span>`:''}</td><td style="padding:8px 10px">${r.nota||''}</td><td style="padding:8px 10px;text-align:center"><button onclick="toggleComprado('${r._scope}','${r.id}')" style="width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:16px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;${done?'background:var(--turq);border:2px solid var(--turq-dark);color:white':'background:white;border:2px solid var(--gray-light);color:transparent'}">✓</button></td></tr>`; }).join('')}</tbody></table>`;
+    }
+    const allGrupos = [...new Set([...pendRows.map(r=>r.grupo), ...doneRows.map(r=>r.grupo)])];
+    const totalPend = pendRows.length; const totalDone = doneRows.length;
+    return topBar + `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;color:var(--gray)"><span style="color:var(--terra);font-weight:600">${totalPend} pendientes</span> · <span style="color:var(--turq-dark);font-weight:600">${totalDone} comprados</span></div><button onclick="window.printResumenInsumos()" style="background:var(--black);border:none;color:var(--cream);border-radius:8px;padding:9px 20px;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif">🖨 Imprimir listado</button></div>` + (totalPend+totalDone===0 ? `<div class="empty-state">No hay insumos pedidos aún.</div>` : allGrupos.map(grupo => { const pend = pendRows.filter(r=>r.grupo===grupo).sort((a,b)=>(prioOrder[a.prioridad||'']??3)-(prioOrder[b.prioridad||'']??3)); const done = doneRows.filter(r=>r.grupo===grupo); const icon = (pend[0]||done[0])?.icon||''; const all = [...pend,...done]; if(!all.length) return ''; return `<div class="section-block"><div class="section-header"><div class="section-title">${icon} ${grupo} <span class="badge badge-open">${pend.length} pendientes</span>${done.length?`<span class="badge" style="background:var(--turq-pale);color:var(--turq-dark);margin-left:4px">${done.length} comprados</span>`:''}</div></div>${renderTable(all)}</div>`; }).join('')) + `<div style="text-align:center;margin-top:8px"><button class="btn btn-ghost" onclick="setInsumosView('detalle')">← Volver al detalle</button></div>`;
   }
   if (sector === 'verduleria') {
     const todayData = getMergedInsumos();
@@ -1549,11 +1566,24 @@ window.toggleComprado = async function(scope, id) {
   const ck = `${scope}__${id}`;
   const done = !!state.comprados[ck];
   if (done) {
+    // Desmarcar: restaurar datos guardados al pedido
+    const saved = state.comprados[ck];
+    await set(ref(db, `insumosPedidos/${todayKey()}/${scope}/${id}`), {qty: saved.qty, nota: saved.nota||'', prioridad: saved.prioridad||'', ts: saved.ts||Date.now()});
+    if (!state.insumosPedidos[todayKey()]) state.insumosPedidos[todayKey()] = {};
+    if (!state.insumosPedidos[todayKey()][scope]) state.insumosPedidos[todayKey()][scope] = {};
+    state.insumosPedidos[todayKey()][scope][id] = {qty: saved.qty, nota: saved.nota||'', prioridad: saved.prioridad||'', ts: saved.ts||Date.now()};
     await remove(ref(db, `comprados/${todayKey()}/${ck}`));
     delete state.comprados[ck];
   } else {
-    await set(ref(db, `comprados/${todayKey()}/${ck}`), true);
-    state.comprados[ck] = true;
+    // Marcar: guardar datos actuales y borrar del pedido (qty → 0 para mañana)
+    const itemData = state.insumosPedidos[todayKey()]?.[scope]?.[id] || state.insumosPedidos[yesterdayKey()]?.[scope]?.[id] || {};
+    const record = {qty: itemData.qty||'', nota: itemData.nota||'', prioridad: itemData.prioridad||'', ts: Date.now()};
+    await set(ref(db, `comprados/${todayKey()}/${ck}`), record);
+    state.comprados[ck] = record;
+    await remove(ref(db, `insumosPedidos/${todayKey()}/${scope}/${id}`));
+    await remove(ref(db, `insumosPedidos/${yesterdayKey()}/${scope}/${id}`));
+    if (state.insumosPedidos[todayKey()]?.[scope]) delete state.insumosPedidos[todayKey()][scope][id];
+    if (state.insumosPedidos[yesterdayKey()]?.[scope]) delete state.insumosPedidos[yesterdayKey()][scope][id];
     showToast('✓ Marcado como comprado', 'success');
   }
   render();
