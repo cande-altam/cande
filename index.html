@@ -404,7 +404,7 @@ textarea.fc{resize:vertical;min-height:56px}
 
 <div class="view" id="view-envios">
   <div class="sh" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-    <div><div class="st">Dashboard de Envíos</div><div class="ss">Pedidos activos agrupados por local</div></div>
+    <div><div class="st">Dashboard de Envíos</div><div class="ss">Pedidos a entregar hoy, agrupados por local</div></div>
     <button class="btn btn-print" onclick="printEnvios()" style="display:flex;align-items:center;gap:6px">🖨️ Imprimir A4</button>
   </div>
   <div id="envios-content"></div>
@@ -1731,8 +1731,9 @@ function addProduct(){
 }
 
 function delProduct(id){
-  if(!confirm('¿Eliminás este producto?'))return;
-  db.ref(`menu/${id}`).remove().then(()=>toast('Producto eliminado'));
+  App.pin(()=>{
+    db.ref(`menu/${id}`).remove().then(()=>toast('Producto eliminado'));
+  });
 }
 
 // ════════════════════════════════════════════════
@@ -1837,13 +1838,17 @@ function renderEnvios(){
   const el=document.getElementById('envios-content');
   if(!el)return;
 
-  // Only pending/in-progress orders, sorted by deliveryDateTime
+  // Only today's orders (any status except cancelled), sorted by delivery time
+  const now=new Date();
+  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const active=orders
-    .filter(o=>o.status==='pending'||o.status==='progress')
+    .filter(o=>isSameDay(o.deliveryDateTime,today))
     .sort((a,b)=>new Date(a.deliveryDateTime)-new Date(b.deliveryDateTime));
 
+  const todayLabel=today.toLocaleDateString('es-AR',{weekday:'long',day:'2-digit',month:'2-digit'});
+
   if(!active.length){
-    el.innerHTML='<div class="card" style="text-align:center;padding:40px;color:var(--muted)">No hay pedidos activos</div>';
+    el.innerHTML=`<div class="card" style="text-align:center;padding:40px;color:var(--muted)">No hay pedidos para hoy (${todayLabel})</div>`;
     return;
   }
 
