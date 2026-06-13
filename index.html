@@ -803,6 +803,19 @@ async function initFirebase() {
 }
 
 // ====================== LÓGICA DE NEGOCIO ======================
+
+// Devuelve la clave de fecha activa POR ÁREA: hoy si algún local ya cargó algo
+// para esa área hoy, si no ayer. Evita el problema global donde un pedido de
+// pastelería de hoy ocultaba los consolidados de panadería de ayer.
+function getActivePedidoKeyForArea(area) {
+  const hasTodayDataForArea = LOCALES.some(local => {
+    const areaData = state.pedidos?.[todayKey()]?.[fbKey(local)]?.[area] || {};
+    return Object.values(areaData).some(v => Number(v) > 0);
+  });
+  return hasTodayDataForArea ? todayKey() : yesterdayKey();
+}
+
+// Mantener compatibilidad con renderEnvio/renderHistorial que usan la versión global
 function getActivePedidoKey() {
   const todayData = state.pedidos?.[todayKey()];
   const hasDataToday = todayData && Object.values(todayData).some(localData =>
@@ -815,7 +828,7 @@ function getActivePedidoKey() {
 
 function getConsolidated(area) {
   const r = {};
-  const activeKey = getActivePedidoKey();
+  const activeKey = getActivePedidoKeyForArea(area);
   LOCALES.forEach(local => {
     const pedidoArea = state.pedidos?.[activeKey]?.[fbKey(local)]?.[area] || {};
     Object.entries(pedidoArea).forEach(([pid, qty]) => {
@@ -930,7 +943,7 @@ function renderProduccion() {
   const items = prods.filter(p => consolidated[p.id] > 0);
   const hasUpdates = items.some(p => updatedKeys.includes(p.id));
   const closed = isClosed(state.areaTab);
-  const showingYesterday = getActivePedidoKey() !== todayKey();
+  const showingYesterday = getActivePedidoKeyForArea(state.areaTab) !== todayKey();
 
   return `
     ${showingYesterday ? `<div class="alert-box alert-warn">⚠️ Mostrando pedidos del día anterior (${yesterdayKey()}). <button class="btn btn-ghost btn-sm" onclick="forceToday()">⟳ Refrescar hoy</button></div>` : ''}
@@ -942,7 +955,7 @@ function renderProduccion() {
     ${items.length===0 ? `<div class="empty-state">No hay productos pedidos para ${area.label} todavía.</div>` : `<div class="prod-view-grid">${items.map(p=>{const upd=updatedKeys.includes(p.id); const qty=consolidated[p.id]; const prod=prods.find(x=>x.id===p.id); return `<div class="prod-item ${upd?'updated':''}"><div class="prod-item-name">${prod?.name || p.id}${upd?' <span class="pulse" style="width:6px;height:6px;display:inline-block;vertical-align:middle;margin-left:4px"></span>':''}</div><div><div class="prod-item-qty">${fmtQty(qty)}</div><div class="prod-item-unit">${prod?.unit||''}</div></div></div>`;}).join('')}</div>`}
     ${(() => {
       const localBreakdown = LOCALES.map(loc => {
-        const activeKey = getActivePedidoKey();
+        const activeKey = getActivePedidoKeyForArea(state.areaTab);
         const pedidoArea = state.pedidos?.[activeKey]?.[fbKey(loc)]?.[state.areaTab] || {};
         const localItems = prods.filter(p => { const q = Number(pedidoArea[p.id]); return q > 0; })
           .map(p => ({ ...p, qty: Number(pedidoArea[p.id]) }));
