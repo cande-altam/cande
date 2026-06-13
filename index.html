@@ -2048,62 +2048,73 @@ function printCuadra(){
   const refDate=isHoy?today:tomorrow;
   const label=isHoy?'Hoy':'Mañana';
   const dateLabel=refDate.toLocaleDateString('es-AR',{weekday:'long',day:'2-digit',month:'2-digit',year:'2-digit'});
-
-  const active=orders.filter(o=>o.status==='pending'||o.status==='producing');
-  const filtered=active.filter(o=>isSameDay(o.deliveryDateTime,refDate))
-    .sort((a,b)=>new Date(a.deliveryDateTime)-new Date(b.deliveryDateTime));
-
   const emitido=now.toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
 
-  const teamSections=Object.entries(TEAMS).map(([tk,team])=>{
-    const tOrders=filtered.filter(o=>o.items&&Object.values(o.items).some(it=>it.team===tk));
-    if(!tOrders.length) return '';
-    return `
-      <div class="team-block">
-        <div class="team-title">${team.icon} ${team.name}</div>
-        <table>
-          <thead><tr>
-            <th>#</th><th>Cliente</th><th>Hora</th><th>Local</th><th>Productos</th><th>Notas</th>
-          </tr></thead>
-          <tbody>
-            ${tOrders.map(o=>{
-              const items=o.items?Object.values(o.items).filter(it=>it.team===tk):[];
-              return `<tr>
-                <td class="num">${o.orderNum?'#'+o.orderNum:'-'}</td>
-                <td><strong>${o.client||''}</strong>${o.phone?'<br><span style="color:#666;font-size:9pt">'+o.phone+'</span>':''}${o.sena?'<br><span style="color:#065F46;font-size:9pt;font-weight:600">Seña: $'+o.sena+'</span>':''}</td>
-                <td style="white-space:nowrap;font-weight:700">${ftime(o.deliveryDateTime)}</td>
-                <td>${o.local||''}</td>
-                <td>${items.map(it=>`<div>${it.name} <strong>x${it.qty}</strong>${it.acl?'<br><span style="color:#666;font-size:8.5pt">→ '+it.acl+'</span>':''}</div>`).join('')}</td>
-                <td style="font-size:9pt;color:#555">${o.notes||''}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>`;
-  }).join('');
+  // Todos los pedidos del día sin importar estado
+  const filtered=orders
+    .filter(o=>isSameDay(o.deliveryDateTime,refDate))
+    .sort((a,b)=>new Date(a.deliveryDateTime)-new Date(b.deliveryDateTime));
+
+  // Agrupar por local (igual que Envíos)
+  const byLocal={};
+  filtered.forEach(o=>{
+    const loc=o.local||'Sin local';
+    if(!byLocal[loc])byLocal[loc]=[];
+    byLocal[loc].push(o);
+  });
+
+  const statusLabel=o=>o.status==='pending'?'Pendiente':o.status==='producing'?'En proceso':o.status==='ready'?'Listo para enviar':'—';
+  const statusColor=o=>o.status==='pending'?'#92400E':o.status==='producing'?'#1E40AF':o.status==='ready'?'#065F46':'#555';
+  const statusBg=o=>o.status==='pending'?'#FEF3C7':o.status==='producing'?'#DBEAFE':o.status==='ready'?'#D1FAE5':'#eee';
+
+  const localSections=Object.entries(byLocal).map(([loc,ords])=>`
+    <div class="local-block">
+      <div class="local-title">📍 ${loc} <span style="font-size:11pt;font-weight:400;color:#555">(${ords.length} pedido${ords.length!==1?'s':''})</span></div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Cliente</th><th>Hora</th><th>Productos</th><th>Estado</th><th>Notas</th>
+        </tr></thead>
+        <tbody>
+          ${ords.map(o=>{
+            const items=o.items?Object.values(o.items):[];
+            return `<tr>
+              <td class="num">${o.orderNum?'#'+o.orderNum:'-'}</td>
+              <td>
+                <strong>${o.client||''}</strong>
+                ${o.phone?'<br><span style="color:#666;font-size:9pt">'+o.phone+'</span>':''}
+                ${o.sena?'<br><span style="color:#065F46;font-size:9pt;font-weight:600">Seña: $'+o.sena+'</span>':''}
+              </td>
+              <td style="white-space:nowrap;font-weight:700;font-size:12pt">${ftime(o.deliveryDateTime)}</td>
+              <td>${items.map(it=>`<div><span style="font-size:10px">${(typeof TEAMS!=='undefined'&&TEAMS[it.team])?TEAMS[it.team].icon:''}</span> ${it.name} <strong>x${it.qty}</strong>${it.done?' <span style="color:#065F46">✓</span>':''}${it.acl?'<br><span style="color:#666;font-size:8.5pt">→ '+it.acl+'</span>':''}</div>`).join('')}</td>
+              <td><span style="display:inline-block;padding:3px 8px;border-radius:10px;font-size:9pt;font-weight:700;background:${statusBg(o)};color:${statusColor(o)}">${statusLabel(o)}</span></td>
+              <td style="font-size:9pt;color:#555">${o.notes||''}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`).join('');
 
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
-  <title>Producción ${label} · Candela</title>
+  <title>Pedidos ${label} · Candela</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:Arial,sans-serif;font-size:11pt;color:#111;padding:18mm 15mm}
     h1{font-size:16pt;font-weight:700;margin-bottom:2px}
     .sub{font-size:9pt;color:#666;margin-bottom:20px}
-    .team-block{margin-bottom:24px}
-    .team-title{font-size:13pt;font-weight:700;margin-bottom:8px;padding:6px 10px;background:#f0f0f0;border-left:4px solid #333;border-radius:3px}
+    .local-block{margin-bottom:28px}
+    .local-title{font-size:13pt;font-weight:700;margin-bottom:8px;padding:6px 12px;background:#f0f0f0;border-left:4px solid #E15D46;border-radius:3px}
     table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:10pt}
-    th{background:#f8f8f8;padding:6px 8px;text-align:left;font-size:8.5pt;text-transform:uppercase;color:#555;border:1px solid #ccc}
-    td{padding:7px 8px;border:1px solid #ddd;vertical-align:top}
+    th{background:#f8f8f8;padding:7px 10px;text-align:left;font-size:8pt;text-transform:uppercase;color:#555;border:1px solid #ccc;letter-spacing:.5px}
+    td{padding:8px 10px;border:1px solid #ddd;vertical-align:top}
     tr:nth-child(even){background:#fafafa}
     .num{font-family:'Courier New',monospace;font-weight:700;color:#c0440c;white-space:nowrap}
-    .summary{background:#f5f5f5;border:1px solid #ddd;border-radius:6px;padding:10px 14px;margin-bottom:20px;font-size:10pt}
     @media print{@page{size:A4;margin:15mm}}
   </style></head><body>
-  <h1>🏭 Producción ${label} · Candela</h1>
-  <div class="sub">${dateLabel} · Emitido: ${emitido} · ${filtered.length} pedido${filtered.length!==1?'s':''} activo${filtered.length!==1?'s':''}</div>
+  <h1>📦 Pedidos ${label} · Candela</h1>
+  <div class="sub">${dateLabel} · Emitido: ${emitido} · ${filtered.length} pedido${filtered.length!==1?'s':''} en total</div>
   ${filtered.length===0
-    ? '<div class="summary">Sin pedidos activos para este día.</div>'
-    : teamSections||'<div class="summary">Sin pedidos activos para este día.</div>'
+    ? '<p style="color:#888;margin-top:20px">Sin pedidos para este día.</p>'
+    : localSections
   }
   </body></html>`;
 
