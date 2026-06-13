@@ -1043,7 +1043,6 @@ function renderHeader() {
     {key:'carga', label:'Carga de pedidos', alert:false},
     {key:'produccion', label:'Cuadra', alert:hasAlerts},
     {key:'envio', label:'Guía de envío', alert:false},
-    {key:'stock', label:'Stock cuadra', alert:false},
     {key:'insumos', label:'Pedido de insumos', alert:false},
     {key:'historial', label:'Historial', alert:false},
     {key:'admin', label:'Admin', alert:false},
@@ -1156,14 +1155,14 @@ function renderEnvio() {
   const fecha = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
   const showingYesterday = getActivePedidoKey() !== todayKey();
   let html = showingYesterday ? `<div class="alert-box alert-warn">⚠️ Mostrando pedidos del día anterior (${yesterdayKey()}). <button class="btn btn-ghost btn-sm" onclick="forceToday()">⟳ Refrescar hoy</button></div>` : '';
-  html += `<div class="page-title">Guía de envío</div><div class="page-sub">Todos los productos pedidos, agrupados por área · ${fecha}</div>`;
+  html += `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div><div class="page-title">Guía de envío</div><div class="page-sub">Todos los productos pedidos, agrupados por área · ${fecha}</div></div><button onclick="window.printEnvioAll()" style="background:var(--black);border:none;color:var(--cream);border-radius:8px;padding:9px 20px;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap">🖨 Imprimir todo</button></div>`;
   LOCALES.forEach(local => {
     const allItems = getEnvioPorLocal(local);
     const byArea = {};
     AREAS.forEach(a=>byArea[a.key]=[]);
     allItems.forEach(p=>byArea[p.areaKey].push(p));
     const areasConItems = AREAS.filter(a=>byArea[a.key].length>0);
-    html += `<div class="section-block" style="margin-bottom:24px"><div style="display:flex;justify-content:space-between;margin-bottom:18px"><div><div style="font-size:18px;font-weight:500">${local}</div><div style="font-size:12px;color:var(--gray)">${allItems.length} producto(s) · ${areasConItems.length} área(s)</div></div><button class="btn-print-envio" data-local="${local}" style="background:var(--black);border:none;color:var(--cream);border-radius:6px;padding:7px 16px;cursor:pointer">🖨 Imprimir</button></div>`;
+    html += `<div class="section-block" style="margin-bottom:24px"><div style="display:flex;justify-content:space-between;margin-bottom:18px"><div><div style="font-size:18px;font-weight:500">${local}</div><div style="font-size:12px;color:var(--gray)">${allItems.length} producto(s) · ${areasConItems.length} área(s)</div></div></div>`;
     if(allItems.length===0) html += '<div class="envio-empty">Sin pedido cargado para este local</div>';
     else areasConItems.forEach(area=>{
       const prods = byArea[area.key];
@@ -1238,7 +1237,7 @@ function renderInsumos() {
     const pc = prioColors[prio] || {bg:'var(--white)', border:'var(--cream-dark)', dot:'#ccc', label:''};
     return `<div class="insumo-row" style="background:${pc.bg};border-color:${pc.border}"><div><div class="insumo-dot" style="background:${pc.dot}" title="${pc.label}"></div></div><div class="insumo-name">${name}${deleteFn ? ` <button onclick="${deleteFn}" style="background:none;border:none;cursor:pointer;color:#bbb">✕</button>` : ''}</div><input class="insumo-qty" type="text" placeholder="Cantidad" value="${item?.qty||''}" data-scope="${scope}" data-id="${id}" onblur="saveInsumo(this)" onkeydown="if(event.key==='Enter')this.blur()"><div class="insumo-prio-btns">${['verde','amarillo','rojo'].map(p => `<button class="prio-btn prio-${p} ${prio===p?'active':''}" onclick="setPrioInsumo('${scope}','${id}','${p}')" title="${prioColors[p].label}"></button>`).join('')}</div><input class="insumo-nota" type="text" placeholder="Aclaración..." value="${item?.nota||''}" data-scope="${scope}" data-id="${id}" data-field="nota" onblur="saveInsumoNota(this)" onkeydown="if(event.key==='Enter')this.blur()"></div>`;
   }
-  const topBar = `<div class="page-title">Pedido de insumos</div><div class="page-sub">${fecha}</div><div style="display:flex;gap:8px;margin-bottom:20px"><button class="btn ${sector==='produccion'&&insView!=='resumen'?'btn-primary':'btn-ghost'}" onclick="setInsumosSector('produccion')">🏭 Producción</button><button class="btn ${sector==='ventas'&&insView!=='resumen'?'btn-primary':'btn-ghost'}" onclick="setInsumosSector('ventas')">🛒 Ventas</button><button class="btn ${sector==='verduleria'?'btn-primary':'btn-ghost'}" onclick="setInsumosSector('verduleria')">🥦 Verdulería</button><button class="btn btn-ghost" onclick="setInsumosView('resumen')">📋 Ver resumen</button></div>`;
+  const topBar = `<div class="page-title">Pedido de insumos</div><div class="page-sub">${fecha}</div><div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap"><button class="btn ${(sector==='produccion'||sector==='ventas')&&insView!=='resumen'?'btn-primary':'btn-ghost'}" onclick="setInsumosSector('produccion')">✏️ Hace el pedido</button><button class="btn ${sector==='verduleria'?'btn-primary':'btn-ghost'}" onclick="setInsumosSector('verduleria')">🥦 Verdulería</button><button class="btn btn-ghost" onclick="setInsumosView('resumen')">📋 Ver resumen</button></div>`;
   if (insView === 'resumen') {
     const todayData = getMergedInsumos();
     let allRows = [];
@@ -1261,7 +1260,7 @@ function renderInsumos() {
     const grupos = [...new Set(allRows.map(r => r.grupo))];
     const prioLabel = {verde:'Stock OK', amarillo:'Stock bajo', rojo:'Urgente'};
     const prioBg2 = {verde:'#e8f8f0', amarillo:'#fffbe6', rojo:'#fdecea'};
-    return topBar + (allRows.length===0 ? `<div class="empty-state">No hay insumos pedidos aún.</div>` : grupos.map(grupo => { const rows = allRows.filter(r => r.grupo === grupo).sort((a,b)=>(prioOrder[a.prioridad||'']??3)-(prioOrder[b.prioridad||'']??3)); const icon = rows[0]?.icon || ''; return `<div class="section-block"><div class="section-header"><div class="section-title">${icon} ${grupo} <span class="badge badge-open">${rows.length} insumos</span></div></div><table style="width:100%;border-collapse:collapse;"><thead><tr style="border-bottom:1.5px solid var(--black)"><th style="padding:6px 10px;text-align:left">Insumo</th><th style="padding:6px 10px;text-align:left">Cantidad</th><th style="padding:6px 10px;text-align:left">Prioridad</th><th style="padding:6px 10px;text-align:left">Aclaración</th><th style="padding:6px 10px;text-align:center">✓ Comprado</th></tr></thead><tbody>${rows.map(r => `<tr style="background:${prioBg2[r.prioridad||'']||'transparent'}"><td style="padding:8px 10px">${r.name}</td><td style="padding:8px 10px">${r.qty||'—'}</td><td style="padding:8px 10px">${r.prioridad?`<span style="background:${prioBg2[r.prioridad]};color:${prioColors[r.prioridad].dot};padding:2px 9px;border-radius:20px">${prioLabel[r.prioridad]}</span>`:''}</td><td style="padding:8px 10px">${r.nota||''}</td><td style="padding:8px 10px;text-align:center"><button onclick="marcarComprado('${r._scope}','${r.id}')" style="background:var(--turq-pale);border:1.5px solid var(--turq-dark);color:var(--turq-dark);border-radius:6px;padding:4px 12px;cursor:pointer">✓ Comprado</button></td></tr>`).join('')}</tbody></table></div>`; }).join('') + `<div style="text-align:center;margin-top:8px"><button class="btn btn-ghost" onclick="setInsumosView('detalle')">← Volver al detalle</button></div>`);
+    return topBar + `<div style="text-align:right;margin-bottom:12px"><button onclick="window.printResumenInsumos()" style="background:var(--black);border:none;color:var(--cream);border-radius:8px;padding:9px 20px;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif">🖨 Imprimir listado</button></div>` + (allRows.length===0 ? `<div class="empty-state">No hay insumos pedidos aún.</div>` : grupos.map(grupo => { const rows = allRows.filter(r => r.grupo === grupo).sort((a,b)=>(prioOrder[a.prioridad||'']??3)-(prioOrder[b.prioridad||'']??3)); const icon = rows[0]?.icon || ''; return `<div class="section-block"><div class="section-header"><div class="section-title">${icon} ${grupo} <span class="badge badge-open">${rows.length} insumos</span></div></div><table style="width:100%;border-collapse:collapse;"><thead><tr style="border-bottom:1.5px solid var(--black)"><th style="padding:6px 10px;text-align:left">Insumo</th><th style="padding:6px 10px;text-align:left">Cantidad</th><th style="padding:6px 10px;text-align:left">Prioridad</th><th style="padding:6px 10px;text-align:left">Aclaración</th><th style="padding:6px 10px;text-align:center">✓ Comprado</th></tr></thead><tbody>${rows.map(r => `<tr style="background:${prioBg2[r.prioridad||'']||'transparent'}"><td style="padding:8px 10px">${r.name}</td><td style="padding:8px 10px">${r.qty||'—'}</td><td style="padding:8px 10px">${r.prioridad?`<span style="background:${prioBg2[r.prioridad]};color:${prioColors[r.prioridad].dot};padding:2px 9px;border-radius:20px">${prioLabel[r.prioridad]}</span>`:''}</td><td style="padding:8px 10px">${r.nota||''}</td><td style="padding:8px 10px;text-align:center"><button onclick="marcarComprado('${r._scope}','${r.id}')" style="background:var(--turq-pale);border:1.5px solid var(--turq-dark);color:var(--turq-dark);border-radius:6px;padding:4px 12px;cursor:pointer">✓ Comprado</button></td></tr>`).join('')}</tbody></table></div>`; }).join('') + `<div style="text-align:center;margin-top:8px"><button class="btn btn-ghost" onclick="setInsumosView('detalle')">← Volver al detalle</button></div>`);
   }
   if (sector === 'verduleria') {
     const todayData = getMergedInsumos();
@@ -1283,17 +1282,14 @@ function renderInsumos() {
     if (items.length === 0) return topBar + `<div class="empty-state">No hay insumos de verdulería pedidos hoy.</div>`;
     return topBar + `<div class="section-block"><div class="section-header"><div class="section-title">🥦 Consolidado de verdulería · ${fecha}</div><button class="btn btn-ghost btn-sm" onclick="printVerduleria()">🖨 Imprimir pedido</button></div><div class="alert-box alert-turq">Lista consolidada de <strong>Producción + San Luis</strong>. Se genera automáticamente.</div><table style="width:100%"><thead><tr style="background:var(--black);color:var(--cream)"><th style="padding:10px">Producto</th><th style="padding:10px">Pedido desde</th><th style="padding:10px">Aclaración</th></tr></thead><tbody>${items.map((item,i) => `<tr style="background:${i%2===0?'var(--white)':'var(--cream)'}"><td style="padding:10px">${item.name}</td><td style="padding:10px">${item.sectores.join(' · ')}</td><td style="padding:10px">${item.notas.join(', ')}</td></tr>`).join('')}</tbody></table></div>`;
   }
-  if (sector === 'produccion') {
-    const areaKey = state.insumosAreaTab;
-    const area = AREAS.find(a => a.key === areaKey);
-    const baseItems = INSUMOS_PRODUCCION[areaKey] || [];
-    const customItems = state.prodCustomInsumos[areaKey] || [];
-    const scope = `prod_${areaKey}`;
-    const pedidos = getMergedInsumos()[scope] || {};
-    const conPedido = Object.keys(pedidos).filter(id => pedidos[id]?.qty).length;
-    return topBar + `<div class="area-selector" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">${AREAS.map(a => `<div class="area-card ${areaKey===a.key?'active':''}" onclick="setInsumosAreaTab('${a.key}')"><div class="area-card-icon">${a.icon}</div><div class="area-card-name">${a.label}</div></div>`).join('')}</div><div class="section-block"><div class="section-header"><div class="section-title">${area.icon} ${area.label} <span class="badge badge-open">${conPedido} pedidos</span></div><div><div style="display:flex;gap:6px;font-size:11px"><span>🟢 OK</span><span>🟡 Bajo</span><span>🔴 Urgente</span></div><button class="btn btn-ghost btn-sm" onclick="openAddProdInsumo('${areaKey}')">+ Agregar insumo</button></div></div><div id="prod-custom-form-${areaKey}" style="display:none;background:var(--cream);padding:14px;margin-bottom:14px"><div>Nuevo insumo — ${area.label}</div><div style="display:flex;gap:8px;margin-top:8px"><input id="pcustom-name-${areaKey}" placeholder="Nombre" style="flex:1;padding:6px"><button class="btn btn-primary btn-sm" onclick="addProdCustomInsumo('${areaKey}')">Agregar</button><button class="btn btn-ghost btn-sm" onclick="closeAddProdInsumo('${areaKey}')">Cancelar</button></div></div><div class="insumo-header-row"><div></div><div>Insumo</div><div>Cantidad</div><div>Prioridad</div><div>Aclaración</div></div>${baseItems.map(p => renderItem(p.id, p.name, scope)).join('')}${customItems.length ? `<div style="font-size:10px;padding:8px 10px 2px">Agregados manualmente</div>` : ''}${customItems.map(p => renderItem(p.id, p.name, scope, `deleteProdCustomInsumo('${areaKey}','${p.id}')`)).join('')}</div>`;
-  } else { // ventas
-    const local = LOCALES[state.insumosLocalTab];
+  // "Hace el pedido" — áreas de producción + locales SLA y San Luis en un solo selector
+  const localTabs = LOCALES.map(l => ({key:`ventas_${l.replace(/[ ./]/g,'_')}`, label:l, icon:'🛒', isLocal:true}));
+  const allTabs = [...AREAS.map(a=>({key:a.key, label:a.label, icon:a.icon, isLocal:false})), ...localTabs];
+  const activeTabKey = state.insumosAreaTab;
+  const isLocalTab = activeTabKey.startsWith('ventas_');
+  const tabSelector = `<div class="area-selector" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">${allTabs.map(t => `<div class="area-card ${activeTabKey===t.key?'active':''}" onclick="setInsumosAreaTab('${t.key}')"><div class="area-card-icon">${t.icon}</div><div class="area-card-name">${t.label}</div></div>`).join('')}</div>`;
+  if (isLocalTab) {
+    const local = LOCALES.find(l => `ventas_${l.replace(/[ ./]/g,'_')}` === activeTabKey) || '';
     const localKey = local.replace(/[ ./]/g,'_');
     const scope = `ventas_${localKey}`;
     const pedidos = getMergedInsumos()[scope] || {};
@@ -1301,7 +1297,16 @@ function renderInsumos() {
     const cats = [...new Set(INSUMOS_VENTAS.map(i => i.cat))];
     const customItems = state.ventasCustomInsumos[localKey] || [];
     const allCats = [...new Set([...cats, ...customItems.map(i=>i.cat)])];
-    return topBar + `<div class="tabs" style="margin-bottom:20px">${LOCALES.map((l,i)=>`<button class="tab ${state.insumosLocalTab===i?'active':''}" onclick="setInsumosLocalTab(${i})">${l}</button>`).join('')}</div><div class="section-block"><div class="section-header"><div class="section-title">🛒 ${local} <span class="badge badge-open">${conPedido} pedidos</span></div><div><div style="display:flex;gap:6px;font-size:11px"><span>🟢 OK</span><span>🟡 Bajo</span><span>🔴 Urgente</span></div><button class="btn btn-ghost btn-sm" onclick="openAddVentasInsumo('${localKey}')">+ Agregar insumo</button></div></div><div id="ventas-custom-form-${localKey}" style="display:none;background:var(--cream);padding:14px;margin-bottom:14px"><div>Nuevo insumo para ${local}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><input id="vcustom-name-${localKey}" placeholder="Nombre" style="flex:2"><select id="vcustom-cat-${localKey}" style="flex:1">${allCats.map(c=>`<option value="${c}">${c}</option>`).join('')}<option value="__nueva__">+ Nueva categoría...</option></select><div id="vcustom-newcat-wrap-${localKey}" style="display:none"><input id="vcustom-newcat-${localKey}" placeholder="Nueva categoría"></div><button class="btn btn-primary btn-sm" onclick="addVentasCustomInsumo('${localKey}')">Agregar</button><button class="btn btn-ghost btn-sm" onclick="closeAddVentasInsumo('${localKey}')">Cancelar</button></div></div><div class="insumo-header-row"><div></div><div>Insumo</div><div>Cantidad</div><div>Prioridad</div><div>Aclaración</div></div>${allCats.map(cat => { const baseItems = INSUMOS_VENTAS.filter(i => i.cat === cat); const custItems = customItems.filter(i => i.cat === cat); const catItems = [...baseItems, ...custItems]; return `<div class="insumo-cat-title"><span>${cat}</span>${custItems.length ? `<span style="font-size:10px">+${custItems.length} personalizados</span>` : ''}</div>${catItems.map(p => renderItem(p.id, p.name, scope)).join('')}`; }).join('')}</div>`;
+    return topBar + tabSelector + `<div class="section-block"><div class="section-header"><div class="section-title">🛒 ${local} <span class="badge badge-open">${conPedido} pedidos</span></div><div><div style="display:flex;gap:6px;font-size:11px"><span>🟢 OK</span><span>🟡 Bajo</span><span>🔴 Urgente</span></div><button class="btn btn-ghost btn-sm" onclick="openAddVentasInsumo('${localKey}')">+ Agregar insumo</button></div></div><div id="ventas-custom-form-${localKey}" style="display:none;background:var(--cream);padding:14px;margin-bottom:14px"><div>Nuevo insumo para ${local}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><input id="vcustom-name-${localKey}" placeholder="Nombre" style="flex:2"><select id="vcustom-cat-${localKey}" style="flex:1">${allCats.map(c=>`<option value="${c}">${c}</option>`).join('')}<option value="__nueva__">+ Nueva categoría...</option></select><div id="vcustom-newcat-wrap-${localKey}" style="display:none"><input id="vcustom-newcat-${localKey}" placeholder="Nueva categoría"></div><button class="btn btn-primary btn-sm" onclick="addVentasCustomInsumo('${localKey}')">Agregar</button><button class="btn btn-ghost btn-sm" onclick="closeAddVentasInsumo('${localKey}')">Cancelar</button></div></div><div class="insumo-header-row"><div></div><div>Insumo</div><div>Cantidad</div><div>Prioridad</div><div>Aclaración</div></div>${allCats.map(cat => { const baseItems = INSUMOS_VENTAS.filter(i => i.cat === cat); const custItems = customItems.filter(i => i.cat === cat); const catItems = [...baseItems, ...custItems]; return `<div class="insumo-cat-title"><span>${cat}</span>${custItems.length ? `<span style="font-size:10px">+${custItems.length} personalizados</span>` : ''}</div>${catItems.map(p => renderItem(p.id, p.name, scope)).join('')}`; }).join('')}</div>`;
+  } else {
+    const areaKey = activeTabKey;
+    const area = AREAS.find(a => a.key === areaKey);
+    const baseItems = INSUMOS_PRODUCCION[areaKey] || [];
+    const customItems = state.prodCustomInsumos[areaKey] || [];
+    const scope = `prod_${areaKey}`;
+    const pedidos = getMergedInsumos()[scope] || {};
+    const conPedido = Object.keys(pedidos).filter(id => pedidos[id]?.qty).length;
+    return topBar + tabSelector + `<div class="section-block"><div class="section-header"><div class="section-title">${area.icon} ${area.label} <span class="badge badge-open">${conPedido} pedidos</span></div><div><div style="display:flex;gap:6px;font-size:11px"><span>🟢 OK</span><span>🟡 Bajo</span><span>🔴 Urgente</span></div><button class="btn btn-ghost btn-sm" onclick="openAddProdInsumo('${areaKey}')">+ Agregar insumo</button></div></div><div id="prod-custom-form-${areaKey}" style="display:none;background:var(--cream);padding:14px;margin-bottom:14px"><div>Nuevo insumo — ${area.label}</div><div style="display:flex;gap:8px;margin-top:8px"><input id="pcustom-name-${areaKey}" placeholder="Nombre" style="flex:1;padding:6px"><button class="btn btn-primary btn-sm" onclick="addProdCustomInsumo('${areaKey}')">Agregar</button><button class="btn btn-ghost btn-sm" onclick="closeAddProdInsumo('${areaKey}')">Cancelar</button></div></div><div class="insumo-header-row"><div></div><div>Insumo</div><div>Cantidad</div><div>Prioridad</div><div>Aclaración</div></div>${baseItems.map(p => renderItem(p.id, p.name, scope)).join('')}${customItems.length ? `<div style="font-size:10px;padding:8px 10px 2px">Agregados manualmente</div>` : ''}${customItems.map(p => renderItem(p.id, p.name, scope, `deleteProdCustomInsumo('${areaKey}','${p.id}')`)).join('')}</div>`;
   }
 }
 
@@ -1364,12 +1369,10 @@ function render() {
   if (state.view === 'carga') content = renderCarga();
   else if (state.view === 'produccion') content = renderProduccion();
   else if (state.view === 'envio') content = renderEnvio();
-  else if (state.view === 'stock') content = renderStock();
   else if (state.view === 'admin') content = renderAdmin();
   else if (state.view === 'insumos') content = renderInsumos();
   else if (state.view === 'historial') content = renderHistorial();
   app.innerHTML = renderHeader() + `<div class="main">${content}</div>`;
-  document.querySelectorAll('.btn-print-envio').forEach(btn => btn.addEventListener('click', () => window.printEnvio(btn.dataset.local)));
 }
 
 // ====================== HANDLERS GLOBALES ======================
@@ -1580,6 +1583,45 @@ window.printArea = function(local, areaKey) {
 window.printEnvio = function(local) {
   const items = getEnvioPorLocal(local);
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Guía de envío ${local}</title><style>@page{size:A4;margin:18mm 16mm;}body{font-family:Helvetica,Arial;font-size:11px;}table{width:100%;border-collapse:collapse;}th,td{padding:6px 10px;border-bottom:1px solid #ddd;}th{background:#222;color:#fff;}</style></head><body><h1>Candela Café</h1><h2>📦 Guía de envío — ${local}</h2><p>${new Date().toLocaleDateString('es-AR')}</p><table><thead><tr><th>Producto</th><th>Área</th><th>Cantidad</th><th>Unidad</th></tr></thead><tbody>${items.map(p=>`<tr><td>${p.name}</td><td>${p.area||''}</td><td>${fmtQty(p.qty)}</td><td>${p.unit}</td></tr>`).join('')}</tbody></table></body></html>`;
+  const win = window.open('','_blank','width=794,height=1123');
+  win.document.write(html); win.document.close(); win.focus(); setTimeout(()=>win.print(),400);
+};
+window.printEnvioAll = function() {
+  const fecha = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  let body = '';
+  LOCALES.forEach(local => {
+    const items = getEnvioPorLocal(local);
+    if (items.length === 0) return;
+    body += `<h2 style="margin-top:28px;border-bottom:2px solid #222;padding-bottom:4px">📦 ${local}</h2><table><thead><tr><th>Producto</th><th>Área</th><th>Cantidad</th><th>Unidad</th></tr></thead><tbody>${items.map(p=>`<tr><td>${p.name}</td><td>${p.area||''}</td><td>${fmtQty(p.qty)}</td><td>${p.unit}</td></tr>`).join('')}</tbody></table>`;
+  });
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Guía de envío</title><style>@page{size:A4;margin:18mm 16mm;}body{font-family:Helvetica,Arial;font-size:11px;}table{width:100%;border-collapse:collapse;margin-bottom:8px;}th,td{padding:6px 10px;border-bottom:1px solid #ddd;}th{background:#222;color:#fff;}</style></head><body><h1>Candela Café · Guía de envío completa</h1><p>${fecha}</p>${body}</body></html>`;
+  const win = window.open('','_blank','width=794,height=1123');
+  win.document.write(html); win.document.close(); win.focus(); setTimeout(()=>win.print(),400);
+};
+window.printResumenInsumos = function() {
+  const todayData = getMergedInsumos();
+  const fecha = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const prioColors = {verde:'#27ae60', amarillo:'#f0a500', rojo:'#c0392b'};
+  const prioLabel = {verde:'Stock OK', amarillo:'Stock bajo', rojo:'Urgente'};
+  let allRows = [];
+  AREAS.forEach(area => {
+    const scope = `prod_${area.key}`;
+    const pedidos = todayData[scope] || {};
+    const items = [...(INSUMOS_PRODUCCION[area.key] || []), ...(state.prodCustomInsumos[area.key] || [])];
+    items.forEach(p => { const item = pedidos[p.id]; if (item?.qty || item?.prioridad) allRows.push({...p, ...item, grupo:`${area.icon} ${area.label}`}); });
+  });
+  LOCALES.forEach(local => {
+    const scope = `ventas_${local.replace(/[ ./]/g,'_')}`;
+    const pedidos = todayData[scope] || {};
+    const customItems = state.ventasCustomInsumos[local.replace(/[ ./]/g,'_')] || [];
+    [...INSUMOS_VENTAS, ...customItems].forEach(p => { const item = pedidos[p.id]; if (item?.qty || item?.prioridad) allRows.push({...p, ...item, grupo:`🛒 ${local}`}); });
+  });
+  const grupos = [...new Set(allRows.map(r=>r.grupo))];
+  let body = grupos.map(grupo => {
+    const rows = allRows.filter(r=>r.grupo===grupo);
+    return `<h3 style="margin-top:20px;border-bottom:1px solid #aaa;padding-bottom:2px">${grupo}</h3><table><thead><tr><th>Insumo</th><th>Cantidad</th><th>Prioridad</th><th>Aclaración</th><th>✓</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.name}</td><td>${r.qty||'—'}</td><td style="color:${prioColors[r.prioridad||'']||'#666'}">${prioLabel[r.prioridad||'']||''}</td><td>${r.nota||''}</td><td style="text-align:center">☐</td></tr>`).join('')}</tbody></table>`;
+  }).join('');
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Resumen de insumos</title><style>@page{size:A4;margin:16mm;}body{font-family:Helvetica,Arial;font-size:11px;}table{width:100%;border-collapse:collapse;margin-bottom:8px;}th,td{padding:6px 8px;border-bottom:1px solid #ddd;}th{background:#222;color:#fff;}</style></head><body><h1>Candela Café · Resumen de insumos pedidos</h1><p>${fecha}</p>${body||'<p>No hay insumos pedidos.</p>'}</body></html>`;
   const win = window.open('','_blank','width=794,height=1123');
   win.document.write(html); win.document.close(); win.focus(); setTimeout(()=>win.print(),400);
 };
