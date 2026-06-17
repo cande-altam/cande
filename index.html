@@ -1093,7 +1093,7 @@ function renderCarga() {
     <div class="tabs">
       ${LOCALES.map((l,i) => `<button class="tab ${state.localTab===i?'active':''}" onclick="setLocalTab(${i})">${l}</button>`).join('')}
     </div>
-    ${AREAS.map(area => {
+    ${AREAS.filter(a=>a.cuadra!==false).map(area => {
       const closed = isClosed(area.key);
       const prods = (state.productos[area.key] || []).filter(p => state.productActive[p.id] !== false);
       const filled = prods.filter(p => { const q = getQty(local, area.key, p.id); return q !== '' && parseFloat(q) > 0; }).length;
