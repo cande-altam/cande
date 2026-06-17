@@ -662,7 +662,23 @@ const INSUMOS_PRODUCCION = {
     {id:'ip_sw_v4', name:'Tomates cherry', prov:'Verdulería'},
     {id:'ip_sw_v5', name:'Albahaca hidropónica', prov:'Verdulería'},
   ],
-};
+  cocina_sl: [
+    {id:'ip_csl_lim1', name:'Detergente',                  cat:'Limpieza'},
+    {id:'ip_csl_lim2', name:'Lavandina',                   cat:'Limpieza'},
+    {id:'ip_csl_fl1',  name:'Queso de máquina barra',      cat:'Fiambres y Lácteos'},
+    {id:'ip_csl_fl2',  name:'Queso cheddar fetas',         cat:'Fiambres y Lácteos'},
+    {id:'ip_csl_fl3',  name:'Queso roquefort',             cat:'Fiambres y Lácteos'},
+    {id:'ip_csl_fl4',  name:'Queso parmesano rallo',       cat:'Fiambres y Lácteos'},
+    {id:'ip_csl_fl5',  name:'Queso crema s/sabor',         cat:'Fiambres y Lácteos'},
+    {id:'ip_csl_fl6',  name:'Jamón cocido paladini',       cat:'Fiambres y Lácteos'},
+    {id:'ip_csl_fl7',  name:'Salame milán',                cat:'Fiambres y Lácteos'},
+    {id:'ip_csl_fl8',  name:'Lomo ahumado feteado',        cat:'Fiambres y Lácteos'},
+    {id:'ip_csl_fl9',  name:'Panceta ahumada feteada',     cat:'Fiambres y Lácteos'},
+    {id:'ip_csl_fl10', name:'Salchicha viena f/larga',     cat:'Fiambres y Lácteos'},
+    {id:'ip_csl_fl11', name:'Leche entera',                cat:'Fiambres y Lácteos'},
+    {id:'ip_csl_fl12', name:'Crema de leche',              cat:'Fiambres y Lácteos'},
+    {id:'ip_csl_v1',   name:'Pomelo',                      cat:'Verdulería', prov:'Verdulería'},
+  ],
 
 const INSUMOS_VENTAS = [
   {id:'iv_d1', name:'Bolsas medianas', cat:'Descartables'},
@@ -1328,7 +1344,11 @@ function renderInsumos() {
     const scope = `prod_${areaKey}`;
     const pedidos = getMergedInsumos()[scope] || {};
     const conPedido = Object.keys(pedidos).filter(id => pedidos[id]?.qty).length;
-    return topBar + tabSelector + `<div class="section-block"><div class="section-header"><div class="section-title">${area.icon} ${area.label} <span class="badge badge-open">${conPedido} pedidos</span></div><div><div style="display:flex;gap:6px;font-size:11px"><span>🟢 OK</span><span>🟡 Bajo</span><span>🔴 Urgente</span></div><button class="btn btn-ghost btn-sm" onclick="openAddProdInsumo('${areaKey}')">+ Agregar insumo</button></div></div><div id="prod-custom-form-${areaKey}" style="display:none;background:var(--cream);padding:14px;margin-bottom:14px"><div>Nuevo insumo — ${area.label}</div><div style="display:flex;gap:8px;margin-top:8px"><input id="pcustom-name-${areaKey}" placeholder="Nombre" style="flex:1;padding:6px"><button class="btn btn-primary btn-sm" onclick="addProdCustomInsumo('${areaKey}')">Agregar</button><button class="btn btn-ghost btn-sm" onclick="closeAddProdInsumo('${areaKey}')">Cancelar</button></div></div><div class="insumo-header-row"><div></div><div>Insumo</div><div>Cantidad</div><div>Prioridad</div><div>Aclaración</div></div>${baseItems.map(p => renderItem(p.id, p.name, scope)).join('')}${customItems.length ? `<div style="font-size:10px;padding:8px 10px 2px">Agregados manualmente</div>` : ''}${customItems.map(p => renderItem(p.id, p.name, scope, `deleteProdCustomInsumo('${areaKey}','${p.id}')`)).join('')}</div>`;
+    const hasCats = baseItems.some(p => p.cat);
+    const itemsHtml = hasCats
+      ? (() => { const cats = [...new Set(baseItems.map(p=>p.cat).filter(Boolean))]; return cats.map(cat => { const catItems = baseItems.filter(p=>p.cat===cat); return `<div class="insumo-cat-title"><span>${cat}</span></div>${catItems.map(p=>renderItem(p.id,p.name,scope)).join('')}`; }).join(''); })()
+      : baseItems.map(p => renderItem(p.id, p.name, scope)).join('');
+    return topBar + tabSelector + `<div class="section-block"><div class="section-header"><div class="section-title">${area.icon} ${area.label} <span class="badge badge-open">${conPedido} pedidos</span></div><div><div style="display:flex;gap:6px;font-size:11px"><span>🟢 OK</span><span>🟡 Bajo</span><span>🔴 Urgente</span></div><button class="btn btn-ghost btn-sm" onclick="openAddProdInsumo('${areaKey}')">+ Agregar insumo</button></div></div><div id="prod-custom-form-${areaKey}" style="display:none;background:var(--cream);padding:14px;margin-bottom:14px"><div>Nuevo insumo — ${area.label}</div><div style="display:flex;gap:8px;margin-top:8px"><input id="pcustom-name-${areaKey}" placeholder="Nombre" style="flex:1;padding:6px"><button class="btn btn-primary btn-sm" onclick="addProdCustomInsumo('${areaKey}')">Agregar</button><button class="btn btn-ghost btn-sm" onclick="closeAddProdInsumo('${areaKey}')">Cancelar</button></div></div><div class="insumo-header-row"><div></div><div>Insumo</div><div>Cantidad</div><div>Prioridad</div><div>Aclaración</div></div>${itemsHtml}${customItems.length ? `<div style="font-size:10px;padding:8px 10px 2px">Agregados manualmente</div>` : ''}${customItems.map(p => renderItem(p.id, p.name, scope, `deleteProdCustomInsumo('${areaKey}','${p.id}')`)).join('')}</div>`;
   }
 }
 
