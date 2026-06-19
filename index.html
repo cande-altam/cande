@@ -1048,8 +1048,8 @@ function getConsolidated(area) {
 
 function getEnvioPorLocal(local) {
   const r = [];
-  const activeKey = getActivePedidoKey();
   AREAS.forEach(area => {
+    const activeKey = getActivePedidoKeyForArea(area.key);
     const prodMap = {};
     (state.productos[area.key] || []).forEach(p => { prodMap[p.id] = p; });
     const pedidoArea = state.pedidos?.[activeKey]?.[fbKey(local)]?.[area.key] || {};
