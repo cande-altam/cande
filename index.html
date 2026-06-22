@@ -1149,7 +1149,13 @@ function renderProduccion() {
   const consolidated = getConsolidated(state.areaTab);
   const updatedKeys = getUpdatedKeys();
   const prods = (state.productos[state.areaTab] || []).filter(p => state.productActive[p.id] !== false);
-  const items = prods.filter(p => consolidated[p.id] > 0);
+  // También incluir productos con cantidad pedida que no estén en el catálogo (ej: dados de baja)
+  const prodIds = new Set(prods.map(p => p.id));
+  const extraItems = Object.entries(consolidated)
+    .filter(([pid, qty]) => qty > 0 && !prodIds.has(pid))
+    .map(([pid, qty]) => ({ id: pid, name: pid, unit: '' }));
+  const allProds = [...prods, ...extraItems];
+  const items = allProds.filter(p => consolidated[p.id] > 0);
   const hasUpdates = items.some(p => updatedKeys.includes(p.id));
   const closed = isClosed(state.areaTab);
   const showingYesterday = getActivePedidoKeyForArea(state.areaTab) !== todayKey();
@@ -1161,7 +1167,7 @@ function renderProduccion() {
     <div class="area-selector">${AREAS.filter(a=>a.cuadra!==false).map(a => `<div class="area-card ${state.areaTab===a.key?'active':''}" onclick="setAreaTab('${a.key}')"><div class="area-card-icon">${a.icon}</div><div class="area-card-name">${a.label}</div><span class="badge ${isClosed(a.key)?'badge-closed':'badge-open'}" style="font-size:10px">${isClosed(a.key)?'Cerrado':'hasta '+a.deadline}</span></div>`).join('')}</div>
     ${hasUpdates ? `<div style="background:var(--terra);color:#fff;border-radius:10px;padding:18px;margin-bottom:20px;">⚠️ Pedido modificado fuera de horario. Revisá los productos marcados.</div>` : ''}
     <div class="summary-bar"><div class="summary-card"><div class="summary-label">Área</div><div class="summary-value">${area.label}</div><div class="summary-sub">${area.icon} Límite: ${area.deadline}</div></div><div class="summary-card"><div class="summary-label">Productos pedidos</div><div class="summary-value">${items.length}</div><div class="summary-sub">de ${prods.length} en catálogo</div></div><div class="summary-card"><div class="summary-label">Estado</div><div class="summary-value" style="font-size:15px"><span class="status-dot ${closed?'dot-closed':'dot-open'}"></span>${closed?'Cerrado':'Abierto'}</div><div class="summary-sub">Pedido de hoy</div></div></div>
-    ${items.length===0 ? `<div class="empty-state">No hay productos pedidos para ${area.label} todavía.</div>` : `<div class="prod-view-grid">${items.map(p=>{const upd=updatedKeys.includes(p.id); const qty=consolidated[p.id]; const prod=prods.find(x=>x.id===p.id); return `<div class="prod-item ${upd?'updated':''}"><div class="prod-item-name">${prod?.name || p.id}${upd?' <span class="pulse" style="width:6px;height:6px;display:inline-block;vertical-align:middle;margin-left:4px"></span>':''}</div><div><div class="prod-item-qty">${fmtQty(qty)}</div><div class="prod-item-unit">${prod?.unit||''}</div></div></div>`;}).join('')}</div>`}
+    ${items.length===0 ? `<div class="empty-state">No hay productos pedidos para ${area.label} todavía.</div>` : `<div class="prod-view-grid">${items.map(p=>{const upd=updatedKeys.includes(p.id); const qty=consolidated[p.id]; const prod=allProds.find(x=>x.id===p.id); return `<div class="prod-item ${upd?'updated':''}"><div class="prod-item-name">${prod?.name || p.id}${upd?' <span class="pulse" style="width:6px;height:6px;display:inline-block;vertical-align:middle;margin-left:4px"></span>':''}</div><div><div class="prod-item-qty">${fmtQty(qty)}</div><div class="prod-item-unit">${prod?.unit||''}</div></div></div>`;}).join('')}</div>`}
     ${(() => {
       const localBreakdown = LOCALES.map(loc => {
         const activeKey = getActivePedidoKeyForArea(state.areaTab);
