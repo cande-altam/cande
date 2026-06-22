@@ -493,6 +493,254 @@
       .insumo-header-row,.insumo-row{grid-template-columns:16px 1fr 80px 70px;}
       .insumo-nota{display:none;}
     }
+
+    /* ── MOBILE QTY CONTROLS ── */
+    .qty-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--cream-dark);}
+    .qty-row:last-child{border-bottom:none;}
+    .qty-product-name{flex:1;font-size:14px;font-weight:400;color:var(--black);line-height:1.3;}
+    .qty-btn-new{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--cream-dark);background:var(--white);font-size:22px;font-weight:300;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--black);transition:all .15s;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+    .qty-btn-new:active{background:var(--terra);color:#fff;border-color:var(--terra);}
+    .qty-btn-new.minus:active{background:var(--black);border-color:var(--black);}
+    .qty-input-new{width:64px;height:44px;border-radius:10px;border:1.5px solid var(--cream-dark);background:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:600;text-align:center;color:var(--black);outline:none;-moz-appearance:textfield;transition:border-color .15s,box-shadow .15s;flex-shrink:0;}
+    .qty-input-new::-webkit-outer-spin-button,.qty-input-new::-webkit-inner-spin-button{-webkit-appearance:none;}
+    .qty-input-new:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(225,93,70,.12);}
+    .qty-input-new.has-value{border-color:var(--terra);color:var(--terra);background:var(--terra-pale);}
+    .qty-unit-lbl{font-size:11px;color:var(--gray);min-width:28px;text-align:left;}
+
+    /* ── DASHBOARD ── */
+    .dashboard-greeting{font-size:22px;font-weight:700;color:var(--black);margin-bottom:4px;letter-spacing:-.3px;}
+    .dashboard-date{font-size:13px;color:var(--gray);margin-bottom:24px;}
+    .dashboard-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
+    .dash-stat{background:var(--white);border-radius:var(--r);padding:16px;border:1px solid rgba(34,32,31,.07);box-shadow:var(--shadow-sm);text-align:center;}
+    .dash-stat-val{font-size:28px;font-weight:700;line-height:1;margin-bottom:4px;}
+    .dash-stat-label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;}
+    .dashboard-areas{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px;}
+    @media(min-width:600px){.dashboard-areas{grid-template-columns:repeat(3,1fr);}}
+    .dash-area-card{background:var(--white);border-radius:var(--r);padding:20px 16px;border:2px solid var(--cream-dark);cursor:pointer;text-align:center;transition:all .2s cubic-bezier(.25,.8,.25,1);box-shadow:var(--shadow-sm);-webkit-tap-highlight-color:transparent;position:relative;}
+    .dash-area-card:active{transform:scale(.97);}
+    .dash-area-card.confirmed{border-color:var(--turq);background:var(--turq-pale);}
+    .dash-area-card.has-pedido{border-color:var(--terra);background:var(--terra-pale);}
+    .dash-area-card.closed{opacity:.55;}
+    .dash-area-icon{font-size:32px;margin-bottom:8px;}
+    .dash-area-name{font-size:13px;font-weight:600;color:var(--black);margin-bottom:6px;}
+    .dash-area-badge{font-size:10px;padding:3px 10px;border-radius:100px;font-weight:500;display:inline-block;}
+    .dash-check{position:absolute;top:10px;right:10px;width:22px;height:22px;background:var(--turq);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:white;font-weight:700;}
+    .dash-quick-actions{display:flex;gap:10px;flex-wrap:wrap;}
+    .dash-quick-actions .btn{flex:1;justify-content:center;min-width:140px;}
+
+    /* ── CONFIRM BTN ── */
+    .confirm-area-btn{width:100%;padding:16px;border-radius:12px;border:none;background:var(--terra);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;cursor:pointer;margin-top:20px;box-shadow:var(--shadow-terra);transition:all .2s;-webkit-tap-highlight-color:transparent;}
+    .confirm-area-btn:active{transform:scale(.98);box-shadow:none;}
+    .confirm-area-btn.confirmed{background:var(--turq-dark);box-shadow:var(--shadow-turq);}
+
+    /* ── MOBILE RESPONSIVE ── */
+    @media(max-width:640px){
+      body{font-size:15px;}
+      .main{padding:14px 12px;}
+      .header{padding:0 14px;height:60px;}
+      .page-title{font-size:20px;}
+      .section-block{padding:16px 14px;}
+      .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+      .tab{padding:12px 20px;white-space:nowrap;}
+      .btn{padding:12px 18px;font-size:14px;}
+      .btn-sm{padding:9px 14px;font-size:13px;}
+      .nav-desktop{display:none;}
+      .nav-hamburger{display:flex;}
+      .dashboard-summary{gap:8px;}
+      .dash-stat{padding:12px 8px;}
+      .dash-stat-val{font-size:22px;}
+    }
+
+/* ── MOBILE PRODUCT CONTROLS ── */
+.qty-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--cream-dark);
+}
+.qty-row:last-child { border-bottom: none; }
+.qty-product-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--black);
+  line-height: 1.3;
+}
+.qty-btn {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  border: 1.5px solid var(--cream-dark);
+  background: var(--white);
+  font-size: 22px; font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--black);
+  transition: all .15s;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.qty-btn:active { background: var(--terra); color: #fff; border-color: var(--terra); }
+.qty-btn.minus:active { background: var(--black); border-color: var(--black); }
+.qty-input-new {
+  width: 64px; height: 44px;
+  border-radius: 10px;
+  border: 1.5px solid var(--cream-dark);
+  background: var(--white);
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 18px; font-weight: 600;
+  text-align: center;
+  color: var(--black);
+  outline: none;
+  -moz-appearance: textfield;
+  transition: border-color .15s, box-shadow .15s;
+  flex-shrink: 0;
+}
+.qty-input-new::-webkit-outer-spin-button,
+.qty-input-new::-webkit-inner-spin-button { -webkit-appearance: none; }
+.qty-input-new:focus {
+  border-color: var(--terra);
+  box-shadow: 0 0 0 3px rgba(225,93,70,.12);
+}
+.qty-input-new.has-value {
+  border-color: var(--terra);
+  color: var(--terra);
+  background: var(--terra-pale);
+}
+.qty-unit-label {
+  font-size: 11px;
+  color: var(--gray);
+  min-width: 28px;
+  text-align: left;
+}
+
+/* ── DASHBOARD ── */
+.dashboard-greeting {
+  font-size: 22px; font-weight: 700;
+  color: var(--black); margin-bottom: 4px;
+  letter-spacing: -.3px;
+}
+.dashboard-date {
+  font-size: 13px; color: var(--gray);
+  margin-bottom: 24px;
+}
+.dashboard-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.dash-stat {
+  background: var(--white);
+  border-radius: var(--r);
+  padding: 16px;
+  border: 1px solid rgba(34,32,31,.07);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+.dash-stat-val {
+  font-size: 28px; font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.dash-stat-label {
+  font-size: 11px; color: var(--gray);
+  text-transform: uppercase; letter-spacing: .8px;
+}
+.dashboard-areas {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+@media (min-width: 600px) {
+  .dashboard-areas { grid-template-columns: repeat(3, 1fr); }
+}
+.dash-area-card {
+  background: var(--white);
+  border-radius: var(--r);
+  padding: 20px 16px;
+  border: 2px solid var(--cream-dark);
+  cursor: pointer;
+  text-align: center;
+  transition: all .2s cubic-bezier(.25,.8,.25,1);
+  box-shadow: var(--shadow-sm);
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.dash-area-card:active { transform: scale(.97); }
+.dash-area-card.confirmed {
+  border-color: var(--turq);
+  background: var(--turq-pale);
+}
+.dash-area-card.has-pedido {
+  border-color: var(--terra);
+  background: var(--terra-pale);
+}
+.dash-area-card.closed {
+  opacity: .55;
+}
+.dash-area-icon { font-size: 32px; margin-bottom: 8px; }
+.dash-area-name { font-size: 13px; font-weight: 600; color: var(--black); margin-bottom: 6px; }
+.dash-area-badge {
+  font-size: 10px; padding: 3px 10px;
+  border-radius: 100px; font-weight: 500;
+  display: inline-block;
+}
+.dash-check {
+  position: absolute; top: 10px; right: 10px;
+  width: 22px; height: 22px;
+  background: var(--turq);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: white; font-weight: 700;
+}
+.dash-quick-actions {
+  display: flex; gap: 10px; flex-wrap: wrap;
+}
+.dash-quick-actions .btn { flex: 1; justify-content: center; min-width: 140px; }
+
+/* ── CONFIRM AREA ── */
+.confirm-area-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  border: none;
+  background: var(--terra);
+  color: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 16px; font-weight: 700;
+  cursor: pointer;
+  margin-top: 20px;
+  box-shadow: var(--shadow-terra);
+  transition: all .2s;
+  letter-spacing: .2px;
+  -webkit-tap-highlight-color: transparent;
+}
+.confirm-area-btn:active { transform: scale(.98); box-shadow: none; }
+.confirm-area-btn.confirmed {
+  background: var(--turq-dark);
+  box-shadow: var(--shadow-turq);
+}
+
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 640px) {
+  body { font-size: 15px; }
+  .main { padding: 14px 12px; }
+  .header { padding: 0 16px; height: 60px; }
+  .page-title { font-size: 20px; }
+  .section-block { padding: 16px 14px; }
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tab { padding: 12px 20px; white-space: nowrap; }
+  .btn { padding: 12px 18px; font-size: 14px; }
+  .btn-sm { padding: 9px 14px; font-size: 13px; }
+  .nav-desktop { display: none; }
+  .nav-hamburger { display: flex; }
+  .dashboard-summary { grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .dash-stat { padding: 12px 8px; }
+  .dash-stat-val { font-size: 22px; }
+  .area-selector { grid-template-columns: repeat(2, 1fr); }
+}
   </style>
 </head>
 <body>
@@ -735,7 +983,7 @@ function fbKey(str) { return str.replace(/[^a-zA-Z0-9_]/g, '_'); }
 
 // ====================== STATE ======================
 let state = {
-  view: 'carga',
+  view: 'dashboard',
   localTab: 0,
   areaTab: 'panaderia',
   pedidos: {},
@@ -750,6 +998,7 @@ let state = {
   insumosView: 'detalle',
   insumosPedidos: {},
   comprados: {},
+  confirmados: {},
   ventasCustomInsumos: {},
   prodCustomInsumos: {},
   loading: true,
@@ -988,6 +1237,10 @@ async function initFirebase() {
     state.comprados = snap.val() || {};
     if (!state.loading) safeRender();
   });
+  onValue(ref(db, `confirmados/${todayKey()}`), snap => {
+    state.confirmados = snap.val() || {};
+    if (!state.loading) safeRender();
+  });
   onValue(ref(db, 'ventasCustomInsumos'), snap => {
     state.ventasCustomInsumos = snap.val() || {};
     if (!state.loading) safeRender();
@@ -1076,6 +1329,7 @@ function renderHeader() {
   const updatedKeys = getUpdatedKeys();
   const hasAlerts = updatedKeys.length > 0;
   const views = [
+    {key:'dashboard', label:'Inicio', alert:false},
     {key:'carga', label:'Carga de pedidos', alert:false},
     {key:'produccion', label:'Cuadra', alert:hasAlerts},
     {key:'envio', label:'Guía de envío', alert:false},
@@ -1099,6 +1353,63 @@ function renderHeader() {
     ${views.map(v => `<button class="nav-mobile-btn ${state.view===v.key?'active':''}" onclick="setView('${v.key}');closeMobileNav()">${v.label}${v.alert ? ' •' : ''}</button>`).join('')}
   </div>`;
 }
+
+function renderDashboard() {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const fecha = new Date().toLocaleDateString('es-AR', {weekday:'long', day:'numeric', month:'long'});
+  const areasVisibles = AREAS.filter(a => a.cuadra !== false);
+  let confirmed = 0, withPedido = 0, pending = 0;
+  areasVisibles.forEach(a => {
+    if (state.confirmados[a.key]) confirmed++;
+    else {
+      const cons = getConsolidated(a.key);
+      const hasPedido = Object.values(cons).some(q => q > 0);
+      if (hasPedido) withPedido++; else pending++;
+    }
+  });
+  return `
+    <div class="dashboard-greeting">${greeting} 👋</div>
+    <div class="dashboard-date">${fecha}</div>
+    <div class="dashboard-summary">
+      <div class="dash-stat"><div class="dash-stat-val" style="color:var(--turq-dark)">${confirmed}</div><div class="dash-stat-label">Confirmados</div></div>
+      <div class="dash-stat"><div class="dash-stat-val" style="color:var(--terra)">${withPedido}</div><div class="dash-stat-label">Con pedido</div></div>
+      <div class="dash-stat"><div class="dash-stat-val" style="color:var(--gray)">${pending}</div><div class="dash-stat-label">Pendientes</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Áreas de producción</div>
+    <div class="dashboard-areas">
+      ${areasVisibles.map(a => {
+        const cons = getConsolidated(a.key);
+        const isConfirmed = !!state.confirmados[a.key];
+        const hasPedido = Object.values(cons).some(q => q > 0);
+        const closed = isClosed(a.key);
+        const itemCount = Object.values(cons).filter(q => q > 0).length;
+        let badgeText, badgeBg, badgeColor;
+        if (isConfirmed) { badgeText = '✓ Confirmado'; badgeBg = 'var(--turq-pale)'; badgeColor = 'var(--turq-dark)'; }
+        else if (hasPedido) { badgeText = itemCount + ' productos'; badgeBg = 'var(--terra-pale)'; badgeColor = 'var(--terra)'; }
+        else if (closed) { badgeText = 'Cerrado'; badgeBg = '#f0f0f0'; badgeColor = 'var(--gray)'; }
+        else { badgeText = 'Pendiente'; badgeBg = '#f5f5f0'; badgeColor = 'var(--gray)'; }
+        return '<div class="dash-area-card ' + (isConfirmed?'confirmed':hasPedido?'has-pedido':closed?'closed':'') + '" onclick="goToCarga(\'' + a.key + '\')">' +
+          (isConfirmed ? '<div class="dash-check">✓</div>' : '') +
+          '<div class="dash-area-icon">' + a.icon + '</div>' +
+          '<div class="dash-area-name">' + a.label + '</div>' +
+          '<span class="dash-area-badge" style="background:' + badgeBg + ';color:' + badgeColor + '">' + badgeText + '</span>' +
+          '</div>';
+      }).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Acciones rápidas</div>
+    <div class="dash-quick-actions">
+      <button class="btn btn-primary" onclick="setView('produccion')">📋 Ver Cuadra</button>
+      <button class="btn btn-ghost" onclick="window.printEnvioAll()">🖨 Imprimir guía</button>
+      <button class="btn btn-ghost" onclick="setView('insumos')">📦 Insumos</button>
+    </div>
+  \`;
+}
+window.goToCarga = function(areaKey) {
+  state.areaTab = areaKey;
+  state.view = 'carga';
+  render();
+};
 
 function renderCarga() {
   const local = LOCALES[state.localTab];
@@ -1130,16 +1441,28 @@ function renderCarga() {
           </div>
         </div>
         ${closed ? `<div class="alert-box alert-warn"><span class="pulse"></span>Horario cerrado. Cualquier cambio alertará al área de ${area.label}.</div>` : ''}
-        <div class="product-grid">
-          ${prods.map(p => `<div class="product-row">
-            <span class="product-name">${p.name}</span>
-            <input class="qty-input" type="number" min="0" step="0.1"
-              value="${getQty(local, area.key, p.id)}"
-              data-local="${local}" data-area="${area.key}" data-pid="${p.id}"
-              onblur="handleQtyChange(this)" onkeydown="handleQtyKeydown(this, event)" oninput="debouncedQtySave(this)" placeholder="—">
-            <span class="unit-label">${p.unit}</span>
-          </div>`).join('')}
+        <div style="padding:4px 0">
+          ${prods.map(p => {
+            const qty = getQty(local, area.key, p.id);
+            const hasVal = qty !== '' && parseFloat(qty) > 0;
+            return `<div class="qty-row">
+              <span class="qty-product-name">${p.name}</span>
+              <button class="qty-btn minus" onclick="qtyDecrement('${local}','${area.key}','${p.id}')">−</button>
+              <input class="qty-input-new ${hasVal?'has-value':''}" type="number" min="0" step="0.1"
+                value="${hasVal ? qty : ''}" placeholder="0"
+                data-local="${local}" data-area="${area.key}" data-pid="${p.id}"
+                onblur="saveQtyInput(this)"
+                onkeydown="if(event.key==='Enter')this.blur()"
+                oninput="this.classList.toggle('has-value', parseFloat(this.value)>0)">
+              <span class="qty-unit-label">${p.unit}</span>
+              <button class="qty-btn" onclick="qtyIncrement('${local}','${area.key}','${p.id}')">+</button>
+            </div>`;
+          }).join('')}
         </div>
+        <button class="confirm-area-btn ${state.confirmados[area.key]?'confirmed':''}" 
+          onclick="toggleConfirmarArea('${area.key}','${local}')">
+          ${state.confirmados[area.key] ? '✓ Pedido confirmado — tocá para editar' : '✓ Confirmar pedido de ' + area.label}
+        </button>
       </div>`;
     }).join('')}`;
 }
@@ -1429,7 +1752,8 @@ function render() {
   const app = document.getElementById('app');
   if (state.loading) { app.innerHTML = `<div class="loading"><div class="spinner"></div>Conectando...</div>`; return; }
   let content = '';
-  if (state.view === 'carga') content = renderCarga();
+  if (state.view === 'dashboard') content = renderDashboard();
+  else if (state.view === 'carga') content = renderCarga();
   else if (state.view === 'produccion') content = renderProduccion();
   else if (state.view === 'envio') content = renderEnvio();
   else if (state.view === 'admin') content = renderAdmin();
@@ -1771,6 +2095,47 @@ window.closeMobileNav = () => { state.mobileNavOpen = false; };
 
 // Iniciar
 initFirebase();
+
+window.qtyIncrement = function(local, area, pid) {
+  const input = document.querySelector(\`input[data-local="\${local}"][data-area="\${area}"][data-pid="\${pid}"]\`);
+  if (!input) return;
+  const current = parseFloat(input.value) || 0;
+  const step = current < 10 ? 1 : current < 100 ? 5 : 10;
+  const next = current + step;
+  input.value = fmtQty(next);
+  input.classList.add('has-value');
+  saveQty(local, area, pid, String(next));
+};
+window.qtyDecrement = function(local, area, pid) {
+  const input = document.querySelector(\`input[data-local="\${local}"][data-area="\${area}"][data-pid="\${pid}"]\`);
+  if (!input) return;
+  const current = parseFloat(input.value) || 0;
+  const step = current <= 10 ? 1 : current <= 100 ? 5 : 10;
+  const next = Math.max(0, current - step);
+  input.value = next > 0 ? fmtQty(next) : '';
+  input.classList.toggle('has-value', next > 0);
+  saveQty(local, area, pid, next > 0 ? String(next) : '');
+};
+window.saveQtyInput = function(input) {
+  const { local, area, pid } = input.dataset;
+  const val = parseFloat(input.value);
+  saveQty(local, area, pid, isNaN(val) || val <= 0 ? '' : String(val));
+};
+window.toggleConfirmarArea = async function(areaKey, local) {
+  const isConfirmed = !!state.confirmados[areaKey];
+  if (isConfirmed) {
+    await remove(ref(db, \`confirmados/\${todayKey()}/\${areaKey}\`));
+    delete state.confirmados[areaKey];
+  } else {
+    const areaLabel = AREAS.find(a=>a.key===areaKey)?.label || areaKey;
+    await set(ref(db, \`confirmados/\${todayKey()}/\${areaKey}\`), { ts: Date.now(), local });
+    state.confirmados[areaKey] = { ts: Date.now(), local };
+    showToast('✓ Pedido de ' + areaLabel + ' confirmado', 'success');
+    setView('dashboard');
+    return;
+  }
+  render();
+};
 </script>
 </body>
 </html>
