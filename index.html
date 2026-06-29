@@ -1011,6 +1011,8 @@ let state = {
   hasUnsavedChanges: false,
   mobileNavOpen: false,
   historialDate: '',
+  historialType: 'productos',
+  historialInsumos: {},
 };
 
 // ====================== HELPERS ======================
@@ -1227,10 +1229,12 @@ async function initFirebase() {
 
   onValue(ref(db, `insumosPedidos/${todayKey()}`), snap => {
     state.insumosPedidos[todayKey()] = snap.val() || {};
+    state.historialInsumos[todayKey()] = snap.val() || {};
     if (!state.loading) safeRender();
   });
   onValue(ref(db, `insumosPedidos/${yesterdayKey()}`), snap => {
     state.insumosPedidos[yesterdayKey()] = snap.val() || {};
+    state.historialInsumos[yesterdayKey()] = snap.val() || {};
     if (!state.loading) safeRender();
   });
   onValue(ref(db, `comprados/${todayKey()}`), snap => {
@@ -1698,16 +1702,86 @@ function renderInsumos() {
 
 function renderHistorial() {
   const selectedDate = state.historialDate || todayKey();
+  const type = state.historialType || 'productos';
   return `
-    <div class="page-title">Historial de pedidos</div>
-    <div class="page-sub">Consultá pedidos por fecha</div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <div class="page-title">Historial</div>
+    <div class="page-sub">Consultá pedidos e insumos por fecha</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
       <input type="date" class="form-input" style="max-width:200px" value="${selectedDate}"
         onchange="setHistorialDate(this.value)" max="${todayKey()}">
       <span style="font-size:13px;color:var(--gray)">${new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span>
     </div>
-    ${renderHistorialFecha(selectedDate)}
+    <div style="display:flex;gap:8px;margin-bottom:24px">
+      <button class="btn ${type==='productos'?'btn-primary':'btn-ghost'}" onclick="setHistorialType('productos')">📦 Pedidos de producción</button>
+      <button class="btn ${type==='insumos'?'btn-primary':'btn-ghost'}" onclick="setHistorialType('insumos')">🛒 Insumos pedidos</button>
+    </div>
+    ${type === 'productos' ? renderHistorialFecha(selectedDate) : renderHistorialInsumosFecha(selectedDate)}
   `;
+}
+
+function renderHistorialInsumosFecha(dateKey) {
+  const data = state.historialInsumos[dateKey];
+  if (!data) return `<div class="empty-state">Cargando datos de insumos...</div>`;
+  const scopes = Object.keys(data);
+  if (scopes.length === 0) return `<div class="empty-state">No hay insumos registrados para esta fecha.</div>`;
+
+  // Map scope key → display label
+  function scopeLabel(scope) {
+    if (scope.startsWith('prod_')) {
+      const ak = scope.replace('prod_', '');
+      const a = AREAS.find(a => a.key === ak);
+      return a ? `${a.icon} ${a.label}` : scope;
+    }
+    if (scope.startsWith('ventas_')) {
+      const lk = scope.replace('ventas_', '');
+      const l = LOCALES.find(l => l.replace(/[ ./]/g,'_') === lk);
+      return l ? `🛒 ${l}` : scope;
+    }
+    return scope;
+  }
+
+  // Build name lookup
+  function findName(scope, id) {
+    if (scope.startsWith('prod_')) {
+      const ak = scope.replace('prod_','');
+      const found = (INSUMOS_PRODUCCION[ak]||[]).find(p=>p.id===id);
+      if (found) return found.name;
+    }
+    const found = INSUMOS_VENTAS.find(p=>p.id===id);
+    return found ? found.name : id;
+  }
+
+  const prioLabel = {verde:'Stock OK', amarillo:'Stock bajo', rojo:'Urgente'};
+  const prioBg = {verde:'#e8f8f0', amarillo:'#fffbe6', rojo:'#fdecea'};
+  const prioColor = {verde:'#27ae60', amarillo:'#f0a500', rojo:'#c0392b'};
+
+  let html = '';
+  scopes.forEach(scope => {
+    const items = Object.entries(data[scope] || {}).filter(([,v]) => v && (v.qty || v.prioridad || v.nota));
+    if (items.length === 0) return;
+    html += `<div class="section-block" style="margin-bottom:16px">
+      <div style="font-size:15px;font-weight:600;margin-bottom:14px">${scopeLabel(scope)} <span class="badge badge-open">${items.length} insumos</span></div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:1.5px solid var(--cream-dark)">
+          <th style="padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray)">Insumo</th>
+          <th style="padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray)">Cantidad</th>
+          <th style="padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray)">Prioridad</th>
+          <th style="padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray)">Aclaración</th>
+        </tr></thead>
+        <tbody>${items.map(([id,v]) => {
+          const name = findName(scope, id);
+          const prio = v.prioridad || '';
+          return `<tr style="border-bottom:1px solid var(--cream-mid)">
+            <td style="padding:8px 10px">${name}</td>
+            <td style="padding:8px 10px;font-weight:500">${v.qty || '—'}</td>
+            <td style="padding:8px 10px">${prio ? `<span style="background:${prioBg[prio]};color:${prioColor[prio]};padding:2px 9px;border-radius:20px;font-size:11px">${prioLabel[prio]}</span>` : ''}</td>
+            <td style="padding:8px 10px;color:var(--gray)">${v.nota||''}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+  });
+  return html || `<div class="empty-state">No hay insumos registrados para esta fecha.</div>`;
 }
 
 function renderHistorialFecha(dateKey) {
@@ -1725,7 +1799,14 @@ function renderHistorialFecha(dateKey) {
     html += `<div class="section-block" style="margin-bottom:16px"><div style="font-size:16px;font-weight:500;margin-bottom:16px">${local}</div>`;
     AREAS.forEach(area => {
       const areaData = localData[area.key] || {};
-      const items = (state.productos[area.key] || []).filter(p => Number(areaData[p.id]) > 0);
+      const catalogProds = state.productos[area.key] || [];
+      const catalogIds = new Set(catalogProds.map(p => p.id));
+      // Incluye productos del catálogo (activos o no) + productos pedidos que ya no están en catálogo
+      const extraItems = Object.entries(areaData)
+        .filter(([pid, qty]) => Number(qty) > 0 && !catalogIds.has(pid))
+        .map(([pid]) => ({ id: pid, name: pid, unit: '' }));
+      const allProds = [...catalogProds, ...extraItems];
+      const items = allProds.filter(p => Number(areaData[p.id]) > 0);
       if (items.length === 0) return;
       html += `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--gray);margin-bottom:6px">${area.icon} ${area.label}</div>`;
       html += `<div style="display:flex;flex-wrap:wrap;gap:6px">`;
@@ -2079,11 +2160,22 @@ window.copiarDeAyer = async function(local, area) {
 // Change 8: Historial date handler
 window.setHistorialDate = function(dateKey) {
   state.historialDate = dateKey;
-  if (!state.pedidos[dateKey]) {
-    get(ref(db, `pedidos/${dateKey}`)).then(snap => {
-      state.pedidos[dateKey] = snap.val() || {};
-      render();
-    });
+  const needsPedidos = !state.pedidos[dateKey];
+  const needsInsumos = !state.historialInsumos[dateKey];
+  if (needsPedidos || needsInsumos) {
+    const fetches = [];
+    if (needsPedidos) fetches.push(get(ref(db, `pedidos/${dateKey}`)).then(s => { state.pedidos[dateKey] = s.val() || {}; }));
+    if (needsInsumos) fetches.push(get(ref(db, `insumosPedidos/${dateKey}`)).then(s => { state.historialInsumos[dateKey] = s.val() || {}; }));
+    Promise.all(fetches).then(() => render());
+  } else {
+    render();
+  }
+};
+window.setHistorialType = function(type) {
+  state.historialType = type;
+  const dateKey = state.historialDate || todayKey();
+  if (type === 'insumos' && !state.historialInsumos[dateKey]) {
+    get(ref(db, `insumosPedidos/${dateKey}`)).then(s => { state.historialInsumos[dateKey] = s.val() || {}; render(); });
   } else {
     render();
   }
