@@ -1407,7 +1407,7 @@ function renderDashboard() {
       <button class="btn btn-ghost" onclick="window.printEnvioAll()">🖨 Imprimir guía</button>
       <button class="btn btn-ghost" onclick="setView('insumos')">📦 Insumos</button>
     </div>
-  \`;
+  `;
 }
 window.goToCarga = function(areaKey) {
   state.areaTab = areaKey;
@@ -2189,7 +2189,7 @@ window.closeMobileNav = () => { state.mobileNavOpen = false; };
 initFirebase();
 
 window.qtyIncrement = function(local, area, pid) {
-  const input = document.querySelector(\`input[data-local="\${local}"][data-area="\${area}"][data-pid="\${pid}"]\`);
+  const input = document.querySelector(`input[data-local="\${local}"][data-area="\${area}"][data-pid="\${pid}"]`);
   if (!input) return;
   const current = parseFloat(input.value) || 0;
   const step = current < 10 ? 1 : current < 100 ? 5 : 10;
@@ -2199,7 +2199,7 @@ window.qtyIncrement = function(local, area, pid) {
   saveQty(local, area, pid, String(next));
 };
 window.qtyDecrement = function(local, area, pid) {
-  const input = document.querySelector(\`input[data-local="\${local}"][data-area="\${area}"][data-pid="\${pid}"]\`);
+  const input = document.querySelector(`input[data-local="\${local}"][data-area="\${area}"][data-pid="\${pid}"]`);
   if (!input) return;
   const current = parseFloat(input.value) || 0;
   const step = current <= 10 ? 1 : current <= 100 ? 5 : 10;
@@ -2216,11 +2216,11 @@ window.saveQtyInput = function(input) {
 window.toggleConfirmarArea = async function(areaKey, local) {
   const isConfirmed = !!state.confirmados[areaKey];
   if (isConfirmed) {
-    await remove(ref(db, \`confirmados/\${todayKey()}/\${areaKey}\`));
+    await remove(ref(db, `confirmados/\${todayKey()}/\${areaKey}`));
     delete state.confirmados[areaKey];
   } else {
     const areaLabel = AREAS.find(a=>a.key===areaKey)?.label || areaKey;
-    await set(ref(db, \`confirmados/\${todayKey()}/\${areaKey}\`), { ts: Date.now(), local });
+    await set(ref(db, `confirmados/\${todayKey()}/\${areaKey}`), { ts: Date.now(), local });
     state.confirmados[areaKey] = { ts: Date.now(), local };
     showToast('✓ Pedido de ' + areaLabel + ' confirmado', 'success');
     setView('dashboard');
