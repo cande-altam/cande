@@ -1279,6 +1279,12 @@ function getActivePedidoKeyForArea(area) {
   return hasTodayDataForArea ? todayKey() : yesterdayKey();
 }
 
+// Fecha activa POR LOCAL Y ÁREA — evita que un local con datos hoy tape los datos de ayer del otro local
+function getActivePedidoKeyForLocalArea(local, area) {
+  const areaData = state.pedidos?.[todayKey()]?.[fbKey(local)]?.[area] || {};
+  return Object.values(areaData).some(v => Number(v) > 0) ? todayKey() : yesterdayKey();
+}
+
 // Mantener compatibilidad con renderEnvio/renderHistorial que usan la versión global
 function getActivePedidoKey() {
   const todayData = state.pedidos?.[todayKey()];
@@ -1497,9 +1503,17 @@ function renderProduccion() {
     ${items.length===0 ? `<div class="empty-state">No hay productos pedidos para ${area.label} todavía.</div>` : `<div class="prod-view-grid">${items.map(p=>{const upd=updatedKeys.includes(p.id); const qty=consolidated[p.id]; const prod=allProds.find(x=>x.id===p.id); return `<div class="prod-item ${upd?'updated':''}"><div class="prod-item-name">${prod?.name || p.id}${upd?' <span class="pulse" style="width:6px;height:6px;display:inline-block;vertical-align:middle;margin-left:4px"></span>':''}</div><div><div class="prod-item-qty">${fmtQty(qty)}</div><div class="prod-item-unit">${prod?.unit||''}</div></div></div>`;}).join('')}</div>`}
     ${(() => {
       const localBreakdown = LOCALES.map(loc => {
-        const activeKey = getActivePedidoKeyForArea(state.areaTab);
+        // Usar fecha activa POR LOCAL para que San Luis con datos de ayer
+        // no quede oculto si SLA 5.0 ya cargó hoy
+        const activeKey = getActivePedidoKeyForLocalArea(loc, state.areaTab);
         const pedidoArea = state.pedidos?.[activeKey]?.[fbKey(loc)]?.[state.areaTab] || {};
-        const localItems = prods.filter(p => { const q = Number(pedidoArea[p.id]); return q > 0; })
+        // Incluir también productos que no están en catálogo (ej: dados de baja)
+        const catalogIds = new Set(prods.map(p => p.id));
+        const extraLocItems = Object.entries(pedidoArea)
+          .filter(([pid, qty]) => Number(qty) > 0 && !catalogIds.has(pid))
+          .map(([pid]) => ({ id: pid, name: pid, unit: '' }));
+        const allLocalProds = [...prods, ...extraLocItems];
+        const localItems = allLocalProds.filter(p => { const q = Number(pedidoArea[p.id]); return q > 0; })
           .map(p => ({ ...p, qty: Number(pedidoArea[p.id]) }));
         return { local: loc, items: localItems };
       }).filter(l => l.items.length > 0);
