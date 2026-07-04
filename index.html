@@ -741,6 +741,55 @@
   .dash-stat-val { font-size: 22px; }
   .area-selector { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── ANUNCIO GLOBAL ── */
+.anuncio-banner {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 28px;
+  font-size: 14px; font-weight: 600;
+  letter-spacing: .2px;
+  box-shadow: 0 2px 12px rgba(34,32,31,.18);
+  position: sticky; top: 68px; z-index: 150;
+  animation: anuncioSlide .4s cubic-bezier(.25,.8,.25,1) both;
+}
+@keyframes anuncioSlide { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+.anuncio-banner-icon { font-size: 18px; flex-shrink: 0; }
+.anuncio-banner-text { flex: 1; line-height: 1.35; }
+
+.anuncio-overlay {
+  position: fixed; inset: 0; z-index: 9998;
+  background: rgba(34,32,31,.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  animation: fadeIn .2s ease both;
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+}
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.anuncio-modal {
+  background: var(--white);
+  border-radius: 18px;
+  padding: 28px 26px;
+  max-width: 420px; width: 100%;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: anuncioPop .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes anuncioPop { from { opacity:0; transform:scale(.9); } to { opacity:1; transform:scale(1); } }
+.anuncio-modal-icon {
+  width: 60px; height: 60px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; margin: 0 auto 18px;
+  box-shadow: var(--shadow-md);
+}
+.anuncio-modal-text {
+  font-size: 17px; font-weight: 600; color: var(--black);
+  line-height: 1.45; margin-bottom: 22px;
+  white-space: pre-wrap;
+}
+@media (max-width: 640px) {
+  .anuncio-banner { padding: 12px 16px; font-size: 15px; top: 60px; }
+  .anuncio-modal-text { font-size: 16px; }
+}
   </style>
 </head>
 <body>
@@ -1013,6 +1062,8 @@ let state = {
   historialDate: '',
   historialType: 'productos',
   historialInsumos: {},
+  anuncio: {},              // { activo, texto, tipo, expira, ts } — aviso global desde Admin
+  anuncioPopupCerrado: 0,   // ts del anuncio cuyo popup ya cerró el usuario (por sesión)
 };
 
 // ====================== HELPERS ======================
@@ -1260,6 +1311,10 @@ async function initFirebase() {
   onValue(ref(db, 'stockHistory'), snap => {
     state.stockHistory = snap.val() || {};
     if (!state.loading) safeRender();
+  });
+  onValue(ref(db, 'anuncio'), snap => {
+    state.anuncio = snap.val() || {};
+    if (!state.loading) render();
   });
 
   state.loading = false;
@@ -1847,8 +1902,78 @@ function renderAdmin() {
   }
   const cats = Object.keys(state.productos);
   const prods = state.productos[state.adminCategory] || [];
-  return `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><div class="page-title">Administración</div><button class="btn btn-ghost btn-sm" onclick="adminLogout()">Cerrar sesión</button></div><div class="page-sub">Gestión del catálogo de productos</div><div class="section-block"><div class="section-title" style="margin-bottom:16px">Agregar producto</div><div class="form-row"><div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="new-name" placeholder="Nombre del producto"></div><div class="form-group" style="max-width:130px"><label class="form-label">Unidad</label><select class="form-select" id="new-unit"><option value="u">u — unidades</option><option value="kg">kg</option></select></div><div class="form-group" style="max-width:160px"><label class="form-label">Categoría</label><select class="form-select" id="new-cat">${cats.map(c=>`<option value="${c}" ${state.adminCategory===c?'selected':''}>${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}</select></div><button class="btn btn-primary" onclick="addProduct()">Agregar</button></div></div><div class="section-block"><div class="section-title" style="margin-bottom:14px">Catálogo</div><div class="cat-tabs">${cats.map(c=>`<button class="cat-tab ${state.adminCategory===c?'active':''}" onclick="setAdminCat('${c}')">${c.charAt(0).toUpperCase()+c.slice(1)}</button>`).join('')}</div><div class="product-list-admin">${prods.map(p=>`<div class="admin-product-row"><button class="toggle ${state.productActive[p.id]!==false?'on':''}" onclick="toggleProduct('${p.id}')"></button><span style="flex:1">${p.name}</span><span style="color:var(--gray)">${p.unit}</span><button class="btn btn-danger btn-sm" onclick="removeProduct('${state.adminCategory}','${p.id}')">Eliminar</button></div>`).join('')}</div></div>`;
+  const a = state.anuncio || {};
+  const anuncioActivo = isAnuncioActivo();
+  const tipoActual = a.tipo || 'terra';
+  const anuncioBlock = `<div class="section-block">
+    <div class="section-header"><div class="section-title">📢 Mensaje / aviso global ${anuncioActivo ? '<span class="badge badge-open">Activo</span>' : (a.texto ? '<span class="badge badge-closed">Inactivo</span>' : '')}</div></div>
+    <div style="font-size:12px;color:var(--gray);margin-bottom:14px">Se muestra como cartel emergente al entrar y como banner fijo en todas las vistas, para todos los usuarios.</div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">Texto del mensaje</label><textarea class="form-input" id="anuncio-texto" rows="2" placeholder="Ej: Mañana no se recibe pedido de facturería" style="resize:vertical;font-family:inherit">${(a.texto||'').replace(/</g,'&lt;')}</textarea></div>
+    <div class="form-row" style="align-items:flex-end">
+      <div class="form-group"><label class="form-label">Estilo / color</label><select class="form-select" id="anuncio-tipo">
+        <option value="terra" ${tipoActual==='terra'?'selected':''}>📢 Terracota (destacado)</option>
+        <option value="turq" ${tipoActual==='turq'?'selected':''}>ℹ️ Turquesa (informativo)</option>
+        <option value="amber" ${tipoActual==='amber'?'selected':''}>⚠️ Ámbar (atención)</option>
+        <option value="dark" ${tipoActual==='dark'?'selected':''}>🔔 Oscuro (neutro)</option>
+      </select></div>
+      <div class="form-group" style="max-width:200px"><label class="form-label">Se desactiva el día (opcional)</label><input type="date" class="form-input" id="anuncio-expira" value="${a.expira||''}" min="${todayKey()}"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="publicarAnuncio()">${a.texto?'Guardar y publicar':'Publicar mensaje'}</button>
+      ${a.activo ? `<button class="btn btn-ghost" onclick="desactivarAnuncio()">Desactivar</button>` : ''}
+      ${a.texto ? `<button class="btn btn-danger btn-sm" onclick="eliminarAnuncio()">Eliminar</button>` : ''}
+    </div>
+    ${a.expira ? `<div style="font-size:12px;color:var(--gray);margin-top:10px">${a.expira < todayKey() ? '⏱ Expiró el' : '⏱ Se desactivará automáticamente el'} ${new Date(a.expira+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'long'})}</div>` : ''}
+  </div>`;
+  return `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><div class="page-title">Administración</div><button class="btn btn-ghost btn-sm" onclick="adminLogout()">Cerrar sesión</button></div><div class="page-sub">Gestión del catálogo y avisos</div>${anuncioBlock}<div class="section-block"><div class="section-title" style="margin-bottom:16px">Agregar producto</div><div class="form-row"><div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="new-name" placeholder="Nombre del producto"></div><div class="form-group" style="max-width:130px"><label class="form-label">Unidad</label><select class="form-select" id="new-unit"><option value="u">u — unidades</option><option value="kg">kg</option></select></div><div class="form-group" style="max-width:160px"><label class="form-label">Categoría</label><select class="form-select" id="new-cat">${cats.map(c=>`<option value="${c}" ${state.adminCategory===c?'selected':''}>${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}</select></div><button class="btn btn-primary" onclick="addProduct()">Agregar</button></div></div><div class="section-block"><div class="section-title" style="margin-bottom:14px">Catálogo</div><div class="cat-tabs">${cats.map(c=>`<button class="cat-tab ${state.adminCategory===c?'active':''}" onclick="setAdminCat('${c}')">${c.charAt(0).toUpperCase()+c.slice(1)}</button>`).join('')}</div><div class="product-list-admin">${prods.map(p=>`<div class="admin-product-row"><button class="toggle ${state.productActive[p.id]!==false?'on':''}" onclick="toggleProduct('${p.id}')"></button><span style="flex:1">${p.name}</span><span style="color:var(--gray)">${p.unit}</span><button class="btn btn-danger btn-sm" onclick="removeProduct('${state.adminCategory}','${p.id}')">Eliminar</button></div>`).join('')}</div></div>`;
 }
+
+// ====================== ANUNCIO GLOBAL ======================
+// Activo si está marcado y (sin fecha de expiración O la fecha aún no pasó)
+function isAnuncioActivo() {
+  const a = state.anuncio;
+  if (!a || !a.activo || !a.texto) return false;
+  if (a.expira && a.expira < todayKey()) return false;
+  return true;
+}
+const ANUNCIO_TIPOS = {
+  terra:  { bg:'var(--terra)',     fg:'#fff',          icon:'📢' },
+  turq:   { bg:'var(--turq-dark)', fg:'#fff',          icon:'ℹ️' },
+  amber:  { bg:'#f0a500',          fg:'#fff',          icon:'⚠️' },
+  dark:   { bg:'var(--black)',     fg:'var(--cream)',  icon:'🔔' },
+};
+function escapeAnuncio(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function renderAnuncioBanner() {
+  if (!isAnuncioActivo()) return '';
+  const a = state.anuncio;
+  const t = ANUNCIO_TIPOS[a.tipo] || ANUNCIO_TIPOS.terra;
+  return `<div class="anuncio-banner" style="background:${t.bg};color:${t.fg}">
+    <span class="anuncio-banner-icon">${t.icon}</span>
+    <span class="anuncio-banner-text">${escapeAnuncio(a.texto)}</span>
+  </div>`;
+}
+function renderAnuncioPopup() {
+  if (!isAnuncioActivo()) return '';
+  const a = state.anuncio;
+  // El popup se muestra al entrar; si el usuario ya lo cerró en esta sesión, no reaparece
+  // hasta que el admin publique/edite el anuncio (cambia el ts).
+  if (state.anuncioPopupCerrado === (a.ts || 0)) return '';
+  const t = ANUNCIO_TIPOS[a.tipo] || ANUNCIO_TIPOS.terra;
+  return `<div class="anuncio-overlay" onclick="cerrarAnuncioPopup(event)">
+    <div class="anuncio-modal" onclick="event.stopPropagation()">
+      <div class="anuncio-modal-icon" style="background:${t.bg};color:${t.fg}">${t.icon}</div>
+      <div class="anuncio-modal-text">${escapeAnuncio(a.texto)}</div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="cerrarAnuncioPopup()">Entendido</button>
+    </div>
+  </div>`;
+}
+window.cerrarAnuncioPopup = function(ev) {
+  if (ev) ev.stopPropagation();
+  state.anuncioPopupCerrado = state.anuncio?.ts || 0;
+  render();
+};
 
 function render() {
   const app = document.getElementById('app');
@@ -1861,7 +1986,7 @@ function render() {
   else if (state.view === 'admin') content = renderAdmin();
   else if (state.view === 'insumos') content = renderInsumos();
   else if (state.view === 'historial') content = renderHistorial();
-  app.innerHTML = renderHeader() + `<div class="main">${content}</div>`;
+  app.innerHTML = renderHeader() + renderAnuncioBanner() + `<div class="main">${content}</div>` + renderAnuncioPopup();
 }
 
 // ====================== HANDLERS GLOBALES ======================
@@ -1932,6 +2057,27 @@ window.adminLogin = function() {
   const input = document.getElementById('admin-pass');
   if (input && input.value === ADMIN_PASS) { state.adminLoggedIn = true; render(); }
   else { const err = document.getElementById('login-err'); if(err) err.style.display = 'block'; }
+};
+
+// ── Anuncio global ──
+window.publicarAnuncio = async function() {
+  const texto = document.getElementById('anuncio-texto')?.value?.trim();
+  const tipo  = document.getElementById('anuncio-tipo')?.value || 'terra';
+  const expira = document.getElementById('anuncio-expira')?.value || '';
+  if (!texto) { showToast('Escribí un mensaje primero', 'warn'); return; }
+  if (expira && expira < todayKey()) { showToast('La fecha de desactivación ya pasó', 'warn'); return; }
+  await set(ref(db, 'anuncio'), { activo: true, texto, tipo, expira, ts: Date.now() });
+  showToast('Mensaje publicado para todos', 'success');
+};
+window.desactivarAnuncio = async function() {
+  const a = state.anuncio || {};
+  await set(ref(db, 'anuncio'), { ...a, activo: false });
+  showToast('Mensaje desactivado', 'info');
+};
+window.eliminarAnuncio = async function() {
+  if (!confirm('¿Eliminar el mensaje por completo?')) return;
+  await remove(ref(db, 'anuncio'));
+  showToast('Mensaje eliminado', 'info');
 };
 window.addProduct = async function() {
   const name = document.getElementById('new-name')?.value?.trim();
