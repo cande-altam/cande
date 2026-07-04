@@ -1503,18 +1503,25 @@ function renderProduccion() {
     ${items.length===0 ? `<div class="empty-state">No hay productos pedidos para ${area.label} todavía.</div>` : `<div class="prod-view-grid">${items.map(p=>{const upd=updatedKeys.includes(p.id); const qty=consolidated[p.id]; const prod=allProds.find(x=>x.id===p.id); return `<div class="prod-item ${upd?'updated':''}"><div class="prod-item-name">${prod?.name || p.id}${upd?' <span class="pulse" style="width:6px;height:6px;display:inline-block;vertical-align:middle;margin-left:4px"></span>':''}</div><div><div class="prod-item-qty">${fmtQty(qty)}</div><div class="prod-item-unit">${prod?.unit||''}</div></div></div>`;}).join('')}</div>`}
     ${(() => {
       const localBreakdown = LOCALES.map(loc => {
-        // Usar fecha activa POR LOCAL para que San Luis con datos de ayer
-        // no quede oculto si SLA 5.0 ya cargó hoy
-        const activeKey = getActivePedidoKeyForLocalArea(loc, state.areaTab);
-        const pedidoArea = state.pedidos?.[activeKey]?.[fbKey(loc)]?.[state.areaTab] || {};
-        // Incluir también productos que no están en catálogo (ej: dados de baja)
+        // Usar misma lógica que getQty: hoy si existe, ayer como fallback por producto.
+        // Esto evita que productos "visibles en carga" queden ocultos en Cuadra cuando
+        // solo algunos fueron re-guardados hoy y el resto aún apunta a ayer.
+        const todayArea     = state.pedidos?.[todayKey()]?.[fbKey(loc)]?.[state.areaTab] || {};
+        const yesterdayArea = state.pedidos?.[yesterdayKey()]?.[fbKey(loc)]?.[state.areaTab] || {};
+        function localQty(pid) {
+          const tv = todayArea[pid];
+          if (tv !== undefined && tv !== null) return Number(tv);
+          return Number(yesterdayArea[pid]) || 0;
+        }
         const catalogIds = new Set(prods.map(p => p.id));
-        const extraLocItems = Object.entries(pedidoArea)
-          .filter(([pid, qty]) => Number(qty) > 0 && !catalogIds.has(pid))
-          .map(([pid]) => ({ id: pid, name: pid, unit: '' }));
+        const allPids = new Set([...Object.keys(todayArea), ...Object.keys(yesterdayArea)]);
+        const extraLocItems = [...allPids]
+          .filter(pid => !catalogIds.has(pid) && localQty(pid) > 0)
+          .map(pid => ({ id: pid, name: pid, unit: '' }));
         const allLocalProds = [...prods, ...extraLocItems];
-        const localItems = allLocalProds.filter(p => { const q = Number(pedidoArea[p.id]); return q > 0; })
-          .map(p => ({ ...p, qty: Number(pedidoArea[p.id]) }));
+        const localItems = allLocalProds
+          .filter(p => localQty(p.id) > 0)
+          .map(p => ({ ...p, qty: localQty(p.id) }));
         return { local: loc, items: localItems };
       }).filter(l => l.items.length > 0);
       if (localBreakdown.length === 0) return '';
