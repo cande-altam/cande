@@ -1062,9 +1062,21 @@ let state = {
   historialDate: '',
   historialType: 'productos',
   historialInsumos: {},
-  anuncio: {},              // { activo, texto, tipo, expira, ts } — aviso global desde Admin
-  anuncioPopupCerrado: 0,   // ts del anuncio cuyo popup ya cerró el usuario (por sesión)
+  anuncios: {},             // { [viewKey|'global']: { activo, texto, tipo, expira, ts } } — avisos por vista
+  anuncioPopupCerrado: {},  // { [viewKey]: ts } — popup ya cerrado por el usuario (por sesión)
+  adminAnuncioView: 'global', // vista que se está editando en el panel Admin
 };
+
+// Vistas que pueden tener aviso propio (+ 'global' como respaldo)
+const ANUNCIO_VIEWS = [
+  { key: 'global',     label: '🌐 Todas las vistas (global)' },
+  { key: 'dashboard',  label: '🏠 Inicio' },
+  { key: 'carga',      label: '📝 Carga de pedidos' },
+  { key: 'produccion', label: '📋 Cuadra' },
+  { key: 'envio',      label: '🚚 Guía de envío' },
+  { key: 'insumos',    label: '🛒 Pedido de insumos' },
+  { key: 'historial',  label: '📅 Historial' },
+];
 
 // ====================== HELPERS ======================
 function todayKey() {
@@ -1312,8 +1324,8 @@ async function initFirebase() {
     state.stockHistory = snap.val() || {};
     if (!state.loading) safeRender();
   });
-  onValue(ref(db, 'anuncio'), snap => {
-    state.anuncio = snap.val() || {};
+  onValue(ref(db, 'anuncios'), snap => {
+    state.anuncios = snap.val() || {};
     if (!state.loading) render();
   });
 
@@ -1902,13 +1914,19 @@ function renderAdmin() {
   }
   const cats = Object.keys(state.productos);
   const prods = state.productos[state.adminCategory] || [];
-  const a = state.anuncio || {};
-  const anuncioActivo = isAnuncioActivo();
+  const av = state.adminAnuncioView || 'global';
+  const a = state.anuncios?.[av] || {};
   const tipoActual = a.tipo || 'terra';
+  const vistaLabel = (ANUNCIO_VIEWS.find(v=>v.key===av)||{}).label || av;
+  // Resumen de qué vistas tienen aviso vigente
+  const vigentesList = ANUNCIO_VIEWS.filter(v => anuncioVigente(state.anuncios?.[v.key]));
   const anuncioBlock = `<div class="section-block">
-    <div class="section-header"><div class="section-title">📢 Mensaje / aviso global ${anuncioActivo ? '<span class="badge badge-open">Activo</span>' : (a.texto ? '<span class="badge badge-closed">Inactivo</span>' : '')}</div></div>
-    <div style="font-size:12px;color:var(--gray);margin-bottom:14px">Se muestra como cartel emergente al entrar y como banner fijo en todas las vistas, para todos los usuarios.</div>
-    <div class="form-group" style="margin-bottom:12px"><label class="form-label">Texto del mensaje</label><textarea class="form-input" id="anuncio-texto" rows="2" placeholder="Ej: Mañana no se recibe pedido de facturería" style="resize:vertical;font-family:inherit">${(a.texto||'').replace(/</g,'&lt;')}</textarea></div>
+    <div class="section-header"><div class="section-title">📢 Mensajes por vista</div></div>
+    <div style="font-size:12px;color:var(--gray);margin-bottom:14px">Cada vista puede tener su propio aviso. Se muestra como cartel emergente al entrar y como banner fijo arriba de esa vista. El aviso <strong>global</strong> aparece en cualquier vista que no tenga su propio mensaje.</div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">¿En qué vista?</label><select class="form-select" id="anuncio-view" onchange="setAdminAnuncioView(this.value)">
+      ${ANUNCIO_VIEWS.map(v => `<option value="${v.key}" ${av===v.key?'selected':''}>${v.label}${anuncioVigente(state.anuncios?.[v.key])?' — activo':''}</option>`).join('')}
+    </select></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">Texto del mensaje para ${vistaLabel} ${anuncioVigente(a) ? '<span class="badge badge-open">Activo</span>' : (a.texto ? '<span class="badge badge-closed">Inactivo</span>' : '')}</label><textarea class="form-input" id="anuncio-texto" rows="2" placeholder="Ej: Mañana no se recibe pedido de facturería" style="resize:vertical;font-family:inherit">${escapeAnuncio(a.texto||'')}</textarea></div>
     <div class="form-row" style="align-items:flex-end">
       <div class="form-group"><label class="form-label">Estilo / color</label><select class="form-select" id="anuncio-tipo">
         <option value="terra" ${tipoActual==='terra'?'selected':''}>📢 Terracota (destacado)</option>
@@ -1924,17 +1942,26 @@ function renderAdmin() {
       ${a.texto ? `<button class="btn btn-danger btn-sm" onclick="eliminarAnuncio()">Eliminar</button>` : ''}
     </div>
     ${a.expira ? `<div style="font-size:12px;color:var(--gray);margin-top:10px">${a.expira < todayKey() ? '⏱ Expiró el' : '⏱ Se desactivará automáticamente el'} ${new Date(a.expira+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'long'})}</div>` : ''}
+    ${vigentesList.length ? `<div style="font-size:12px;color:var(--gray);margin-top:12px;padding-top:12px;border-top:1px solid var(--cream-dark)">Avisos activos: ${vigentesList.map(v=>`<span class="badge badge-open" style="margin-right:4px">${v.label}</span>`).join('')}</div>` : ''}
   </div>`;
   return `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><div class="page-title">Administración</div><button class="btn btn-ghost btn-sm" onclick="adminLogout()">Cerrar sesión</button></div><div class="page-sub">Gestión del catálogo y avisos</div>${anuncioBlock}<div class="section-block"><div class="section-title" style="margin-bottom:16px">Agregar producto</div><div class="form-row"><div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="new-name" placeholder="Nombre del producto"></div><div class="form-group" style="max-width:130px"><label class="form-label">Unidad</label><select class="form-select" id="new-unit"><option value="u">u — unidades</option><option value="kg">kg</option></select></div><div class="form-group" style="max-width:160px"><label class="form-label">Categoría</label><select class="form-select" id="new-cat">${cats.map(c=>`<option value="${c}" ${state.adminCategory===c?'selected':''}>${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}</select></div><button class="btn btn-primary" onclick="addProduct()">Agregar</button></div></div><div class="section-block"><div class="section-title" style="margin-bottom:14px">Catálogo</div><div class="cat-tabs">${cats.map(c=>`<button class="cat-tab ${state.adminCategory===c?'active':''}" onclick="setAdminCat('${c}')">${c.charAt(0).toUpperCase()+c.slice(1)}</button>`).join('')}</div><div class="product-list-admin">${prods.map(p=>`<div class="admin-product-row"><button class="toggle ${state.productActive[p.id]!==false?'on':''}" onclick="toggleProduct('${p.id}')"></button><span style="flex:1">${p.name}</span><span style="color:var(--gray)">${p.unit}</span><button class="btn btn-danger btn-sm" onclick="removeProduct('${state.adminCategory}','${p.id}')">Eliminar</button></div>`).join('')}</div></div>`;
 }
 
-// ====================== ANUNCIO GLOBAL ======================
-// Activo si está marcado y (sin fecha de expiración O la fecha aún no pasó)
-function isAnuncioActivo() {
-  const a = state.anuncio;
+// ====================== ANUNCIOS POR VISTA ======================
+// Un anuncio está vigente si está marcado activo y (sin expira O la fecha aún no pasó)
+function anuncioVigente(a) {
   if (!a || !a.activo || !a.texto) return false;
   if (a.expira && a.expira < todayKey()) return false;
   return true;
+}
+// Devuelve el anuncio a mostrar para una vista: el propio de la vista si está vigente,
+// si no el global como respaldo. Devuelve {a, key} o null.
+function getAnuncioParaVista(viewKey) {
+  const propio = state.anuncios?.[viewKey];
+  if (anuncioVigente(propio)) return { a: propio, key: viewKey };
+  const global = state.anuncios?.global;
+  if (anuncioVigente(global)) return { a: global, key: 'global' };
+  return null;
 }
 const ANUNCIO_TIPOS = {
   terra:  { bg:'var(--terra)',     fg:'#fff',          icon:'📢' },
@@ -1946,32 +1973,34 @@ function escapeAnuncio(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 function renderAnuncioBanner() {
-  if (!isAnuncioActivo()) return '';
-  const a = state.anuncio;
-  const t = ANUNCIO_TIPOS[a.tipo] || ANUNCIO_TIPOS.terra;
+  const res = getAnuncioParaVista(state.view);
+  if (!res) return '';
+  const t = ANUNCIO_TIPOS[res.a.tipo] || ANUNCIO_TIPOS.terra;
   return `<div class="anuncio-banner" style="background:${t.bg};color:${t.fg}">
     <span class="anuncio-banner-icon">${t.icon}</span>
-    <span class="anuncio-banner-text">${escapeAnuncio(a.texto)}</span>
+    <span class="anuncio-banner-text">${escapeAnuncio(res.a.texto)}</span>
   </div>`;
 }
 function renderAnuncioPopup() {
-  if (!isAnuncioActivo()) return '';
-  const a = state.anuncio;
-  // El popup se muestra al entrar; si el usuario ya lo cerró en esta sesión, no reaparece
-  // hasta que el admin publique/edite el anuncio (cambia el ts).
-  if (state.anuncioPopupCerrado === (a.ts || 0)) return '';
+  const res = getAnuncioParaVista(state.view);
+  if (!res) return '';
+  const { a, key } = res;
+  // El popup se muestra al entrar a la vista; si el usuario ya lo cerró en esta sesión,
+  // no reaparece hasta que el admin publique/edite ese anuncio (cambia el ts).
+  if (state.anuncioPopupCerrado[key] === (a.ts || 0)) return '';
   const t = ANUNCIO_TIPOS[a.tipo] || ANUNCIO_TIPOS.terra;
-  return `<div class="anuncio-overlay" onclick="cerrarAnuncioPopup(event)">
+  return `<div class="anuncio-overlay" onclick="cerrarAnuncioPopup(event,'${key}')">
     <div class="anuncio-modal" onclick="event.stopPropagation()">
       <div class="anuncio-modal-icon" style="background:${t.bg};color:${t.fg}">${t.icon}</div>
       <div class="anuncio-modal-text">${escapeAnuncio(a.texto)}</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="cerrarAnuncioPopup()">Entendido</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="cerrarAnuncioPopup(null,'${key}')">Entendido</button>
     </div>
   </div>`;
 }
-window.cerrarAnuncioPopup = function(ev) {
+window.cerrarAnuncioPopup = function(ev, key) {
   if (ev) ev.stopPropagation();
-  state.anuncioPopupCerrado = state.anuncio?.ts || 0;
+  const a = state.anuncios?.[key];
+  state.anuncioPopupCerrado[key] = a?.ts || 0;
   render();
 };
 
@@ -2059,24 +2088,29 @@ window.adminLogin = function() {
   else { const err = document.getElementById('login-err'); if(err) err.style.display = 'block'; }
 };
 
-// ── Anuncio global ──
+// ── Anuncios por vista ──
+window.setAdminAnuncioView = function(v) { state.adminAnuncioView = v; render(); };
 window.publicarAnuncio = async function() {
+  const view = state.adminAnuncioView || 'global';
   const texto = document.getElementById('anuncio-texto')?.value?.trim();
   const tipo  = document.getElementById('anuncio-tipo')?.value || 'terra';
   const expira = document.getElementById('anuncio-expira')?.value || '';
   if (!texto) { showToast('Escribí un mensaje primero', 'warn'); return; }
   if (expira && expira < todayKey()) { showToast('La fecha de desactivación ya pasó', 'warn'); return; }
-  await set(ref(db, 'anuncio'), { activo: true, texto, tipo, expira, ts: Date.now() });
-  showToast('Mensaje publicado para todos', 'success');
+  await set(ref(db, `anuncios/${view}`), { activo: true, texto, tipo, expira, ts: Date.now() });
+  const label = (ANUNCIO_VIEWS.find(v=>v.key===view)||{}).label || view;
+  showToast(`Mensaje publicado en ${label}`, 'success');
 };
 window.desactivarAnuncio = async function() {
-  const a = state.anuncio || {};
-  await set(ref(db, 'anuncio'), { ...a, activo: false });
+  const view = state.adminAnuncioView || 'global';
+  const a = state.anuncios?.[view] || {};
+  await set(ref(db, `anuncios/${view}`), { ...a, activo: false });
   showToast('Mensaje desactivado', 'info');
 };
 window.eliminarAnuncio = async function() {
   if (!confirm('¿Eliminar el mensaje por completo?')) return;
-  await remove(ref(db, 'anuncio'));
+  const view = state.adminAnuncioView || 'global';
+  await remove(ref(db, `anuncios/${view}`));
   showToast('Mensaje eliminado', 'info');
 };
 window.addProduct = async function() {
