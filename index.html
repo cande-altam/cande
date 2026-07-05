@@ -1937,14 +1937,15 @@ function renderAdmin() {
         <option value="amber" ${tipoActual==='amber'?'selected':''}>⚠️ Ámbar (atención)</option>
         <option value="dark" ${tipoActual==='dark'?'selected':''}>🔔 Oscuro (neutro)</option>
       </select></div>
-      <div class="form-group" style="max-width:200px"><label class="form-label">Se desactiva el día (opcional)</label><input type="date" class="form-input" id="anuncio-expira" value="${a.expira||''}" min="${todayKey()}"></div>
+      <div class="form-group" style="max-width:170px"><label class="form-label">Se desactiva el día (opcional)</label><input type="date" class="form-input" id="anuncio-expira" value="${a.expira||''}" min="${todayKey()}"></div>
+      <div class="form-group" style="max-width:130px"><label class="form-label">A la hora (opcional)</label><input type="time" class="form-input" id="anuncio-expira-hora" value="${a.expiraHora||''}"></div>
     </div>
     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="publicarAnuncio()">${a.texto?'Guardar y publicar':'Publicar mensaje'}</button>
       ${a.activo ? `<button class="btn btn-ghost" onclick="desactivarAnuncio()">Desactivar</button>` : ''}
       ${a.texto ? `<button class="btn btn-danger btn-sm" onclick="eliminarAnuncio()">Eliminar</button>` : ''}
     </div>
-    ${a.expira ? `<div style="font-size:12px;color:var(--gray);margin-top:10px">${a.expira < todayKey() ? '⏱ Expiró el' : '⏱ Se desactivará automáticamente el'} ${new Date(a.expira+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'long'})}</div>` : ''}
+    ${a.expira ? `<div style="font-size:12px;color:var(--gray);margin-top:10px">${!anuncioVigente(a) && a.activo ? '⏱ Expiró el' : '⏱ Se desactivará automáticamente el'} ${new Date(a.expira+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'long'})}${a.expiraHora ? ` a las ${a.expiraHora}` : ''}</div>` : ''}
     ${vigentesList.length ? `<div style="font-size:12px;color:var(--gray);margin-top:12px;padding-top:12px;border-top:1px solid var(--cream-dark)">Avisos activos: ${vigentesList.map(v=>`<span class="badge badge-open" style="margin-right:4px">${v.label}</span>`).join('')}</div>` : ''}
   </div>`;
   return `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><div class="page-title">Administración</div><button class="btn btn-ghost btn-sm" onclick="adminLogout()">Cerrar sesión</button></div><div class="page-sub">Gestión del catálogo y avisos</div>${anuncioBlock}<div class="section-block"><div class="section-title" style="margin-bottom:16px">Agregar producto</div><div class="form-row"><div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="new-name" placeholder="Nombre del producto"></div><div class="form-group" style="max-width:130px"><label class="form-label">Unidad</label><select class="form-select" id="new-unit"><option value="u">u — unidades</option><option value="kg">kg</option></select></div><div class="form-group" style="max-width:160px"><label class="form-label">Categoría</label><select class="form-select" id="new-cat">${cats.map(c=>`<option value="${c}" ${state.adminCategory===c?'selected':''}>${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}</select></div><button class="btn btn-primary" onclick="addProduct()">Agregar</button></div></div><div class="section-block"><div class="section-title" style="margin-bottom:14px">Catálogo</div><div class="cat-tabs">${cats.map(c=>`<button class="cat-tab ${state.adminCategory===c?'active':''}" onclick="setAdminCat('${c}')">${c.charAt(0).toUpperCase()+c.slice(1)}</button>`).join('')}</div><div class="product-list-admin">${prods.map(p=>`<div class="admin-product-row"><button class="toggle ${state.productActive[p.id]!==false?'on':''}" onclick="toggleProduct('${p.id}')"></button><span style="flex:1">${p.name}</span><span style="color:var(--gray)">${p.unit}</span><button class="btn btn-danger btn-sm" onclick="removeProduct('${state.adminCategory}','${p.id}')">Eliminar</button></div>`).join('')}</div></div>`;
@@ -1954,7 +1955,15 @@ function renderAdmin() {
 // Un anuncio está vigente si está marcado activo y (sin expira O la fecha aún no pasó)
 function anuncioVigente(a) {
   if (!a || !a.activo || !a.texto) return false;
-  if (a.expira && a.expira < todayKey()) return false;
+  if (a.expira) {
+    const today = todayKey();
+    if (a.expira < today) return false;              // ya pasó el día
+    if (a.expira === today && a.expiraHora) {         // vence hoy a una hora puntual
+      const now = new Date();
+      const hhmm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+      if (hhmm >= a.expiraHora) return false;
+    }
+  }
   return true;
 }
 // Cadena de claves a evaluar según la vista y su sub-tab activo (de lo más
@@ -2110,9 +2119,11 @@ window.publicarAnuncio = async function() {
   const texto = document.getElementById('anuncio-texto')?.value?.trim();
   const tipo  = document.getElementById('anuncio-tipo')?.value || 'terra';
   const expira = document.getElementById('anuncio-expira')?.value || '';
+  const expiraHora = document.getElementById('anuncio-expira-hora')?.value || '';
   if (!texto) { showToast('Escribí un mensaje primero', 'warn'); return; }
   if (expira && expira < todayKey()) { showToast('La fecha de desactivación ya pasó', 'warn'); return; }
-  await set(ref(db, `anuncios/${view}`), { activo: true, texto, tipo, expira, ts: Date.now() });
+  if (expiraHora && !expira) { showToast('Elegí también el día de desactivación', 'warn'); return; }
+  await set(ref(db, `anuncios/${view}`), { activo: true, texto, tipo, expira, expiraHora, ts: Date.now() });
   const label = (ANUNCIO_VIEWS.find(v=>v.key===view)||{}).label || view;
   showToast(`Mensaje publicado en ${label}`, 'success');
 };
@@ -2403,6 +2414,15 @@ window.closeMobileNav = () => { state.mobileNavOpen = false; };
 
 // Iniciar
 initFirebase();
+
+// Refresco periódico para aplicar expiraciones por hora sin recargar.
+// Solo re-renderiza cuando cambia la visibilidad del aviso de la vista actual.
+setInterval(() => {
+  const anyTimed = Object.values(state.anuncios || {}).some(a => a && a.activo && a.expira === todayKey() && a.expiraHora);
+  if (!anyTimed) return;
+  const vis = currentAnuncioKeys().map(k => anuncioVigente(state.anuncios?.[k]) ? k : '').join('|');
+  if (vis !== state._lastAnuncioVis) { state._lastAnuncioVis = vis; safeRender(); }
+}, 30000);
 
 window.qtyIncrement = function(local, area, pid) {
   const input = document.querySelector(`input[data-local="\${local}"][data-area="\${area}"][data-pid="\${pid}"]`);
