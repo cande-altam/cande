@@ -1067,12 +1067,15 @@ let state = {
   adminAnuncioView: 'global', // vista que se está editando en el panel Admin
 };
 
-// Vistas que pueden tener aviso propio (+ 'global' como respaldo)
+// Vistas / sub-vistas que pueden tener aviso propio (+ 'global' como respaldo).
+// Carga se puede segmentar por local y Cuadra por área.
 const ANUNCIO_VIEWS = [
   { key: 'global',     label: '🌐 Todas las vistas (global)' },
   { key: 'dashboard',  label: '🏠 Inicio' },
-  { key: 'carga',      label: '📝 Carga de pedidos' },
-  { key: 'produccion', label: '📋 Cuadra' },
+  { key: 'carga',      label: '📝 Carga de pedidos · todos los locales' },
+  ...LOCALES.map(l => ({ key: `carga:${fbKey(l)}`, label: `↳ Carga · ${l}` })),
+  { key: 'produccion', label: '📋 Cuadra · todas las áreas' },
+  ...AREAS.filter(a => a.cuadra !== false).map(a => ({ key: `produccion:${a.key}`, label: `↳ Cuadra · ${a.label}` })),
   { key: 'envio',      label: '🚚 Guía de envío' },
   { key: 'insumos',    label: '🛒 Pedido de insumos' },
   { key: 'historial',  label: '📅 Historial' },
@@ -1954,13 +1957,25 @@ function anuncioVigente(a) {
   if (a.expira && a.expira < todayKey()) return false;
   return true;
 }
-// Devuelve el anuncio a mostrar para una vista: el propio de la vista si está vigente,
-// si no el global como respaldo. Devuelve {a, key} o null.
-function getAnuncioParaVista(viewKey) {
-  const propio = state.anuncios?.[viewKey];
-  if (anuncioVigente(propio)) return { a: propio, key: viewKey };
-  const global = state.anuncios?.global;
-  if (anuncioVigente(global)) return { a: global, key: 'global' };
+// Cadena de claves a evaluar según la vista y su sub-tab activo (de lo más
+// específico a lo más general). Carga se segmenta por local, Cuadra por área.
+function currentAnuncioKeys() {
+  const v = state.view;
+  if (v === 'carga') {
+    const localKey = fbKey(LOCALES[state.localTab] || '');
+    return [`carga:${localKey}`, 'carga', 'global'];
+  }
+  if (v === 'produccion') {
+    return [`produccion:${state.areaTab}`, 'produccion', 'global'];
+  }
+  return [v, 'global'];
+}
+// Devuelve el primer anuncio vigente de la cadena. {a, key} o null.
+function getAnuncioActual() {
+  for (const key of currentAnuncioKeys()) {
+    const a = state.anuncios?.[key];
+    if (anuncioVigente(a)) return { a, key };
+  }
   return null;
 }
 const ANUNCIO_TIPOS = {
@@ -1973,7 +1988,7 @@ function escapeAnuncio(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 function renderAnuncioBanner() {
-  const res = getAnuncioParaVista(state.view);
+  const res = getAnuncioActual();
   if (!res) return '';
   const t = ANUNCIO_TIPOS[res.a.tipo] || ANUNCIO_TIPOS.terra;
   return `<div class="anuncio-banner" style="background:${t.bg};color:${t.fg}">
@@ -1982,7 +1997,7 @@ function renderAnuncioBanner() {
   </div>`;
 }
 function renderAnuncioPopup() {
-  const res = getAnuncioParaVista(state.view);
+  const res = getAnuncioActual();
   if (!res) return '';
   const { a, key } = res;
   // El popup se muestra al entrar a la vista; si el usuario ya lo cerró en esta sesión,
