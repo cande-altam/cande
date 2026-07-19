@@ -100,6 +100,8 @@ pedido-de-produccion/
 └── README.md
 ```
 
+> Además del sistema de Pedidos de Producción, el repo incluye `costeo-proveedores/` (app separada, ver más abajo), `netlify/functions/` (función serverless para el escaneo de facturas) y `netlify.toml` (configuración de deploy/funciones de Netlify).
+
 ---
 
 ## Flujo de uso
@@ -142,6 +144,48 @@ pedido-de-produccion/
 | Sandwiches | Sin corte |
 
 Los pedidos fuera de horario se marcan con el indicador **⏰ Fuera de horario** pero igual se envían.
+
+---
+
+## Módulo: Costeo & Proveedores (IA)
+
+App separada, de uso exclusivo de administración, ubicada en `costeo-proveedores/` (no forma parte del sistema de Pedidos de Producción). Permite:
+
+- Registrar facturas de proveedores sacándoles una foto — opcionalmente escaneada automáticamente con IA (proveedor, monto, fecha, ítems), siempre revisable/editable antes de guardar.
+- Generar automáticamente la orden de pago de cada factura y marcarla pagada/no pagada.
+- Mantener un catálogo de insumos con su precio actual e historial de precios.
+- Cargar productos con su receta (qué insumos y en qué cantidad llevan) y calcular su costo automáticamente a partir del precio de los insumos.
+- Comparar la variación de precio de cada insumo contra la inflación mensual cargada a mano, y alertar cuáles subieron por encima de la inflación.
+
+### Acceso
+
+URL: `https://<tu-sitio>.netlify.app/costeo-proveedores/`. Contraseña inicial: `costeo2025` (cambiable desde la pestaña **Configuración**).
+
+### Datos
+
+Usa el **mismo proyecto Firebase** que el sistema de Pedidos de Producción, bajo la rama `costeo/` (no pisa los datos existentes). Las fotos de facturas se guardan en Firebase Storage.
+
+En Firebase Console → **Storage → Rules**, pegar (mismo criterio que las reglas de Realtime Database):
+
+```
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}
+```
+
+### Escaneo automático por IA (opcional)
+
+El botón "Escanear con IA" llama a una función serverless (`netlify/functions/extraer-factura.js`) que usa la API de Claude (Anthropic) para leer la factura. Esto requiere:
+
+1. Desplegar el sitio en Netlify **vía GitHub** (Add new site → Import from Git) — el deploy por drag & drop no empaqueta funciones.
+2. En el sitio de Netlify → **Site configuration → Environment variables**, agregar `ANTHROPIC_API_KEY` con una clave válida de [console.anthropic.com](https://console.anthropic.com/).
+
+Si la clave no está configurada, o el escaneo falla, no pasa nada: el formulario de "Nueva factura" se completa a mano igual, sin ninguna dependencia de la IA para funcionar.
 
 ---
 
