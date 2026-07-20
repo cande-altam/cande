@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Candela — Costeo y Proveedores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --cream:#EEEBD7; --cream-dark:#dedad8; --cream-mid:#e5e1cc;
+  --black:#22201F; --black-soft:#3a3836;
+  --terra:#E15D46; --terra-light:#ea7a65; --terra-pale:#f9ddd8;
+  --turq:#9BD6CC; --turq-dark:#6bbfb4; --turq-pale:#d8f0ed;
+  --gray:#9a9888; --gray-light:#ccc9b5; --white:#ffffff;
+  --green:#27ae60; --green-pale:#e8f8f0;
+  --shadow-sm:0 1px 3px rgba(34,32,31,.06),0 1px 2px rgba(34,32,31,.04);
+  --shadow-md:0 4px 16px rgba(34,32,31,.08),0 2px 6px rgba(34,32,31,.05);
+  --shadow-lg:0 12px 40px rgba(34,32,31,.12),0 4px 12px rgba(34,32,31,.06);
+  --shadow-terra:0 4px 18px rgba(225,93,70,.30);
+  --shadow-turq:0 4px 18px rgba(155,214,204,.35);
+  --r:14px;--r-sm:8px;--r-xs:6px;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--black);min-height:100vh;font-weight:300;font-size:14px;}
+
+/* HEADER */
+.header{background:var(--black);padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;height:68px;box-shadow:0 1px 0 rgba(255,255,255,.06),0 4px 24px rgba(0,0,0,.3);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{font-size:22px;}
+.logo-text-wrap{display:flex;flex-direction:column;line-height:1.1;}
+.logo-name{font-size:15px;font-weight:600;color:var(--cream);letter-spacing:.2px;}
+.logo-sub{font-size:9px;color:var(--gray);font-weight:400;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+.nav-desktop{display:flex;gap:2px;align-items:center;flex-wrap:wrap;}
+.nav-btn{padding:8px 14px;border:none;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;font-size:12.5px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;border-radius:8px;transition:all .2s cubic-bezier(.25,.8,.25,1);letter-spacing:.2px;white-space:nowrap;}
+.nav-btn:hover{color:var(--cream);background:rgba(255,255,255,.08);}
+.nav-btn.active{color:#fff;background:var(--terra);font-weight:600;box-shadow:var(--shadow-terra);}
+.nav-logout{padding:8px 14px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.6);cursor:pointer;font-size:12px;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;}
+.nav-logout:hover{color:#fff;border-color:rgba(255,255,255,.4);}
+.nav-hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;background:none;border:none;}
+.nav-hamburger span{width:22px;height:2px;background:var(--gray);border-radius:2px;display:block;}
+.nav-mobile-menu{display:none;position:fixed;top:60px;left:0;right:0;background:var(--black);z-index:199;padding:12px;flex-direction:column;gap:4px;border-bottom:1px solid #3a3836;box-shadow:0 8px 24px rgba(0,0,0,.3);}
+.nav-mobile-menu.open{display:flex;}
+.nav-mobile-btn{padding:14px 18px;border:none;background:transparent;color:rgba(255,255,255,.5);cursor:pointer;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;border-radius:10px;text-align:left;}
+.nav-mobile-btn.active{color:#fff;background:var(--terra);font-weight:600;}
+@media(max-width:900px){.nav-desktop{display:none;}.nav-hamburger{display:flex;}}
+
+/* MAIN */
+.main{padding:28px;max-width:1160px;margin:0 auto;width:100%;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.main > *{animation:fadeUp .3s ease both;}
+.page-title{font-size:22px;font-weight:700;color:var(--black);margin-bottom:4px;letter-spacing:-.3px;}
+.page-sub{color:var(--gray);font-size:13px;margin-bottom:24px;font-weight:400;}
+
+/* SECTION BLOCK */
+.section-block{background:var(--white);border:1px solid rgba(34,32,31,.07);border-radius:var(--r);padding:22px 24px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap;}
+.section-title{font-size:14px;font-weight:600;color:var(--black);display:flex;align-items:center;gap:8px;}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1.5px solid var(--cream-dark);margin-bottom:20px;overflow-x:auto;}
+.tab{padding:11px 22px;cursor:pointer;font-size:13px;color:var(--gray);border:none;background:none;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;border-bottom:2px solid transparent;margin-bottom:-1.5px;white-space:nowrap;}
+.tab:hover{color:var(--black);}
+.tab.active{color:var(--terra);border-bottom-color:var(--terra);font-weight:600;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;transition:all .2s cubic-bezier(.25,.8,.25,1);letter-spacing:.2px;}
+.btn-primary{background:var(--terra);color:#fff;box-shadow:var(--shadow-terra);}
+.btn-primary:hover{background:var(--terra-light);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-turq{background:var(--turq);color:var(--black);box-shadow:var(--shadow-turq);}
+.btn-turq:hover{background:var(--turq-dark);color:#fff;}
+.btn-ghost{background:rgba(34,32,31,.04);border:1px solid rgba(34,32,31,.12);color:var(--gray);}
+.btn-ghost:hover{border-color:var(--black);color:var(--black);background:rgba(34,32,31,.06);}
+.btn-danger{background:#fdecea;color:#b83a25;border:1px solid #f5c4bc;}
+.btn-danger:hover{background:var(--terra);color:#fff;border-color:var(--terra);}
+.btn-sm{padding:6px 13px;font-size:12px;border-radius:8px;}
+
+/* BADGES */
+.badge{font-size:11px;padding:3px 10px;border-radius:100px;font-weight:500;letter-spacing:.2px;display:inline-block;}
+.badge-pagado{background:var(--green-pale);color:var(--green);}
+.badge-no-pagado{background:#fff3ee;color:var(--terra);}
+.badge-alerta{background:#fdecea;color:#b83a25;}
+.badge-ok{background:var(--turq-pale);color:var(--turq-dark);}
+.badge-neutro{background:var(--cream);color:var(--gray);}
+
+/* FORMS */
+.form-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;}
+.form-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:150px;}
+.form-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+.form-input,.form-select{padding:10px 14px;background:var(--cream);border:1.5px solid var(--cream-dark);border-radius:var(--r-sm);color:var(--black);font-size:13px;outline:none;width:100%;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;transition:border-color .15s,box-shadow .15s;}
+.form-input:focus,.form-select:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(225,93,70,.12);}
+textarea.form-input{resize:vertical;min-height:60px;}
+
+/* TOGGLE */
+.toggle{width:38px;height:22px;border-radius:11px;background:var(--cream-dark);position:relative;cursor:pointer;transition:background .25s;flex-shrink:0;border:none;}
+.toggle.on{background:var(--turq);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.toggle.on::after{transform:translateX(16px);}
+
+/* TABLE */
+.data-table-wrap{overflow-x:auto;}
+.data-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--white);}
+.data-table th{text-align:left;padding:10px 14px;color:var(--gray);border-bottom:1.5px solid var(--cream-dark);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;}
+.data-table td{padding:10px 14px;border-bottom:1px solid var(--cream-mid);color:var(--black);font-weight:300;vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(155,214,204,.08);}
+
+/* ITEM ROWS (factura / receta) */
+.item-row{display:grid;grid-template-columns:1.6fr 1.4fr .8fr .8fr 1fr 32px;gap:8px;align-items:center;padding:6px 0;}
+.item-row-header{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--cream-dark);margin-bottom:4px;}
+.item-row-wrap{overflow-x:auto;}
+@media(max-width:700px){.item-row,.item-row-header{grid-template-columns:repeat(6,140px);min-width:760px;}}
+.recipe-row{display:grid;grid-template-columns:2fr 1fr 32px;gap:8px;align-items:center;padding:6px 0;}
+
+/* CARDS LIST */
+.card-list{display:flex;flex-direction:column;gap:10px;}
+.mini-card{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--r-sm);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow-sm);}
+.mini-card-title{font-size:13.5px;font-weight:600;color:var(--black);}
+.mini-card-sub{font-size:11.5px;color:var(--gray);margin-top:2px;}
+
+/* LOGIN */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:80vh;}
+.login-card{background:var(--white);border:1px solid rgba(34,32,31,.08);border-radius:20px;padding:44px 40px;width:360px;max-width:90vw;box-shadow:var(--shadow-lg);}
+.login-title{font-size:22px;font-weight:700;color:var(--black);margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--gray);margin-bottom:26px;font-weight:400;}
+.admin-form{display:flex;flex-direction:column;gap:14px;}
+
+/* MISC */
+.loading{text-align:center;padding:80px 24px;color:var(--gray);font-size:13px;}
+.empty-state{text-align:center;padding:48px 24px;color:var(--gray);font-size:13px;}
+.spinner{width:34px;height:34px;border:3px solid var(--cream-dark);border-top-color:var(--terra);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#toast{position:fixed;bottom:24px;right:24px;left:auto;max-width:340px;background:var(--black);color:var(--cream);padding:14px 20px;border-radius:12px;font-size:13px;font-weight:500;opacity:0;transform:translateY(12px) scale(.97);transition:all .3s cubic-bezier(.25,.8,.25,1);pointer-events:none;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.25);}
+#toast.show{opacity:1;transform:translateY(0) scale(1);}
+#toast.success{border-left:3px solid var(--turq);}
+#toast.warn{border-left:3px solid var(--terra);}
+#toast.danger{border-left:3px solid #b83a25;}
+.text-muted{color:var(--gray);font-size:12px;}
+.photo-thumb{max-width:160px;border-radius:10px;box-shadow:var(--shadow-sm);display:block;}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--white);border-radius:var(--r);padding:16px 18px;border:1px solid rgba(34,32,31,.07);box-shadow:var(--shadow-sm);}
+.stat-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;font-weight:500;}
+.stat-value{font-size:22px;font-weight:700;color:var(--black);}
+.alert-box{padding:12px 18px;border-radius:10px;margin-bottom:16px;font-size:13px;display:flex;align-items:center;gap:10px;font-weight:400;}
+.alert-warn{background:#fff5f3;border:1px solid var(--terra-pale);color:var(--terra);}
+.alert-turq{background:var(--turq-pale);border:1px solid var(--turq);color:var(--turq-dark);}
+.delta-pos{color:#b83a25;font-weight:600;}
+.delta-neg{color:var(--green);font-weight:600;}
+@media(max-width:640px){
+  .main{padding:14px 12px;}
+  .header{padding:0 14px;height:60px;}
+  .page-title{font-size:19px;}
+  .section-block{padding:16px 14px;}
+  .form-group{min-width:100%;}
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading"><div class="spinner"></div>Conectando con Firebase...</div></div>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// Same Firebase project as the production-order system (Candela) — new data lives under costeo/*
+// Invoice photos are stored inline in Realtime Database (compressed base64), not Firebase
+// Storage, so this app needs zero extra Firebase setup beyond the existing database.
+const firebaseConfig = {
+  apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
+  authDomain: "pedidos-de-produccion-ee3cb.firebaseapp.com",
+  databaseURL: "https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-produccion-ee3cb",
+  storageBucket: "pedidos-de-produccion-ee3cb.firebasestorage.app",
+  messagingSenderId: "744141794971",
+  appId: "1:744141794971:web:9639c8bf3834e4978ae03e"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const DEFAULT_ADMIN_PASS = "costeo2025";
+
+const TABS = [
+  { key: "nueva-factura", label: "📷 Nueva factura" },
+  { key: "facturas",      label: "🧾 Facturas" },
+  { key: "pagos",         label: "💳 Órdenes de pago" },
+  { key: "proveedores",   label: "🏭 Proveedores" },
+  { key: "insumos",       label: "📦 Insumos" },
+  { key: "productos",     label: "🍰 Productos" },
+  { key: "analisis",      label: "📈 Análisis" },
+  { key: "config",        label: "⚙️ Configuración" },
+];
+
+const state = {
+  loggedIn: false,
+  view: "nueva-factura",
+  formOpen: false,
+  mobileNavOpen: false,
+  proveedores: {},
+  insumos: {},
+  productos: {},
+  facturas: {},
+  inflacion: {},
+  config: {},
+  _facturaFotoDataUrl: null,
+  facturasFiltro: "todas",
+  pagosFiltro: "no_pagado",
+  analisisPeriodo: 6,
+  editingProveedorId: null,
+  editingInsumoId: null,
+  editingProductoId: null,
+  viewingInsumoHistId: null,
+};
+
+// ── Helpers ──────────────────────────────────────────────
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function todayISO() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+function fmtMoney(n) {
+  const num = Number(n) || 0;
+  return "$" + num.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtPct(n) {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  const sign = n > 0 ? "+" : "";
+  return `${sign}${n.toFixed(1)}%`;
+}
+function monthKey(iso) { return iso.slice(0, 7); }
+function monthsAgoISO(n) {
+  const d = new Date();
+  d.setMonth(d.getMonth() - n);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+}
+function monthLabel(key) {
+  const [y, m] = key.split("-");
+  const names = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  return `${names[parseInt(m, 10) - 1]} ${y}`;
+}
+function showToast(msg, type = "success") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "show " + type;
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.className = ""; }, 3200);
+}
+function objToSortedEntries(obj, cmp) {
+  return Object.entries(obj || {}).sort(cmp);
+}
+
+// ── Auth ─────────────────────────────────────────────────
+async function attemptLogin(password) {
+  let pass = state.config.adminPassword;
+  if (!pass) {
+    pass = DEFAULT_ADMIN_PASS;
+    await set(ref(db, "costeo/config/adminPassword"), pass);
+  }
+  if (password === pass) {
+    state.loggedIn = true;
+    return true;
+  }
+  return false;
+}
+
+window.handleLoginSubmit = async function() {
+  const input = document.getElementById("login-pass");
+  const err = document.getElementById("login-err");
+  const btn = document.getElementById("login-btn");
+  btn.disabled = true; btn.textContent = "Ingresando...";
+  try {
+    const ok = await attemptLogin(input.value);
+    if (ok) {
+      err.style.display = "none";
+      render();
+    } else {
+      err.style.display = "block";
+      btn.disabled = false; btn.textContent = "Ingresar";
+    }
+  } catch (e) {
+    console.error(e);
+    err.textContent = "Error de conexión. Verificá tu internet.";
+    err.style.display = "block";
+    btn.disabled = false; btn.textContent = "Ingresar";
+  }
+};
+
+window.handleLogout = function() {
+  state.loggedIn = false;
+  state.view = "nueva-factura";
+  state.formOpen = false;
+  render();
+};
+
+// ── Navigation ───────────────────────────────────────────
+window.navigate = function(view) {
+  state.view = view;
+  state.formOpen = false;
+  state.mobileNavOpen = false;
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+window.toggleMobileNav = function() {
+  state.mobileNavOpen = !state.mobileNavOpen;
+  render();
+};
+
+// ── Root render ──────────────────────────────────────────
+function render() {
+  const root = document.getElementById("app");
+  if (!state.loggedIn) {
+    root.innerHTML = renderLogin();
+    return;
+  }
+  root.innerHTML = `
+    <div class="header">
+      <div class="logo">
+        <span class="logo-mark">☕</span>
+        <div class="logo-text-wrap">
+          <span class="logo-name">Candela</span>
+          <span class="logo-sub">Costeo &amp; Proveedores</span>
+        </div>
+      </div>
+      <div class="nav-desktop">
+        ${TABS.map(t => `<button class="nav-btn ${state.view === t.key ? "active" : ""}" onclick="navigate('${t.key}')">${t.label}</button>`).join("")}
+        <button class="nav-logout" onclick="handleLogout()">Salir</button>
+      </div>
+      <button class="nav-hamburger" onclick="toggleMobileNav()"><span></span><span></span><span></span></button>
+    </div>
+    <div class="nav-mobile-menu ${state.mobileNavOpen ? "open" : ""}">
+      ${TABS.map(t => `<button class="nav-mobile-btn ${state.view === t.key ? "active" : ""}" onclick="navigate('${t.key}')">${t.label}</button>`).join("")}
+      <button class="nav-mobile-btn" onclick="handleLogout()">🚪 Salir</button>
+    </div>
+    <div class="main" id="main-content"></div>`;
+
+  const container = document.getElementById("main-content");
+  switch (state.view) {
+    case "nueva-factura": renderNuevaFacturaView(container); break;
+    case "facturas": renderFacturasView(container); break;
+    case "pagos": renderPagosView(container); break;
+    case "proveedores": renderProveedoresView(container); break;
+    case "insumos": renderInsumosView(container); break;
+    case "productos": renderProductosView(container); break;
+    case "analisis": renderAnalisisView(container); break;
+    case "config": renderConfigView(container); break;
+    default: container.innerHTML = `<div class="empty-state">Vista no encontrada.</div>`;
+  }
+}
+
+function renderLogin() {
+  return `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-title">Costeo &amp; Proveedores</div>
+        <div class="login-sub">Acceso exclusivo de administración</div>
+        <div class="admin-form">
+          <div class="form-group">
+            <label class="form-label">Contraseña</label>
+            <input class="form-input" type="password" id="login-pass" placeholder="••••••" onkeydown="if(event.key==='Enter')handleLoginSubmit()">
+          </div>
+          <button class="btn btn-primary" id="login-btn" onclick="handleLoginSubmit()">Ingresar</button>
+          <div id="login-err" style="color:var(--terra);font-size:12px;display:none">Contraseña incorrecta.</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Firebase listeners ───────────────────────────────────
+function attachListeners() {
+  onValue(ref(db, "costeo/proveedores"), snap => { state.proveedores = snap.val() || {}; if (!state.formOpen) render(); });
+  onValue(ref(db, "costeo/insumos"), snap => { state.insumos = snap.val() || {}; if (!state.formOpen) render(); });
+  onValue(ref(db, "costeo/productos"), snap => { state.productos = snap.val() || {}; if (!state.formOpen) render(); });
+  onValue(ref(db, "costeo/facturas"), snap => { state.facturas = snap.val() || {}; if (!state.formOpen) render(); });
+  onValue(ref(db, "costeo/inflacion"), snap => { state.inflacion = snap.val() || {}; if (!state.formOpen) render(); });
+  onValue(ref(db, "costeo/config"), snap => { state.config = snap.val() || {}; });
+}
+
+// =============================================================
+// NUEVA FACTURA
+// =============================================================
+function itemRowHtml({ insumoId = "", nombreNuevo = "", cantidad = "", unidad = "", precioUnitario = "" } = {}) {
+  const isNew = insumoId === "__new__" || (!insumoId && nombreNuevo);
+  const options = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .map(([id, ins]) => `<option value="${id}" ${id === insumoId ? "selected" : ""}>${escapeHtml(ins.nombre)}${ins.unidad ? " (" + escapeHtml(ins.unidad) + ")" : ""}</option>`).join("");
+  return `
+    <div class="item-row">
+      <div>
+        <select class="form-select item-insumo" onchange="handleItemInsumoChange(this)">
+          <option value="">— Insumo —</option>
+          <option value="__new__" ${isNew ? "selected" : ""}>➕ Nuevo insumo…</option>
+          ${options}
+        </select>
+        <input type="text" class="form-input item-nombre-nuevo" placeholder="Nombre del insumo nuevo" value="${escapeHtml(nombreNuevo)}" style="margin-top:6px;${isNew ? "" : "display:none"}">
+      </div>
+      <input type="text" class="form-input item-unidad" placeholder="Unidad (kg, litros...)" value="${escapeHtml(unidad || "")}">
+      <input type="number" step="0.01" min="0" class="form-input item-cantidad" placeholder="Cant." value="${cantidad ?? ""}" oninput="updateItemSubtotal(this)">
+      <input type="number" step="0.01" min="0" class="form-input item-precio" placeholder="$ unit." value="${precioUnitario ?? ""}" oninput="updateItemSubtotal(this)">
+      <div class="text-muted item-subtotal">${cantidad > 0 && precioUnitario > 0 ? fmtMoney(cantidad * precioUnitario) : "—"}</div>
+      <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.item-row').remove()">✕</button>
+    </div>`;
+}
+
+window.handleItemInsumoChange = function(sel) {
+  const row = sel.closest(".item-row");
+  row.querySelector(".item-nombre-nuevo").style.display = sel.value === "__new__" ? "" : "none";
+};
+
+window.updateItemSubtotal = function(el) {
+  const row = el.closest(".item-row");
+  const cant = parseFloat(row.querySelector(".item-cantidad").value) || 0;
+  const precio = parseFloat(row.querySelector(".item-precio").value) || 0;
+  row.querySelector(".item-subtotal").textContent = (cant > 0 && precio > 0) ? fmtMoney(cant * precio) : "—";
+};
+
+window.addItemRow = function() {
+  document.getElementById("items-container").insertAdjacentHTML("beforeend", itemRowHtml());
+};
+
+function matchInsumoId(nombre) {
+  if (!nombre) return "";
+  const n = nombre.trim().toLowerCase();
+  if (!n) return "";
+  const exact = Object.entries(state.insumos).find(([, ins]) => ins.nombre.trim().toLowerCase() === n);
+  if (exact) return exact[0];
+  const partial = Object.entries(state.insumos).find(([, ins]) => {
+    const insN = ins.nombre.trim().toLowerCase();
+    return insN.length > 2 && (n.includes(insN) || insN.includes(n));
+  });
+  return partial ? partial[0] : "";
+}
+
+function renderNuevaFacturaView(container) {
+  state.formOpen = true;
+  const proveedorOptions = objToSortedEntries(state.proveedores, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .map(([id, p]) => `<option value="${id}">${escapeHtml(p.nombre)}</option>`).join("");
+
+  container.innerHTML = `
+    <div class="page-title">Nueva factura de proveedor</div>
+    <div class="page-sub">Sacá una foto de la factura para que la IA complete los datos, o cargalos a mano. Siempre podés revisar y corregir antes de guardar.</div>
+    <div id="nueva-factura-form" class="section-block">
+      <div class="form-row" style="align-items:flex-start">
+        <div class="form-group" style="flex:0 0 auto;min-width:auto">
+          <input type="file" id="factura-foto-input" accept="image/*" capture="environment" style="display:none" onchange="handleFacturaFotoChange(event)">
+          <button type="button" class="btn btn-ghost" onclick="document.getElementById('factura-foto-input').click()">📷 Elegir / tomar foto</button>
+          <div id="factura-foto-preview" style="margin-top:10px"></div>
+        </div>
+        <div class="form-group" style="flex:0 0 auto;min-width:auto">
+          <button type="button" class="btn btn-primary" id="scan-btn" onclick="escanearFactura()" disabled>🤖 Escanear con IA</button>
+          <div class="text-muted" style="margin-top:6px;max-width:220px">Si no tenés foto o falla el escaneo, completá el formulario manualmente.</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Proveedor</label>
+          <select class="form-select" id="f-proveedor" onchange="document.getElementById('f-proveedor-nuevo').style.display = this.value==='__new__' ? '' : 'none'">
+            <option value="">— Seleccioná —</option>
+            <option value="__new__">➕ Nuevo proveedor…</option>
+            ${proveedorOptions}
+          </select>
+        </div>
+        <div class="form-group" id="f-proveedor-nuevo" style="display:none">
+          <label class="form-label">Nombre del nuevo proveedor</label>
+          <input type="text" class="form-input" id="f-proveedor-nombre-nuevo" placeholder="Nombre">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CUIT (opcional)</label>
+          <input type="text" class="form-input" id="f-cuit" placeholder="20-12345678-9">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input type="date" class="form-input" id="f-fecha" value="${todayISO()}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">N° factura (opcional)</label>
+          <input type="text" class="form-input" id="f-numero">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monto total (con IVA)</label>
+          <input type="number" step="0.01" min="0" class="form-input" id="f-monto" placeholder="0.00">
+        </div>
+        <div class="form-group" style="flex:0 0 auto;min-width:auto">
+          <label class="form-label">Estado</label>
+          <button type="button" class="toggle" id="f-estado-toggle" onclick="toggleEstadoFactura(this)"></button>
+          <div class="text-muted" style="margin-top:4px" id="f-estado-label">No pagado</div>
+        </div>
+      </div>
+
+      <div class="section-header" style="margin-top:18px">
+        <div class="section-title">📦 Insumos de esta factura</div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addItemRow()">+ Agregar ítem</button>
+      </div>
+      <div class="item-row-wrap">
+        <div class="item-row item-row-header">
+          <div>Insumo</div><div>Unidad</div><div>Cantidad</div><div>Precio unit.</div><div>Subtotal</div><div></div>
+        </div>
+        <div id="items-container">${itemRowHtml()}</div>
+      </div>
+
+      <button class="btn btn-primary" style="margin-top:20px" onclick="guardarFactura()" id="guardar-factura-btn">💾 Guardar factura</button>
+    </div>`;
+}
+
+window.toggleEstadoFactura = function(btn) {
+  btn.classList.toggle("on");
+  document.getElementById("f-estado-label").textContent = btn.classList.contains("on") ? "Pagado" : "No pagado";
+};
+
+function compressImageToDataUrl(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("No se pudo leer el archivo."));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("No se pudo procesar la imagen."));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const scale = maxDim / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+window.handleFacturaFotoChange = async function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    // Kept fairly small since the photo is stored inline in Realtime Database (no Storage bucket).
+    const dataUrl = await compressImageToDataUrl(file, 1000, 0.6);
+    state._facturaFotoDataUrl = dataUrl;
+    document.getElementById("factura-foto-preview").innerHTML = `<img src="${dataUrl}" class="photo-thumb">`;
+    document.getElementById("scan-btn").disabled = false;
+  } catch (err) {
+    console.error(err);
+    showToast("⚠️ No se pudo procesar la foto.", "warn");
+  }
+};
+
+window.escanearFactura = async function() {
+  if (!state._facturaFotoDataUrl) return;
+  const btn = document.getElementById("scan-btn");
+  btn.disabled = true; btn.textContent = "🤖 Escaneando...";
+  try {
+    const base64 = state._facturaFotoDataUrl.split(",")[1];
+    const resp = await fetch("/.netlify/functions/extraer-factura", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ imageBase64: base64, mediaType: "image/jpeg" })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || "Error al escanear la factura.");
+    aplicarDatosEscaneados(data);
+    showToast("✅ Factura escaneada. Revisá los datos antes de guardar.", "success");
+  } catch (err) {
+    console.error(err);
+    showToast("⚠️ No se pudo escanear automáticamente. Completá los datos a mano.", "warn");
+  } finally {
+    btn.disabled = false; btn.textContent = "🤖 Escanear con IA";
+  }
+};
+
+function aplicarDatosEscaneados(data) {
+  if (data.proveedor) {
+    const sel = document.getElementById("f-proveedor");
+    const match = Object.entries(state.proveedores).find(([, p]) => p.nombre.trim().toLowerCase() === String(data.proveedor).trim().toLowerCase());
+    if (match) {
+      sel.value = match[0];
+      document.getElementById("f-proveedor-nuevo").style.display = "none";
+    } else {
+      sel.value = "__new__";
+      document.getElementById("f-proveedor-nuevo").style.display = "";
+      document.getElementById("f-proveedor-nombre-nuevo").value = data.proveedor;
+    }
+  }
+  if (data.cuit) document.getElementById("f-cuit").value = data.cuit;
+  if (data.fecha && /^\d{4}-\d{2}-\d{2}$/.test(data.fecha)) document.getElementById("f-fecha").value = data.fecha;
+  if (data.numeroFactura) document.getElementById("f-numero").value = data.numeroFactura;
+  if (data.montoTotal != null && !Number.isNaN(Number(data.montoTotal))) document.getElementById("f-monto").value = data.montoTotal;
+
+  if (Array.isArray(data.items) && data.items.length) {
+    const cont = document.getElementById("items-container");
+    cont.innerHTML = data.items.map(it => {
+      const matchedId = matchInsumoId(it.nombre);
+      return itemRowHtml({
+        insumoId: matchedId || "__new__",
+        nombreNuevo: matchedId ? "" : (it.nombre || ""),
+        cantidad: it.cantidad ?? "",
+        unidad: it.unidad ?? "",
+        precioUnitario: it.precioUnitario ?? ""
+      });
+    }).join("");
+  }
+}
+
+window.guardarFactura = async function() {
+  const proveedorSel = document.getElementById("f-proveedor").value;
+  const proveedorNombreNuevo = document.getElementById("f-proveedor-nombre-nuevo").value.trim();
+  const cuit = document.getElementById("f-cuit").value.trim();
+  const fecha = document.getElementById("f-fecha").value;
+  const numero = document.getElementById("f-numero").value.trim();
+  const monto = parseFloat(document.getElementById("f-monto").value);
+  const pagado = document.getElementById("f-estado-toggle").classList.contains("on");
+
+  if (!proveedorSel) { showToast("⚠️ Elegí o creá un proveedor.", "warn"); return; }
+  if (proveedorSel === "__new__" && !proveedorNombreNuevo) { showToast("⚠️ Escribí el nombre del nuevo proveedor.", "warn"); return; }
+  if (!fecha) { showToast("⚠️ Elegí la fecha.", "warn"); return; }
+  if (!(monto > 0)) { showToast("⚠️ Ingresá el monto total.", "warn"); return; }
+
+  const saveBtn = document.getElementById("guardar-factura-btn");
+  saveBtn.disabled = true; saveBtn.textContent = "Guardando...";
+
+  try {
+    let proveedorId = proveedorSel;
+    let proveedorNombre;
+    if (proveedorSel === "__new__") {
+      const newProvRef = push(ref(db, "costeo/proveedores"));
+      proveedorId = newProvRef.key;
+      proveedorNombre = proveedorNombreNuevo;
+      await set(newProvRef, { nombre: proveedorNombre, cuit, creadoTs: Date.now() });
+    } else {
+      proveedorNombre = state.proveedores[proveedorId]?.nombre || "";
+    }
+
+    const itemRows = Array.from(document.querySelectorAll("#items-container .item-row"));
+    const items = [];
+    for (const row of itemRows) {
+      const sel = row.querySelector(".item-insumo").value;
+      const nombreNuevo = row.querySelector(".item-nombre-nuevo").value.trim();
+      const cantidad = parseFloat(row.querySelector(".item-cantidad").value);
+      const unidad = row.querySelector(".item-unidad").value.trim();
+      const precioUnitario = parseFloat(row.querySelector(".item-precio").value);
+      if ((!sel || sel === "__new__") && !nombreNuevo) continue;
+      if (!(precioUnitario > 0)) continue;
+
+      let insumoId = sel;
+      let nombre;
+      if (!sel || sel === "__new__") {
+        const newInsRef = push(ref(db, "costeo/insumos"));
+        insumoId = newInsRef.key;
+        nombre = nombreNuevo;
+        await set(newInsRef, { nombre, unidad, precioActual: precioUnitario, actualizadoTs: Date.now() });
+        state.insumos[insumoId] = { nombre, unidad, precioActual: precioUnitario, actualizadoTs: Date.now() };
+      } else {
+        nombre = state.insumos[insumoId]?.nombre || "";
+        const finalUnidad = unidad || state.insumos[insumoId]?.unidad || "";
+        await update(ref(db, `costeo/insumos/${insumoId}`), { precioActual: precioUnitario, unidad: finalUnidad, actualizadoTs: Date.now() });
+      }
+      items.push({ insumoId, nombre, cantidad: Number.isFinite(cantidad) ? cantidad : null, unidad, precioUnitario });
+    }
+
+    const facturaRef = push(ref(db, "costeo/facturas"));
+    const facturaId = facturaRef.key;
+
+    for (const it of items) {
+      await push(ref(db, `costeo/insumos/${it.insumoId}/historial`), {
+        precio: it.precioUnitario, fecha, proveedorId, proveedorNombre, facturaId
+      });
+    }
+
+    await set(facturaRef, {
+      proveedorId, proveedorNombre, cuit, fecha, numeroFactura: numero,
+      montoTotal: monto, estado: pagado ? "pagado" : "no_pagado",
+      foto: state._facturaFotoDataUrl || "", items, creadoTs: Date.now()
+    });
+
+    showToast("✅ Factura guardada correctamente.", "success");
+    state._facturaFotoDataUrl = null;
+    navigate("facturas");
+  } catch (err) {
+    console.error(err);
+    showToast("❌ Error al guardar la factura. Reintentá.", "danger");
+    saveBtn.disabled = false; saveBtn.textContent = "💾 Guardar factura";
+  }
+};
+
+// =============================================================
+// FACTURAS (listado)
+// =============================================================
+window.setFacturasFiltro = function(f) {
+  state.facturasFiltro = f;
+  render();
+};
+
+window.toggleFacturaEstado = async function(id) {
+  const f = state.facturas[id];
+  if (!f) return;
+  const nuevo = f.estado === "pagado" ? "no_pagado" : "pagado";
+  await update(ref(db, `costeo/facturas/${id}`), { estado: nuevo });
+  showToast(nuevo === "pagado" ? "✅ Marcada como pagada." : "↩️ Marcada como no pagada.", "success");
+};
+
+function renderFacturasView(container) {
+  state.formOpen = false;
+  const entries = objToSortedEntries(state.facturas, (a, b) => (b[1].creadoTs || 0) - (a[1].creadoTs || 0))
+    .filter(([, f]) => state.facturasFiltro === "todas" || f.estado === state.facturasFiltro);
+
+  const rows = entries.map(([id, f]) => `
+    <tr>
+      <td>${fmtDate(f.fecha)}</td>
+      <td>${escapeHtml(f.proveedorNombre)}</td>
+      <td>${escapeHtml(f.numeroFactura) || "—"}</td>
+      <td>${fmtMoney(f.montoTotal)}</td>
+      <td>${(f.items || []).length} ítem(s)</td>
+      <td>${f.foto ? `<a href="${f.foto}" target="_blank" rel="noopener">Ver foto</a>` : "—"}</td>
+      <td><span class="badge ${f.estado === "pagado" ? "badge-pagado" : "badge-no-pagado"}">${f.estado === "pagado" ? "Pagado" : "No pagado"}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="toggleFacturaEstado('${id}')">${f.estado === "pagado" ? "Marcar no pagada" : "Marcar pagada"}</button></td>
+    </tr>`).join("");
+
+  container.innerHTML = `
+    <div class="page-title">Facturas registradas</div>
+    <div class="page-sub">Historial de facturas de proveedores.</div>
+    <div class="tabs">
+      <button class="tab ${state.facturasFiltro === "todas" ? "active" : ""}" onclick="setFacturasFiltro('todas')">Todas</button>
+      <button class="tab ${state.facturasFiltro === "no_pagado" ? "active" : ""}" onclick="setFacturasFiltro('no_pagado')">No pagadas</button>
+      <button class="tab ${state.facturasFiltro === "pagado" ? "active" : ""}" onclick="setFacturasFiltro('pagado')">Pagadas</button>
+    </div>
+    <div class="section-block">
+      ${entries.length === 0 ? `<div class="empty-state">No hay facturas en esta categoría.</div>` : `
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Fecha</th><th>Proveedor</th><th>N° Factura</th><th>Monto</th><th>Ítems</th><th>Foto</th><th>Estado</th><th></th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`}
+    </div>`;
+}
+
+// =============================================================
+// ÓRDENES DE PAGO (derivadas de facturas)
+// =============================================================
+window.setPagosFiltro = function(f) {
+  state.pagosFiltro = f;
+  render();
+};
+
+function renderPagosView(container) {
+  state.formOpen = false;
+  const entries = objToSortedEntries(state.facturas, (a, b) => (a[1].fecha || "").localeCompare(b[1].fecha || "") * -1)
+    .filter(([, f]) => state.pagosFiltro === "todas" || f.estado === state.pagosFiltro);
+
+  const cards = entries.map(([id, f]) => `
+    <div class="mini-card">
+      <div>
+        <div class="mini-card-title">${escapeHtml(f.proveedorNombre)}</div>
+        <div class="mini-card-sub">${fmtDate(f.fecha)} · Factura ${escapeHtml(f.numeroFactura) || "s/n"} · ${fmtMoney(f.montoTotal)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="badge ${f.estado === "pagado" ? "badge-pagado" : "badge-no-pagado"}">${f.estado === "pagado" ? "Pagada" : "Pendiente"}</span>
+        <button class="btn ${f.estado === "pagado" ? "btn-ghost" : "btn-turq"} btn-sm" onclick="toggleFacturaEstado('${id}')">
+          ${f.estado === "pagado" ? "↩️ Reabrir" : "✅ Marcar pagada"}
+        </button>
+      </div>
+    </div>`).join("");
+
+  container.innerHTML = `
+    <div class="page-title">Órdenes de pago</div>
+    <div class="page-sub">Cada factura registrada genera automáticamente una orden de pago.</div>
+    <div class="tabs">
+      <button class="tab ${state.pagosFiltro === "no_pagado" ? "active" : ""}" onclick="setPagosFiltro('no_pagado')">Pendientes</button>
+      <button class="tab ${state.pagosFiltro === "pagado" ? "active" : ""}" onclick="setPagosFiltro('pagado')">Pagadas</button>
+      <button class="tab ${state.pagosFiltro === "todas" ? "active" : ""}" onclick="setPagosFiltro('todas')">Todas</button>
+    </div>
+    <div class="card-list">
+      ${entries.length === 0 ? `<div class="empty-state">No hay órdenes de pago en esta categoría.</div>` : cards}
+    </div>`;
+}
+
+// =============================================================
+// PROVEEDORES (CRUD)
+// =============================================================
+window.abrirFormProveedor = function(id) {
+  state.editingProveedorId = id || "new";
+  state.formOpen = true;
+  render();
+};
+window.cerrarFormProveedor = function() {
+  state.editingProveedorId = null;
+  state.formOpen = false;
+  render();
+};
+window.guardarProveedor = async function() {
+  const nombre = document.getElementById("prov-nombre").value.trim();
+  const cuit = document.getElementById("prov-cuit").value.trim();
+  const telefono = document.getElementById("prov-telefono").value.trim();
+  const contacto = document.getElementById("prov-contacto").value.trim();
+  const notas = document.getElementById("prov-notas").value.trim();
+  if (!nombre) { showToast("⚠️ Ingresá el nombre del proveedor.", "warn"); return; }
+
+  const id = state.editingProveedorId;
+  const data = { nombre, cuit, telefono, contacto, notas };
+  try {
+    if (id === "new") {
+      await set(push(ref(db, "costeo/proveedores")), { ...data, creadoTs: Date.now() });
+    } else {
+      await update(ref(db, `costeo/proveedores/${id}`), data);
+    }
+    showToast("✅ Proveedor guardado.", "success");
+    state.editingProveedorId = null;
+    state.formOpen = false;
+    render();
+  } catch (err) {
+    console.error(err);
+    showToast("❌ Error al guardar el proveedor.", "danger");
+  }
+};
+window.eliminarProveedor = async function(id) {
+  if (!confirm("¿Eliminar este proveedor? Las facturas ya registradas no se ven afectadas.")) return;
+  await remove(ref(db, `costeo/proveedores/${id}`));
+  showToast("🗑️ Proveedor eliminado.", "success");
+};
+
+function renderProveedoresView(container) {
+  const editing = state.editingProveedorId;
+  const editingData = editing && editing !== "new" ? (state.proveedores[editing] || {}) : {};
+
+  const formHtml = editing ? `
+    <div class="section-block" id="proveedor-form">
+      <div class="section-title" style="margin-bottom:14px">${editing === "new" ? "➕ Nuevo proveedor" : "✏️ Editar proveedor"}</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="prov-nombre" value="${escapeHtml(editingData.nombre)}"></div>
+        <div class="form-group"><label class="form-label">CUIT</label><input class="form-input" id="prov-cuit" value="${escapeHtml(editingData.cuit)}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Teléfono</label><input class="form-input" id="prov-telefono" value="${escapeHtml(editingData.telefono)}"></div>
+        <div class="form-group"><label class="form-label">Contacto</label><input class="form-input" id="prov-contacto" value="${escapeHtml(editingData.contacto)}"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px"><label class="form-label">Notas</label><textarea class="form-input" id="prov-notas">${escapeHtml(editingData.notas)}</textarea></div>
+      <button class="btn btn-primary" onclick="guardarProveedor()">💾 Guardar</button>
+      <button class="btn btn-ghost" onclick="cerrarFormProveedor()">Cancelar</button>
+    </div>` : "";
+
+  const rows = objToSortedEntries(state.proveedores, (a, b) => a[1].nombre.localeCompare(b[1].nombre)).map(([id, p]) => `
+    <tr>
+      <td>${escapeHtml(p.nombre)}</td>
+      <td>${escapeHtml(p.cuit) || "—"}</td>
+      <td>${escapeHtml(p.telefono) || "—"}</td>
+      <td>${escapeHtml(p.contacto) || "—"}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="abrirFormProveedor('${id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarProveedor('${id}')">Eliminar</button>
+      </td>
+    </tr>`).join("");
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="page-title">Proveedores</div>
+        <div class="page-sub" style="margin-bottom:0">Gestioná los proveedores de insumos del negocio.</div>
+      </div>
+      ${!editing ? `<button class="btn btn-primary" onclick="abrirFormProveedor()">+ Nuevo proveedor</button>` : ""}
+    </div>
+    ${formHtml}
+    <div class="section-block">
+      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>CUIT</th><th>Teléfono</th><th>Contacto</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay proveedores cargados.</div>`}
+    </div>`;
+}
+
+// =============================================================
+// INSUMOS (maestro + historial de precios)
+// =============================================================
+window.abrirFormInsumo = function(id) {
+  state.editingInsumoId = id || "new";
+  state.formOpen = true;
+  render();
+};
+window.cerrarFormInsumo = function() {
+  state.editingInsumoId = null;
+  state.formOpen = false;
+  render();
+};
+window.guardarInsumo = async function() {
+  const nombre = document.getElementById("ins-nombre").value.trim();
+  const unidad = document.getElementById("ins-unidad").value.trim();
+  const precio = parseFloat(document.getElementById("ins-precio").value);
+  if (!nombre) { showToast("⚠️ Ingresá el nombre del insumo.", "warn"); return; }
+
+  const id = state.editingInsumoId;
+  try {
+    if (id === "new") {
+      const newRef = push(ref(db, "costeo/insumos"));
+      await set(newRef, { nombre, unidad, precioActual: Number.isFinite(precio) ? precio : 0, actualizadoTs: Date.now() });
+      if (precio > 0) {
+        await push(ref(db, `costeo/insumos/${newRef.key}/historial`), { precio, fecha: todayISO(), proveedorId: "", proveedorNombre: "Carga manual", facturaId: "" });
+      }
+    } else {
+      await update(ref(db, `costeo/insumos/${id}`), { nombre, unidad });
+    }
+    showToast("✅ Insumo guardado.", "success");
+    state.editingInsumoId = null;
+    state.formOpen = false;
+    render();
+  } catch (err) {
+    console.error(err);
+    showToast("❌ Error al guardar el insumo.", "danger");
+  }
+};
+window.eliminarInsumo = async function(id) {
+  if (!confirm("¿Eliminar este insumo? Se perderá su historial de precios.")) return;
+  await remove(ref(db, `costeo/insumos/${id}`));
+  showToast("🗑️ Insumo eliminado.", "success");
+};
+window.toggleHistorialInsumo = function(id) {
+  state.viewingInsumoHistId = state.viewingInsumoHistId === id ? null : id;
+  render();
+};
+
+function renderInsumosView(container) {
+  const editing = state.editingInsumoId;
+  const editingData = editing && editing !== "new" ? (state.insumos[editing] || {}) : {};
+
+  const formHtml = editing ? `
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:14px">${editing === "new" ? "➕ Nuevo insumo" : "✏️ Editar insumo"}</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="ins-nombre" value="${escapeHtml(editingData.nombre)}"></div>
+        <div class="form-group"><label class="form-label">Unidad</label><input class="form-input" id="ins-unidad" placeholder="kg, litros, unidad..." value="${escapeHtml(editingData.unidad)}"></div>
+        ${editing === "new" ? `<div class="form-group"><label class="form-label">Precio inicial (opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="ins-precio"></div>` : `<input type="hidden" id="ins-precio">`}
+      </div>
+      <button class="btn btn-primary" onclick="guardarInsumo()">💾 Guardar</button>
+      <button class="btn btn-ghost" onclick="cerrarFormInsumo()">Cancelar</button>
+    </div>` : "";
+
+  const rows = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre)).map(([id, ins]) => {
+    const hist = objToSortedEntries(ins.historial, (a, b) => a[1].fecha.localeCompare(b[1].fecha));
+    const isOpen = state.viewingInsumoHistId === id;
+    const histRows = hist.slice().reverse().map(([, h]) => `
+      <tr><td>${fmtDate(h.fecha)}</td><td>${fmtMoney(h.precio)}</td><td>${escapeHtml(h.proveedorNombre) || "—"}</td></tr>`).join("");
+    return `
+      <tr>
+        <td>${escapeHtml(ins.nombre)}</td>
+        <td>${escapeHtml(ins.unidad) || "—"}</td>
+        <td>${fmtMoney(ins.precioActual)}</td>
+        <td>${hist.length}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-ghost btn-sm" onclick="toggleHistorialInsumo('${id}')">${isOpen ? "Ocultar" : "Ver historial"}</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirFormInsumo('${id}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarInsumo('${id}')">Eliminar</button>
+        </td>
+      </tr>
+      ${isOpen ? `<tr><td colspan="5" style="background:var(--cream);padding:14px 18px">
+        ${hist.length ? `<table class="data-table"><thead><tr><th>Fecha</th><th>Precio</th><th>Proveedor</th></tr></thead><tbody>${histRows}</tbody></table>` : `<div class="text-muted">Sin historial de precios todavía.</div>`}
+      </td></tr>` : ""}`;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="page-title">Insumos</div>
+        <div class="page-sub" style="margin-bottom:0">Precio actual e historial de cada insumo.</div>
+      </div>
+      ${!editing ? `<button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button>` : ""}
+    </div>
+    ${formHtml}
+    <div class="section-block">
+      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Unidad</th><th>Precio actual</th><th>Registros</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay insumos cargados. Se crean automáticamente al registrar una factura, o podés agregarlos a mano.</div>`}
+    </div>`;
+}
+
+// =============================================================
+// PRODUCTOS Y RECETAS (costeo automático)
+// =============================================================
+function recipeRowHtml({ insumoId = "", cantidad = "" } = {}) {
+  const options = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .map(([id, ins]) => `<option value="${id}" ${id === insumoId ? "selected" : ""}>${escapeHtml(ins.nombre)}${ins.unidad ? " (" + escapeHtml(ins.unidad) + ")" : ""} — ${fmtMoney(ins.precioActual)}</option>`).join("");
+  return `
+    <div class="recipe-row">
+      <select class="form-select recipe-insumo" onchange="recalcCostoProducto()">
+        <option value="">— Insumo —</option>
+        ${options}
+      </select>
+      <input type="number" step="0.001" min="0" class="form-input recipe-cantidad" placeholder="Cantidad usada" value="${cantidad ?? ""}" oninput="recalcCostoProducto()">
+      <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.recipe-row').remove();recalcCostoProducto()">✕</button>
+    </div>`;
+}
+window.addRecipeRow = function() {
+  document.getElementById("recipe-container").insertAdjacentHTML("beforeend", recipeRowHtml());
+};
+window.recalcCostoProducto = function() {
+  const rows = Array.from(document.querySelectorAll("#recipe-container .recipe-row"));
+  let total = 0;
+  for (const row of rows) {
+    const insumoId = row.querySelector(".recipe-insumo").value;
+    const cantidad = parseFloat(row.querySelector(".recipe-cantidad").value) || 0;
+    const precio = state.insumos[insumoId]?.precioActual || 0;
+    total += precio * cantidad;
+  }
+  const el = document.getElementById("costo-preview");
+  if (el) el.textContent = fmtMoney(total);
+  return total;
+};
+
+function calcCostoProducto(producto) {
+  const receta = producto.receta || {};
+  return Object.entries(receta).reduce((sum, [insumoId, cantidad]) => {
+    const precio = state.insumos[insumoId]?.precioActual || 0;
+    return sum + precio * (Number(cantidad) || 0);
+  }, 0);
+}
+
+window.abrirFormProducto = function(id) {
+  state.editingProductoId = id || "new";
+  state.formOpen = true;
+  render();
+  if (id && id !== "new") {
+    setTimeout(() => window.recalcCostoProducto(), 0);
+  }
+};
+window.cerrarFormProducto = function() {
+  state.editingProductoId = null;
+  state.formOpen = false;
+  render();
+};
+window.guardarProducto = async function() {
+  const nombre = document.getElementById("prod-nombre").value.trim();
+  const precioVentaRaw = document.getElementById("prod-precio-venta").value;
+  const precioVenta = precioVentaRaw ? parseFloat(precioVentaRaw) : null;
+  if (!nombre) { showToast("⚠️ Ingresá el nombre del producto.", "warn"); return; }
+
+  const rows = Array.from(document.querySelectorAll("#recipe-container .recipe-row"));
+  const receta = {};
+  for (const row of rows) {
+    const insumoId = row.querySelector(".recipe-insumo").value;
+    const cantidad = parseFloat(row.querySelector(".recipe-cantidad").value);
+    if (insumoId && cantidad > 0) receta[insumoId] = cantidad;
+  }
+
+  const id = state.editingProductoId;
+  const data = { nombre, precioVenta, receta };
+  try {
+    if (id === "new") {
+      await set(push(ref(db, "costeo/productos")), { ...data, creadoTs: Date.now() });
+    } else {
+      await update(ref(db, `costeo/productos/${id}`), data);
+    }
+    showToast("✅ Producto guardado.", "success");
+    state.editingProductoId = null;
+    state.formOpen = false;
+    render();
+  } catch (err) {
+    console.error(err);
+    showToast("❌ Error al guardar el producto.", "danger");
+  }
+};
+window.eliminarProducto = async function(id) {
+  if (!confirm("¿Eliminar este producto?")) return;
+  await remove(ref(db, `costeo/productos/${id}`));
+  showToast("🗑️ Producto eliminado.", "success");
+};
+
+function renderProductosView(container) {
+  const editing = state.editingProductoId;
+  const editingData = editing && editing !== "new" ? (state.productos[editing] || {}) : {};
+  const recetaRows = editing && editing !== "new" ? objToSortedEntries(editingData.receta || {}, () => 0).map(([insumoId, cantidad]) => recipeRowHtml({ insumoId, cantidad })).join("") : recipeRowHtml();
+
+  const formHtml = editing ? `
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:14px">${editing === "new" ? "➕ Nuevo producto" : "✏️ Editar producto"}</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="prod-nombre" value="${escapeHtml(editingData.nombre)}"></div>
+        <div class="form-group"><label class="form-label">Precio de venta (opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="prod-precio-venta" value="${editingData.precioVenta ?? ""}"></div>
+      </div>
+      <div class="section-header" style="margin-top:10px">
+        <div class="section-title">🧾 Receta (insumos que lleva)</div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addRecipeRow()">+ Agregar insumo</button>
+      </div>
+      <div id="recipe-container">${recetaRows}</div>
+      <div style="margin-top:14px;font-size:13px">Costo estimado: <strong id="costo-preview">$0,00</strong></div>
+      <button class="btn btn-primary" style="margin-top:14px" onclick="guardarProducto()">💾 Guardar</button>
+      <button class="btn btn-ghost" onclick="cerrarFormProducto()">Cancelar</button>
+    </div>` : "";
+
+  const rows = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre)).map(([id, p]) => {
+    const costo = calcCostoProducto(p);
+    const margen = p.precioVenta ? ((p.precioVenta - costo) / p.precioVenta * 100) : null;
+    return `
+      <tr>
+        <td>${escapeHtml(p.nombre)}</td>
+        <td>${Object.keys(p.receta || {}).length} insumo(s)</td>
+        <td>${fmtMoney(costo)}</td>
+        <td>${p.precioVenta ? fmtMoney(p.precioVenta) : "—"}</td>
+        <td>${margen !== null ? fmtPct(margen) : "—"}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-ghost btn-sm" onclick="abrirFormProducto('${id}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarProducto('${id}')">Eliminar</button>
+        </td>
+      </tr>`;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="page-title">Productos y recetas</div>
+        <div class="page-sub" style="margin-bottom:0">El costo se calcula automáticamente a partir del precio actual de los insumos.</div>
+      </div>
+      ${!editing ? `<button class="btn btn-primary" onclick="abrirFormProducto()">+ Nuevo producto</button>` : ""}
+    </div>
+    ${formHtml}
+    <div class="section-block">
+      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Producto</th><th>Receta</th><th>Costo actual</th><th>Precio venta</th><th>Margen</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay productos cargados.</div>`}
+    </div>`;
+}
+
+// =============================================================
+// ANÁLISIS — variación de precios vs. inflación
+// =============================================================
+window.setAnalisisPeriodo = function(n) {
+  state.analisisPeriodo = parseInt(n, 10);
+  render();
+};
+
+window.guardarInflacionMes = async function(mes, input) {
+  const val = parseFloat(input.value);
+  if (!Number.isFinite(val)) return;
+  await set(ref(db, `costeo/inflacion/${mes}`), val);
+  showToast(`✅ Inflación de ${monthLabel(mes)} guardada.`, "success");
+};
+
+function accumulatedInflation(months) {
+  const today = new Date();
+  let acc = 1;
+  let missing = 0;
+  for (let i = 0; i < months; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const val = state.inflacion[key];
+    if (val === undefined) missing++;
+    acc *= (1 + (Number(val) || 0) / 100);
+  }
+  return { pct: (acc - 1) * 100, missing };
+}
+
+function renderAnalisisView(container) {
+  state.formOpen = true;
+  const periodo = state.analisisPeriodo;
+  const cutoff = monthsAgoISO(periodo);
+  const { pct: inflacionAcum, missing } = accumulatedInflation(periodo);
+
+  const filas = objToSortedEntries(state.insumos, () => 0).map(([id, ins]) => {
+    const hist = objToSortedEntries(ins.historial, (a, b) => a[1].fecha.localeCompare(b[1].fecha)).map(([, h]) => h);
+    if (hist.length < 2) return { id, ins, insuficiente: true };
+    const base = hist.find(h => h.fecha >= cutoff) || hist[0];
+    const actual = ins.precioActual;
+    const variacion = base.precio > 0 ? ((actual - base.precio) / base.precio) * 100 : null;
+    const delta = variacion !== null ? variacion - inflacionAcum : null;
+    return { id, ins, insuficiente: false, base, variacion, delta };
+  }).sort((a, b) => {
+    if (a.insuficiente && b.insuficiente) return 0;
+    if (a.insuficiente) return 1;
+    if (b.insuficiente) return -1;
+    return (b.delta ?? -999) - (a.delta ?? -999);
+  });
+
+  const alertas = filas.filter(f => !f.insuficiente && f.delta > 0);
+
+  const rows = filas.map(f => {
+    if (f.insuficiente) {
+      return `<tr><td>${escapeHtml(f.ins.nombre)}</td><td colspan="4" class="text-muted">Datos insuficientes (se necesitan al menos 2 precios registrados)</td></tr>`;
+    }
+    return `
+      <tr>
+        <td>${escapeHtml(f.ins.nombre)}</td>
+        <td>${fmtMoney(f.base.precio)} <span class="text-muted">(${fmtDate(f.base.fecha)})</span></td>
+        <td>${fmtMoney(f.ins.precioActual)}</td>
+        <td class="${f.variacion > 0 ? "delta-pos" : "delta-neg"}">${fmtPct(f.variacion)}</td>
+        <td>${f.delta > 0 ? `<span class="badge badge-alerta">⚠️ ${fmtPct(f.delta)} sobre inflación</span>` : `<span class="badge badge-ok">Dentro de la inflación</span>`}</td>
+      </tr>`;
+  }).join("");
+
+  // Inflación table: last 12 months, most recent first
+  const today = new Date();
+  const mesesInflacion = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    mesesInflacion.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  const inflacionRows = mesesInflacion.map(key => `
+    <tr>
+      <td>${monthLabel(key)}</td>
+      <td><input type="number" step="0.1" class="form-input" style="max-width:120px" value="${state.inflacion[key] ?? ""}" placeholder="% mensual" onchange="guardarInflacionMes('${key}', this)"></td>
+    </tr>`).join("");
+
+  container.innerHTML = `
+    <div class="page-title">Análisis de precios e inflación</div>
+    <div class="page-sub">Comparación de la variación de precio de cada insumo contra la inflación acumulada del período.</div>
+
+    <div class="section-block">
+      <div class="section-header">
+        <div class="section-title">📈 Variación de insumos</div>
+        <select class="form-select" style="max-width:200px" onchange="setAnalisisPeriodo(this.value)">
+          <option value="3" ${periodo === 3 ? "selected" : ""}>Últimos 3 meses</option>
+          <option value="6" ${periodo === 6 ? "selected" : ""}>Últimos 6 meses</option>
+          <option value="12" ${periodo === 12 ? "selected" : ""}>Últimos 12 meses</option>
+        </select>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Inflación acumulada (${periodo}m)</div><div class="stat-value">${fmtPct(inflacionAcum)}</div>${missing ? `<div class="text-muted">${missing} mes(es) sin dato cargado</div>` : ""}</div>
+        <div class="stat-card"><div class="stat-label">Insumos por encima de la inflación</div><div class="stat-value">${alertas.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Insumos con historial</div><div class="stat-value">${filas.filter(f => !f.insuficiente).length} / ${filas.length}</div></div>
+      </div>
+      ${alertas.length ? `<div class="alert-box alert-warn">⚠️ ${alertas.length} insumo(s) subieron más que la inflación del período — considerá renegociar precio o buscar otro proveedor.</div>` : ""}
+      ${filas.length === 0 ? `<div class="empty-state">Todavía no hay insumos cargados.</div>` : `
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Insumo</th><th>Precio base</th><th>Precio actual</th><th>Variación</th><th>Vs. inflación</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`}
+    </div>
+
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:14px">🏦 Inflación mensual (IPC)</div>
+      <div class="text-muted" style="margin-bottom:12px">Cargá manualmente el % de inflación mensual (por ejemplo, del INDEC) para poder comparar contra la variación de precios.</div>
+      <div class="data-table-wrap">
+        <table class="data-table"><thead><tr><th>Mes</th><th>% mensual</th></tr></thead><tbody>${inflacionRows}</tbody></table>
+      </div>
+    </div>`;
+}
+
+// =============================================================
+// CONFIG
+// =============================================================
+window.cambiarPasswordAdmin = async function() {
+  const nueva = document.getElementById("cfg-nueva-pass").value;
+  if (!nueva || nueva.length < 4) { showToast("⚠️ La contraseña debe tener al menos 4 caracteres.", "warn"); return; }
+  await set(ref(db, "costeo/config/adminPassword"), nueva);
+  showToast("✅ Contraseña actualizada.", "success");
+  document.getElementById("cfg-nueva-pass").value = "";
+};
+
+function renderConfigView(container) {
+  state.formOpen = true;
+  container.innerHTML = `
+    <div class="page-title">Configuración</div>
+    <div class="page-sub">Ajustes del módulo de Costeo &amp; Proveedores.</div>
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:14px">🔑 Contraseña de acceso</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nueva contraseña</label><input type="password" class="form-input" id="cfg-nueva-pass" placeholder="••••••"></div>
+      </div>
+      <button class="btn btn-primary" onclick="cambiarPasswordAdmin()">Actualizar contraseña</button>
+    </div>
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">🤖 Escaneo automático de facturas</div>
+      <div class="text-muted">El escaneo con IA depende de una función del servidor (Netlify Functions) con una clave de la API de Anthropic configurada como variable de entorno <code>ANTHROPIC_API_KEY</code>. Si no está configurada, o el escaneo falla, el formulario de "Nueva factura" se completa manualmente sin ningún problema — no es un requisito para usar la app.</div>
+    </div>`;
+}
+
+// ── Bootstrap ────────────────────────────────────────────
+attachListeners();
+render();
+</script>
+</body>
+</html>
