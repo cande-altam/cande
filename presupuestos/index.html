@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Candela — Presupuestos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --cream:#EEEBD7; --cream-dark:#dedad8; --cream-mid:#e5e1cc;
+  --black:#22201F; --black-soft:#3a3836;
+  --terra:#E15D46; --terra-light:#ea7a65; --terra-pale:#f9ddd8;
+  --turq:#9BD6CC; --turq-dark:#6bbfb4; --turq-pale:#d8f0ed;
+  --gray:#9a9888; --gray-light:#ccc9b5; --white:#ffffff;
+  --green:#27ae60; --green-pale:#e8f8f0;
+  --shadow-sm:0 1px 3px rgba(34,32,31,.06),0 1px 2px rgba(34,32,31,.04);
+  --shadow-md:0 4px 16px rgba(34,32,31,.08),0 2px 6px rgba(34,32,31,.05);
+  --shadow-lg:0 12px 40px rgba(34,32,31,.12),0 4px 12px rgba(34,32,31,.06);
+  --shadow-terra:0 4px 18px rgba(225,93,70,.30);
+  --shadow-turq:0 4px 18px rgba(155,214,204,.35);
+  --r:14px;--r-sm:8px;--r-xs:6px;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--black);min-height:100vh;font-weight:300;font-size:14px;}
+
+/* HEADER */
+.header{background:var(--black);padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;height:68px;box-shadow:0 1px 0 rgba(255,255,255,.06),0 4px 24px rgba(0,0,0,.3);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{font-size:22px;}
+.logo-text-wrap{display:flex;flex-direction:column;line-height:1.1;}
+.logo-name{font-size:15px;font-weight:600;color:var(--cream);letter-spacing:.2px;}
+.logo-sub{font-size:9px;color:var(--gray);font-weight:400;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+.nav-desktop{display:flex;gap:2px;align-items:center;flex-wrap:wrap;}
+.nav-btn{padding:8px 14px;border:none;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;font-size:12.5px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;border-radius:8px;transition:all .2s cubic-bezier(.25,.8,.25,1);letter-spacing:.2px;white-space:nowrap;}
+.nav-btn:hover{color:var(--cream);background:rgba(255,255,255,.08);}
+.nav-btn.active{color:#fff;background:var(--terra);font-weight:600;box-shadow:var(--shadow-terra);}
+.nav-logout{padding:8px 14px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.6);cursor:pointer;font-size:12px;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;}
+.nav-logout:hover{color:#fff;border-color:rgba(255,255,255,.4);}
+.nav-hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;background:none;border:none;}
+.nav-hamburger span{width:22px;height:2px;background:var(--gray);border-radius:2px;display:block;}
+.nav-mobile-menu{display:none;position:fixed;top:60px;left:0;right:0;background:var(--black);z-index:199;padding:12px;flex-direction:column;gap:4px;border-bottom:1px solid #3a3836;box-shadow:0 8px 24px rgba(0,0,0,.3);}
+.nav-mobile-menu.open{display:flex;}
+.nav-mobile-btn{padding:14px 18px;border:none;background:transparent;color:rgba(255,255,255,.5);cursor:pointer;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;border-radius:10px;text-align:left;}
+.nav-mobile-btn.active{color:#fff;background:var(--terra);font-weight:600;}
+@media(max-width:900px){.nav-desktop{display:none;}.nav-hamburger{display:flex;}}
+
+/* MAIN */
+.main{padding:28px;max-width:1160px;margin:0 auto;width:100%;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.main > *{animation:fadeUp .3s ease both;}
+.page-title{font-size:22px;font-weight:700;color:var(--black);margin-bottom:4px;letter-spacing:-.3px;}
+.page-sub{color:var(--gray);font-size:13px;margin-bottom:24px;font-weight:400;}
+
+/* SECTION BLOCK */
+.section-block{background:var(--white);border:1px solid rgba(34,32,31,.07);border-radius:var(--r);padding:22px 24px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap;}
+.section-title{font-size:14px;font-weight:600;color:var(--black);display:flex;align-items:center;gap:8px;}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1.5px solid var(--cream-dark);margin-bottom:20px;overflow-x:auto;}
+.tab{padding:11px 22px;cursor:pointer;font-size:13px;color:var(--gray);border:none;background:none;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;border-bottom:2px solid transparent;margin-bottom:-1.5px;white-space:nowrap;}
+.tab:hover{color:var(--black);}
+.tab.active{color:var(--terra);border-bottom-color:var(--terra);font-weight:600;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;transition:all .2s cubic-bezier(.25,.8,.25,1);letter-spacing:.2px;}
+.btn-primary{background:var(--terra);color:#fff;box-shadow:var(--shadow-terra);}
+.btn-primary:hover{background:var(--terra-light);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-turq{background:var(--turq);color:var(--black);box-shadow:var(--shadow-turq);}
+.btn-turq:hover{background:var(--turq-dark);color:#fff;}
+.btn-ghost{background:rgba(34,32,31,.04);border:1px solid rgba(34,32,31,.12);color:var(--gray);}
+.btn-ghost:hover{border-color:var(--black);color:var(--black);background:rgba(34,32,31,.06);}
+.btn-danger{background:#fdecea;color:#b83a25;border:1px solid #f5c4bc;}
+.btn-danger:hover{background:var(--terra);color:#fff;border-color:var(--terra);}
+.btn-sm{padding:6px 13px;font-size:12px;border-radius:8px;}
+
+/* BADGES */
+.badge{font-size:11px;padding:3px 10px;border-radius:100px;font-weight:500;letter-spacing:.2px;display:inline-block;}
+.badge-borrador{background:var(--cream);color:var(--gray);}
+.badge-enviado{background:var(--turq-pale);color:var(--turq-dark);}
+.badge-aceptado{background:var(--green-pale);color:var(--green);}
+.badge-rechazado{background:#fdecea;color:#b83a25;}
+
+/* FORMS */
+.form-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;}
+.form-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:150px;}
+.form-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+.form-input,.form-select{padding:10px 14px;background:var(--cream);border:1.5px solid var(--cream-dark);border-radius:var(--r-sm);color:var(--black);font-size:13px;outline:none;width:100%;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;transition:border-color .15s,box-shadow .15s;}
+.form-input:focus,.form-select:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(225,93,70,.12);}
+textarea.form-input{resize:vertical;min-height:60px;}
+
+/* TABLE */
+.data-table-wrap{overflow-x:auto;}
+.data-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--white);}
+.data-table th{text-align:left;padding:10px 14px;color:var(--gray);border-bottom:1.5px solid var(--cream-dark);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;}
+.data-table td{padding:10px 14px;border-bottom:1px solid var(--cream-mid);color:var(--black);font-weight:300;vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(155,214,204,.08);}
+
+/* ITEM ROWS */
+.item-row{display:grid;grid-template-columns:1.8fr 1.1fr .8fr 1fr 1fr 32px;gap:8px;align-items:center;padding:6px 0;}
+.item-row-header{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--cream-dark);margin-bottom:4px;}
+.item-row-wrap{overflow-x:auto;}
+@media(max-width:700px){.item-row,.item-row-header{grid-template-columns:repeat(6,140px);min-width:780px;}}
+
+/* CARDS LIST */
+.card-list{display:flex;flex-direction:column;gap:10px;}
+.mini-card{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--r-sm);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow-sm);}
+.mini-card-title{font-size:13.5px;font-weight:600;color:var(--black);}
+.mini-card-sub{font-size:11.5px;color:var(--gray);margin-top:2px;}
+
+/* LOGIN */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:80vh;}
+.login-card{background:var(--white);border:1px solid rgba(34,32,31,.08);border-radius:20px;padding:44px 40px;width:360px;max-width:90vw;box-shadow:var(--shadow-lg);}
+.login-title{font-size:22px;font-weight:700;color:var(--black);margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--gray);margin-bottom:26px;font-weight:400;}
+.admin-form{display:flex;flex-direction:column;gap:14px;}
+
+/* MISC */
+.loading{text-align:center;padding:80px 24px;color:var(--gray);font-size:13px;}
+.empty-state{text-align:center;padding:48px 24px;color:var(--gray);font-size:13px;}
+.spinner{width:34px;height:34px;border:3px solid var(--cream-dark);border-top-color:var(--terra);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#toast{position:fixed;bottom:24px;right:24px;left:auto;max-width:340px;background:var(--black);color:var(--cream);padding:14px 20px;border-radius:12px;font-size:13px;font-weight:500;opacity:0;transform:translateY(12px) scale(.97);transition:all .3s cubic-bezier(.25,.8,.25,1);pointer-events:none;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.25);}
+#toast.show{opacity:1;transform:translateY(0) scale(1);}
+#toast.success{border-left:3px solid var(--turq);}
+#toast.warn{border-left:3px solid var(--terra);}
+#toast.danger{border-left:3px solid #b83a25;}
+.text-muted{color:var(--gray);font-size:12px;}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--white);border-radius:var(--r);padding:16px 18px;border:1px solid rgba(34,32,31,.07);box-shadow:var(--shadow-sm);}
+.stat-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;font-weight:500;}
+.stat-value{font-size:22px;font-weight:700;color:var(--black);}
+.total-line{display:flex;justify-content:flex-end;gap:24px;font-size:14px;padding:8px 0;}
+.total-line.grand{font-size:18px;font-weight:700;border-top:1.5px solid var(--cream-dark);padding-top:12px;margin-top:6px;}
+@media(max-width:640px){
+  .main{padding:14px 12px;}
+  .header{padding:0 14px;height:60px;}
+  .page-title{font-size:19px;}
+  .section-block{padding:16px 14px;}
+  .form-group{min-width:100%;}
+}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(34,32,31,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:500;}
+.modal-card{background:var(--white);border-radius:18px;padding:26px 24px;max-width:480px;width:100%;box-shadow:var(--shadow-lg);max-height:90vh;overflow-y:auto;}
+
+/* PRINT */
+.print-only{display:none;}
+@media print{
+  .header,.nav-mobile-menu,.tabs,.no-print,#toast{display:none!important;}
+  body{background:#fff;font-size:12px;}
+  .main{max-width:100%;padding:0;}
+  .print-only{display:block;}
+  .section-block{box-shadow:none;border:none;padding:0;}
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading"><div class="spinner"></div>Conectando con Firebase...</div></div>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, push, update, remove, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// Firebase project for THIS app — presupuestos/* lives here, isolated from everything else.
+const firebaseConfig = {
+  apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
+  authDomain: "pedidos-de-produccion-ee3cb.firebaseapp.com",
+  databaseURL: "https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-produccion-ee3cb",
+  storageBucket: "pedidos-de-produccion-ee3cb.firebasestorage.app",
+  messagingSenderId: "744141794971",
+  appId: "1:744141794971:web:9639c8bf3834e4978ae03e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Second, separate Firebase project: the existing "Pedidos de Clientes" system
+// (branch claude/stoic-cori-7e9bj9). We only ever WRITE a new order there when a
+// quote is accepted — we don't render or manage its data, that system already does.
+const clientesFirebaseConfig = {
+  apiKey: "AIzaSyDFqS6RG1fkOZGo1x2-WcfT82am7ERHgyY",
+  authDomain: "pedidos-de-clientes-4775b.firebaseapp.com",
+  databaseURL: "https://pedidos-de-clientes-4775b-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-clientes-4775b",
+  storageBucket: "pedidos-de-clientes-4775b.firebasestorage.app",
+  messagingSenderId: "702040534350",
+  appId: "1:702040534350:web:af4acddff23ee2db24c21f"
+};
+const clientesApp = initializeApp(clientesFirebaseConfig, "clientesApp");
+const clientesDb = getDatabase(clientesApp);
+
+// Must mirror TEAMS / VENDEDORES / local values from the Pedidos de Clientes system exactly,
+// so orders created here render correctly over there. If that system's roster changes, update here too.
+const TEAMS = {
+  pan:  { name: "Panadería",      icon: "🥖" },
+  past: { name: "Pastelería",     icon: "🎂" },
+  fact: { name: "Facturería",     icon: "🥐" },
+  esp:  { name: "Especialidades", icon: "🍩" },
+  sand: { name: "Sándwiches",     icon: "🥪" },
+};
+const LOCALES_CLIENTE = ["San Luis", "SLA"];
+const VENDEDORES = ["Aaron", "Brenda", "Dana", "Erica", "Guadalupe", "Javier", "Margarita", "Natalia", "Paula", "Valentina"];
+
+function clienteKey(phone, name) {
+  if (phone) return "p_" + phone.replace(/\D/g, "");
+  return "n_" + name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+}
+function uidLike() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+async function crearPedidoCliente({ presupuesto, local, vendedor, hora, sena }) {
+  const counterSnap = await runTransaction(ref(clientesDb, "orderCounter"), current => (current || 0) + 1);
+  const num = counterSnap.snapshot.val();
+  const orderNum = String(num).padStart(4, "0");
+
+  const items = {};
+  (presupuesto.items || []).forEach(it => {
+    const id = uidLike();
+    items[id] = { id, menuId: "", name: it.descripcion, team: it.area || "pan", qty: it.cantidad, acl: "", done: false };
+  });
+
+  const order = {
+    client: presupuesto.cliente?.nombre || "",
+    phone: presupuesto.cliente?.telefono || "",
+    local,
+    vendedor,
+    deliveryDateTime: `${presupuesto.fechaEntrega}T${hora}`,
+    sena: sena || "",
+    notes: `${presupuesto.notas ? presupuesto.notas + " — " : ""}Presupuesto #${presupuesto.numero} · Total: ${fmtMoney(presupuesto.total)}`,
+    items,
+    status: "pending",
+    orderNum,
+    createdAt: new Date().toISOString()
+  };
+
+  const orderRef = await push(ref(clientesDb, "orders"), order);
+
+  const key = clienteKey(order.phone, order.client);
+  await runTransaction(ref(clientesDb, `clients/${key}`), cur => {
+    const now = new Date().toISOString();
+    if (!cur) {
+      return { key, name: order.client, phone: order.phone || "", firstOrderAt: now, lastOrderAt: now, totalOrders: 1, orderIds: { [orderRef.key]: true } };
+    }
+    return { ...cur, name: order.client, phone: order.phone || cur.phone || "", lastOrderAt: now, totalOrders: (cur.totalOrders || 0) + 1, orderIds: { ...(cur.orderIds || {}), [orderRef.key]: true } };
+  });
+
+  return { orderId: orderRef.key, orderNum };
+}
+
+const DEFAULT_ADMIN_PASS = "presupuestos2025";
+const ESTADOS = ["borrador", "enviado", "aceptado", "rechazado"];
+const ESTADO_LABELS = { borrador: "Borrador", enviado: "Enviado", aceptado: "Aceptado", rechazado: "Rechazado" };
+
+const TABS = [
+  { key: "nuevo",         label: "📝 Nuevo presupuesto" },
+  { key: "presupuestos",  label: "📄 Presupuestos" },
+  { key: "config",        label: "⚙️ Configuración" },
+];
+
+const state = {
+  loggedIn: false,
+  view: "nuevo",
+  formOpen: false,
+  mobileNavOpen: false,
+  presupuestos: {},
+  config: {},
+  filtro: "todos",
+  viewingId: null,
+  aceptandoId: null,
+};
+
+// ── Helpers ──────────────────────────────────────────────
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function todayISO() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+function fmtMoney(n) {
+  const num = Number(n) || 0;
+  return "$" + num.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function showToast(msg, type = "success") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "show " + type;
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.className = ""; }, 3200);
+}
+function objToSortedEntries(obj, cmp) {
+  return Object.entries(obj || {}).sort(cmp);
+}
+function calcTotales(items, descuento) {
+  const subtotal = (items || []).reduce((sum, it) => sum + (Number(it.cantidad) || 0) * (Number(it.precioUnitario) || 0), 0);
+  const total = Math.max(0, subtotal - (Number(descuento) || 0));
+  return { subtotal, total };
+}
+
+// ── Auth ─────────────────────────────────────────────────
+async function attemptLogin(password) {
+  let pass = state.config.adminPassword;
+  if (!pass) {
+    pass = DEFAULT_ADMIN_PASS;
+    await set(ref(db, "presupuestos/config/adminPassword"), pass);
+  }
+  if (password === pass) { state.loggedIn = true; return true; }
+  return false;
+}
+
+window.handleLoginSubmit = async function() {
+  const input = document.getElementById("login-pass");
+  const err = document.getElementById("login-err");
+  const btn = document.getElementById("login-btn");
+  btn.disabled = true; btn.textContent = "Ingresando...";
+  try {
+    const ok = await attemptLogin(input.value);
+    if (ok) { err.style.display = "none"; render(); }
+    else { err.style.display = "block"; btn.disabled = false; btn.textContent = "Ingresar"; }
+  } catch (e) {
+    console.error(e);
+    err.textContent = "Error de conexión. Verificá tu internet.";
+    err.style.display = "block";
+    btn.disabled = false; btn.textContent = "Ingresar";
+  }
+};
+
+window.handleLogout = function() {
+  state.loggedIn = false;
+  state.view = "nuevo";
+  state.formOpen = false;
+  render();
+};
+
+// ── Navigation ───────────────────────────────────────────
+window.navigate = function(view) {
+  state.view = view;
+  state.formOpen = false;
+  state.mobileNavOpen = false;
+  state.viewingId = null;
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+window.toggleMobileNav = function() { state.mobileNavOpen = !state.mobileNavOpen; render(); };
+
+// ── Root render ──────────────────────────────────────────
+function render() {
+  const root = document.getElementById("app");
+  if (!state.loggedIn) { root.innerHTML = renderLogin(); return; }
+
+  root.innerHTML = `
+    <div class="header no-print">
+      <div class="logo">
+        <span class="logo-mark">☕</span>
+        <div class="logo-text-wrap"><span class="logo-name">Candela</span><span class="logo-sub">Presupuestos</span></div>
+      </div>
+      <div class="nav-desktop">
+        ${TABS.map(t => `<button class="nav-btn ${state.view === t.key ? "active" : ""}" onclick="navigate('${t.key}')">${t.label}</button>`).join("")}
+        <button class="nav-logout" onclick="handleLogout()">Salir</button>
+      </div>
+      <button class="nav-hamburger" onclick="toggleMobileNav()"><span></span><span></span><span></span></button>
+    </div>
+    <div class="nav-mobile-menu no-print ${state.mobileNavOpen ? "open" : ""}">
+      ${TABS.map(t => `<button class="nav-mobile-btn ${state.view === t.key ? "active" : ""}" onclick="navigate('${t.key}')">${t.label}</button>`).join("")}
+      <button class="nav-mobile-btn" onclick="handleLogout()">🚪 Salir</button>
+    </div>
+    <div class="main" id="main-content"></div>`;
+
+  const container = document.getElementById("main-content");
+  switch (state.view) {
+    case "nuevo": renderNuevoView(container); break;
+    case "presupuestos": renderListadoView(container); break;
+    case "config": renderConfigView(container); break;
+    default: container.innerHTML = `<div class="empty-state">Vista no encontrada.</div>`;
+  }
+}
+
+function renderLogin() {
+  return `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-title">Presupuestos</div>
+        <div class="login-sub">Acceso exclusivo de administración</div>
+        <div class="admin-form">
+          <div class="form-group"><label class="form-label">Contraseña</label>
+            <input class="form-input" type="password" id="login-pass" placeholder="••••••" onkeydown="if(event.key==='Enter')handleLoginSubmit()"></div>
+          <button class="btn btn-primary" id="login-btn" onclick="handleLoginSubmit()">Ingresar</button>
+          <div id="login-err" style="color:var(--terra);font-size:12px;display:none">Contraseña incorrecta.</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Firebase listeners ───────────────────────────────────
+function attachListeners() {
+  onValue(ref(db, "presupuestos/items"), snap => { state.presupuestos = snap.val() || {}; if (!state.formOpen) render(); });
+  onValue(ref(db, "presupuestos/config"), snap => { state.config = snap.val() || {}; });
+}
+
+// =============================================================
+// ÍTEMS LIBRES (fila de presupuesto)
+// =============================================================
+function itemRowHtml({ descripcion = "", area = "pan", cantidad = "", precioUnitario = "" } = {}) {
+  const subtotal = (Number(cantidad) > 0 && Number(precioUnitario) > 0) ? fmtMoney(Number(cantidad) * Number(precioUnitario)) : "—";
+  const areaOptions = Object.entries(TEAMS).map(([k, t]) => `<option value="${k}" ${k === area ? "selected" : ""}>${t.icon} ${t.name}</option>`).join("");
+  return `
+    <div class="item-row">
+      <input type="text" class="form-input item-descripcion" placeholder="Descripción (ej. Torta temática Frozen 30 personas)" value="${escapeHtml(descripcion)}">
+      <select class="form-select item-area">${areaOptions}</select>
+      <input type="number" step="0.01" min="0" class="form-input item-cantidad" placeholder="Cant." value="${cantidad ?? ""}" oninput="updateItemSubtotal(this)">
+      <input type="number" step="0.01" min="0" class="form-input item-precio" placeholder="$ unit." value="${precioUnitario ?? ""}" oninput="updateItemSubtotal(this)">
+      <div class="text-muted item-subtotal">${subtotal}</div>
+      <button type="button" class="btn btn-danger btn-sm no-print" onclick="this.closest('.item-row').remove();updateTotalPreview()">✕</button>
+    </div>`;
+}
+window.addItemRow = function() {
+  document.getElementById("items-container").insertAdjacentHTML("beforeend", itemRowHtml());
+};
+window.updateItemSubtotal = function(el) {
+  const row = el.closest(".item-row");
+  const cant = parseFloat(row.querySelector(".item-cantidad").value) || 0;
+  const precio = parseFloat(row.querySelector(".item-precio").value) || 0;
+  row.querySelector(".item-subtotal").textContent = (cant > 0 && precio > 0) ? fmtMoney(cant * precio) : "—";
+  updateTotalPreview();
+};
+window.updateTotalPreview = function() {
+  const rows = Array.from(document.querySelectorAll("#items-container .item-row"));
+  const items = rows.map(row => ({
+    cantidad: parseFloat(row.querySelector(".item-cantidad").value) || 0,
+    precioUnitario: parseFloat(row.querySelector(".item-precio").value) || 0
+  }));
+  const descuento = parseFloat(document.getElementById("p-descuento")?.value) || 0;
+  const { subtotal, total } = calcTotales(items, descuento);
+  const subEl = document.getElementById("subtotal-preview");
+  const totEl = document.getElementById("total-preview");
+  if (subEl) subEl.textContent = fmtMoney(subtotal);
+  if (totEl) totEl.textContent = fmtMoney(total);
+};
+
+// =============================================================
+// NUEVO PRESUPUESTO
+// =============================================================
+function renderNuevoView(container) {
+  state.formOpen = true;
+  container.innerHTML = `
+    <div class="page-title">Nuevo presupuesto</div>
+    <div class="page-sub">Armá una cotización para un cliente con ítems libres. El total se calcula solo.</div>
+    <div id="nuevo-form" class="section-block">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre del cliente</label><input class="form-input" id="p-cliente-nombre" placeholder="Nombre y apellido"></div>
+        <div class="form-group"><label class="form-label">Teléfono</label><input class="form-input" id="p-cliente-telefono" placeholder="11-2345-6789"></div>
+        <div class="form-group"><label class="form-label">Fecha de entrega / evento</label><input type="date" class="form-input" id="p-fecha-entrega" value="${todayISO()}"></div>
+      </div>
+
+      <div class="section-header" style="margin-top:10px">
+        <div class="section-title">🧾 Ítems del presupuesto</div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addItemRow()">+ Agregar ítem</button>
+      </div>
+      <div class="item-row-wrap">
+        <div class="item-row item-row-header"><div>Descripción</div><div>Área que lo prepara</div><div>Cantidad</div><div>Precio unit.</div><div>Subtotal</div><div></div></div>
+        <div id="items-container">${itemRowHtml()}</div>
+      </div>
+
+      <div class="form-row" style="margin-top:14px">
+        <div class="form-group" style="max-width:220px"><label class="form-label">Descuento (monto, opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="p-descuento" value="0" oninput="updateTotalPreview()"></div>
+        <div class="form-group"><label class="form-label">Notas (opcional)</label><input class="form-input" id="p-notas" placeholder="Ej. seña 50% al confirmar"></div>
+      </div>
+
+      <div class="total-line">Subtotal: <span id="subtotal-preview">—</span></div>
+      <div class="total-line grand">Total: <span id="total-preview">$0,00</span></div>
+
+      <button class="btn btn-primary" style="margin-top:10px" onclick="guardarPresupuesto()" id="guardar-btn">💾 Guardar presupuesto</button>
+    </div>`;
+}
+
+window.guardarPresupuesto = async function() {
+  const nombre = document.getElementById("p-cliente-nombre").value.trim();
+  const telefono = document.getElementById("p-cliente-telefono").value.trim();
+  const fechaEntrega = document.getElementById("p-fecha-entrega").value;
+  const descuento = parseFloat(document.getElementById("p-descuento").value) || 0;
+  const notas = document.getElementById("p-notas").value.trim();
+
+  if (!nombre) { showToast("⚠️ Ingresá el nombre del cliente.", "warn"); return; }
+  if (!fechaEntrega) { showToast("⚠️ Elegí la fecha de entrega.", "warn"); return; }
+
+  const rows = Array.from(document.querySelectorAll("#items-container .item-row"));
+  const items = rows.map(row => ({
+    descripcion: row.querySelector(".item-descripcion").value.trim(),
+    area: row.querySelector(".item-area").value,
+    cantidad: parseFloat(row.querySelector(".item-cantidad").value) || 0,
+    precioUnitario: parseFloat(row.querySelector(".item-precio").value) || 0
+  })).filter(it => it.descripcion && it.cantidad > 0);
+
+  if (items.length === 0) { showToast("⚠️ Agregá al menos un ítem con descripción y cantidad.", "warn"); return; }
+
+  const btn = document.getElementById("guardar-btn");
+  btn.disabled = true; btn.textContent = "Guardando...";
+
+  try {
+    const { subtotal, total } = calcTotales(items, descuento);
+    const numero = Object.keys(state.presupuestos).length + 1;
+    const data = {
+      numero,
+      cliente: { nombre, telefono },
+      fechaEntrega, items, descuento, subtotal, total, notas,
+      estado: "borrador",
+      pedidoClienteOrderId: null,
+      pedidoClienteOrderNum: null,
+      creadoTs: Date.now(), actualizadoTs: Date.now()
+    };
+    await set(push(ref(db, "presupuestos/items")), data);
+    showToast("✅ Presupuesto guardado como borrador.", "success");
+    navigate("presupuestos");
+  } catch (err) {
+    console.error(err);
+    showToast("❌ Error al guardar el presupuesto.", "danger");
+    btn.disabled = false; btn.textContent = "💾 Guardar presupuesto";
+  }
+};
+
+// =============================================================
+// LISTADO DE PRESUPUESTOS
+// =============================================================
+window.setFiltro = function(f) { state.filtro = f; render(); };
+window.verPresupuesto = function(id) { state.viewingId = id; render(); };
+window.cerrarVista = function() { state.viewingId = null; render(); };
+
+window.cambiarEstado = async function(id, nuevoEstado) {
+  const p = state.presupuestos[id];
+  if (!p) return;
+
+  if (nuevoEstado === "aceptado" && p.estado !== "aceptado" && !p.pedidoClienteOrderId) {
+    state.aceptandoId = id;
+    state.formOpen = true;
+    render();
+    return;
+  }
+
+  await update(ref(db, `presupuestos/items/${id}`), { estado: nuevoEstado, actualizadoTs: Date.now() });
+  showToast(`Estado actualizado a "${ESTADO_LABELS[nuevoEstado]}".`, "success");
+};
+
+window.cerrarAceptarModal = function() {
+  state.aceptandoId = null;
+  state.formOpen = false;
+  render();
+};
+
+window.confirmarAceptacion = async function(id) {
+  const p = state.presupuestos[id];
+  if (!p) return;
+
+  const local = document.getElementById("acept-local").value;
+  const vendedor = document.getElementById("acept-vendedor").value;
+  const hora = document.getElementById("acept-hora").value;
+  const sena = document.getElementById("acept-sena").value.trim();
+
+  if (!local) { showToast("⚠️ Elegí el local de retiro.", "warn"); return; }
+  if (!vendedor) { showToast("⚠️ Elegí quién vende.", "warn"); return; }
+  if (!hora) { showToast("⚠️ Ingresá la hora de entrega.", "warn"); return; }
+
+  const btn = document.getElementById("acept-confirm-btn");
+  btn.disabled = true; btn.textContent = "Registrando...";
+
+  try {
+    const { orderId, orderNum } = await crearPedidoCliente({ presupuesto: p, local, vendedor, hora, sena });
+    await update(ref(db, `presupuestos/items/${id}`), {
+      estado: "aceptado", pedidoClienteOrderId: orderId, pedidoClienteOrderNum: orderNum, actualizadoTs: Date.now()
+    });
+    showToast(`✅ Presupuesto aceptado. Pedido #${orderNum} registrado en Pedidos de Clientes.`, "success");
+    state.aceptandoId = null;
+    state.formOpen = false;
+    render();
+  } catch (err) {
+    console.error(err);
+    showToast("❌ Error al registrar el pedido en Pedidos de Clientes.", "danger");
+    btn.disabled = false; btn.textContent = "✅ Confirmar y registrar pedido";
+  }
+};
+
+function renderAceptarModal(id) {
+  const p = state.presupuestos[id];
+  if (!p) return "";
+  const localOptions = LOCALES_CLIENTE.map(l => `<option value="${l}">${l}</option>`).join("");
+  const vendedorOptions = VENDEDORES.map(v => `<option value="${v}">${v}</option>`).join("");
+  return `
+    <div class="modal-overlay no-print">
+      <div class="modal-card">
+        <div class="section-title" style="margin-bottom:6px">✅ Aceptar presupuesto #${p.numero}</div>
+        <div class="text-muted" style="margin-bottom:16px">Estos datos son los que necesita el sistema de Pedidos de Clientes para registrar el pedido.</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Local de retiro</label>
+            <select class="form-select" id="acept-local"><option value="">— Elegí —</option>${localOptions}</select></div>
+          <div class="form-group"><label class="form-label">Vendedor/a</label>
+            <select class="form-select" id="acept-vendedor"><option value="">— Elegí —</option>${vendedorOptions}</select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Hora de entrega</label><input type="time" class="form-input" id="acept-hora" value="10:00"></div>
+          <div class="form-group"><label class="form-label">Seña ($, opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="acept-sena"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-primary" id="acept-confirm-btn" onclick="confirmarAceptacion('${id}')">✅ Confirmar y registrar pedido</button>
+          <button class="btn btn-ghost" onclick="cerrarAceptarModal()">Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+window.eliminarPresupuesto = async function(id) {
+  if (!confirm("¿Eliminar este presupuesto? Esta acción no se puede deshacer.")) return;
+  await remove(ref(db, `presupuestos/items/${id}`));
+  showToast("🗑️ Presupuesto eliminado.", "success");
+};
+
+function renderListadoView(container) {
+  state.formOpen = false;
+
+  if (state.viewingId) {
+    renderDetalleImprimible(container, state.viewingId);
+    return;
+  }
+
+  const entries = objToSortedEntries(state.presupuestos, (a, b) => (b[1].creadoTs || 0) - (a[1].creadoTs || 0))
+    .filter(([, p]) => state.filtro === "todos" || p.estado === state.filtro);
+
+  const rows = entries.map(([id, p]) => `
+    <tr>
+      <td>#${p.numero ?? "—"}</td>
+      <td>${escapeHtml(p.cliente?.nombre)}</td>
+      <td>${fmtDate(p.fechaEntrega)}</td>
+      <td>${(p.items || []).length} ítem(s)</td>
+      <td>${fmtMoney(p.total)}</td>
+      <td><span class="badge badge-${p.estado}">${ESTADO_LABELS[p.estado] || p.estado}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="verPresupuesto('${id}')">Ver / Imprimir</button>
+        ${p.estado === "borrador" ? `<button class="btn btn-turq btn-sm" onclick="cambiarEstado('${id}','enviado')">Marcar enviado</button>` : ""}
+        ${p.estado !== "aceptado" && p.estado !== "rechazado" ? `<button class="btn btn-primary btn-sm" onclick="cambiarEstado('${id}','aceptado')">Aceptar</button>` : ""}
+        ${p.estado !== "aceptado" && p.estado !== "rechazado" ? `<button class="btn btn-danger btn-sm" onclick="cambiarEstado('${id}','rechazado')">Rechazar</button>` : ""}
+        ${p.pedidoClienteOrderId ? `<span class="badge badge-aceptado" title="Registrado en Pedidos de Clientes">→ Pedido #${p.pedidoClienteOrderNum}</span>` : ""}
+        <button class="btn btn-danger btn-sm" onclick="eliminarPresupuesto('${id}')">Eliminar</button>
+      </td>
+    </tr>`).join("");
+
+  container.innerHTML = `
+    <div class="page-title">Presupuestos</div>
+    <div class="page-sub">Cotizaciones armadas para clientes.</div>
+    <div class="tabs">
+      ${["todos", ...ESTADOS].map(f => `<button class="tab ${state.filtro === f ? "active" : ""}" onclick="setFiltro('${f}')">${f === "todos" ? "Todos" : ESTADO_LABELS[f]}</button>`).join("")}
+    </div>
+    <div class="section-block">
+      ${entries.length === 0 ? `<div class="empty-state">No hay presupuestos en esta categoría.</div>` : `
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>N°</th><th>Cliente</th><th>Entrega</th><th>Ítems</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`}
+    </div>
+    ${state.aceptandoId ? renderAceptarModal(state.aceptandoId) : ""}`;
+}
+
+function renderDetalleImprimible(container, id) {
+  const p = state.presupuestos[id];
+  if (!p) { state.viewingId = null; container.innerHTML = `<div class="empty-state">Presupuesto no encontrado.</div>`; return; }
+
+  const itemsRows = (p.items || []).map(it => `
+    <tr><td>${escapeHtml(it.descripcion)}</td><td style="text-align:center">${it.cantidad}</td><td style="text-align:right">${fmtMoney(it.precioUnitario)}</td><td style="text-align:right">${fmtMoney(it.cantidad * it.precioUnitario)}</td></tr>`).join("");
+
+  container.innerHTML = `
+    <div class="no-print" style="margin-bottom:16px;display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="cerrarVista()">← Volver</button>
+      <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+    </div>
+    <div class="section-block">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:20px;font-weight:700">☕ Candela Café &amp; Patisserie</div>
+          <div class="text-muted">Presupuesto N° ${p.numero ?? "—"}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="text-muted">Fecha de entrega</div>
+          <div style="font-weight:600">${fmtDate(p.fechaEntrega)}</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Cliente</div><div class="stat-value" style="font-size:16px">${escapeHtml(p.cliente?.nombre)}</div>${p.cliente?.telefono ? `<div class="text-muted">${escapeHtml(p.cliente.telefono)}</div>` : ""}</div>
+        <div class="stat-card"><div class="stat-label">Estado</div><span class="badge badge-${p.estado}">${ESTADO_LABELS[p.estado] || p.estado}</span></div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:right">Precio unit.</th><th style="text-align:right">Subtotal</th></tr></thead>
+          <tbody>${itemsRows}</tbody>
+        </table>
+      </div>
+      <div class="total-line">Subtotal: ${fmtMoney(p.subtotal)}</div>
+      ${p.descuento > 0 ? `<div class="total-line">Descuento: -${fmtMoney(p.descuento)}</div>` : ""}
+      <div class="total-line grand">Total: ${fmtMoney(p.total)}</div>
+      ${p.notas ? `<div style="margin-top:16px"><div class="form-label">Notas</div><div>${escapeHtml(p.notas)}</div></div>` : ""}
+    </div>`;
+}
+
+// =============================================================
+// CONFIG
+// =============================================================
+window.cambiarPasswordAdmin = async function() {
+  const nueva = document.getElementById("cfg-nueva-pass").value;
+  if (!nueva || nueva.length < 4) { showToast("⚠️ La contraseña debe tener al menos 4 caracteres.", "warn"); return; }
+  await set(ref(db, "presupuestos/config/adminPassword"), nueva);
+  showToast("✅ Contraseña actualizada.", "success");
+  document.getElementById("cfg-nueva-pass").value = "";
+};
+
+function renderConfigView(container) {
+  state.formOpen = true;
+  container.innerHTML = `
+    <div class="page-title">Configuración</div>
+    <div class="page-sub">Ajustes del módulo de Presupuestos.</div>
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:14px">🔑 Contraseña de acceso</div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Nueva contraseña</label><input type="password" class="form-input" id="cfg-nueva-pass" placeholder="••••••"></div></div>
+      <button class="btn btn-primary" onclick="cambiarPasswordAdmin()">Actualizar contraseña</button>
+    </div>
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">🔗 Pedidos de Clientes</div>
+      <div class="text-muted">Al aceptar un presupuesto, se pide el local de retiro, vendedor/a, hora de entrega y seña, y se registra automáticamente como pedido nuevo en el sistema de Pedidos de Clientes (proyecto Firebase separado: <code>pedidos-de-clientes-4775b</code>). Esta app solo escribe ese pedido — no lo edita ni lo muestra después; el seguimiento de producción y entrega se hace desde el sistema de Pedidos de Clientes.</div>
+    </div>`;
+}
+
+// ── Bootstrap ────────────────────────────────────────────
+attachListeners();
+render();
+</script>
+</body>
+</html>

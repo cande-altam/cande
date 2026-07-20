@@ -189,6 +189,20 @@ Si la clave no está configurada, o el escaneo falla, no pasa nada: el formulari
 
 ---
 
+## Módulo: Presupuestos
+
+App separada, de uso exclusivo de administración, ubicada en `presupuestos/`. URL: `https://<tu-sitio>.netlify.app/presupuestos/`. Contraseña inicial: `presupuestos2025` (cambiable desde **Configuración**). Usa el mismo proyecto Firebase que Pedidos de Producción, bajo la rama `presupuestos/` (no pisa datos existentes).
+
+Permite armar cotizaciones para clientes con ítems libres (descripción + cantidad + precio unitario, subtotal y total automáticos, descuento opcional), con estados **Borrador → Enviado → Aceptado / Rechazado** y una vista imprimible/PDF (botón "Ver / Imprimir").
+
+### Integración con Pedidos de Clientes
+
+Este módulo **no incluye** un sistema de seguimiento de pedidos de clientes propio — eso ya existe como app separada (rama `claude/stoic-cori-7e9bj9`, proyecto Firebase `pedidos-de-clientes-4775b`). Presupuestos solo **escribe** ahí: al marcar un presupuesto como **Aceptado**, pide los datos que ese sistema necesita y no están en la cotización (local de retiro, vendedor/a, hora de entrega, seña), y registra un pedido nuevo con el mismo formato que usa esa app (mismo `orderCounter`, mismo `orders/{id}`, misma ficha de `clients/{id}`). Cada ítem del presupuesto lleva asignada un área de producción (Panadería/Pastelería/Facturería/Especialidades/Sándwiches) para que el pedido aparezca correctamente en la Cuadra de esa área.
+
+> ⚠️ Los arrays de vendedores (`VENDEDORES`) y locales (`LOCALES_CLIENTE`) están duplicados en `presupuestos/index.html` para poder armar el pedido con el formato exacto que espera el otro sistema. Si el equipo de vendedores o los locales cambian allá, hay que actualizarlos acá también.
+
+---
+
 ## Notas técnicas
 
 - **Framework**: ninguno — HTML + CSS + JS vanilla
