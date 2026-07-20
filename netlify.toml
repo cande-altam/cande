@@ -2,5 +2,12 @@
   publish = "."
   functions = "netlify/functions"
 
+[build.environment]
+  # Netlify's secret scanner flags Firebase Web API keys (they start with "AIza...",
+  # matching Google's API key prefix). These are NOT secret — Firebase's security model
+  # relies on database/storage rules, not on hiding the client-side apiKey — so they're
+  # intentionally committed in costeo-proveedores/index.html and presupuestos/index.html.
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU,AIzaSyDFqS6RG1fkOZGo1x2-WcfT82am7ERHgyY"
+
 [functions]
   node_bundler = "esbuild"
