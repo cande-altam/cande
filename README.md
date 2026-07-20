@@ -68,13 +68,14 @@ Presupuestos no necesita que el sitio de Pedidos de Clientes esté desplegado pa
 4. **Deploy site**.
 5. (Opcional, para el escaneo por IA) Agregar la variable de entorno `ANTHROPIC_API_KEY` como se explica arriba.
 
-La raíz del sitio (`/`) no tiene una página propia — se entra directamente a `/costeo-proveedores/` o `/presupuestos/`.
+La raíz del sitio (`/`) muestra una página simple con links a las dos apps.
 
 ---
 
 ## Estructura de archivos
 
 ```
+├── index.html                — Página de inicio (links a las dos apps)
 ├── costeo-proveedores/
 │   └── index.html          — App de Costeo & Proveedores (HTML+CSS+JS autocontenido)
 ├── presupuestos/
