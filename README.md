@@ -25,26 +25,9 @@ URL: `https://<tu-sitio>.netlify.app/costeo-proveedores/`. Contraseña inicial: 
 
 ### Configuración en Firebase
 
-Usa el proyecto Firebase `pedidos-de-produccion-ee3cb` (ya existente), bajo la rama de datos `costeo/`. Solo hace falta habilitar **Storage** (para las fotos de facturas), que no viene activado por defecto:
+Usa el proyecto Firebase `pedidos-de-produccion-ee3cb` (ya existente), bajo la rama de datos `costeo/`. **No requiere ninguna configuración adicional** — las fotos de facturas se guardan comprimidas (como texto, base64) directo en la misma Realtime Database que ya está habilitada, en vez de usar Firebase Storage, así que no hace falta activar ni configurar nada nuevo.
 
-1. [console.firebase.google.com](https://console.firebase.google.com/) → proyecto `pedidos-de-produccion-ee3cb` → **Build → Storage → Get started**.
-2. Elegir modo de prueba y una ubicación de bucket.
-3. Pestaña **Rules**, reemplazar por:
-
-```
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if true;
-    }
-  }
-}
-```
-
-4. **Publish**.
-
-> Esta configuración permite acceso sin autenticación de Firebase, intencional — igual que el resto del sistema, que usa contraseñas propias guardadas en Firebase en vez de Firebase Auth.
+> Nota: esto hace que cada factura con foto ocupe más espacio en la base de datos que si estuviera en Storage. Para el volumen de un negocio como este no debería ser un problema, pero si en algún momento la base crece mucho y querés optimizar, se puede migrar a Firebase Storage más adelante.
 
 ### Escaneo automático por IA (opcional)
 

@@ -163,9 +163,10 @@ textarea.form-input{resize:vertical;min-height:60px;}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 // Same Firebase project as the production-order system (Candela) — new data lives under costeo/*
+// Invoice photos are stored inline in Realtime Database (compressed base64), not Firebase
+// Storage, so this app needs zero extra Firebase setup beyond the existing database.
 const firebaseConfig = {
   apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
   authDomain: "pedidos-de-produccion-ee3cb.firebaseapp.com",
@@ -178,7 +179,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const storage = getStorage(app);
 
 const DEFAULT_ADMIN_PASS = "costeo2025";
 
@@ -547,7 +547,8 @@ window.handleFacturaFotoChange = async function(e) {
   const file = e.target.files[0];
   if (!file) return;
   try {
-    const dataUrl = await compressImageToDataUrl(file, 1400, 0.72);
+    // Kept fairly small since the photo is stored inline in Realtime Database (no Storage bucket).
+    const dataUrl = await compressImageToDataUrl(file, 1000, 0.6);
     state._facturaFotoDataUrl = dataUrl;
     document.getElementById("factura-foto-preview").innerHTML = `<img src="${dataUrl}" class="photo-thumb">`;
     document.getElementById("scan-btn").disabled = false;
@@ -678,17 +679,10 @@ window.guardarFactura = async function() {
       });
     }
 
-    let fotoURL = "";
-    if (state._facturaFotoDataUrl) {
-      const sref = storageRef(storage, `facturas/${facturaId}.jpg`);
-      await uploadString(sref, state._facturaFotoDataUrl, "data_url");
-      fotoURL = await getDownloadURL(sref);
-    }
-
     await set(facturaRef, {
       proveedorId, proveedorNombre, cuit, fecha, numeroFactura: numero,
       montoTotal: monto, estado: pagado ? "pagado" : "no_pagado",
-      fotoURL, items, creadoTs: Date.now()
+      foto: state._facturaFotoDataUrl || "", items, creadoTs: Date.now()
     });
 
     showToast("✅ Factura guardada correctamente.", "success");
@@ -729,7 +723,7 @@ function renderFacturasView(container) {
       <td>${escapeHtml(f.numeroFactura) || "—"}</td>
       <td>${fmtMoney(f.montoTotal)}</td>
       <td>${(f.items || []).length} ítem(s)</td>
-      <td>${f.fotoURL ? `<a href="${f.fotoURL}" target="_blank" rel="noopener">Ver foto</a>` : "—"}</td>
+      <td>${f.foto ? `<a href="${f.foto}" target="_blank" rel="noopener">Ver foto</a>` : "—"}</td>
       <td><span class="badge ${f.estado === "pagado" ? "badge-pagado" : "badge-no-pagado"}">${f.estado === "pagado" ? "Pagado" : "No pagado"}</span></td>
       <td><button class="btn btn-ghost btn-sm" onclick="toggleFacturaEstado('${id}')">${f.estado === "pagado" ? "Marcar no pagada" : "Marcar pagada"}</button></td>
     </tr>`).join("");
