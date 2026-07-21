@@ -480,17 +480,17 @@ function renderNuevaFacturaView(container) {
 
   container.innerHTML = `
     <div class="page-title">Nueva factura de proveedor</div>
-    <div class="page-sub">Sacá una foto de la factura para que la IA complete los datos, o cargalos a mano. Siempre podés revisar y corregir antes de guardar.</div>
+    <div class="page-sub">Subí una foto de la factura (de la cámara o de tu galería) y la IA completa los datos sola. Siempre podés revisar y corregir antes de guardar.</div>
     <div id="nueva-factura-form" class="section-block">
       <div class="form-row" style="align-items:flex-start">
         <div class="form-group" style="flex:0 0 auto;min-width:auto">
-          <input type="file" id="factura-foto-input" accept="image/*" capture="environment" style="display:none" onchange="handleFacturaFotoChange(event)">
-          <button type="button" class="btn btn-ghost" onclick="document.getElementById('factura-foto-input').click()">📷 Elegir / tomar foto</button>
+          <input type="file" id="factura-foto-input" accept="image/*" style="display:none" onchange="handleFacturaFotoChange(event)">
+          <button type="button" class="btn btn-ghost" onclick="document.getElementById('factura-foto-input').click()">📷 Subir foto de la factura</button>
           <div id="factura-foto-preview" style="margin-top:10px"></div>
         </div>
         <div class="form-group" style="flex:0 0 auto;min-width:auto">
-          <button type="button" class="btn btn-primary" id="scan-btn" onclick="escanearFactura()" disabled>🤖 Escanear con IA</button>
-          <div class="text-muted" style="margin-top:6px;max-width:220px">Si no tenés foto o falla el escaneo, completá el formulario manualmente.</div>
+          <button type="button" class="btn btn-primary" id="scan-btn" onclick="escanearFactura()" disabled>🤖 Reintentar escaneo</button>
+          <div class="text-muted" style="margin-top:6px;max-width:220px">El escaneo se hace automáticamente al subir la foto. Usá este botón para reintentar, o completá el formulario a mano si no tenés foto.</div>
         </div>
       </div>
 
@@ -604,6 +604,9 @@ window.handleFacturaFotoChange = async function(e) {
     state._facturaFotoDataUrl = dataUrl;
     document.getElementById("factura-foto-preview").innerHTML = `<img src="${dataUrl}" class="photo-thumb">`;
     document.getElementById("scan-btn").disabled = false;
+    // Auto-scan as soon as a photo is chosen (camera or gallery) — the manual button stays
+    // enabled below in case the auto-scan fails and the user wants to retry.
+    await window.escanearFactura();
   } catch (err) {
     console.error(err);
     showToast("⚠️ No se pudo procesar la foto.", "warn");
