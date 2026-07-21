@@ -31,12 +31,16 @@ Usa el proyecto Firebase `pedidos-de-produccion-ee3cb` (ya existente), bajo la r
 
 ### Escaneo automático por IA (opcional)
 
-El botón "Escanear con IA" llama a una función serverless (`netlify/functions/extraer-factura.js`) que usa la API de Claude (Anthropic) para leer la factura. Esto requiere:
+Al subir una foto de la factura (de la cámara o de la galería/archivos), se escanea automáticamente: llama a una función serverless (`netlify/functions/extraer-factura.js`) que usa la API de Claude (Anthropic) para leer la factura. Esto requiere:
 
 1. Desplegar el sitio en Netlify **vía GitHub** (Add new site → Import from Git) — el deploy por drag & drop no empaqueta funciones.
-2. En el sitio de Netlify → **Site configuration → Environment variables**, agregar `ANTHROPIC_API_KEY` con una clave válida de [console.anthropic.com](https://console.anthropic.com/).
+2. En el sitio de Netlify → **Site configuration → Environment variables**, agregar `ANTHROPIC_API_KEY` con una clave válida de [console.anthropic.com](https://console.anthropic.com/), con crédito cargado en **Plans & Billing**.
 
-Si la clave no está configurada, o el escaneo falla, no pasa nada: el formulario de "Nueva factura" se completa a mano igual, sin ninguna dependencia de la IA para funcionar.
+Si la clave no está configurada, o el escaneo falla, no pasa nada: el formulario de "Nueva factura" se completa a mano igual (o con el botón "Reintentar escaneo"), sin ninguna dependencia de la IA para funcionar.
+
+El escaneo identifica al proveedor por **razón social o CUIT** (lo que efectivamente figura impreso en la factura), no por el nombre comercial con el que está cargado en el sistema. También recibe el catálogo de insumos ya cargados y trata de matchear cada línea de la factura contra un insumo existente (aunque el texto tenga mayúsculas, abreviaturas o tamaño de envase distintos, ej. "LECHE ENT. X 1LT" ≈ "Leche entera"), en vez de crear un insumo nuevo por cada factura. Una vez elegido el proveedor, el buscador de insumos de esa vista prioriza los productos que ya le compraste antes a ese proveedor.
+
+En la pestaña **Insumos** hay un botón "Buscar posibles duplicados" que revisa el catálogo (nombres casi idénticos) y sugiere pares para fusionar con el botón "Fusionar duplicados" — no fusiona nada automáticamente, siempre queda a criterio de quien lo revisa.
 
 ---
 

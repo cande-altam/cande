@@ -214,6 +214,7 @@ const state = {
   inflacion: {},
   config: {},
   _facturaFotoDataUrl: null,
+  _facturaProveedorId: "",
   facturasFiltro: "todas",
   pagosFiltro: "no_pagado",
   productosFiltro: "",
@@ -225,6 +226,7 @@ const state = {
   insumosMergeMode: false,
   insumosMergeSeleccion: {},
   insumosMergeSurvivor: null,
+  mostrarDuplicados: false,
 };
 
 // ── Helpers ──────────────────────────────────────────────
@@ -416,23 +418,36 @@ function itemRowHtml({ insumoId = "", nombre = "", precioUnitario = "" } = {}) {
     </div>`;
 }
 
+function esInsumoConocidoDeProveedor(ins, proveedorId) {
+  return !!(proveedorId && ins.precios && ins.precios[proveedorId]);
+}
+
+// Prioritizes insumos already priced by the currently-selected proveedor (state._facturaProveedorId)
+// so repeat invoices from the same proveedor are faster to load — "recuerda" lo que ya le compramos.
 function insumoSearchMatches(query) {
   const q = query.trim().toLowerCase();
+  const proveedorId = state._facturaProveedorId || "";
   const sorted = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre));
-  if (!q) return sorted.slice(0, 8);
-  return sorted.filter(([, ins]) => ins.nombre.toLowerCase().includes(q)).slice(0, 8);
+  let pool = q ? sorted.filter(([, ins]) => ins.nombre.toLowerCase().includes(q)) : sorted;
+  if (proveedorId) {
+    const conocidos = pool.filter(([, ins]) => esInsumoConocidoDeProveedor(ins, proveedorId));
+    const otros = pool.filter(([, ins]) => !esInsumoConocidoDeProveedor(ins, proveedorId));
+    pool = [...conocidos, ...otros];
+  }
+  return pool.slice(0, 8);
 }
 
 window.handleInsumoSearchInput = function(input) {
   const picker = input.closest(".insumo-picker");
   const query = input.value;
   const trimmed = query.trim();
+  const proveedorId = state._facturaProveedorId || "";
   const matches = insumoSearchMatches(query);
   const exact = matches.some(([, ins]) => ins.nombre.toLowerCase() === trimmed.toLowerCase());
 
   const items = matches.map(([id, ins]) => `
     <div class="insumo-picker-item" data-id="${escapeHtml(id)}" data-nombre="${escapeHtml(ins.nombre)}" onmousedown="selectInsumoPicker(this)">
-      ${escapeHtml(ins.nombre)}${ins.unidad ? ` <span class="text-muted">(${escapeHtml(ins.unidad)})</span>` : ""}
+      ${escapeHtml(ins.nombre)}${ins.unidad ? ` <span class="text-muted">(${escapeHtml(ins.unidad)})</span>` : ""}${esInsumoConocidoDeProveedor(ins, proveedorId) ? ` <span class="text-muted">· ya comprado a este proveedor</span>` : ""}
     </div>`).join("");
   const createOption = trimmed && !exact
     ? `<div class="insumo-picker-item insumo-picker-create" data-id="" data-nombre="${escapeHtml(trimmed)}" onmousedown="selectInsumoPicker(this)">➕ Crear insumo "${escapeHtml(trimmed)}"</div>`
@@ -475,8 +490,9 @@ function matchInsumoId(nombre) {
 
 function renderNuevaFacturaView(container) {
   state.formOpen = true;
+  state._facturaProveedorId = "";
   const proveedorOptions = objToSortedEntries(state.proveedores, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
-    .map(([id, p]) => `<option value="${id}">${escapeHtml(p.nombre)}</option>`).join("");
+    .map(([id, p]) => `<option value="${id}">${escapeHtml(p.nombre)}${p.contacto ? " — " + escapeHtml(p.contacto) : ""}</option>`).join("");
 
   container.innerHTML = `
     <div class="page-title">Nueva factura de proveedor</div>
@@ -618,7 +634,13 @@ window.onFacturaProveedorChange = function(sel) {
   const cuitInput = document.getElementById("f-cuit");
   const p = sel.value && sel.value !== "__new__" ? state.proveedores[sel.value] : null;
   cuitInput.value = p ? (p.cuit || "") : "";
+  // Remembered so the item picker can prioritize this proveedor's previously-supplied insumos.
+  state._facturaProveedorId = sel.value && sel.value !== "__new__" ? sel.value : "";
 };
+
+function normCuit(s) {
+  return String(s || "").replace(/\D/g, "");
+}
 
 window.escanearFactura = async function() {
   if (!state._facturaFotoDataUrl) return;
@@ -626,10 +648,11 @@ window.escanearFactura = async function() {
   btn.disabled = true; btn.textContent = "🤖 Escaneando...";
   try {
     const base64 = state._facturaFotoDataUrl.split(",")[1];
+    const insumosConocidos = Object.entries(state.insumos).map(([id, ins]) => ({ id, nombre: ins.nombre }));
     const resp = await fetch("/.netlify/functions/extraer-factura", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ imageBase64: base64, mediaType: "image/jpeg" })
+      body: JSON.stringify({ imageBase64: base64, mediaType: "image/jpeg", insumosConocidos })
     });
 
     const rawText = await resp.text();
@@ -657,14 +680,32 @@ window.escanearFactura = async function() {
   }
 };
 
+// Finds an existing proveedor matching AI-scanned invoice data. CUIT is the most reliable
+// signal (unique fiscal id); razón social is what's actually printed on the invoice, which is
+// generally more reliable than nombre comercial (the friendly/brand name we display in lists).
+function matchProveedor(data) {
+  const cuit = normCuit(data.cuit);
+  if (cuit) {
+    const byCuit = Object.entries(state.proveedores).find(([, p]) => normCuit(p.cuit) && normCuit(p.cuit) === cuit);
+    if (byCuit) return byCuit;
+  }
+  const nombreProveedor = String(data.proveedor || "").trim().toLowerCase();
+  if (!nombreProveedor) return null;
+  const byRazonSocial = Object.entries(state.proveedores).find(([, p]) => p.contacto && p.contacto.trim().toLowerCase() === nombreProveedor);
+  if (byRazonSocial) return byRazonSocial;
+  const byNombreComercial = Object.entries(state.proveedores).find(([, p]) => p.nombre.trim().toLowerCase() === nombreProveedor);
+  if (byNombreComercial) return byNombreComercial;
+  return null;
+}
+
 function aplicarDatosEscaneados(data) {
-  if (data.proveedor) {
+  if (data.proveedor || data.cuit) {
     const sel = document.getElementById("f-proveedor");
-    const match = Object.entries(state.proveedores).find(([, p]) => p.nombre.trim().toLowerCase() === String(data.proveedor).trim().toLowerCase());
+    const match = matchProveedor(data);
     if (match) {
       sel.value = match[0];
-      document.getElementById("f-proveedor-nuevo").style.display = "none";
-    } else {
+      window.onFacturaProveedorChange(sel);
+    } else if (data.proveedor) {
       sel.value = "__new__";
       document.getElementById("f-proveedor-nuevo").style.display = "";
       document.getElementById("f-proveedor-nombre-nuevo").value = data.proveedor;
@@ -678,7 +719,10 @@ function aplicarDatosEscaneados(data) {
   if (Array.isArray(data.items) && data.items.length) {
     const cont = document.getElementById("items-container");
     cont.innerHTML = data.items.map(it => {
-      const matchedId = matchInsumoId(it.nombre);
+      // Trust the AI's insumoId only if it's a real, current insumo — otherwise fall back
+      // to the client-side name-matching heuristic as a safety net.
+      const aiMatchId = it.insumoId && state.insumos[it.insumoId] ? it.insumoId : "";
+      const matchedId = aiMatchId || matchInsumoId(it.nombre);
       return itemRowHtml({
         insumoId: matchedId || "",
         nombre: it.nombre || "",
@@ -1029,6 +1073,66 @@ window.toggleHistorialInsumo = function(id) {
   render();
 };
 
+function stripAccentsCosteo(s) {
+  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+function normalizeInsumoNombre(s) {
+  let n = stripAccentsCosteo(s).toLowerCase().trim();
+  n = n.replace(/\s*\(\d+\)\s*$/, ""); // strip a trailing numeric disambiguator like " (1)"
+  n = n.replace(/\s+/g, " ");
+  return n;
+}
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  const dp = new Array(n + 1);
+  for (let j = 0; j <= n; j++) dp[j] = j;
+  for (let i = 1; i <= m; i++) {
+    let prev = dp[0];
+    dp[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const tmp = dp[j];
+      dp[j] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, dp[j], dp[j - 1]);
+      prev = tmp;
+    }
+  }
+  return dp[n];
+}
+
+// Conservative similarity check for the duplicate-suggestion tool: only flags pairs that are
+// near-identical after normalizing (same product, different casing/spacing/typo) — NOT products
+// that merely share a word (e.g. "Dulce de membrillo — Frucor" vs "— Prindal" are legitimately
+// different insumos with different proveedores/precios, and must never be auto-flagged).
+function buscarInsumosDuplicados() {
+  const entries = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre));
+  const pares = [];
+  for (let i = 0; i < entries.length; i++) {
+    for (let j = i + 1; j < entries.length; j++) {
+      const [idA, insA] = entries[i], [idB, insB] = entries[j];
+      const nA = normalizeInsumoNombre(insA.nombre), nB = normalizeInsumoNombre(insB.nombre);
+      if (!nA || !nB) continue;
+      const dist = levenshtein(nA, nB);
+      const cerca = dist === 0 || (dist <= 2 && Math.min(nA.length, nB.length) > 4);
+      if (cerca) pares.push({ idA, idB, insA, insB, dist });
+    }
+  }
+  return pares.sort((a, b) => a.dist - b.dist);
+}
+
+window.toggleBuscarDuplicados = function() {
+  state.mostrarDuplicados = !state.mostrarDuplicados;
+  render();
+};
+
+window.fusionarDesdeSugerencia = function(idA, idB) {
+  state.insumosMergeMode = true;
+  state.insumosMergeSeleccion = { [idA]: true, [idB]: true };
+  state.insumosMergeSurvivor = idA;
+  state.mostrarDuplicados = false;
+  render();
+};
+
 window.toggleInsumosMergeMode = function() {
   state.insumosMergeMode = !state.insumosMergeMode;
   state.insumosMergeSeleccion = {};
@@ -1096,7 +1200,8 @@ window.fusionarInsumos = async function(idsSeleccionados, survivorId) {
 function renderInsumosView(container) {
   const editing = state.editingInsumoId;
   const editingData = editing && editing !== "new" ? (state.insumos[editing] || {}) : {};
-  if (state.insumosMergeMode) state.formOpen = true;
+  if (state.insumosMergeMode || state.mostrarDuplicados) state.formOpen = true;
+  const duplicados = state.mostrarDuplicados ? buscarInsumosDuplicados() : [];
 
   const formHtml = editing ? `
     <div class="section-block">
@@ -1164,9 +1269,25 @@ function renderInsumosView(container) {
         <div class="page-title">Insumos</div>
         <div class="page-sub" style="margin-bottom:0">Precio actual e historial de cada insumo.</div>
       </div>
-      ${!editing ? `<div style="display:flex;gap:8px"><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar fusión" : "🔀 Fusionar duplicados"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
+      ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${state.mostrarDuplicados ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarDuplicados()">${state.mostrarDuplicados ? "✕ Cerrar búsqueda" : "🔍 Buscar posibles duplicados"}</button><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar fusión" : "🔀 Fusionar duplicados"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
     </div>
     ${formHtml}
+    ${state.mostrarDuplicados ? `
+      <div class="section-block">
+        <div class="section-title" style="margin-bottom:10px">🔍 Posibles duplicados</div>
+        ${duplicados.length ? `
+          <div class="text-muted" style="margin-bottom:12px">Revisá cada par: si son el mismo insumo, fusionalos. Si son productos distintos (ej. misma base pero otra marca/proveedor), ignorá la sugerencia.</div>
+          <div class="card-list">
+            ${duplicados.map(d => `
+              <div class="mini-card">
+                <div>
+                  <div class="mini-card-title">${escapeHtml(d.insA.nombre)} <span class="text-muted">vs.</span> ${escapeHtml(d.insB.nombre)}</div>
+                  <div class="mini-card-sub">${fmtMoney(d.insA.precioActual)} · ${fmtMoney(d.insB.precioActual)}</div>
+                </div>
+                <button class="btn btn-turq btn-sm" onclick="fusionarDesdeSugerencia('${d.idA}','${d.idB}')">Revisar y fusionar</button>
+              </div>`).join("")}
+          </div>` : `<div class="empty-state">No se encontraron posibles duplicados por ahora.</div>`}
+      </div>` : ""}
     ${mergeBarHtml}
     <div class="section-block">
       ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr>${state.insumosMergeMode ? "<th></th>" : ""}<th>Nombre</th><th>Unidad</th><th>Precio actual</th><th>Registros</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay insumos cargados. Se crean automáticamente al registrar una factura, o podés agregarlos a mano.</div>`}

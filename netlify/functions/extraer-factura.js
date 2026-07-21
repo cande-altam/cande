@@ -5,7 +5,7 @@
 // Mantiene la API key en el servidor: nunca se expone al cliente.
 // =============================================================
 
-const EXTRACTION_PROMPT = `Sos un asistente que extrae datos de facturas de proveedores para un negocio gastronómico argentino (panadería/pastelería).
+const BASE_PROMPT = `Sos un asistente que extrae datos de facturas de proveedores para un negocio gastronómico argentino (panadería/pastelería).
 Analizá la imagen y devolvé SOLO un JSON válido, sin texto adicional y sin bloques de markdown, con esta forma exacta:
 {
   "proveedor": string | null,
@@ -14,14 +14,23 @@ Analizá la imagen y devolvé SOLO un JSON válido, sin texto adicional y sin bl
   "numeroFactura": string | null,
   "montoTotal": number | null,
   "items": [
-    { "nombre": string, "cantidad": number | null, "unidad": string | null, "precioUnitario": number | null }
+    { "nombre": string, "insumoId": string | null, "cantidad": number | null, "unidad": string | null, "precioUnitario": number | null }
   ]
 }
 Reglas:
 - Si no podés leer un dato con confianza, poné null. No inventes valores.
+- "proveedor" debe ser la RAZÓN SOCIAL del proveedor (el nombre legal/fiscal que figura en la factura, normalmente junto al CUIT o en el encabezado impositivo) — NO un nombre de fantasía, marca o logo comercial si son distintos de la razón social.
 - "montoTotal" es el total final de la factura (con IVA si corresponde), como número sin símbolos de moneda ni separadores de miles (usá punto decimal).
 - "items" son las líneas de detalle de la factura (insumos comprados). Si no hay detalle de líneas legible, devolvé un array vacío.
 - "fecha" en formato ISO YYYY-MM-DD.`;
+
+const CATALOG_INSTRUCTIONS = `
+
+Además, tenés una lista de insumos YA CARGADOS en el sistema (id y nombre). Para cada ítem de la factura, fijate si corresponde a uno de esos insumos ya existentes, aunque el texto de la factura tenga mayúsculas, abreviaturas, marca o tamaño de envase distintos al nombre guardado (ejemplo: "LECHE ENT. SACHET X 1LT" es el mismo insumo que "Leche entera"). Si estás razonablemente seguro de la coincidencia, poné el "id" EXACTO de ese insumo en "insumoId" del ítem. Si el ítem no corresponde a ningún insumo de la lista (es nuevo), poné "insumoId": null — nunca inventes un id que no esté en la lista.
+- "nombre" de cada ítem: si coincide con un insumo de la lista, copiá su nombre EXACTO tal como aparece en la lista; si es un insumo nuevo, un nombre corto y claro, sin marca ni tamaño de envase.
+
+Lista de insumos ya cargados (id → nombre):
+`;
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
@@ -40,9 +49,19 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: "Body inválido." }) };
   }
 
-  const { imageBase64, mediaType } = payload;
+  const { imageBase64, mediaType, insumosConocidos } = payload;
   if (!imageBase64) {
     return { statusCode: 400, body: JSON.stringify({ error: "Falta la imagen." }) };
+  }
+
+  let prompt = BASE_PROMPT;
+  if (Array.isArray(insumosConocidos) && insumosConocidos.length) {
+    // Defensive cap so a very large catalog can't balloon the request indefinitely.
+    const lista = insumosConocidos.slice(0, 600)
+      .filter((it) => it && it.id && it.nombre)
+      .map((it) => `${it.id} → ${it.nombre}`)
+      .join("\n");
+    prompt += CATALOG_INSTRUCTIONS + lista;
   }
 
   try {
@@ -55,12 +74,12 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 1024,
+        max_tokens: 1536,
         messages: [{
           role: "user",
           content: [
             { type: "image", source: { type: "base64", media_type: mediaType || "image/jpeg", data: imageBase64 } },
-            { type: "text", text: EXTRACTION_PROMPT }
+            { type: "text", text: prompt }
           ]
         }]
       })
