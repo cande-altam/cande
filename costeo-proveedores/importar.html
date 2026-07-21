@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Candela — Importar datos iniciales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --cream:#EEEBD7; --cream-dark:#dedad8; --cream-mid:#e5e1cc;
+  --black:#22201F; --gray:#9a9888; --white:#ffffff;
+  --terra:#E15D46; --terra-light:#ea7a65; --terra-pale:#f9ddd8;
+  --turq:#9BD6CC; --turq-dark:#6bbfb4; --turq-pale:#d8f0ed;
+  --green:#27ae60; --green-pale:#e8f8f0;
+  --shadow-sm:0 1px 3px rgba(34,32,31,.06),0 1px 2px rgba(34,32,31,.04);
+  --shadow-md:0 4px 16px rgba(34,32,31,.08),0 2px 6px rgba(34,32,31,.05);
+  --shadow-lg:0 12px 40px rgba(34,32,31,.12),0 4px 12px rgba(34,32,31,.06);
+  --shadow-terra:0 4px 18px rgba(225,93,70,.30);
+  --r:14px;--r-sm:8px;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--black);min-height:100vh;font-weight:300;font-size:14px;}
+.main{max-width:720px;margin:0 auto;padding:40px 24px;}
+.page-title{font-size:22px;font-weight:700;margin-bottom:6px;letter-spacing:-.3px;}
+.page-sub{color:var(--gray);font-size:13px;margin-bottom:24px;}
+.section-block{background:var(--white);border:1px solid rgba(34,32,31,.07);border-radius:var(--r);padding:22px 24px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+.section-title{font-size:14px;font-weight:600;margin-bottom:14px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 22px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;transition:all .2s;}
+.btn-primary{background:var(--terra);color:#fff;box-shadow:var(--shadow-terra);}
+.btn-primary:hover{background:var(--terra-light);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.form-input{padding:10px 14px;background:var(--cream);border:1.5px solid var(--cream-dark);border-radius:var(--r-sm);color:var(--black);font-size:13px;outline:none;width:100%;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:12px;}
+.form-input:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(225,93,70,.12);}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.stat-card{background:var(--cream);border-radius:var(--r-sm);padding:14px 16px;text-align:center;}
+.stat-value{font-size:22px;font-weight:700;}
+.stat-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;margin-top:2px;}
+.alert-box{padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:13px;}
+.alert-warn{background:#fff5f3;border:1px solid var(--terra-pale);color:var(--terra);}
+.alert-turq{background:var(--turq-pale);border:1px solid var(--turq);color:var(--turq-dark);}
+.log-box{background:var(--black);color:var(--cream);border-radius:var(--r-sm);padding:14px 16px;font-family:monospace;font-size:12px;max-height:340px;overflow-y:auto;white-space:pre-wrap;line-height:1.5;}
+#login-err{color:var(--terra);font-size:12px;display:none;margin-top:6px;}
+.progress-bar{height:8px;background:var(--cream-dark);border-radius:100px;overflow:hidden;margin-bottom:16px;}
+.progress-fill{height:100%;background:var(--terra);width:0%;transition:width .2s;}
+</style>
+</head>
+<body>
+<div class="main" id="app">Cargando…</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
+  authDomain: "pedidos-de-produccion-ee3cb.firebaseapp.com",
+  databaseURL: "https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-produccion-ee3cb",
+  storageBucket: "pedidos-de-produccion-ee3cb.firebasestorage.app",
+  messagingSenderId: "744141794971",
+  appId: "1:744141794971:web:9639c8bf3834e4978ae03e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ── Data extraído de "Proveedores_1.xlsx" (hoja Proveedores) y
+// "Costos.xlsx" (hojas "Insumos Pana" y "Costos Cafe"). Ver conversación
+// para el detalle de la limpieza/normalización aplicada.
+const DATA = {"proveedores":[{"nombre":"13 Hermanos","cuit":"20-11496601-1","telefono":"","contacto":"Darouiche Oscar Asis","notas":""},{"nombre":"Aqualand","cuit":"20-26408630-3","telefono":"","contacto":"Epstein Esteban","notas":"Banco: BBVA · Alias: 0170215840000010711714"},{"nombre":"Agua Local","cuit":"30-71603663-0","telefono":"","contacto":"Administración Agua Local","notas":"Alias: ALOCAL.SAS"},{"nombre":"Bonifacio Monge S.R.L","cuit":"30-65442628-2","telefono":"","contacto":"Bonifacio Monge","notas":""},{"nombre":"Calsa","cuit":"27-11080639-1","telefono":"","contacto":"Cisterna Liliana Blanca","notas":"Banco: CREDICOOP · Alias: CALSA.SALTA"},{"nombre":"Campo Quijano","cuit":"30-70916784-3","telefono":"","contacto":"Agro San Pedro S.R.L.","notas":""},{"nombre":"Carfila","cuit":"30-64359502-4","telefono":"","contacto":"Carfila S.R.L.","notas":"Banco: MACRO · Alias: FUENTE.PIPA.COBRE"},{"nombre":"Casa Naoum","cuit":"20-18870334-9","telefono":"","contacto":"Alnaoum Chadi","notas":""},{"nombre":"Citric","cuit":"30-71659688-1","telefono":"","contacto":"Gustavo E. Aguilar S.A.S","notas":"Banco: SANTANDER · Alias: GAS.VUELO.BIGOTE"},{"nombre":"Coca Cola","cuit":"30-51840868-9","telefono":"","contacto":"Salta Refrescos S.A.","notas":"Banco: MACRO · Alias: soga.jueves.cobre"},{"nombre":"Cosalta","cuit":"27-27871432-8","telefono":"","contacto":"Gallardo Daniela Cecilia","notas":"Banco: MACRO · Alias: NORTE.FUERTE."},{"nombre":"Cherry","cuit":"30-71605946-0","telefono":"","contacto":"SHOPS GROUP SAS","notas":"Banco: BANCO BBVA ARGENTINA · Alias: 0170290520000003073779"},{"nombre":"DESC. Harina","cuit":"20-43640873-1","telefono":"","contacto":"David Yonatan Arroyo","notas":"Banco: BANCO DE LA NACION ARGENTINA · Alias: david.arroyo.95"},{"nombre":"El Desafio","cuit":"30-71407883-2","telefono":"","contacto":"EDAFRO S.R.L.","notas":""},{"nombre":"Full City","cuit":"30-71642916-0","telefono":"","contacto":"Diametrik SRL","notas":"Banco: BANCO BBVA ARGENTINA · Alias: 0170124720000009371389"},{"nombre":"Galoppo","cuit":"20-23801019-6","telefono":"","contacto":"Distribuidora Galoppo","notas":"Banco: INDUSTRIAL AND COMMERCIAL BANK OF CHINA · Alias: CAMPO.CUERO.TABLON  // BALDIO.MARCA.FUTURO"},{"nombre":"Gráfico","cuit":"30-71677485-2","telefono":"","contacto":"Grafico Com S.R.L.","notas":"Banco: MACRO · Alias: grafico.com.macro // \n2850109930094197656211"},{"nombre":"Harina — Sucesion de Picchio","cuit":"20-06018545-0","telefono":"","contacto":"Sucesion de Picchio","notas":"Banco: SANTANDER · Alias: 0720334120000000053190"},{"nombre":"Harina — Chahala Ziad","cuit":"20-92295020-3","telefono":"","contacto":"Chahala Ziad","notas":"Banco: MACRO · Alias: 2850130340095048172008"},{"nombre":"La Francisca","cuit":"30-71020433-7","telefono":"","contacto":"Industrias Frigorificas Norte Grande S.A.","notas":"Banco: MACRO · Alias: 2850109930094060811961"},{"nombre":"La Reina Lacteos","cuit":"30-71770171-9","telefono":"","contacto":"La Reina Lacteos S.A.S","notas":""},{"nombre":"La Rotonda","cuit":"30-67377048-3","telefono":"","contacto":"Distribuidora Vidt S.R.L","notas":""},{"nombre":"Levite","cuit":"30-71723313-8","telefono":"","contacto":"Badie S.A.","notas":"Banco: MACRO · Alias: badiesa"},{"nombre":"Master Clean","cuit":"27-39138546-2","telefono":"","contacto":"Contino Apud Leila Maria","notas":""},{"nombre":"Milenium","cuit":"30-70010200-5","telefono":"","contacto":"Distribuidora Milenium","notas":""},{"nombre":"Milkaut","cuit":"30-71562548-9","telefono":"","contacto":"Don Jorge S.R.L.","notas":"Alias: rubia.tapiz.rio"},{"nombre":"Molino Cañuelas","cuit":"30-50795084-8","telefono":"","contacto":"MOLINO CAÑUELAS S.A.C.I.F.I.A.","notas":""},{"nombre":"Momo","cuit":"30-71592635-7","telefono":"","contacto":"Jakarta","notas":"Alias: 0070196520000006178891"},{"nombre":"Panificadora las Flores","cuit":"20-14488997-6","telefono":"","contacto":"Suc de Ramirez Lopez","notas":""},{"nombre":"Puerto bless cafe","cuit":"30-71483347-9","telefono":"","contacto":"Reunión Café SRL","notas":"Banco: CREDICOOP · Alias: URBES.MEDANO.BALANCE  // 1910006355000604050014"},{"nombre":"Queso de Cabra","cuit":"","telefono":"","contacto":"Claudia Elizabeth","notas":"Banco: NARANJA X · Alias: QUESOSDECABRA2024"},{"nombre":"Salta Plast","cuit":"30-64468590-6","telefono":"","contacto":"Salta Plast Polietilenos S.R.L.","notas":"Banco: MACRO · Alias: 2850127330094150523491"},{"nombre":"Sancor","cuit":"30-71215522-8","telefono":"","contacto":"P&H distribuciones","notas":""},{"nombre":"Serenisima","cuit":"30-65446232-8","telefono":"","contacto":"Moreno-Moreno y Cia. S.R.L.","notas":"Banco: MACRO · Alias: macromorenomoreno"},{"nombre":"Servilletas","cuit":"20-27701294-5","telefono":"","contacto":"MARIANO FABIAN","notas":"Banco: SANTANDER · Alias: 0720165988000041335790 // MUSICA.RANA.ITALIA"},{"nombre":"Yogur Griego","cuit":"27-35822445-3","telefono":"","contacto":"AGUSTINA ALFARO","notas":"Banco: NARANJA X · Alias: agusal.nx"},{"nombre":"Tecnico Puerta","cuit":"27-23163347-8","telefono":"","contacto":"Meneses Patricia Evangelina","notas":"Banco: MACRO · Alias: alunorte17 // 2850109930094093635271"},{"nombre":"Te Sai","cuit":"20-22036658-9","telefono":"","contacto":"RAMIREZ GUSTAVO CESAR","notas":"Banco: SANTANDER · Alias: DESIGNIO.TESAI  //  0720199488000000630368"}],"insumos":[{"nombre":"Propionato de calcio","unidad":"kg","precioUnitario":20006.6966,"proveedorNombre":"Calsa"},{"nombre":"Dulce de membrillo — Frucor","unidad":"kg","precioUnitario":3940.6022,"proveedorNombre":"Calsa"},{"nombre":"Dulce de membrillo — Prindal","unidad":"kg","precioUnitario":1938.842,"proveedorNombre":"Calsa"},{"nombre":"Dulce de membrillo — Bari","unidad":"kg","precioUnitario":2849.024,"proveedorNombre":"Galoppo"},{"nombre":"Dulce de membrillo — Calsa","unidad":"kg","precioUnitario":2995.0888,"proveedorNombre":"Calsa"},{"nombre":"Dulce de membrillo — dulcor","unidad":"kg","precioUnitario":2814.0002,"proveedorNombre":"La Rotonda"},{"nombre":"Almidon de maiz","unidad":"kg","precioUnitario":2257.543,"proveedorNombre":"Calsa"},{"nombre":"Aceite de girasol","unidad":"litros","precioUnitario":3227.3827,"proveedorNombre":"La Rotonda"},{"nombre":"Aceite de oliva","unidad":"litros","precioUnitario":11935,"proveedorNombre":"La Rotonda"},{"nombre":"Aditivo","unidad":"kg","precioUnitario":7030.054,"proveedorNombre":"Calsa"},{"nombre":"Albahaca","unidad":"kg","precioUnitario":null,"proveedorNombre":"Cofrutos"},{"nombre":"Almendras — 13 hermanos","unidad":"kg","precioUnitario":28694.22,"proveedorNombre":"13 Hermanos"},{"nombre":"Almendras — Café","unidad":"kg","precioUnitario":19000.0,"proveedorNombre":""},{"nombre":"Anana","unidad":"kg","precioUnitario":null,"proveedorNombre":"Cofrutos"},{"nombre":"Anana en lata","unidad":"kg","precioUnitario":3567.8148,"proveedorNombre":"La Rotonda"},{"nombre":"Arandanos","unidad":"kg","precioUnitario":null,"proveedorNombre":"Cofrutos"},{"nombre":"Arandanos congelados","unidad":"kg","precioUnitario":6561.1,"proveedorNombre":"Milenium"},{"nombre":"Avena","unidad":"kg","precioUnitario":2649.7064,"proveedorNombre":"La Rotonda"},{"nombre":"Azucar — Leach","unidad":"kg","precioUnitario":999.9999,"proveedorNombre":"Casa Naoum"},{"nombre":"Azucar — Ledesma","unidad":"kg","precioUnitario":907.6552,"proveedorNombre":"La Rotonda"},{"nombre":"Azucar — Café","unidad":"kg","precioUnitario":680,"proveedorNombre":""},{"nombre":"Azucar blanca","unidad":"kg","precioUnitario":578.7838,"proveedorNombre":"Calsa"},{"nombre":"Azucar impalpable — Cirse","unidad":"kg","precioUnitario":3027.2784,"proveedorNombre":"Calsa"},{"nombre":"Azucar impalpable — Galoppo","unidad":"kg","precioUnitario":1311.7355,"proveedorNombre":"Galoppo"},{"nombre":"Azucar mascabo","unidad":"kg","precioUnitario":1178,"proveedorNombre":"La Rotonda"},{"nombre":"Banana — Cofrutos","unidad":"kg","precioUnitario":166.6667,"proveedorNombre":"Cofrutos"},{"nombre":"Banana — paquete docena","unidad":"docena","precioUnitario":1800.0,"proveedorNombre":""},{"nombre":"Baño alpino","unidad":"kg","precioUnitario":12333.53,"proveedorNombre":"Galoppo"},{"nombre":"Baño lodiser semiamargo","unidad":"kg","precioUnitario":12976.2719,"proveedorNombre":"Calsa"},{"nombre":"Baño moldeo c/leche","unidad":"kg","precioUnitario":9713.5896,"proveedorNombre":"Galoppo"},{"nombre":"Berlina","unidad":"kg","precioUnitario":6851.7068,"proveedorNombre":"Carfila"},{"nombre":"Bicarbonato de amonio","unidad":"kg","precioUnitario":9279.88,"proveedorNombre":"Calsa"},{"nombre":"Brownie express","unidad":"kg","precioUnitario":10791.6853,"proveedorNombre":"Carfila"},{"nombre":"Cacao","unidad":"kg","precioUnitario":12499.9897,"proveedorNombre":"Galoppo"},{"nombre":"Canela en polvo","unidad":"kg","precioUnitario":null,"proveedorNombre":"13 Hermanos"},{"nombre":"Cereza","unidad":"kg","precioUnitario":11784.96,"proveedorNombre":"Galoppo"},{"nombre":"Cerezas — Cofrutos","unidad":"kg","precioUnitario":null,"proveedorNombre":"Cofrutos"},{"nombre":"Cerezas — Cereskinas","unidad":"kg","precioUnitario":16649.7132,"proveedorNombre":"Calsa"},{"nombre":"Chantypack x12u","unidad":"unidad","precioUnitario":8159.22,"proveedorNombre":"Carfila"},{"nombre":"Chocolate chip","unidad":"kg","precioUnitario":14386.21,"proveedorNombre":"Calsa"},{"nombre":"Chocolate especial","unidad":"kg","precioUnitario":10862.8092,"proveedorNombre":"Galoppo"},{"nombre":"Chocolate gotas","unidad":"kg","precioUnitario":7905.5474,"proveedorNombre":"Galoppo"},{"nombre":"Chocolate moldeo","unidad":"kg","precioUnitario":9610.0031,"proveedorNombre":"Galoppo"},{"nombre":"Chocolate para submarino","unidad":"kg","precioUnitario":20661.158,"proveedorNombre":"Bonifacio Monge S.R.L."},{"nombre":"Chocolino","unidad":"kg","precioUnitario":4753.509,"proveedorNombre":"La Rotonda"},{"nombre":"Ciruelas","unidad":"kg","precioUnitario":null,"proveedorNombre":"Cofrutos"},{"nombre":"Coco rallado","unidad":"kg","precioUnitario":6859.06,"proveedorNombre":"Calsa"},{"nombre":"Color en pasta x12u","unidad":"unidad","precioUnitario":736.032,"proveedorNombre":"Calsa"},{"nombre":"Colorantes varios","unidad":"kg","precioUnitario":null,"proveedorNombre":"Bonifacio Monge S.R.L."},{"nombre":"Confites mini","unidad":"kg","precioUnitario":14880,"proveedorNombre":"Galoppo"},{"nombre":"Crema de leche — Cosalta","unidad":"litros","precioUnitario":8671.6647,"proveedorNombre":"Cosalta"},{"nombre":"Crema de leche — La Reina Lacteos","unidad":"litros","precioUnitario":15500.0002,"proveedorNombre":"La Reina Lacteos"},{"nombre":"Crema Vegetal","unidad":"litros","precioUnitario":7140.0003,"proveedorNombre":"Calsa"},{"nombre":"Crocante de mani","unidad":"kg","precioUnitario":6558.6675,"proveedorNombre":"Galoppo"},{"nombre":"Culatello","unidad":"kg","precioUnitario":15000,"proveedorNombre":"La Francisca"},{"nombre":"Dulce de leche repostero","unidad":"kg","precioUnitario":6547.2,"proveedorNombre":"Citric"},{"nombre":"Dulcerio tres leches","unidad":"kg","precioUnitario":1101.2388,"proveedorNombre":"Carfila"},{"nombre":"Durazno al natural","unidad":"kg","precioUnitario":2058.8092,"proveedorNombre":"La Rotonda"},{"nombre":"Emulsionante en pasta","unidad":"kg","precioUnitario":25158.1909,"proveedorNombre":"Calsa"},{"nombre":"Esencia de vainilla — Monge","unidad":"kg","precioUnitario":null,"proveedorNombre":"Bonifacio Monge S.R.L."},{"nombre":"Esencia de vainilla — Cirse","unidad":"kg","precioUnitario":2683.2331,"proveedorNombre":"Calsa"},{"nombre":"Fecula","unidad":"kg","precioUnitario":1639.9856,"proveedorNombre":"Galoppo"},{"nombre":"Fondant","unidad":"kg","precioUnitario":4509.136,"proveedorNombre":"Galoppo"},{"nombre":"Fruta abrillantada","unidad":"kg","precioUnitario":null,"proveedorNombre":"Calsa"},{"nombre":"Frutillas","unidad":"kg","precioUnitario":11250,"proveedorNombre":"Cofrutos"},{"nombre":"Frutillas congeladas","unidad":"kg","precioUnitario":5695.3369,"proveedorNombre":"Milenium"},{"nombre":"Frutos del bosque","unidad":"kg","precioUnitario":33057.85,"proveedorNombre":"Bonifacio Monge S.R.L."},{"nombre":"Galletas chocolinas","unidad":"kg","precioUnitario":1100,"proveedorNombre":"Herrera Golosinas"},{"nombre":"Galletas lincoln","unidad":"kg","precioUnitario":null,"proveedorNombre":"Herrera Golosinas"},{"nombre":"Galletas oreo","unidad":"kg","precioUnitario":1400,"proveedorNombre":"Herrera Golosinas"},{"nombre":"Galletas vainillas","unidad":"kg","precioUnitario":408.4903,"proveedorNombre":"Herrera Golosinas"},{"nombre":"Granas","unidad":"kg","precioUnitario":4816.4055,"proveedorNombre":"Galoppo"},{"nombre":"Granola — 13 hermanos","unidad":"kg","precioUnitario":12999.998,"proveedorNombre":"13 Hermanos"},{"nombre":"Granola — Café","unidad":"kg","precioUnitario":1800.0,"proveedorNombre":""},{"nombre":"Grasa","unidad":"kg","precioUnitario":6010.4133,"proveedorNombre":"Calsa"},{"nombre":"Harina 000 x25kg — Chahla Zaid","unidad":"kg","precioUnitario":635.1532,"proveedorNombre":"Chahla Zaid"},{"nombre":"Harina 000 x25kg — Radiante","unidad":"kg","precioUnitario":466.8235,"proveedorNombre":"Sucesión de Picchio"},{"nombre":"Harina 0000 x25kg","unidad":"kg","precioUnitario":744.634,"proveedorNombre":"Chahla Zaid"},{"nombre":"Huevos — Lila","unidad":"unidad","precioUnitario":200,"proveedorNombre":"Lila"},{"nombre":"Huevos — paquete unidad","unidad":"unidad","precioUnitario":172.2222,"proveedorNombre":""},{"nombre":"Jalea","unidad":"kg","precioUnitario":null,"proveedorNombre":"Galoppo"},{"nombre":"Jalea fruta","unidad":"kg","precioUnitario":2033.0239,"proveedorNombre":"Calsa"},{"nombre":"Jamon cocido","unidad":"kg","precioUnitario":14983.0936,"proveedorNombre":"La Rotonda"},{"nombre":"Jamon crudo — La Francisca","unidad":"kg","precioUnitario":57656.5121,"proveedorNombre":"La Francisca"},{"nombre":"Jamon Crudo — Café","unidad":"kg","precioUnitario":null,"proveedorNombre":""},{"nombre":"Kiwi","unidad":"kg","precioUnitario":4500,"proveedorNombre":"Cofrutos"},{"nombre":"Leche de almendras","unidad":"litros","precioUnitario":2310.82,"proveedorNombre":"Serenisima"},{"nombre":"Leche de coco","unidad":"litros","precioUnitario":3946.06,"proveedorNombre":"Serenisima"},{"nombre":"Leche deslactosada","unidad":"litros","precioUnitario":null,"proveedorNombre":"Serenisima"},{"nombre":"Leche entera — Manfrey","unidad":"litros","precioUnitario":1455.202,"proveedorNombre":"Citric"},{"nombre":"Leche Entera — Café","unidad":"litros","precioUnitario":1052.22,"proveedorNombre":""},{"nombre":"Leches","unidad":"litros","precioUnitario":1626.0827,"proveedorNombre":"Cosalta"},{"nombre":"Lentejas chocolate","unidad":"kg","precioUnitario":14903.7152,"proveedorNombre":"Calsa"},{"nombre":"Levadura — Duquesa","unidad":"kg","precioUnitario":7598.9996,"proveedorNombre":"Calsa"},{"nombre":"Levadura — Leudex","unidad":"kg","precioUnitario":4691.157,"proveedorNombre":"Calsa"},{"nombre":"licor","unidad":"litros","precioUnitario":42399.9972,"proveedorNombre":"Casa Naoum"},{"nombre":"Limon","unidad":"kg","precioUnitario":null,"proveedorNombre":"Cofrutos"},{"nombre":"Mani filetiado","unidad":"kg","precioUnitario":7890.8677,"proveedorNombre":"Galoppo"},{"nombre":"Manteca — Milkaut","unidad":"kg","precioUnitario":10561.984,"proveedorNombre":"Milkaut"},{"nombre":"Manteca — Primer premio","unidad":"kg","precioUnitario":30216.444,"proveedorNombre":"La Rotonda"},{"nombre":"Manzana verde","unidad":"kg","precioUnitario":null,"proveedorNombre":"Cofrutos"},{"nombre":"Margarina hojaldre","unidad":"kg","precioUnitario":6976.7995,"proveedorNombre":"Calsa"},{"nombre":"Margarina masa — MTK","unidad":"kg","precioUnitario":6670.8002,"proveedorNombre":"Calsa"},{"nombre":"Margarina masa — Premium","unidad":"kg","precioUnitario":3000.992,"proveedorNombre":"Calsa"},{"nombre":"Mayonesa — Natura","unidad":"kg","precioUnitario":3883.6116,"proveedorNombre":"La Rotonda"},{"nombre":"Mayonesa — hellmanns","unidad":"kg","precioUnitario":3342.069,"proveedorNombre":"La Rotonda"},{"nombre":"Mayonesa — paquete 1 kg","unidad":"kg","precioUnitario":1000.0,"proveedorNombre":""},{"nombre":"Mermelada ciruela","unidad":"kg","precioUnitario":3112.2907,"proveedorNombre":""},{"nombre":"Mermelada de membrillo — Prindal","unidad":"kg","precioUnitario":1711.24,"proveedorNombre":"Calsa"},{"nombre":"Mermelada de membrillo — Bari","unidad":"kg","precioUnitario":2787.396,"proveedorNombre":"Galoppo"},{"nombre":"Mermelada durazno","unidad":"kg","precioUnitario":4078.8626,"proveedorNombre":"La Rotonda"},{"nombre":"Mermelada frutilla","unidad":"kg","precioUnitario":5105.9048,"proveedorNombre":"La Rotonda"},{"nombre":"Miel de abeja — La Rotonda","unidad":"kg","precioUnitario":8856.0021,"proveedorNombre":"La Rotonda"},{"nombre":"Miel de abeja — Squezze Aleluya","unidad":"kg","precioUnitario":29495.5824,"proveedorNombre":"La Rotonda"},{"nombre":"Miel de caña","unidad":"kg","precioUnitario":8234.4184,"proveedorNombre":"La Rotonda"},{"nombre":"Mix de frutos rojos","unidad":"kg","precioUnitario":7000,"proveedorNombre":"Milenium"},{"nombre":"Mix de semillas","unidad":"kg","precioUnitario":6000.0028,"proveedorNombre":"13 Hermanos"},{"nombre":"Mortadela","unidad":"kg","precioUnitario":7016.664,"proveedorNombre":"La Rotonda"},{"nombre":"Mortadela con pistachos","unidad":"kg","precioUnitario":15155.25,"proveedorNombre":"La Francisca"},{"nombre":"Naranja — Cofrutos","unidad":"kg","precioUnitario":3000,"proveedorNombre":"Cofrutos"},{"nombre":"Naranja — paquete lt","unidad":"litros","precioUnitario":1200,"proveedorNombre":""},{"nombre":"Nueces (1)","unidad":"kg","precioUnitario":15000,"proveedorNombre":""},{"nombre":"Nueces — Café","unidad":"kg","precioUnitario":6800.0,"proveedorNombre":""},{"nombre":"Nutella","unidad":"kg","precioUnitario":29001.6501,"proveedorNombre":"Galoppo"},{"nombre":"Oregano","unidad":"kg","precioUnitario":null,"proveedorNombre":"13 Hermanos"},{"nombre":"Otentic","unidad":"kg","precioUnitario":4357.5148,"proveedorNombre":"Carfila"},{"nombre":"Palta — Cofrutos","unidad":"kg","precioUnitario":6500,"proveedorNombre":"Cofrutos"},{"nombre":"Palta — Café","unidad":"kg","precioUnitario":7500,"proveedorNombre":""},{"nombre":"Panes blandos","unidad":"kg","precioUnitario":6987.7559,"proveedorNombre":"Carfila"},{"nombre":"Panes granos andinos","unidad":"kg","precioUnitario":9191.8819,"proveedorNombre":"Carfila"},{"nombre":"Panes multicereal","unidad":"kg","precioUnitario":9191.8819,"proveedorNombre":"Carfila"},{"nombre":"Panes salvado","unidad":"kg","precioUnitario":null,"proveedorNombre":"Carfila"},{"nombre":"Pasas de uva","unidad":"kg","precioUnitario":null,"proveedorNombre":"13 Hermanos"},{"nombre":"Pasta de pistachos","unidad":"kg","precioUnitario":55851.2368,"proveedorNombre":"Galoppo"},{"nombre":"Pernil","unidad":"kg","precioUnitario":8667.8108,"proveedorNombre":"La Rotonda"},{"nombre":"Polvo para hornear","unidad":"kg","precioUnitario":10983.0914,"proveedorNombre":"Calsa"},{"nombre":"Premezcla muffin","unidad":"kg","precioUnitario":8771.9999,"proveedorNombre":"Calsa"},{"nombre":"Premezcla pan de papa","unidad":"kg","precioUnitario":19039.4238,"proveedorNombre":"Carfila"},{"nombre":"Premezcla pan de queso","unidad":"kg","precioUnitario":6477.003,"proveedorNombre":"Calsa"},{"nombre":"Pulpalist neutro","unidad":"kg","precioUnitario":8675.9372,"proveedorNombre":"Calsa"},{"nombre":"Queso azul — Eduluc","unidad":"kg","precioUnitario":25054.8324,"proveedorNombre":"La Francisca"},{"nombre":"Queso Azul — Café","unidad":"kg","precioUnitario":null,"proveedorNombre":""},{"nombre":"Queso cabra","unidad":"kg","precioUnitario":null,"proveedorNombre":"Cofrutos"},{"nombre":"Queso crema — Casancrem","unidad":"kg","precioUnitario":5822.4758,"proveedorNombre":"Serenisima"},{"nombre":"queso crema — la quesera","unidad":"kg","precioUnitario":19225.0003,"proveedorNombre":"La Rotonda"},{"nombre":"queso crema — Samin","unidad":"kg","precioUnitario":17350.2021,"proveedorNombre":"Samin"},{"nombre":"Queso cremoso","unidad":"kg","precioUnitario":1570.6491,"proveedorNombre":"La Rotonda"},{"nombre":"Queso de cabra — Cofrutos","unidad":"kg","precioUnitario":13900,"proveedorNombre":"Cofrutos"},{"nombre":"Queso de Cabra — Café","unidad":"kg","precioUnitario":18000.0,"proveedorNombre":""},{"nombre":"Queso sardo — D70","unidad":"kg","precioUnitario":10990.9136,"proveedorNombre":"La Rotonda"},{"nombre":"Queso sardo — cayelac","unidad":"kg","precioUnitario":13294.7056,"proveedorNombre":"La Rotonda"},{"nombre":"Queso tybo — D70","unidad":"kg","precioUnitario":11075.432,"proveedorNombre":"La Rotonda"},{"nombre":"Queso tybo — cremac","unidad":"kg","precioUnitario":9182.5596,"proveedorNombre":"La Rotonda"},{"nombre":"Queso tybo — la rotonda","unidad":"kg","precioUnitario":9174.9944,"proveedorNombre":"La Rotonda"},{"nombre":"Queso Tybo — Café","unidad":"kg","precioUnitario":6850.1994,"proveedorNombre":""},{"nombre":"Rocklets - lentejas de chocolate","unidad":"kg","precioUnitario":13499.728,"proveedorNombre":"Galoppo"},{"nombre":"Romero","unidad":"kg","precioUnitario":24.8,"proveedorNombre":"13 Hermanos"},{"nombre":"Rucula — Cofrutos","unidad":"kg","precioUnitario":500,"proveedorNombre":"Cofrutos"},{"nombre":"Rucula — Café","unidad":"kg","precioUnitario":null,"proveedorNombre":""},{"nombre":"Sal","unidad":"kg","precioUnitario":139.755,"proveedorNombre":"Calsa"},{"nombre":"Salame — Milan","unidad":"kg","precioUnitario":9392.69,"proveedorNombre":"La Rotonda"},{"nombre":"Salame — La Francisca","unidad":"kg","precioUnitario":0,"proveedorNombre":"La Francisca"},{"nombre":"Salamin — La Francisca","unidad":"kg","precioUnitario":19560,"proveedorNombre":"La Francisca"},{"nombre":"Salamin — paquete unidad","unidad":"unidad","precioUnitario":1100.0,"proveedorNombre":""},{"nombre":"Salsa de chocolate x900gr","unidad":"kg","precioUnitario":6611.5667,"proveedorNombre":"Bonifacio Monge S.R.L."},{"nombre":"Salsa para pizza","unidad":"kg","precioUnitario":1155.9348,"proveedorNombre":"Calsa"},{"nombre":"Salvado de trigo","unidad":"kg","precioUnitario":948.0876,"proveedorNombre":"Calsa"},{"nombre":"Semillas de amapola","unidad":"kg","precioUnitario":17999.9963,"proveedorNombre":"13 Hermanos"},{"nombre":"Semillas de sesamo","unidad":"kg","precioUnitario":9999.9966,"proveedorNombre":"13 Hermanos"},{"nombre":"Spekkel","unidad":"kg","precioUnitario":9651.85,"proveedorNombre":"Carfila"},{"nombre":"Syrope avellanas","unidad":"litros","precioUnitario":16294.2076,"proveedorNombre":"Galoppo"},{"nombre":"Syrope caramelo","unidad":"litros","precioUnitario":16294.2076,"proveedorNombre":"Galoppo"},{"nombre":"Syrope coco","unidad":"litros","precioUnitario":16294.2076,"proveedorNombre":"Galoppo"},{"nombre":"Syrope vainilla","unidad":"litros","precioUnitario":16294.2076,"proveedorNombre":"Galoppo"},{"nombre":"Syrup Pistacho","unidad":"litros","precioUnitario":16294.2076,"proveedorNombre":"Galoppo"},{"nombre":"Tegral torta","unidad":"kg","precioUnitario":7457.8272,"proveedorNombre":"Carfila"},{"nombre":"Tomates","unidad":"kg","precioUnitario":750,"proveedorNombre":"Cofrutos"},{"nombre":"Tomates cherrys","unidad":"kg","precioUnitario":2000,"proveedorNombre":"Cofrutos"},{"nombre":"Tulipas","unidad":"kg","precioUnitario":100,"proveedorNombre":""},{"nombre":"Variegato Frutos del bosque","unidad":"kg","precioUnitario":14695.5351,"proveedorNombre":"Galoppo"},{"nombre":"Variegato Maracuya","unidad":"kg","precioUnitario":10821.8183,"proveedorNombre":"Galoppo"},{"nombre":"Yogurt griego — Greenway","unidad":"kg","precioUnitario":7440,"proveedorNombre":"Greenway"},{"nombre":"Yogurt Griego — paquete kg","unidad":"kg","precioUnitario":4600,"proveedorNombre":""},{"nombre":"Yogurt natural","unidad":"kg","precioUnitario":6040,"proveedorNombre":"Greenway"},{"nombre":"Harina 0000","unidad":"kg","precioUnitario":522.8424,"proveedorNombre":"Sucesion de Picchio"},{"nombre":"Miel mielera","unidad":"kg","precioUnitario":null,"proveedorNombre":"La Rotonda"},{"nombre":"Pistachos","unidad":"kg","precioUnitario":74999.9987,"proveedorNombre":"13 Hermanos"},{"nombre":"Bicarbonato de sodio","unidad":"kg","precioUnitario":12000,"proveedorNombre":"13 Hermanos"},{"nombre":"Satin carrot","unidad":"kg","precioUnitario":8855.8518,"proveedorNombre":"Carfila"},{"nombre":"Premezcla brownie x3kg","unidad":"kg","precioUnitario":11593.9982,"proveedorNombre":"Calsa"},{"nombre":"Bondiola","unidad":"kg","precioUnitario":27759.4691,"proveedorNombre":"Carfila"},{"nombre":"Tegral brownie","unidad":"kg","precioUnitario":11056.9824,"proveedorNombre":"Carfila"},{"nombre":"Chocolinas","unidad":"kg","precioUnitario":2662,"proveedorNombre":"Casa Naoum"},{"nombre":"Mermelada — dulcor","unidad":"kg","precioUnitario":2201.8007,"proveedorNombre":"La Rotonda"},{"nombre":"Mermelada — canale","unidad":"kg","precioUnitario":1610.4979,"proveedorNombre":"La Rotonda"},{"nombre":"café instantaneo","unidad":"kg","precioUnitario":6252.0942,"proveedorNombre":"La Rotonda"},{"nombre":"queso roquefort","unidad":"kg","precioUnitario":14027.53,"proveedorNombre":"La Rotonda"},{"nombre":"manteca pilon","unidad":"kg","precioUnitario":1931.9997,"proveedorNombre":"Samin"},{"nombre":"Ternera","unidad":"kg","precioUnitario":22500,"proveedorNombre":"El Desafio"},{"nombre":"Cantimpalo","unidad":"kg","precioUnitario":28023.6,"proveedorNombre":"La Francisca"},{"nombre":"Lomito ahumado","unidad":"kg","precioUnitario":35876.5,"proveedorNombre":"La Francisca"},{"nombre":"Muzzarella","unidad":"kg","precioUnitario":22473.33,"proveedorNombre":"La Francisca"},{"nombre":"Pan de miga","unidad":"kg","precioUnitario":12500,"proveedorNombre":"Panificadora las Flores"},{"nombre":"Café (1)","unidad":"kg","precioUnitario":42000.0,"proveedorNombre":""},{"nombre":"Café — paquete 1/4","unidad":"1/4","precioUnitario":13960.7,"proveedorNombre":""},{"nombre":"Agua saboriz","unidad":"500 cc","precioUnitario":3200.0,"proveedorNombre":""},{"nombre":"Agua","unidad":"500 cc","precioUnitario":2500.0,"proveedorNombre":""},{"nombre":"Alfajor de Dulce de leche","unidad":"kg","precioUnitario":18000.0,"proveedorNombre":""},{"nombre":"Alfajor de Maicena","unidad":"kg","precioUnitario":14400.0,"proveedorNombre":""},{"nombre":"Bagel","unidad":"kg","precioUnitario":800.0,"proveedorNombre":""},{"nombre":"Chipa","unidad":"kg","precioUnitario":23000.0,"proveedorNombre":""},{"nombre":"Churro","unidad":"unidad","precioUnitario":600.0,"proveedorNombre":""},{"nombre":"Cookies","unidad":"unidad","precioUnitario":null,"proveedorNombre":""},{"nombre":"Crema","unidad":"litros","precioUnitario":5546.7475,"proveedorNombre":""},{"nombre":"Croissant","unidad":"kg","precioUnitario":1000.0,"proveedorNombre":""},{"nombre":"Donas","unidad":"kg","precioUnitario":1400.0,"proveedorNombre":""},{"nombre":"Dulce de Leche","unidad":"kg","precioUnitario":null,"proveedorNombre":""},{"nombre":"Durazno","unidad":"kg","precioUnitario":1361.0,"proveedorNombre":""},{"nombre":"Focaccia","unidad":"kg","precioUnitario":1000.0,"proveedorNombre":""},{"nombre":"Frutas","unidad":"kg","precioUnitario":2000.0,"proveedorNombre":""},{"nombre":"Ganache","unidad":"kg","precioUnitario":277.3374,"proveedorNombre":""},{"nombre":"Gaseosa","unidad":"500 cc","precioUnitario":3200.0,"proveedorNombre":""},{"nombre":"Helado","unidad":"kg","precioUnitario":2400.0,"proveedorNombre":""},{"nombre":"Jamon","unidad":"kg","precioUnitario":10346.7,"proveedorNombre":""},{"nombre":"Leche Descremada","unidad":"litros","precioUnitario":1052.22,"proveedorNombre":""},{"nombre":"Lechuga","unidad":"kg","precioUnitario":null,"proveedorNombre":""},{"nombre":"Medialuna","unidad":"kg","precioUnitario":900.0,"proveedorNombre":""},{"nombre":"MiniBaguette","unidad":"kg","precioUnitario":120.0,"proveedorNombre":""},{"nombre":"Mortadela c/pistachos","unidad":"kg","precioUnitario":5300.0,"proveedorNombre":""},{"nombre":"Porcion de Budin","unidad":"kg","precioUnitario":750,"proveedorNombre":""},{"nombre":"Porcion de Torta","unidad":"kg","precioUnitario":6400.0,"proveedorNombre":""},{"nombre":"Queso Crema Casancream","unidad":"kg","precioUnitario":2875.0,"proveedorNombre":""},{"nombre":"Sirope","unidad":"kg","precioUnitario":null,"proveedorNombre":""},{"nombre":"Soda","unidad":"litros","precioUnitario":500.0,"proveedorNombre":""},{"nombre":"Tomate","unidad":"kg","precioUnitario":null,"proveedorNombre":""},{"nombre":"Tomate cherry","unidad":"kg","precioUnitario":null,"proveedorNombre":""},{"nombre":"Tortillas","unidad":"unidad","precioUnitario":null,"proveedorNombre":""},{"nombre":"Tostadas Blancas","unidad":"kg","precioUnitario":3500.0,"proveedorNombre":""},{"nombre":"Tostadas Granos Andinos","unidad":"kg","precioUnitario":4200.0,"proveedorNombre":""},{"nombre":"Tostadas Multicereal","unidad":"kg","precioUnitario":4200.0,"proveedorNombre":""},{"nombre":"Tostadas Salvados","unidad":"kg","precioUnitario":3800.0,"proveedorNombre":""},{"nombre":"Chocolate para subm","unidad":"kg","precioUnitario":640,"proveedorNombre":""},{"nombre":"Hielo","unidad":"bolsa","precioUnitario":1000.0,"proveedorNombre":""},{"nombre":"Azucar en Sobre","unidad":"kg","precioUnitario":null,"proveedorNombre":""},{"nombre":"Miga de jamon cocido","unidad":"kg","precioUnitario":null,"proveedorNombre":""},{"nombre":"Miga de jamon crudo","unidad":"kg","precioUnitario":null,"proveedorNombre":""}]};
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function normKey(s) {
+  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+function todayISO() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+
+const app_ = document.getElementById("app");
+let adminPass = null;
+
+function renderLogin() {
+  app_.innerHTML = `
+    <div class="page-title">Importar datos iniciales</div>
+    <div class="page-sub">Carga única de proveedores e insumos desde los archivos que compartiste. Usa la misma contraseña de administración de Costeo &amp; Proveedores.</div>
+    <div class="section-block">
+      <input type="password" class="form-input" id="login-pass" placeholder="Contraseña">
+      <button class="btn btn-primary" id="login-btn">Ingresar</button>
+      <div id="login-err">Contraseña incorrecta.</div>
+    </div>`;
+  document.getElementById("login-btn").addEventListener("click", handleLogin);
+  document.getElementById("login-pass").addEventListener("keydown", e => { if (e.key === "Enter") handleLogin(); });
+}
+
+async function handleLogin() {
+  const val = document.getElementById("login-pass").value;
+  const snap = await get(ref(db, "costeo/config/adminPassword"));
+  const pass = snap.val() || "costeo2025";
+  if (val === pass) {
+    adminPass = val;
+    renderSummary();
+  } else {
+    document.getElementById("login-err").style.display = "block";
+  }
+}
+
+function renderSummary() {
+  const sinPrecio = DATA.insumos.filter(i => !i.precioUnitario).length;
+  app_.innerHTML = `
+    <div class="page-title">Importar datos iniciales</div>
+    <div class="page-sub">Revisá los números antes de confirmar. Esta acción es segura de repetir: si un proveedor o insumo ya existe (por nombre), se salta y no se duplica.</div>
+    <div class="section-block">
+      <div class="section-title">Resumen de lo que se va a importar</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-value">${DATA.proveedores.length}</div><div class="stat-label">Proveedores</div></div>
+        <div class="stat-card"><div class="stat-value">${DATA.insumos.length}</div><div class="stat-label">Insumos</div></div>
+        <div class="stat-card"><div class="stat-value">${sinPrecio}</div><div class="stat-label">Sin precio en el Excel</div></div>
+      </div>
+      <div class="alert-box alert-warn">⚠️ ${sinPrecio} insumos no tenían un precio válido en el Excel — se van a crear igual, en $0, para que los completes a mano desde la pestaña Insumos.</div>
+      <div class="alert-box alert-turq">ℹ️ Algunos insumos tienen el mismo nombre pero distinta marca o proveedor (ej. "Dulce de membrillo — Frucor" vs "— Prindal") — se cargan como insumos separados, ya que tienen precios distintos.</div>
+      <button class="btn btn-primary" id="start-btn">🚀 Importar ahora</button>
+    </div>`;
+  document.getElementById("start-btn").addEventListener("click", runImport);
+}
+
+async function runImport() {
+  const btn = document.getElementById("start-btn");
+  btn.disabled = true;
+  app_.insertAdjacentHTML("beforeend", `
+    <div class="section-block">
+      <div class="section-title">Progreso</div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="log-box" id="log-box"></div>
+    </div>`);
+  const logBox = document.getElementById("log-box");
+  const progressFill = document.getElementById("progress-fill");
+  const log = (msg) => { logBox.textContent += msg + "\n"; logBox.scrollTop = logBox.scrollHeight; };
+
+  const [provSnap, insSnap] = await Promise.all([
+    get(ref(db, "costeo/proveedores")),
+    get(ref(db, "costeo/insumos"))
+  ]);
+  const existingProv = provSnap.val() || {};
+  const existingIns = insSnap.val() || {};
+  const provByKey = {};
+  Object.values(existingProv).forEach(p => { provByKey[normKey(p.nombre)] = true; });
+  const insByKey = {};
+  Object.values(existingIns).forEach(i => { insByKey[normKey(i.nombre)] = true; });
+
+  const total = DATA.proveedores.length + DATA.insumos.length;
+  let done = 0;
+  const tick = () => { done++; progressFill.style.width = Math.round((done / total) * 100) + "%"; };
+
+  let provCreated = 0, provSkipped = 0, insCreated = 0, insSkipped = 0, insSinPrecio = 0;
+
+  log(`Importando ${DATA.proveedores.length} proveedores…`);
+  for (const p of DATA.proveedores) {
+    if (provByKey[normKey(p.nombre)]) {
+      provSkipped++;
+      log(`  ⏭️  Proveedor ya existe, salteado: ${p.nombre}`);
+      tick();
+      continue;
+    }
+    await set(push(ref(db, "costeo/proveedores")), {
+      nombre: p.nombre, cuit: p.cuit, telefono: p.telefono, contacto: p.contacto, notas: p.notas,
+      creadoTs: Date.now()
+    });
+    provByKey[normKey(p.nombre)] = true;
+    provCreated++;
+    tick();
+  }
+  log(`✅ Proveedores: ${provCreated} creados, ${provSkipped} ya existían.\n`);
+
+  log(`Importando ${DATA.insumos.length} insumos…`);
+  const fecha = todayISO();
+  for (const it of DATA.insumos) {
+    if (insByKey[normKey(it.nombre)]) {
+      insSkipped++;
+      log(`  ⏭️  Insumo ya existe, salteado: ${it.nombre}`);
+      tick();
+      continue;
+    }
+    const precio = it.precioUnitario || 0;
+    const newRef = push(ref(db, "costeo/insumos"));
+    await set(newRef, { nombre: it.nombre, unidad: it.unidad, precioActual: precio, actualizadoTs: Date.now() });
+    if (precio > 0) {
+      await push(ref(db, `costeo/insumos/${newRef.key}/historial`), {
+        precio, fecha, proveedorId: "", proveedorNombre: it.proveedorNombre || "Carga inicial", facturaId: ""
+      });
+    } else {
+      insSinPrecio++;
+    }
+    insByKey[normKey(it.nombre)] = true;
+    insCreated++;
+    tick();
+  }
+  log(`✅ Insumos: ${insCreated} creados (${insSinPrecio} sin precio, completar a mano), ${insSkipped} ya existían.`);
+  log(`\n🎉 Importación terminada.`);
+
+  app_.insertAdjacentHTML("beforeend", `
+    <div class="section-block">
+      <div class="alert-box alert-turq">Listo. Podés ir a <a href="index.html">Costeo &amp; Proveedores</a> a revisar los datos. Esta página es de uso único — podés cerrarla o ignorarla de ahora en más (volver a ejecutarla no duplica nada).</div>
+    </div>`);
+  btn.textContent = "Importación completa";
+}
+
+onValue(ref(db, "costeo/config"), () => {}, { onlyOnce: true });
+renderLogin();
+</script>
+</body>
+</html>
