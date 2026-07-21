@@ -1329,10 +1329,21 @@ window.recalcCostoProducto = function() {
 
 function calcCostoProducto(producto) {
   const receta = producto.receta || {};
-  return Object.entries(receta).reduce((sum, [insumoId, cantidad]) => {
-    const precio = state.insumos[insumoId]?.precioActual || 0;
-    return sum + precio * (Number(cantidad) || 0);
-  }, 0);
+  if (Object.keys(receta).length) {
+    return Object.entries(receta).reduce((sum, [insumoId, cantidad]) => {
+      const precio = state.insumos[insumoId]?.precioActual || 0;
+      return sum + precio * (Number(cantidad) || 0);
+    }, 0);
+  }
+  // Sin receta armada: usamos el costo estimado a mano, si lo cargaron (útil para catálogos
+  // grandes importados donde no es realista armar una receta ingrediente por ingrediente para todo).
+  return Number(producto.costoManual) || 0;
+}
+
+function costoProductoFuente(producto) {
+  if (producto.receta && Object.keys(producto.receta).length) return "receta";
+  if (producto.costoManual > 0) return "manual";
+  return "sin_datos";
 }
 
 // Snapshots a producto's computed cost into costoHistorial (like insumo price historial),
@@ -1365,6 +1376,8 @@ window.guardarProducto = async function() {
   const nombre = document.getElementById("prod-nombre").value.trim();
   const precioVentaRaw = document.getElementById("prod-precio-venta").value;
   const precioVenta = precioVentaRaw ? parseFloat(precioVentaRaw) : null;
+  const costoManualRaw = document.getElementById("prod-costo-manual").value;
+  const costoManual = costoManualRaw ? parseFloat(costoManualRaw) : null;
   if (!nombre) { showToast("⚠️ Ingresá el nombre del producto.", "warn"); return; }
 
   const rows = Array.from(document.querySelectorAll("#recipe-container .recipe-row"));
@@ -1376,7 +1389,7 @@ window.guardarProducto = async function() {
   }
 
   const id = state.editingProductoId;
-  const data = { nombre, precioVenta, receta };
+  const data = { nombre, precioVenta, receta, costoManual };
   try {
     if (id === "new") {
       await set(push(ref(db, "costeo/productos")), { ...data, creadoTs: Date.now() });
@@ -1416,7 +1429,14 @@ function renderProductosView(container) {
       </div>
       <div id="recipe-container">${recetaRows}</div>
       <div style="margin-top:14px;font-size:13px">Costo estimado: <strong id="costo-preview">$0,00</strong></div>
-      <button class="btn btn-primary" style="margin-top:14px" onclick="guardarProducto()">💾 Guardar</button>
+      <div class="form-row" style="margin-top:14px">
+        <div class="form-group" style="max-width:260px">
+          <label class="form-label">Costo manual (opcional, si no armaste la receta)</label>
+          <input type="number" step="0.01" min="0" class="form-input" id="prod-costo-manual" value="${editingData.costoManual ?? ""}" placeholder="0.00">
+        </div>
+      </div>
+      <div class="text-muted" style="margin-bottom:10px">Si armaste la receta, el costo se calcula solo a partir de los insumos y este campo se ignora. Usalo para productos sin receta armada (ej. catálogo importado), así igual entran en la comparación de costo vs. precio de venta.</div>
+      <button class="btn btn-primary" onclick="guardarProducto()">💾 Guardar</button>
       <button class="btn btn-ghost" onclick="cerrarFormProducto()">Cancelar</button>
     </div>` : "";
 
@@ -1426,7 +1446,7 @@ function renderProductosView(container) {
     <div class="section-header">
       <div>
         <div class="page-title">Productos y recetas</div>
-        <div class="page-sub" style="margin-bottom:0">El costo se calcula automáticamente a partir del precio actual de los insumos.</div>
+        <div class="page-sub" style="margin-bottom:0">El costo se calcula automáticamente a partir de la receta. Si un producto no tiene receta armada, podés cargarle un costo manual (acá mismo, en la columna "Costo actual") para que igual entre en la comparación de Análisis.</div>
       </div>
       ${!editing ? `<button class="btn btn-primary" onclick="abrirFormProducto()">+ Nuevo producto</button>` : ""}
     </div>
@@ -1447,13 +1467,18 @@ function renderProductosTable() {
   const rows = productosFiltrados.map(([id, p]) => {
     const costo = calcCostoProducto(p);
     const margen = p.precioVenta ? ((p.precioVenta - costo) / p.precioVenta * 100) : null;
+    const fuente = costoProductoFuente(p);
+    const tieneReceta = Object.keys(p.receta || {}).length > 0;
+    const costoCell = tieneReceta
+      ? `${fmtMoney(costo)} <span class="text-muted" style="font-size:11px">(receta)</span>`
+      : `<input type="number" step="0.01" min="0" class="form-input" style="max-width:120px" value="${p.costoManual ?? ""}" placeholder="Costo manual" onchange="guardarCostoManualRapido('${id}', this.value)">`;
     return `
       <tr>
         <td>${escapeHtml(p.nombre)}</td>
-        <td>${Object.keys(p.receta || {}).length} insumo(s)</td>
-        <td>${fmtMoney(costo)}</td>
+        <td>${tieneReceta ? `${Object.keys(p.receta).length} insumo(s)` : `<span class="text-muted">Sin receta</span>`}</td>
+        <td>${costoCell}</td>
         <td>${p.precioVenta ? fmtMoney(p.precioVenta) : "—"}</td>
-        <td>${margen !== null ? fmtPct(margen) : "—"}</td>
+        <td>${fuente !== "sin_datos" && margen !== null ? fmtPct(margen) : "—"}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" onclick="abrirFormProducto('${id}')">Editar</button>
           <button class="btn btn-danger btn-sm" onclick="eliminarProducto('${id}')">Eliminar</button>
@@ -1465,6 +1490,14 @@ function renderProductosTable() {
     ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Producto</th><th>Receta</th><th>Costo actual</th><th>Precio venta</th><th>Margen</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`
     : `<div class="empty-state">${filtro ? "Ningún producto coincide con la búsqueda." : "Todavía no hay productos cargados."}</div>`;
 }
+
+window.guardarCostoManualRapido = async function(id, val) {
+  const costoManual = val ? parseFloat(val) : null;
+  await update(ref(db, `costeo/productos/${id}`), { costoManual });
+  state.productos[id] = { ...state.productos[id], costoManual };
+  showToast("✅ Costo guardado.", "success");
+  renderProductosTable();
+};
 
 window.setProductosFiltro = function(val) {
   state.productosFiltro = val;
@@ -1523,23 +1556,25 @@ function renderAnalisisView(container) {
 
   const alertas = filas.filter(f => !f.insuficiente && f.delta > 0);
 
-  // Productos con receta: snapshot su costo actual (throttled a 1 vez/día si cambió) y compará
-  // costo vs. precio de venta — igual idea que arriba, pero a nivel producto terminado.
-  const productosConReceta = objToSortedEntries(state.productos, () => 0)
-    .filter(([, p]) => p.receta && Object.keys(p.receta).length);
-  productosConReceta.forEach(([id, p]) => actualizarCostoHistorialProducto(id, p));
+  // Productos con costo conocido (receta armada, o costo manual cargado a mano para catálogos
+  // grandes donde no es realista armar receta por receta): snapshot su costo actual (throttled a
+  // 1 vez/día si cambió) y compará costo vs. precio de venta — igual idea que arriba, a nivel producto.
+  const productosCosteables = objToSortedEntries(state.productos, () => 0)
+    .filter(([, p]) => costoProductoFuente(p) !== "sin_datos");
+  productosCosteables.forEach(([id, p]) => actualizarCostoHistorialProducto(id, p));
 
-  const filasProd = productosConReceta.map(([id, p]) => {
+  const filasProd = productosCosteables.map(([id, p]) => {
     const costoActual = calcCostoProducto(p);
     const venta = p.precioVenta;
+    const fuente = costoProductoFuente(p);
     const margenPct = venta > 0 ? ((venta - costoActual) / venta) * 100 : null;
     const perdida = venta > 0 && costoActual >= venta;
     const hist = objToSortedEntries(p.costoHistorial, (a, b) => a[1].fecha.localeCompare(b[1].fecha)).map(([, h]) => h);
-    if (hist.length < 2) return { id, p, costoActual, venta, margenPct, perdida, insuficiente: true };
+    if (hist.length < 2) return { id, p, costoActual, venta, fuente, margenPct, perdida, insuficiente: true };
     const base = hist.find(h => h.fecha >= cutoff) || hist[0];
     const variacion = base.costo > 0 ? ((costoActual - base.costo) / base.costo) * 100 : null;
     const delta = variacion !== null ? variacion - inflacionAcum : null;
-    return { id, p, costoActual, venta, margenPct, perdida, insuficiente: false, base, variacion, delta };
+    return { id, p, costoActual, venta, fuente, margenPct, perdida, insuficiente: false, base, variacion, delta };
   }).sort((a, b) => {
     if (a.perdida !== b.perdida) return a.perdida ? -1 : 1;
     if (a.insuficiente && b.insuficiente) return 0;
@@ -1555,7 +1590,7 @@ function renderAnalisisView(container) {
     <tr>
       <td>${escapeHtml(f.p.nombre)}</td>
       <td>${f.venta > 0 ? fmtMoney(f.venta) : "—"}</td>
-      <td>${fmtMoney(f.costoActual)}</td>
+      <td>${fmtMoney(f.costoActual)} <span class="text-muted" style="font-size:11px">(${f.fuente === "receta" ? "receta" : "manual"})</span></td>
       <td class="${f.margenPct != null && f.margenPct < 0 ? "delta-pos" : ""}">${fmtPct(f.margenPct)}</td>
       <td>${f.insuficiente ? `<span class="text-muted">Sin historial suficiente</span>` : `${fmtMoney(f.base.costo)} <span class="text-muted">(${fmtDate(f.base.fecha)})</span>`}</td>
       <td>${f.insuficiente ? "—" : `<span class="${f.variacion > 0 ? "delta-pos" : "delta-neg"}">${fmtPct(f.variacion)}</span>`}</td>
@@ -1621,17 +1656,17 @@ function renderAnalisisView(container) {
 
     <div class="section-block">
       <div class="section-header">
-        <div class="section-title">🧾 Costo vs. precio de venta (productos con receta)</div>
+        <div class="section-title">🧾 Costo vs. precio de venta</div>
       </div>
-      <div class="page-sub" style="margin-bottom:16px">Compara el costo calculado de cada producto (según su receta) contra su precio de venta, para detectar cuando un aumento de costos se come el margen.</div>
+      <div class="page-sub" style="margin-bottom:16px">Compara el costo de cada producto (por receta, o cargado a mano si no tiene) contra su precio de venta, para detectar productos que quedaron con precio bajo o cuyo costo se comió el margen.</div>
       <div class="stat-row">
         <div class="stat-card"><div class="stat-label">Vendiendo a pérdida</div><div class="stat-value">${alertasPerdida.length}</div></div>
         <div class="stat-card"><div class="stat-label">Costo subió más que la inflación</div><div class="stat-value">${alertasProdInflacion.length}</div></div>
-        <div class="stat-card"><div class="stat-label">Productos con receta</div><div class="stat-value">${filasProd.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Productos con costo cargado</div><div class="stat-value">${filasProd.length}</div></div>
       </div>
       ${alertasPerdida.length ? `<div class="alert-box alert-danger">❌ ${alertasPerdida.length} producto(s) cuestan más de lo que se venden — ajustá el precio de venta urgente.</div>` : ""}
       ${alertasProdInflacion.length ? `<div class="alert-box alert-warn">⚠️ ${alertasProdInflacion.length} producto(s) subieron de costo más que la inflación del período — revisá el precio de venta o el margen.</div>` : ""}
-      ${filasProd.length === 0 ? `<div class="empty-state">Todavía no hay productos con receta cargada. Armá recetas en "Productos y Recetas" para ver esta comparación.</div>` : `
+      ${filasProd.length === 0 ? `<div class="empty-state">Todavía no hay productos con costo cargado. Armá una receta o cargá un costo manual en "Productos y Recetas" para ver esta comparación.</div>` : `
         <div class="data-table-wrap">
           <table class="data-table">
             <thead><tr><th>Producto</th><th>Precio de venta</th><th>Costo actual</th><th>Margen</th><th>Costo base</th><th>Variación</th><th>Estado</th></tr></thead>
