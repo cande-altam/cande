@@ -27,7 +27,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:va
 /* HEADER */
 .header{background:var(--black);padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;height:68px;box-shadow:0 1px 0 rgba(255,255,255,.06),0 4px 24px rgba(0,0,0,.3);}
 .logo{display:flex;align-items:center;gap:10px;}
-.logo-mark{font-size:22px;}
 .logo-text-wrap{display:flex;flex-direction:column;line-height:1.1;}
 .logo-name{font-size:15px;font-weight:600;color:var(--cream);letter-spacing:.2px;}
 .logo-sub{font-size:9px;color:var(--gray);font-weight:400;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
@@ -151,11 +150,27 @@ textarea.form-input{resize:vertical;min-height:60px;}
 .print-only{display:none;}
 @media print{
   .header,.nav-mobile-menu,.tabs,.no-print,#toast{display:none!important;}
-  body{background:#fff;font-size:12px;}
+  body{background:#fff;font-size:12px;-webkit-print-color-adjust:exact;-moz-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
   .main{max-width:100%;padding:0;}
   .print-only{display:block;}
   .section-block{box-shadow:none;border:none;padding:0;}
+  .doc-header{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
 }
+
+/* CANDELA MARK — small stylized "C" (flame) badge, built as a circle with an offset
+   circular cutout rather than a traced SVG, to approximate the brand mark. */
+.candela-mark{position:relative;border-radius:50%;background:var(--terra);flex-shrink:0;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
+.candela-mark::after{content:"";position:absolute;width:58%;height:58%;border-radius:50%;top:16%;left:44%;background:var(--mark-cutout-bg,#fff);}
+
+/* DOC HEADER (printed / downloaded presupuesto) */
+.doc-header{background:#fff;padding:6px 0 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+.doc-header-brand{display:flex;align-items:center;gap:14px;}
+.doc-header-name{font-size:22px;font-weight:700;letter-spacing:-.2px;line-height:1.15;color:var(--terra);}
+.doc-header-sub{font-size:11.5px;color:var(--turq-dark);letter-spacing:.5px;margin-top:2px;font-weight:600;text-transform:lowercase;}
+.doc-header-num{text-align:right;}
+.doc-header-num .num-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray);}
+.doc-header-num .num-value{font-size:18px;font-weight:700;color:var(--black);}
+.doc-accent-bar{height:5px;border-radius:100px;background:linear-gradient(90deg,var(--terra),var(--turq));margin-bottom:20px;}
 </style>
 </head>
 <body>
@@ -196,12 +211,17 @@ const clientesDb = getDatabase(clientesApp);
 
 // Must mirror TEAMS / VENDEDORES / local values from the Pedidos de Clientes system exactly,
 // so orders created here render correctly over there. If that system's roster changes, update here too.
+// NOTE: "cafe" (Cafetería) was added here on the Presupuestos side — the Pedidos de Clientes
+// system (separate branch/codebase) needs to recognize this same key for it to render with a
+// proper label there too; otherwise the order still gets created fine, but that team may show
+// unlabeled/default until its own TEAMS list is updated to match.
 const TEAMS = {
   pan:  { name: "Panadería",      icon: "🥖" },
   past: { name: "Pastelería",     icon: "🎂" },
   fact: { name: "Facturería",     icon: "🥐" },
   esp:  { name: "Especialidades", icon: "🍩" },
   sand: { name: "Sándwiches",     icon: "🥪" },
+  cafe: { name: "Cafetería",      icon: "☕" },
 };
 const LOCALES_CLIENTE = ["San Luis", "SLA"];
 const VENDEDORES = ["Aaron", "Brenda", "Dana", "Erica", "Guadalupe", "Javier", "Margarita", "Natalia", "Paula", "Valentina"];
@@ -359,7 +379,7 @@ function render() {
   root.innerHTML = `
     <div class="header no-print">
       <div class="logo">
-        <span class="logo-mark">☕</span>
+        <div class="candela-mark" style="width:28px;height:28px;--mark-cutout-bg:var(--black)"></div>
         <div class="logo-text-wrap"><span class="logo-name">Candela</span><span class="logo-sub">Presupuestos</span></div>
       </div>
       <div class="nav-desktop">
@@ -672,7 +692,7 @@ function renderDetalleImprimible(container, id) {
   if (!p) { state.viewingId = null; container.innerHTML = `<div class="empty-state">Presupuesto no encontrado.</div>`; return; }
 
   const itemsRows = (p.items || []).map(it => `
-    <tr><td>${escapeHtml(it.descripcion)}</td><td style="text-align:center">${it.cantidad}</td><td style="text-align:right">${fmtMoney(it.precioUnitario)}</td><td style="text-align:right">${fmtMoney(it.cantidad * it.precioUnitario)}</td></tr>`).join("");
+    <tr><td>${escapeHtml(it.descripcion)}${it.area && TEAMS[it.area] ? `<div class="text-muted" style="font-size:11px">${TEAMS[it.area].icon} ${TEAMS[it.area].name}</div>` : ""}</td><td style="text-align:center">${it.cantidad}</td><td style="text-align:right">${fmtMoney(it.precioUnitario)}</td><td style="text-align:right">${fmtMoney(it.cantidad * it.precioUnitario)}</td></tr>`).join("");
 
   container.innerHTML = `
     <div class="no-print" style="margin-bottom:16px;display:flex;gap:8px">
@@ -680,29 +700,36 @@ function renderDetalleImprimible(container, id) {
       <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
     </div>
     <div class="section-block">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px">
-        <div>
-          <div style="font-size:20px;font-weight:700">☕ Candela Café &amp; Patisserie</div>
-          <div class="text-muted">Presupuesto N° ${p.numero ?? "—"}</div>
+      <div class="doc-header">
+        <div class="doc-header-brand">
+          <div class="candela-mark" style="width:48px;height:48px"></div>
+          <div>
+            <div class="doc-header-name">Candela</div>
+            <div class="doc-header-sub">café &amp; patisserie</div>
+          </div>
         </div>
-        <div style="text-align:right">
-          <div class="text-muted">Fecha de entrega</div>
-          <div style="font-weight:600">${fmtDate(p.fechaEntrega)}</div>
+        <div class="doc-header-num">
+          <div class="num-label">Presupuesto</div>
+          <div class="num-value">N° ${p.numero ?? "—"}</div>
         </div>
+      </div>
+      <div class="doc-accent-bar"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+        <div class="text-muted">Fecha de entrega: <strong style="color:var(--black)">${fmtDate(p.fechaEntrega)}</strong></div>
+        <span class="badge badge-${p.estado}">${ESTADO_LABELS[p.estado] || p.estado}</span>
       </div>
       <div class="stat-row">
         <div class="stat-card"><div class="stat-label">Cliente</div><div class="stat-value" style="font-size:16px">${escapeHtml(p.cliente?.nombre)}</div>${p.cliente?.telefono ? `<div class="text-muted">${escapeHtml(p.cliente.telefono)}</div>` : ""}</div>
-        <div class="stat-card"><div class="stat-label">Estado</div><span class="badge badge-${p.estado}">${ESTADO_LABELS[p.estado] || p.estado}</span></div>
       </div>
       <div class="data-table-wrap">
         <table class="data-table">
-          <thead><tr><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:right">Precio unit.</th><th style="text-align:right">Subtotal</th></tr></thead>
+          <thead><tr style="background:var(--turq-pale)"><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:right">Precio unit.</th><th style="text-align:right">Subtotal</th></tr></thead>
           <tbody>${itemsRows}</tbody>
         </table>
       </div>
       <div class="total-line">Subtotal: ${fmtMoney(p.subtotal)}</div>
       ${p.descuento > 0 ? `<div class="total-line">Descuento: -${fmtMoney(p.descuento)}</div>` : ""}
-      <div class="total-line grand">Total: ${fmtMoney(p.total)}</div>
+      <div class="total-line grand" style="color:var(--terra)">Total: ${fmtMoney(p.total)}</div>
       ${p.notas ? `<div style="margin-top:16px"><div class="form-label">Notas</div><div>${escapeHtml(p.notas)}</div></div>` : ""}
     </div>`;
 }
