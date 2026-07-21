@@ -1050,6 +1050,9 @@ let state = {
   confirmados: {},
   ventasCustomInsumos: {},
   prodCustomInsumos: {},
+  proveedores: [],          // lista global de proveedores (Firebase)
+  proveedorProducto: {},    // { [idInsumo]: nombreProveedor } override por producto (Firebase)
+  resumenOrden: 'local',    // orden de la vista resumen: 'local' | 'proveedor' | 'prioridad'
   loading: true,
   stock: {},
   stockHistory: {},
@@ -1317,6 +1320,15 @@ async function initFirebase() {
   });
   onValue(ref(db, 'prodCustomInsumos'), snap => {
     state.prodCustomInsumos = snap.val() || {};
+    if (!state.loading) safeRender();
+  });
+  onValue(ref(db, 'proveedores'), snap => {
+    const v = snap.val();
+    state.proveedores = Array.isArray(v) ? v : (v ? Object.values(v) : []);
+    if (!state.loading) safeRender();
+  });
+  onValue(ref(db, 'proveedorProducto'), snap => {
+    state.proveedorProducto = snap.val() || {};
     if (!state.loading) safeRender();
   });
   onValue(ref(db, 'stock'), snap => {
@@ -1680,6 +1692,64 @@ function renderStock() {
     ${filtered.length===0 ? `<div class="empty-state">No hay productos que coincidan con el filtro.</div>` : `<div class="stock-grid">${filtered.map(p => { const sd = state.stock[p.id] || {}; const qty = sd.qty || 0; const hist = (state.stockHistory[p.id] || []).slice(-3).reverse(); return `<div class="stock-item ${statusClass(qty)}"><div style="display:flex;justify-content:space-between"><div class="stock-item-name">${p.name}</div><div class="stock-status-dot" style="background:${dotColor(qty)}"></div></div><div class="stock-item-controls"><button class="stock-btn" onclick="stockDecrement('${p.id}','${p.unit}')">−</button><input class="stock-qty-input" type="number" min="0" step="1" value="${qty}" data-pid="${p.id}" data-unit="${p.unit}" onblur="stockSetQty(this)" onkeydown="if(event.key==='Enter')this.blur()"><button class="stock-btn" onclick="stockIncrement('${p.id}','${p.unit}')">+</button><span class="stock-unit">${p.unit}</span></div><div class="stock-item-footer">${alertBadge(qty, p.unit)}<span class="stock-last-update">${sd.ts ? fmtTime(sd.ts) : 'Sin registrar'}</span></div>${hist.length ? `<div class="stock-history">${hist.map(h=>`<div class="stock-history-item"><span class="stock-history-delta ${h.delta>0?'pos':'neg'}">${h.delta>0?'+':''}${h.delta} ${p.unit}</span><span>${fmtTime(h.ts)}</span></div>`).join('')}</div>` : ''}</div>`; }).join('')}</div>`}`;
 }
 
+// ====================== PROVEEDORES ======================
+function escAttr(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// Proveedor por defecto de un insumo (definido en el catálogo con la prop `prov`)
+function getProdProvDefault(id) {
+  for (const ak of Object.keys(INSUMOS_PRODUCCION)) {
+    const f = (INSUMOS_PRODUCCION[ak]||[]).find(p=>p.id===id);
+    if (f) return f.prov || '';
+  }
+  const fv = INSUMOS_VENTAS.find(p=>p.id===id);
+  if (fv) return fv.prov || '';
+  for (const ak of Object.keys(state.prodCustomInsumos||{})) {
+    const f = (state.prodCustomInsumos[ak]||[]).find(p=>p.id===id);
+    if (f) return f.prov || '';
+  }
+  for (const lk of Object.keys(state.ventasCustomInsumos||{})) {
+    const f = (state.ventasCustomInsumos[lk]||[]).find(p=>p.id===id);
+    if (f) return f.prov || '';
+  }
+  return '';
+}
+// Proveedor efectivo: override elegido por el usuario, si no el por defecto
+function getProveedorActual(id) {
+  const ov = state.proveedorProducto?.[id];
+  if (ov !== undefined && ov !== null && ov !== '') return ov;
+  return getProdProvDefault(id);
+}
+// Lista de proveedores conocidos (por defecto del catálogo + guardados + overrides)
+function getListaProveedores() {
+  const set = new Set();
+  Object.values(INSUMOS_PRODUCCION).flat().forEach(p=>{ if(p.prov) set.add(p.prov); });
+  INSUMOS_VENTAS.forEach(p=>{ if(p.prov) set.add(p.prov); });
+  (state.proveedores||[]).forEach(n=>{ if(n) set.add(n); });
+  Object.values(state.proveedorProducto||{}).forEach(n=>{ if(n) set.add(n); });
+  return [...set].sort((a,b)=>a.localeCompare(b,'es'));
+}
+// Menú desplegable de proveedor para una fila del resumen
+function provDropdown(id) {
+  const actual = getProveedorActual(id);
+  const lista = getListaProveedores();
+  const opts = lista.map(n=>`<option value="${escAttr(n)}" ${n===actual?'selected':''}>${n}</option>`).join('');
+  const sinAsignar = `<option value="" ${!actual?'selected':''}>— Sin asignar —</option>`;
+  return `<select onchange="setProveedorProducto('${id}', this.value)" style="max-width:150px;padding:5px 8px;border:1.5px solid var(--cream-dark);border-radius:6px;background:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:var(--black);cursor:pointer">${sinAsignar}${opts}<option value="__nuevo__">＋ Agregar proveedor…</option></select>`;
+}
+window.setProveedorProducto = async function(id, value) {
+  if (value === '__nuevo__') {
+    const nombre = (prompt('Nombre del nuevo proveedor:')||'').trim();
+    if (!nombre) { render(); return; }
+    const lista = Array.from(new Set([...(state.proveedores||[]), nombre]));
+    await set(ref(db, 'proveedores'), lista);
+    await set(ref(db, `proveedorProducto/${id}`), nombre);
+    showToast(`Proveedor "${nombre}" asignado`, 'success');
+    return;
+  }
+  if (value === '') await remove(ref(db, `proveedorProducto/${id}`));
+  else await set(ref(db, `proveedorProducto/${id}`), value);
+};
+window.setResumenOrden = function(o) { state.resumenOrden = o; render(); };
+
 function renderInsumos() {
   const sector = state.insumosSector;
   const insView = state.insumosView || 'detalle';
@@ -1732,12 +1802,52 @@ function renderInsumos() {
     const prioOrder = {rojo:0, amarillo:1, verde:2, '':3};
     const prioLabel = {verde:'Stock OK', amarillo:'Stock bajo', rojo:'Urgente'};
     const prioBg2 = {verde:'#e8f8f0', amarillo:'#fffbe6', rojo:'#fdecea'};
-    function renderTable(rows) {
-      return `<table style="width:100%;border-collapse:collapse;"><thead><tr style="border-bottom:1.5px solid var(--black)"><th style="padding:6px 10px;text-align:left">Insumo</th><th style="padding:6px 10px;text-align:left">Cantidad</th><th style="padding:6px 10px;text-align:left">Prioridad</th><th style="padding:6px 10px;text-align:left">Aclaración</th><th style="padding:6px 10px;text-align:center">Comprado</th></tr></thead><tbody>${rows.map(r => { const ck = `${r._scope}__${r.id}`; const done = r._done; return `<tr style="background:${done?'#f0faf7':prioBg2[r.prioridad||'']||'transparent'};opacity:${done?'0.55':'1'}"><td style="padding:8px 10px;${done?'text-decoration:line-through':''}">${r.name}</td><td style="padding:8px 10px">${r.qty||'—'}</td><td style="padding:8px 10px">${r.prioridad?`<span style="background:${prioBg2[r.prioridad]||''};color:${prioColors[r.prioridad]?.dot||'#666'};padding:2px 9px;border-radius:20px">${prioLabel[r.prioridad]||''}</span>`:''}</td><td style="padding:8px 10px">${r.nota||''}</td><td style="padding:8px 10px;text-align:center"><button onclick="toggleComprado('${r._scope}','${r.id}')" style="width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:16px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;${done?'background:var(--turq);border:2px solid var(--turq-dark);color:white':'background:white;border:2px solid var(--gray-light);color:transparent'}">✓</button></td></tr>`; }).join('')}</tbody></table>`;
-    }
-    const allGrupos = [...new Set([...pendRows.map(r=>r.grupo), ...doneRows.map(r=>r.grupo)])];
+    const orden = state.resumenOrden || 'local';
+    const allRows = [...pendRows, ...doneRows];
+    allRows.forEach(r => { r.proveedor = getProveedorActual(r.id); });
     const totalPend = pendRows.length; const totalDone = doneRows.length;
-    return topBar + `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;color:var(--gray)"><span style="color:var(--terra);font-weight:600">${totalPend} pendientes</span> · <span style="color:var(--turq-dark);font-weight:600">${totalDone} comprados</span></div><button onclick="window.printResumenInsumos()" style="background:var(--black);border:none;color:var(--cream);border-radius:8px;padding:9px 20px;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif">🖨 Imprimir listado</button></div>` + (totalPend+totalDone===0 ? `<div class="empty-state">No hay insumos pedidos aún.</div>` : allGrupos.map(grupo => { const pend = pendRows.filter(r=>r.grupo===grupo).sort((a,b)=>(prioOrder[a.prioridad||'']??3)-(prioOrder[b.prioridad||'']??3)); const done = doneRows.filter(r=>r.grupo===grupo); const icon = (pend[0]||done[0])?.icon||''; const all = [...pend,...done]; if(!all.length) return ''; return `<div class="section-block"><div class="section-header"><div class="section-title">${icon} ${grupo} <span class="badge badge-open">${pend.length} pendientes</span>${done.length?`<span class="badge" style="background:var(--turq-pale);color:var(--turq-dark);margin-left:4px">${done.length} comprados</span>`:''}</div></div>${renderTable(all)}</div>`; }).join('')) + `<div style="text-align:center;margin-top:8px"><button class="btn btn-ghost" onclick="setInsumosView('detalle')">← Volver al detalle</button></div>`;
+
+    function provCell(r) {
+      return r._done
+        ? `<span style="font-size:12px;color:var(--gray)">${escAttr(r.proveedor||'—')}</span>`
+        : provDropdown(r.id);
+    }
+    function renderTable(rows, showOrigen) {
+      return `<table style="width:100%;border-collapse:collapse;"><thead><tr style="border-bottom:1.5px solid var(--black)"><th style="padding:6px 10px;text-align:left">Insumo</th><th style="padding:6px 10px;text-align:left">Cantidad</th><th style="padding:6px 10px;text-align:left">Proveedor</th>${showOrigen?`<th style="padding:6px 10px;text-align:left">Origen</th>`:''}<th style="padding:6px 10px;text-align:left">Prioridad</th><th style="padding:6px 10px;text-align:left">Aclaración</th><th style="padding:6px 10px;text-align:center">Comprado</th></tr></thead><tbody>${rows.map(r => { const done = r._done; return `<tr style="background:${done?'#f0faf7':prioBg2[r.prioridad||'']||'transparent'};opacity:${done?'0.55':'1'}"><td style="padding:8px 10px;${done?'text-decoration:line-through':''}">${r.name}</td><td style="padding:8px 10px">${r.qty||'—'}</td><td style="padding:8px 10px">${provCell(r)}</td>${showOrigen?`<td style="padding:8px 10px;font-size:12px;color:var(--gray)">${r.icon||''} ${r.grupo}</td>`:''}<td style="padding:8px 10px">${r.prioridad?`<span style="background:${prioBg2[r.prioridad]||''};color:${prioColors[r.prioridad]?.dot||'#666'};padding:2px 9px;border-radius:20px">${prioLabel[r.prioridad]||''}</span>`:''}</td><td style="padding:8px 10px">${r.nota||''}</td><td style="padding:8px 10px;text-align:center"><button onclick="toggleComprado('${r._scope}','${r.id}')" style="width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:16px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;${done?'background:var(--turq);border:2px solid var(--turq-dark);color:white':'background:white;border:2px solid var(--gray-light);color:transparent'}">✓</button></td></tr>`; }).join('')}</tbody></table>`;
+    }
+    function ordenarPendDone(rows){
+      const pend = rows.filter(r=>!r._done).sort((a,b)=>(prioOrder[a.prioridad||'']??3)-(prioOrder[b.prioridad||'']??3));
+      const done = rows.filter(r=>r._done);
+      return [...pend, ...done];
+    }
+    const ordenBtns = [['local','🏪 Por local/área'],['proveedor','🚚 Por proveedor'],['prioridad','⚡ Por prioridad']];
+    const ordenBar = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">${ordenBtns.map(([k,l])=>`<button class="btn ${orden===k?'btn-primary':'btn-ghost'} btn-sm" onclick="setResumenOrden('${k}')">${l}</button>`).join('')}</div>`;
+    const statsBar = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;color:var(--gray)"><span style="color:var(--terra);font-weight:600">${totalPend} pendientes</span> · <span style="color:var(--turq-dark);font-weight:600">${totalDone} comprados</span></div><button onclick="window.printResumenInsumos()" style="background:var(--black);border:none;color:var(--cream);border-radius:8px;padding:9px 20px;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif">🖨 Imprimir listado</button></div>`;
+    let body;
+    if (totalPend + totalDone === 0) {
+      body = `<div class="empty-state">No hay insumos pedidos aún.</div>`;
+    } else if (orden === 'proveedor') {
+      const provs = [...new Set(allRows.map(r=>r.proveedor||''))].sort((a,b)=>(a||'zzz').localeCompare(b||'zzz','es'));
+      body = provs.map(prov => {
+        const rows = ordenarPendDone(allRows.filter(r=>(r.proveedor||'')===prov));
+        if(!rows.length) return '';
+        const pendN = rows.filter(r=>!r._done).length; const doneN = rows.filter(r=>r._done).length;
+        const titulo = prov ? `🚚 ${prov}` : '❓ Sin proveedor asignado';
+        return `<div class="section-block"><div class="section-header"><div class="section-title">${titulo} <span class="badge badge-open">${pendN} pendientes</span>${doneN?`<span class="badge" style="background:var(--turq-pale);color:var(--turq-dark);margin-left:4px">${doneN} comprados</span>`:''}</div></div>${renderTable(rows, true)}</div>`;
+      }).join('');
+    } else if (orden === 'prioridad') {
+      body = `<div class="section-block">${renderTable(ordenarPendDone(allRows), true)}</div>`;
+    } else {
+      const allGrupos = [...new Set([...pendRows.map(r=>r.grupo), ...doneRows.map(r=>r.grupo)])];
+      body = allGrupos.map(grupo => {
+        const rows = ordenarPendDone(allRows.filter(r=>r.grupo===grupo));
+        if(!rows.length) return '';
+        const pend = rows.filter(r=>!r._done); const done = rows.filter(r=>r._done);
+        const icon = (rows[0])?.icon||'';
+        return `<div class="section-block"><div class="section-header"><div class="section-title">${icon} ${grupo} <span class="badge badge-open">${pend.length} pendientes</span>${done.length?`<span class="badge" style="background:var(--turq-pale);color:var(--turq-dark);margin-left:4px">${done.length} comprados</span>`:''}</div></div>${renderTable(rows, false)}</div>`;
+      }).join('');
+    }
+    return topBar + statsBar + ordenBar + body + `<div style="text-align:center;margin-top:8px"><button class="btn btn-ghost" onclick="setInsumosView('detalle')">← Volver al detalle</button></div>`;
   }
   if (sector === 'verduleria') {
     const todayData = getMergedInsumos();
@@ -2316,25 +2426,35 @@ window.printResumenInsumos = function() {
   const fecha = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const prioColors = {verde:'#27ae60', amarillo:'#f0a500', rojo:'#c0392b'};
   const prioLabel = {verde:'Stock OK', amarillo:'Stock bajo', rojo:'Urgente'};
+  const prioOrder = {rojo:0, amarillo:1, verde:2, '':3};
+  const orden = state.resumenOrden || 'local';
   let allRows = [];
   AREAS.forEach(area => {
     const scope = `prod_${area.key}`;
     const pedidos = todayData[scope] || {};
     const items = [...(INSUMOS_PRODUCCION[area.key] || []), ...(state.prodCustomInsumos[area.key] || [])];
-    items.forEach(p => { const item = pedidos[p.id]; if (item?.qty || item?.prioridad) allRows.push({...p, ...item, grupo:`${area.icon} ${area.label}`}); });
+    items.forEach(p => { const item = pedidos[p.id]; if (item?.qty || item?.prioridad) allRows.push({...p, ...item, grupo:`${area.icon} ${area.label}`, proveedor:getProveedorActual(p.id)}); });
   });
   LOCALES.forEach(local => {
     const scope = `ventas_${local.replace(/[ ./]/g,'_')}`;
     const pedidos = todayData[scope] || {};
     const customItems = state.ventasCustomInsumos[local.replace(/[ ./]/g,'_')] || [];
-    [...INSUMOS_VENTAS, ...customItems].forEach(p => { const item = pedidos[p.id]; if (item?.qty || item?.prioridad) allRows.push({...p, ...item, grupo:`🛒 ${local}`}); });
+    [...INSUMOS_VENTAS, ...customItems].forEach(p => { const item = pedidos[p.id]; if (item?.qty || item?.prioridad) allRows.push({...p, ...item, grupo:`🛒 ${local}`, proveedor:getProveedorActual(p.id)}); });
   });
-  const grupos = [...new Set(allRows.map(r=>r.grupo))];
-  let body = grupos.map(grupo => {
-    const rows = allRows.filter(r=>r.grupo===grupo);
-    return `<h3 style="margin-top:20px;border-bottom:1px solid #aaa;padding-bottom:2px">${grupo}</h3><table><thead><tr><th>Insumo</th><th>Cantidad</th><th>Prioridad</th><th>Aclaración</th><th>✓</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.name}</td><td>${r.qty||'—'}</td><td style="color:${prioColors[r.prioridad||'']||'#666'}">${prioLabel[r.prioridad||'']||''}</td><td>${r.nota||''}</td><td style="text-align:center">☐</td></tr>`).join('')}</tbody></table>`;
-  }).join('');
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Resumen de insumos</title><style>@page{size:A4;margin:16mm;}body{font-family:Helvetica,Arial;font-size:11px;}table{width:100%;border-collapse:collapse;margin-bottom:8px;}th,td{padding:6px 8px;border-bottom:1px solid #ddd;}th{background:#222;color:#fff;}</style></head><body><h1>Candela Café · Resumen de insumos pedidos</h1><p>${fecha}</p>${body||'<p>No hay insumos pedidos.</p>'}</body></html>`;
+  const th = (showOrigen) => `<tr><th>Insumo</th><th>Cantidad</th><th>Proveedor</th>${showOrigen?'<th>Origen</th>':''}<th>Prioridad</th><th>Aclaración</th><th>✓</th></tr>`;
+  const tr = (r, showOrigen) => `<tr><td>${r.name}</td><td>${r.qty||'—'}</td><td>${r.proveedor||'—'}</td>${showOrigen?`<td>${r.grupo}</td>`:''}<td style="color:${prioColors[r.prioridad||'']||'#666'}">${prioLabel[r.prioridad||'']||''}</td><td>${r.nota||''}</td><td style="text-align:center">☐</td></tr>`;
+  let body;
+  if (orden === 'proveedor') {
+    const provs = [...new Set(allRows.map(r=>r.proveedor||''))].sort((a,b)=>(a||'zzz').localeCompare(b||'zzz','es'));
+    body = provs.map(prov => { const rows = allRows.filter(r=>(r.proveedor||'')===prov).sort((a,b)=>(prioOrder[a.prioridad||'']??3)-(prioOrder[b.prioridad||'']??3)); return `<h3 style="margin-top:20px;border-bottom:1px solid #aaa;padding-bottom:2px">🚚 ${prov||'Sin proveedor asignado'}</h3><table><thead>${th(true)}</thead><tbody>${rows.map(r=>tr(r,true)).join('')}</tbody></table>`; }).join('');
+  } else if (orden === 'prioridad') {
+    const rows = allRows.slice().sort((a,b)=>(prioOrder[a.prioridad||'']??3)-(prioOrder[b.prioridad||'']??3));
+    body = `<table><thead>${th(true)}</thead><tbody>${rows.map(r=>tr(r,true)).join('')}</tbody></table>`;
+  } else {
+    const grupos = [...new Set(allRows.map(r=>r.grupo))];
+    body = grupos.map(grupo => { const rows = allRows.filter(r=>r.grupo===grupo).sort((a,b)=>(prioOrder[a.prioridad||'']??3)-(prioOrder[b.prioridad||'']??3)); return `<h3 style="margin-top:20px;border-bottom:1px solid #aaa;padding-bottom:2px">${grupo}</h3><table><thead>${th(false)}</thead><tbody>${rows.map(r=>tr(r,false)).join('')}</tbody></table>`; }).join('');
+  }
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Resumen de insumos</title><style>@page{size:A4;margin:16mm;}body{font-family:Helvetica,Arial;font-size:11px;}table{width:100%;border-collapse:collapse;margin-bottom:8px;}th,td{padding:6px 8px;border-bottom:1px solid #ddd;text-align:left;}th{background:#222;color:#fff;}</style></head><body><h1>Candela Café · Resumen de insumos pedidos</h1><p>${fecha}</p>${body||'<p>No hay insumos pedidos.</p>'}</body></html>`;
   const win = window.open('','_blank','width=794,height=1123');
   win.document.write(html); win.document.close(); win.focus(); setTimeout(()=>win.print(),400);
 };
