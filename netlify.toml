@@ -8,6 +8,14 @@
   # relies on database/storage rules, not on hiding the client-side apiKey — so they're
   # intentionally committed in costeo-proveedores/index.html and presupuestos/index.html.
   SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU,AIzaSyDFqS6RG1fkOZGo1x2-WcfT82am7ERHgyY"
+  # Pinned so the function runtime always has global fetch() available
+  # (older/legacy Netlify Node runtimes don't ship it, which breaks extraer-factura.js).
+  NODE_VERSION = "20"
 
 [functions]
   node_bundler = "esbuild"
+
+[functions."extraer-factura"]
+  # Vision extraction can take longer than the 10s default. Only takes effect on plans
+  # that support extended sync timeouts; harmless declaration otherwise.
+  timeout = 26

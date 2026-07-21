@@ -107,11 +107,19 @@ textarea.form-input{resize:vertical;min-height:60px;}
 .data-table tr:hover td{background:rgba(155,214,204,.08);}
 
 /* ITEM ROWS (factura / receta) */
-.item-row{display:grid;grid-template-columns:1.6fr 1.4fr .8fr .8fr 1fr 32px;gap:8px;align-items:center;padding:6px 0;}
+.item-row{display:grid;grid-template-columns:2.4fr 1fr 32px;gap:8px;align-items:start;padding:6px 0;}
 .item-row-header{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--cream-dark);margin-bottom:4px;}
 .item-row-wrap{overflow-x:auto;}
-@media(max-width:700px){.item-row,.item-row-header{grid-template-columns:repeat(6,140px);min-width:760px;}}
+@media(max-width:700px){.item-row,.item-row-header{grid-template-columns:repeat(3,180px);min-width:420px;}}
 .recipe-row{display:grid;grid-template-columns:2fr 1fr 32px;gap:8px;align-items:center;padding:6px 0;}
+
+/* INSUMO SEARCH PICKER */
+.insumo-picker{position:relative;}
+.insumo-picker-results{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--r-sm);box-shadow:var(--shadow-md);max-height:220px;overflow-y:auto;z-index:50;}
+.insumo-picker-item{padding:9px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--cream-mid);}
+.insumo-picker-item:last-child{border-bottom:none;}
+.insumo-picker-item:hover{background:var(--turq-pale);}
+.insumo-picker-item.insumo-picker-create{color:var(--terra);font-weight:600;}
 
 /* CARDS LIST */
 .card-list{display:flex;flex-direction:column;gap:10px;}
@@ -144,6 +152,7 @@ textarea.form-input{resize:vertical;min-height:60px;}
 .stat-value{font-size:22px;font-weight:700;color:var(--black);}
 .alert-box{padding:12px 18px;border-radius:10px;margin-bottom:16px;font-size:13px;display:flex;align-items:center;gap:10px;font-weight:400;}
 .alert-warn{background:#fff5f3;border:1px solid var(--terra-pale);color:var(--terra);}
+.alert-danger{background:#fdecea;border:1px solid #f5c4bc;color:#b83a25;}
 .alert-turq{background:var(--turq-pale);border:1px solid var(--turq);color:var(--turq-dark);}
 .delta-pos{color:#b83a25;font-weight:600;}
 .delta-neg{color:var(--green);font-weight:600;}
@@ -207,11 +216,15 @@ const state = {
   _facturaFotoDataUrl: null,
   facturasFiltro: "todas",
   pagosFiltro: "no_pagado",
+  productosFiltro: "",
   analisisPeriodo: 6,
   editingProveedorId: null,
   editingInsumoId: null,
   editingProductoId: null,
   viewingInsumoHistId: null,
+  insumosMergeMode: false,
+  insumosMergeSeleccion: {},
+  insumosMergeSurvivor: null,
 };
 
 // ── Helpers ──────────────────────────────────────────────
@@ -387,38 +400,60 @@ function attachListeners() {
 // =============================================================
 // NUEVA FACTURA
 // =============================================================
-function itemRowHtml({ insumoId = "", nombreNuevo = "", cantidad = "", unidad = "", precioUnitario = "" } = {}) {
-  const isNew = insumoId === "__new__" || (!insumoId && nombreNuevo);
-  const options = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
-    .map(([id, ins]) => `<option value="${id}" ${id === insumoId ? "selected" : ""}>${escapeHtml(ins.nombre)}${ins.unidad ? " (" + escapeHtml(ins.unidad) + ")" : ""}</option>`).join("");
+function itemRowHtml({ insumoId = "", nombre = "", precioUnitario = "" } = {}) {
+  const displayName = insumoId && state.insumos[insumoId] ? state.insumos[insumoId].nombre : (nombre || "");
   return `
     <div class="item-row">
-      <div>
-        <select class="form-select item-insumo" onchange="handleItemInsumoChange(this)">
-          <option value="">— Insumo —</option>
-          <option value="__new__" ${isNew ? "selected" : ""}>➕ Nuevo insumo…</option>
-          ${options}
-        </select>
-        <input type="text" class="form-input item-nombre-nuevo" placeholder="Nombre del insumo nuevo" value="${escapeHtml(nombreNuevo)}" style="margin-top:6px;${isNew ? "" : "display:none"}">
+      <div class="insumo-picker">
+        <input type="hidden" class="item-insumo-id" value="${escapeHtml(insumoId)}">
+        <input type="text" class="form-input item-insumo-search" autocomplete="off" placeholder="Buscar o crear insumo..."
+          value="${escapeHtml(displayName)}"
+          oninput="handleInsumoSearchInput(this)" onfocus="handleInsumoSearchInput(this)" onblur="handleInsumoSearchBlur(this)">
+        <div class="insumo-picker-results"></div>
       </div>
-      <input type="text" class="form-input item-unidad" placeholder="Unidad (kg, litros...)" value="${escapeHtml(unidad || "")}">
-      <input type="number" step="0.01" min="0" class="form-input item-cantidad" placeholder="Cant." value="${cantidad ?? ""}" oninput="updateItemSubtotal(this)">
-      <input type="number" step="0.01" min="0" class="form-input item-precio" placeholder="$ unit." value="${precioUnitario ?? ""}" oninput="updateItemSubtotal(this)">
-      <div class="text-muted item-subtotal">${cantidad > 0 && precioUnitario > 0 ? fmtMoney(cantidad * precioUnitario) : "—"}</div>
+      <input type="number" step="0.01" min="0" class="form-input item-precio" placeholder="$ unit." value="${precioUnitario ?? ""}">
       <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.item-row').remove()">✕</button>
     </div>`;
 }
 
-window.handleItemInsumoChange = function(sel) {
-  const row = sel.closest(".item-row");
-  row.querySelector(".item-nombre-nuevo").style.display = sel.value === "__new__" ? "" : "none";
+function insumoSearchMatches(query) {
+  const q = query.trim().toLowerCase();
+  const sorted = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre));
+  if (!q) return sorted.slice(0, 8);
+  return sorted.filter(([, ins]) => ins.nombre.toLowerCase().includes(q)).slice(0, 8);
+}
+
+window.handleInsumoSearchInput = function(input) {
+  const picker = input.closest(".insumo-picker");
+  const query = input.value;
+  const trimmed = query.trim();
+  const matches = insumoSearchMatches(query);
+  const exact = matches.some(([, ins]) => ins.nombre.toLowerCase() === trimmed.toLowerCase());
+
+  const items = matches.map(([id, ins]) => `
+    <div class="insumo-picker-item" data-id="${escapeHtml(id)}" data-nombre="${escapeHtml(ins.nombre)}" onmousedown="selectInsumoPicker(this)">
+      ${escapeHtml(ins.nombre)}${ins.unidad ? ` <span class="text-muted">(${escapeHtml(ins.unidad)})</span>` : ""}
+    </div>`).join("");
+  const createOption = trimmed && !exact
+    ? `<div class="insumo-picker-item insumo-picker-create" data-id="" data-nombre="${escapeHtml(trimmed)}" onmousedown="selectInsumoPicker(this)">➕ Crear insumo "${escapeHtml(trimmed)}"</div>`
+    : "";
+
+  const resultsEl = picker.querySelector(".insumo-picker-results");
+  resultsEl.innerHTML = items + createOption;
+  resultsEl.style.display = (items || createOption) ? "block" : "none";
+  picker.querySelector(".item-insumo-id").value = "";
 };
 
-window.updateItemSubtotal = function(el) {
-  const row = el.closest(".item-row");
-  const cant = parseFloat(row.querySelector(".item-cantidad").value) || 0;
-  const precio = parseFloat(row.querySelector(".item-precio").value) || 0;
-  row.querySelector(".item-subtotal").textContent = (cant > 0 && precio > 0) ? fmtMoney(cant * precio) : "—";
+window.selectInsumoPicker = function(el) {
+  const picker = el.closest(".insumo-picker");
+  picker.querySelector(".item-insumo-id").value = el.dataset.id || "";
+  picker.querySelector(".item-insumo-search").value = el.dataset.nombre || "";
+  picker.querySelector(".insumo-picker-results").style.display = "none";
+};
+
+window.handleInsumoSearchBlur = function(input) {
+  const picker = input.closest(".insumo-picker");
+  setTimeout(() => { picker.querySelector(".insumo-picker-results").style.display = "none"; }, 150);
 };
 
 window.addItemRow = function() {
@@ -462,7 +497,7 @@ function renderNuevaFacturaView(container) {
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Proveedor</label>
-          <select class="form-select" id="f-proveedor" onchange="document.getElementById('f-proveedor-nuevo').style.display = this.value==='__new__' ? '' : 'none'">
+          <select class="form-select" id="f-proveedor" onchange="onFacturaProveedorChange(this)">
             <option value="">— Seleccioná —</option>
             <option value="__new__">➕ Nuevo proveedor…</option>
             ${proveedorOptions}
@@ -488,7 +523,7 @@ function renderNuevaFacturaView(container) {
           <input type="text" class="form-input" id="f-numero">
         </div>
         <div class="form-group">
-          <label class="form-label">Monto total (con IVA)</label>
+          <label class="form-label">Monto total</label>
           <input type="number" step="0.01" min="0" class="form-input" id="f-monto" placeholder="0.00">
         </div>
         <div class="form-group" style="flex:0 0 auto;min-width:auto">
@@ -498,13 +533,25 @@ function renderNuevaFacturaView(container) {
         </div>
       </div>
 
+      <div class="form-row">
+        <div class="form-group" style="flex:0 0 auto;min-width:auto">
+          <label class="form-label">Precios cargados</label>
+          <button type="button" class="toggle on" id="f-iva-toggle" onclick="toggleIvaFactura(this)"></button>
+          <div class="text-muted" style="margin-top:4px" id="f-iva-label">Con IVA</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cargos / impuestos adicionales (opcional)</label>
+          <input type="number" step="0.01" min="0" class="form-input" id="f-cargos" placeholder="0.00">
+        </div>
+      </div>
+
       <div class="section-header" style="margin-top:18px">
         <div class="section-title">📦 Insumos de esta factura</div>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addItemRow()">+ Agregar ítem</button>
       </div>
       <div class="item-row-wrap">
         <div class="item-row item-row-header">
-          <div>Insumo</div><div>Unidad</div><div>Cantidad</div><div>Precio unit.</div><div>Subtotal</div><div></div>
+          <div>Insumo</div><div>Precio unit.</div><div></div>
         </div>
         <div id="items-container">${itemRowHtml()}</div>
       </div>
@@ -516,6 +563,11 @@ function renderNuevaFacturaView(container) {
 window.toggleEstadoFactura = function(btn) {
   btn.classList.toggle("on");
   document.getElementById("f-estado-label").textContent = btn.classList.contains("on") ? "Pagado" : "No pagado";
+};
+
+window.toggleIvaFactura = function(btn) {
+  btn.classList.toggle("on");
+  document.getElementById("f-iva-label").textContent = btn.classList.contains("on") ? "Con IVA" : "Sin IVA";
 };
 
 function compressImageToDataUrl(file, maxDim, quality) {
@@ -558,6 +610,13 @@ window.handleFacturaFotoChange = async function(e) {
   }
 };
 
+window.onFacturaProveedorChange = function(sel) {
+  document.getElementById("f-proveedor-nuevo").style.display = sel.value === "__new__" ? "" : "none";
+  const cuitInput = document.getElementById("f-cuit");
+  const p = sel.value && sel.value !== "__new__" ? state.proveedores[sel.value] : null;
+  cuitInput.value = p ? (p.cuit || "") : "";
+};
+
 window.escanearFactura = async function() {
   if (!state._facturaFotoDataUrl) return;
   const btn = document.getElementById("scan-btn");
@@ -569,13 +628,27 @@ window.escanearFactura = async function() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ imageBase64: base64, mediaType: "image/jpeg" })
     });
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || "Error al escanear la factura.");
+
+    const rawText = await resp.text();
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      // Netlify itself returns an HTML/plain-text body on timeouts (504) or crashes (502),
+      // not JSON. Surface that instead of a silent generic failure.
+      const reason = resp.status === 504
+        ? "El escaneo tardó demasiado y se agotó el tiempo de espera del servidor."
+        : `Respuesta inesperada del servidor (HTTP ${resp.status}).`;
+      throw new Error(reason);
+    }
+    if (!resp.ok) throw new Error(data.error || `Error al escanear la factura (HTTP ${resp.status}).`);
+
     aplicarDatosEscaneados(data);
     showToast("✅ Factura escaneada. Revisá los datos antes de guardar.", "success");
   } catch (err) {
-    console.error(err);
-    showToast("⚠️ No se pudo escanear automáticamente. Completá los datos a mano.", "warn");
+    console.error("Error al escanear factura:", err);
+    const msg = err && err.message ? err.message : "Error desconocido.";
+    showToast(`⚠️ No se pudo escanear: ${msg}`, "warn");
   } finally {
     btn.disabled = false; btn.textContent = "🤖 Escanear con IA";
   }
@@ -604,15 +677,39 @@ function aplicarDatosEscaneados(data) {
     cont.innerHTML = data.items.map(it => {
       const matchedId = matchInsumoId(it.nombre);
       return itemRowHtml({
-        insumoId: matchedId || "__new__",
-        nombreNuevo: matchedId ? "" : (it.nombre || ""),
-        cantidad: it.cantidad ?? "",
-        unidad: it.unidad ?? "",
+        insumoId: matchedId || "",
+        nombre: it.nombre || "",
         precioUnitario: it.precioUnitario ?? ""
       });
     }).join("");
   }
 }
+
+// Updates (or creates) an insumo's price for a specific proveedor, keeping precioActual
+// in sync with whichever proveedor is marked as "preferido" for that insumo (defaults to
+// the first proveedor that ever priced it). Does not touch historial — callers push that separately.
+async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, precio }) {
+  const insumo = state.insumos[insumoId] || {};
+  const precios = { ...(insumo.precios || {}) };
+  const key = proveedorId || "_manual";
+  precios[key] = { precio, actualizadoTs: Date.now(), proveedorNombre: proveedorNombre || "" };
+
+  let proveedorPreferido = insumo.proveedorPreferido;
+  if (!proveedorPreferido || !precios[proveedorPreferido]) proveedorPreferido = key;
+  const precioActual = precios[proveedorPreferido]?.precio ?? precio;
+
+  const updates = { precios, proveedorPreferido, precioActual, actualizadoTs: Date.now() };
+  await update(ref(db, `costeo/insumos/${insumoId}`), updates);
+  state.insumos[insumoId] = { ...insumo, ...updates };
+}
+
+window.setProveedorPreferido = async function(insumoId, proveedorId) {
+  const insumo = state.insumos[insumoId];
+  if (!insumo || !insumo.precios || !insumo.precios[proveedorId]) return;
+  const precioActual = insumo.precios[proveedorId].precio;
+  await update(ref(db, `costeo/insumos/${insumoId}`), { proveedorPreferido: proveedorId, precioActual, actualizadoTs: Date.now() });
+  showToast("✅ Proveedor preferido actualizado.", "success");
+};
 
 window.guardarFactura = async function() {
   const proveedorSel = document.getElementById("f-proveedor").value;
@@ -622,6 +719,9 @@ window.guardarFactura = async function() {
   const numero = document.getElementById("f-numero").value.trim();
   const monto = parseFloat(document.getElementById("f-monto").value);
   const pagado = document.getElementById("f-estado-toggle").classList.contains("on");
+  const preciosConIva = document.getElementById("f-iva-toggle").classList.contains("on");
+  const cargosAdicionalesVal = parseFloat(document.getElementById("f-cargos").value);
+  const cargosAdicionales = Number.isFinite(cargosAdicionalesVal) ? cargosAdicionalesVal : 0;
 
   if (!proveedorSel) { showToast("⚠️ Elegí o creá un proveedor.", "warn"); return; }
   if (proveedorSel === "__new__" && !proveedorNombreNuevo) { showToast("⚠️ Escribí el nombre del nuevo proveedor.", "warn"); return; }
@@ -646,28 +746,25 @@ window.guardarFactura = async function() {
     const itemRows = Array.from(document.querySelectorAll("#items-container .item-row"));
     const items = [];
     for (const row of itemRows) {
-      const sel = row.querySelector(".item-insumo").value;
-      const nombreNuevo = row.querySelector(".item-nombre-nuevo").value.trim();
-      const cantidad = parseFloat(row.querySelector(".item-cantidad").value);
-      const unidad = row.querySelector(".item-unidad").value.trim();
+      const insumoIdSel = row.querySelector(".item-insumo-id").value;
+      const nombreTyped = row.querySelector(".item-insumo-search").value.trim();
       const precioUnitario = parseFloat(row.querySelector(".item-precio").value);
-      if ((!sel || sel === "__new__") && !nombreNuevo) continue;
+      if (!insumoIdSel && !nombreTyped) continue;
       if (!(precioUnitario > 0)) continue;
 
-      let insumoId = sel;
+      let insumoId = insumoIdSel;
       let nombre;
-      if (!sel || sel === "__new__") {
+      if (!insumoId) {
         const newInsRef = push(ref(db, "costeo/insumos"));
         insumoId = newInsRef.key;
-        nombre = nombreNuevo;
-        await set(newInsRef, { nombre, unidad, precioActual: precioUnitario, actualizadoTs: Date.now() });
-        state.insumos[insumoId] = { nombre, unidad, precioActual: precioUnitario, actualizadoTs: Date.now() };
+        nombre = nombreTyped;
+        await set(newInsRef, { nombre, unidad: "", creadoTs: Date.now() });
+        state.insumos[insumoId] = { nombre, unidad: "" };
       } else {
-        nombre = state.insumos[insumoId]?.nombre || "";
-        const finalUnidad = unidad || state.insumos[insumoId]?.unidad || "";
-        await update(ref(db, `costeo/insumos/${insumoId}`), { precioActual: precioUnitario, unidad: finalUnidad, actualizadoTs: Date.now() });
+        nombre = state.insumos[insumoId]?.nombre || nombreTyped;
       }
-      items.push({ insumoId, nombre, cantidad: Number.isFinite(cantidad) ? cantidad : null, unidad, precioUnitario });
+      await actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, precio: precioUnitario });
+      items.push({ insumoId, nombre, precioUnitario });
     }
 
     const facturaRef = push(ref(db, "costeo/facturas"));
@@ -675,13 +772,14 @@ window.guardarFactura = async function() {
 
     for (const it of items) {
       await push(ref(db, `costeo/insumos/${it.insumoId}/historial`), {
-        precio: it.precioUnitario, fecha, proveedorId, proveedorNombre, facturaId
+        precio: it.precioUnitario, conIva: preciosConIva, fecha, proveedorId, proveedorNombre, facturaId
       });
     }
 
     await set(facturaRef, {
       proveedorId, proveedorNombre, cuit, fecha, numeroFactura: numero,
-      montoTotal: monto, estado: pagado ? "pagado" : "no_pagado",
+      montoTotal: monto, cargosAdicionales, preciosConIva,
+      estado: pagado ? "pagado" : "no_pagado",
       foto: state._facturaFotoDataUrl || "", items, creadoTs: Date.now()
     });
 
@@ -844,7 +942,7 @@ function renderProveedoresView(container) {
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Teléfono</label><input class="form-input" id="prov-telefono" value="${escapeHtml(editingData.telefono)}"></div>
-        <div class="form-group"><label class="form-label">Contacto</label><input class="form-input" id="prov-contacto" value="${escapeHtml(editingData.contacto)}"></div>
+        <div class="form-group"><label class="form-label">Razón Social</label><input class="form-input" id="prov-contacto" value="${escapeHtml(editingData.contacto)}"></div>
       </div>
       <div class="form-group" style="margin-bottom:14px"><label class="form-label">Notas</label><textarea class="form-input" id="prov-notas">${escapeHtml(editingData.notas)}</textarea></div>
       <button class="btn btn-primary" onclick="guardarProveedor()">💾 Guardar</button>
@@ -873,7 +971,7 @@ function renderProveedoresView(container) {
     </div>
     ${formHtml}
     <div class="section-block">
-      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>CUIT</th><th>Teléfono</th><th>Contacto</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay proveedores cargados.</div>`}
+      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>CUIT</th><th>Teléfono</th><th>Razón Social</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay proveedores cargados.</div>`}
     </div>`;
 }
 
@@ -900,9 +998,11 @@ window.guardarInsumo = async function() {
   try {
     if (id === "new") {
       const newRef = push(ref(db, "costeo/insumos"));
-      await set(newRef, { nombre, unidad, precioActual: Number.isFinite(precio) ? precio : 0, actualizadoTs: Date.now() });
+      await set(newRef, { nombre, unidad, creadoTs: Date.now() });
+      state.insumos[newRef.key] = { nombre, unidad };
       if (precio > 0) {
-        await push(ref(db, `costeo/insumos/${newRef.key}/historial`), { precio, fecha: todayISO(), proveedorId: "", proveedorNombre: "Carga manual", facturaId: "" });
+        await actualizarPrecioInsumo(newRef.key, { proveedorId: "", proveedorNombre: "Carga manual", precio });
+        await push(ref(db, `costeo/insumos/${newRef.key}/historial`), { precio, conIva: true, fecha: todayISO(), proveedorId: "", proveedorNombre: "Carga manual", facturaId: "" });
       }
     } else {
       await update(ref(db, `costeo/insumos/${id}`), { nombre, unidad });
@@ -926,9 +1026,74 @@ window.toggleHistorialInsumo = function(id) {
   render();
 };
 
+window.toggleInsumosMergeMode = function() {
+  state.insumosMergeMode = !state.insumosMergeMode;
+  state.insumosMergeSeleccion = {};
+  state.insumosMergeSurvivor = null;
+  render();
+};
+
+window.toggleInsumoMergeCheck = function(id, checked) {
+  if (checked) state.insumosMergeSeleccion[id] = true;
+  else delete state.insumosMergeSeleccion[id];
+  render();
+};
+
+// Fusiona 2+ insumos duplicados en uno solo: combina precios por proveedor, historial,
+// y remapea las recetas de productos que referenciaban a los insumos absorbidos.
+window.fusionarInsumos = async function(idsSeleccionados, survivorId) {
+  const ids = idsSeleccionados.filter(id => state.insumos[id]);
+  if (ids.length < 2 || !ids.includes(survivorId)) return;
+  if (!confirm(`¿Fusionar ${ids.length} insumos en "${state.insumos[survivorId].nombre}"? Los otros se eliminan (su historial y precios se conservan dentro del que queda).`)) return;
+
+  const survivor = state.insumos[survivorId];
+  const others = ids.filter(id => id !== survivorId);
+
+  let precios = { ...(survivor.precios || {}) };
+  let historial = { ...(survivor.historial || {}) };
+  for (const id of others) {
+    const o = state.insumos[id] || {};
+    for (const [provId, p] of Object.entries(o.precios || {})) {
+      if (!precios[provId] || (p.actualizadoTs || 0) > (precios[provId].actualizadoTs || 0)) precios[provId] = p;
+    }
+    for (const [hid, h] of Object.entries(o.historial || {})) historial[`${id}_${hid}`] = h;
+  }
+
+  let proveedorPreferido = survivor.proveedorPreferido && precios[survivor.proveedorPreferido] ? survivor.proveedorPreferido : Object.keys(precios)[0];
+  const precioActual = proveedorPreferido ? (precios[proveedorPreferido]?.precio ?? 0) : (survivor.precioActual || 0);
+
+  await update(ref(db, `costeo/insumos/${survivorId}`), {
+    precios, historial, precioActual, actualizadoTs: Date.now(),
+    ...(proveedorPreferido ? { proveedorPreferido } : {})
+  });
+
+  for (const [prodId, p] of Object.entries(state.productos)) {
+    const receta = p.receta || {};
+    let changed = false;
+    const newReceta = { ...receta };
+    for (const id of others) {
+      if (id in newReceta) {
+        newReceta[survivorId] = (newReceta[survivorId] || 0) + newReceta[id];
+        delete newReceta[id];
+        changed = true;
+      }
+    }
+    if (changed) await update(ref(db, `costeo/productos/${prodId}`), { receta: newReceta });
+  }
+
+  for (const id of others) await remove(ref(db, `costeo/insumos/${id}`));
+
+  state.insumosMergeMode = false;
+  state.insumosMergeSeleccion = {};
+  state.insumosMergeSurvivor = null;
+  showToast("✅ Insumos fusionados.", "success");
+  render();
+};
+
 function renderInsumosView(container) {
   const editing = state.editingInsumoId;
   const editingData = editing && editing !== "new" ? (state.insumos[editing] || {}) : {};
+  if (state.insumosMergeMode) state.formOpen = true;
 
   const formHtml = editing ? `
     <div class="section-block">
@@ -947,11 +1112,22 @@ function renderInsumosView(container) {
     const isOpen = state.viewingInsumoHistId === id;
     const histRows = hist.slice().reverse().map(([, h]) => `
       <tr><td>${fmtDate(h.fecha)}</td><td>${fmtMoney(h.precio)}</td><td>${escapeHtml(h.proveedorNombre) || "—"}</td></tr>`).join("");
+    const precios = ins.precios || {};
+    const precioEntries = Object.entries(precios).sort((a, b) => (a[1].precio || 0) - (b[1].precio || 0));
+    const precioRows = precioEntries.map(([provId, p]) => `
+      <tr>
+        <td>${escapeHtml(p.proveedorNombre) || "—"}</td>
+        <td>${fmtMoney(p.precio)}</td>
+        <td>${provId === ins.proveedorPreferido ? `<span class="badge badge-ok">⭐ Preferido</span>` : `<button class="btn btn-ghost btn-sm" onclick="setProveedorPreferido('${id}','${escapeHtml(provId)}')">Usar este</button>`}</td>
+      </tr>`).join("");
+    const preferidoNombre = precios[ins.proveedorPreferido]?.proveedorNombre || "";
+    const checked = !!state.insumosMergeSeleccion[id];
     return `
       <tr>
+        ${state.insumosMergeMode ? `<td><input type="checkbox" ${checked ? "checked" : ""} onchange="toggleInsumoMergeCheck('${id}', this.checked)"></td>` : ""}
         <td>${escapeHtml(ins.nombre)}</td>
         <td>${escapeHtml(ins.unidad) || "—"}</td>
-        <td>${fmtMoney(ins.precioActual)}</td>
+        <td>${fmtMoney(ins.precioActual)}${preferidoNombre ? `<div class="text-muted" style="font-size:11px">${escapeHtml(preferidoNombre)}</div>` : ""}</td>
         <td>${hist.length}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" onclick="toggleHistorialInsumo('${id}')">${isOpen ? "Ocultar" : "Ver historial"}</button>
@@ -959,10 +1135,25 @@ function renderInsumosView(container) {
           <button class="btn btn-danger btn-sm" onclick="eliminarInsumo('${id}')">Eliminar</button>
         </td>
       </tr>
-      ${isOpen ? `<tr><td colspan="5" style="background:var(--cream);padding:14px 18px">
+      ${isOpen ? `<tr><td colspan="${state.insumosMergeMode ? 6 : 5}" style="background:var(--cream);padding:14px 18px">
+        ${precioEntries.length ? `<div class="text-muted" style="margin-bottom:6px;font-weight:600">Precios por proveedor</div><table class="data-table"><thead><tr><th>Proveedor</th><th>Precio</th><th></th></tr></thead><tbody>${precioRows}</tbody></table>` : ""}
+        <div class="text-muted" style="margin:${precioEntries.length ? "14px" : "0"} 0 6px;font-weight:600">Historial</div>
         ${hist.length ? `<table class="data-table"><thead><tr><th>Fecha</th><th>Precio</th><th>Proveedor</th></tr></thead><tbody>${histRows}</tbody></table>` : `<div class="text-muted">Sin historial de precios todavía.</div>`}
       </td></tr>` : ""}`;
   }).join("");
+
+  const seleccionIds = Object.keys(state.insumosMergeSeleccion);
+  const mergeBarHtml = state.insumosMergeMode && seleccionIds.length >= 2 ? `
+    <div class="section-block" style="border-color:var(--terra)">
+      <div class="section-title" style="margin-bottom:10px">🔀 Fusionar ${seleccionIds.length} insumos seleccionados</div>
+      <div class="text-muted" style="margin-bottom:10px">Elegí cuál se queda con el nombre. Los precios por proveedor y el historial de todos se combinan en el que elijas; los demás se eliminan.</div>
+      ${seleccionIds.map(id => `
+        <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
+          <input type="radio" name="merge-survivor" value="${id}" ${state.insumosMergeSurvivor === id ? "checked" : ""} onchange="state.insumosMergeSurvivor='${id}'">
+          ${escapeHtml(state.insumos[id]?.nombre || "")}
+        </label>`).join("")}
+      <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="fusionarInsumos(${JSON.stringify(seleccionIds)}, state.insumosMergeSurvivor || ${JSON.stringify(seleccionIds[0])})">Fusionar</button>
+    </div>` : "";
 
   container.innerHTML = `
     <div class="section-header">
@@ -970,11 +1161,12 @@ function renderInsumosView(container) {
         <div class="page-title">Insumos</div>
         <div class="page-sub" style="margin-bottom:0">Precio actual e historial de cada insumo.</div>
       </div>
-      ${!editing ? `<button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button>` : ""}
+      ${!editing ? `<div style="display:flex;gap:8px"><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar fusión" : "🔀 Fusionar duplicados"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
     </div>
     ${formHtml}
+    ${mergeBarHtml}
     <div class="section-block">
-      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Unidad</th><th>Precio actual</th><th>Registros</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay insumos cargados. Se crean automáticamente al registrar una factura, o podés agregarlos a mano.</div>`}
+      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr>${state.insumosMergeMode ? "<th></th>" : ""}<th>Nombre</th><th>Unidad</th><th>Precio actual</th><th>Registros</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay insumos cargados. Se crean automáticamente al registrar una factura, o podés agregarlos a mano.</div>`}
     </div>`;
 }
 
@@ -1017,6 +1209,19 @@ function calcCostoProducto(producto) {
     const precio = state.insumos[insumoId]?.precioActual || 0;
     return sum + precio * (Number(cantidad) || 0);
   }, 0);
+}
+
+// Snapshots a producto's computed cost into costoHistorial (like insumo price historial),
+// so the Análisis view can compare cost variation over time — at most once per day, and only
+// when the cost actually moved, since this piggybacks on viewing Análisis rather than a cron.
+async function actualizarCostoHistorialProducto(id, producto) {
+  const costoActual = calcCostoProducto(producto);
+  const hist = objToSortedEntries(producto.costoHistorial, (a, b) => a[1].fecha.localeCompare(b[1].fecha));
+  const last = hist.length ? hist[hist.length - 1][1] : null;
+  const today = todayISO();
+  if (last && last.fecha === today) return;
+  if (last && Math.abs(last.costo - costoActual) < 0.005) return;
+  await push(ref(db, `costeo/productos/${id}/costoHistorial`), { costo: costoActual, fecha: today });
 }
 
 window.abrirFormProducto = function(id) {
@@ -1091,7 +1296,31 @@ function renderProductosView(container) {
       <button class="btn btn-ghost" onclick="cerrarFormProducto()">Cancelar</button>
     </div>` : "";
 
-  const rows = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre)).map(([id, p]) => {
+  const todosProductos = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre));
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="page-title">Productos y recetas</div>
+        <div class="page-sub" style="margin-bottom:0">El costo se calcula automáticamente a partir del precio actual de los insumos.</div>
+      </div>
+      ${!editing ? `<button class="btn btn-primary" onclick="abrirFormProducto()">+ Nuevo producto</button>` : ""}
+    </div>
+    ${!editing && todosProductos.length > 8 ? `<div class="form-row"><div class="form-group" style="max-width:320px"><input class="form-input" id="productos-filtro-input" placeholder="🔎 Buscar producto..." value="${escapeHtml(state.productosFiltro)}" oninput="setProductosFiltro(this.value)"></div></div>` : ""}
+    ${formHtml}
+    <div class="section-block" id="productos-table-wrap"></div>`;
+
+  renderProductosTable();
+}
+
+function renderProductosTable() {
+  const wrap = document.getElementById("productos-table-wrap");
+  if (!wrap) return;
+  const filtro = state.productosFiltro.trim().toLowerCase();
+  const todosProductos = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre));
+  const productosFiltrados = filtro ? todosProductos.filter(([, p]) => p.nombre.toLowerCase().includes(filtro)) : todosProductos;
+
+  const rows = productosFiltrados.map(([id, p]) => {
     const costo = calcCostoProducto(p);
     const margen = p.precioVenta ? ((p.precioVenta - costo) / p.precioVenta * 100) : null;
     return `
@@ -1108,19 +1337,15 @@ function renderProductosView(container) {
       </tr>`;
   }).join("");
 
-  container.innerHTML = `
-    <div class="section-header">
-      <div>
-        <div class="page-title">Productos y recetas</div>
-        <div class="page-sub" style="margin-bottom:0">El costo se calcula automáticamente a partir del precio actual de los insumos.</div>
-      </div>
-      ${!editing ? `<button class="btn btn-primary" onclick="abrirFormProducto()">+ Nuevo producto</button>` : ""}
-    </div>
-    ${formHtml}
-    <div class="section-block">
-      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Producto</th><th>Receta</th><th>Costo actual</th><th>Precio venta</th><th>Margen</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay productos cargados.</div>`}
-    </div>`;
+  wrap.innerHTML = rows
+    ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Producto</th><th>Receta</th><th>Costo actual</th><th>Precio venta</th><th>Margen</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`
+    : `<div class="empty-state">${filtro ? "Ningún producto coincide con la búsqueda." : "Todavía no hay productos cargados."}</div>`;
 }
+
+window.setProductosFiltro = function(val) {
+  state.productosFiltro = val;
+  renderProductosTable();
+};
 
 // =============================================================
 // ANÁLISIS — variación de precios vs. inflación
@@ -1174,6 +1399,47 @@ function renderAnalisisView(container) {
 
   const alertas = filas.filter(f => !f.insuficiente && f.delta > 0);
 
+  // Productos con receta: snapshot su costo actual (throttled a 1 vez/día si cambió) y compará
+  // costo vs. precio de venta — igual idea que arriba, pero a nivel producto terminado.
+  const productosConReceta = objToSortedEntries(state.productos, () => 0)
+    .filter(([, p]) => p.receta && Object.keys(p.receta).length);
+  productosConReceta.forEach(([id, p]) => actualizarCostoHistorialProducto(id, p));
+
+  const filasProd = productosConReceta.map(([id, p]) => {
+    const costoActual = calcCostoProducto(p);
+    const venta = p.precioVenta;
+    const margenPct = venta > 0 ? ((venta - costoActual) / venta) * 100 : null;
+    const perdida = venta > 0 && costoActual >= venta;
+    const hist = objToSortedEntries(p.costoHistorial, (a, b) => a[1].fecha.localeCompare(b[1].fecha)).map(([, h]) => h);
+    if (hist.length < 2) return { id, p, costoActual, venta, margenPct, perdida, insuficiente: true };
+    const base = hist.find(h => h.fecha >= cutoff) || hist[0];
+    const variacion = base.costo > 0 ? ((costoActual - base.costo) / base.costo) * 100 : null;
+    const delta = variacion !== null ? variacion - inflacionAcum : null;
+    return { id, p, costoActual, venta, margenPct, perdida, insuficiente: false, base, variacion, delta };
+  }).sort((a, b) => {
+    if (a.perdida !== b.perdida) return a.perdida ? -1 : 1;
+    if (a.insuficiente && b.insuficiente) return 0;
+    if (a.insuficiente) return 1;
+    if (b.insuficiente) return -1;
+    return (b.delta ?? -999) - (a.delta ?? -999);
+  });
+
+  const alertasPerdida = filasProd.filter(f => f.perdida);
+  const alertasProdInflacion = filasProd.filter(f => !f.insuficiente && !f.perdida && f.delta > 0);
+
+  const rowsProd = filasProd.map(f => `
+    <tr>
+      <td>${escapeHtml(f.p.nombre)}</td>
+      <td>${f.venta > 0 ? fmtMoney(f.venta) : "—"}</td>
+      <td>${fmtMoney(f.costoActual)}</td>
+      <td class="${f.margenPct != null && f.margenPct < 0 ? "delta-pos" : ""}">${fmtPct(f.margenPct)}</td>
+      <td>${f.insuficiente ? `<span class="text-muted">Sin historial suficiente</span>` : `${fmtMoney(f.base.costo)} <span class="text-muted">(${fmtDate(f.base.fecha)})</span>`}</td>
+      <td>${f.insuficiente ? "—" : `<span class="${f.variacion > 0 ? "delta-pos" : "delta-neg"}">${fmtPct(f.variacion)}</span>`}</td>
+      <td>${f.perdida
+        ? `<span class="badge badge-alerta">❌ Vendiendo a pérdida</span>`
+        : (!f.insuficiente && f.delta > 0 ? `<span class="badge badge-alerta">⚠️ ${fmtPct(f.delta)} sobre inflación</span>` : `<span class="badge badge-ok">OK</span>`)}</td>
+    </tr>`).join("");
+
   const rows = filas.map(f => {
     if (f.insuficiente) {
       return `<tr><td>${escapeHtml(f.ins.nombre)}</td><td colspan="4" class="text-muted">Datos insuficientes (se necesitan al menos 2 precios registrados)</td></tr>`;
@@ -1203,7 +1469,7 @@ function renderAnalisisView(container) {
 
   container.innerHTML = `
     <div class="page-title">Análisis de precios e inflación</div>
-    <div class="page-sub">Comparación de la variación de precio de cada insumo contra la inflación acumulada del período.</div>
+    <div class="page-sub">Comparación de la variación de precio de cada insumo, y del costo de cada producto vs. su precio de venta, contra la inflación acumulada del período.</div>
 
     <div class="section-block">
       <div class="section-header">
@@ -1225,6 +1491,27 @@ function renderAnalisisView(container) {
           <table class="data-table">
             <thead><tr><th>Insumo</th><th>Precio base</th><th>Precio actual</th><th>Variación</th><th>Vs. inflación</th></tr></thead>
             <tbody>${rows}</tbody>
+          </table>
+        </div>`}
+    </div>
+
+    <div class="section-block">
+      <div class="section-header">
+        <div class="section-title">🧾 Costo vs. precio de venta (productos con receta)</div>
+      </div>
+      <div class="page-sub" style="margin-bottom:16px">Compara el costo calculado de cada producto (según su receta) contra su precio de venta, para detectar cuando un aumento de costos se come el margen.</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Vendiendo a pérdida</div><div class="stat-value">${alertasPerdida.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Costo subió más que la inflación</div><div class="stat-value">${alertasProdInflacion.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Productos con receta</div><div class="stat-value">${filasProd.length}</div></div>
+      </div>
+      ${alertasPerdida.length ? `<div class="alert-box alert-danger">❌ ${alertasPerdida.length} producto(s) cuestan más de lo que se venden — ajustá el precio de venta urgente.</div>` : ""}
+      ${alertasProdInflacion.length ? `<div class="alert-box alert-warn">⚠️ ${alertasProdInflacion.length} producto(s) subieron de costo más que la inflación del período — revisá el precio de venta o el margen.</div>` : ""}
+      ${filasProd.length === 0 ? `<div class="empty-state">Todavía no hay productos con receta cargada. Armá recetas en "Productos y Recetas" para ver esta comparación.</div>` : `
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Producto</th><th>Precio de venta</th><th>Costo actual</th><th>Margen</th><th>Costo base</th><th>Variación</th><th>Estado</th></tr></thead>
+            <tbody>${rowsProd}</tbody>
           </table>
         </div>`}
     </div>
