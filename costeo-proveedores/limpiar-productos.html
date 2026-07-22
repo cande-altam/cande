@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Candela — Limpiar catálogo de productos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --cream:#EEEBD7; --cream-dark:#dedad8; --cream-mid:#e5e1cc;
+  --black:#22201F; --gray:#9a9888; --white:#ffffff;
+  --terra:#E15D46; --terra-light:#ea7a65; --terra-pale:#f9ddd8;
+  --turq:#9BD6CC; --turq-dark:#6bbfb4; --turq-pale:#d8f0ed;
+  --green:#27ae60; --green-pale:#e8f8f0;
+  --shadow-sm:0 1px 3px rgba(34,32,31,.06),0 1px 2px rgba(34,32,31,.04);
+  --shadow-md:0 4px 16px rgba(34,32,31,.08),0 2px 6px rgba(34,32,31,.05);
+  --shadow-terra:0 4px 18px rgba(225,93,70,.30);
+  --r:14px;--r-sm:8px;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--black);min-height:100vh;font-weight:300;font-size:14px;}
+.main{max-width:760px;margin:0 auto;padding:40px 24px;}
+.page-title{font-size:22px;font-weight:700;margin-bottom:6px;letter-spacing:-.3px;}
+.page-sub{color:var(--gray);font-size:13px;margin-bottom:24px;}
+.section-block{background:var(--white);border:1px solid rgba(34,32,31,.07);border-radius:var(--r);padding:22px 24px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+.section-title{font-size:14px;font-weight:600;margin-bottom:14px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 22px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;transition:all .2s;}
+.btn-primary{background:var(--terra);color:#fff;box-shadow:var(--shadow-terra);}
+.btn-primary:hover{background:var(--terra-light);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--black);border:1.5px solid var(--cream-dark);}
+.form-input{padding:10px 14px;background:var(--cream);border:1.5px solid var(--cream-dark);border-radius:var(--r-sm);color:var(--black);font-size:13px;outline:none;width:100%;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:12px;}
+.form-input:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(225,93,70,.12);}
+.stat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px;}
+.stat-card{background:var(--cream);border-radius:var(--r-sm);padding:14px 16px;text-align:center;}
+.stat-value{font-size:22px;font-weight:700;}
+.stat-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;margin-top:2px;}
+.alert-box{padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:13px;}
+.alert-warn{background:#fff5f3;border:1px solid var(--terra-pale);color:var(--terra);}
+.alert-turq{background:var(--turq-pale);border:1px solid var(--turq);color:var(--turq-dark);}
+.log-box{background:var(--black);color:var(--cream);border-radius:var(--r-sm);padding:14px 16px;font-family:monospace;font-size:12px;max-height:340px;overflow-y:auto;white-space:pre-wrap;line-height:1.5;}
+.list-box{background:var(--cream);border-radius:var(--r-sm);padding:12px 14px;font-family:monospace;font-size:12px;max-height:260px;overflow-y:auto;white-space:pre-wrap;line-height:1.6;margin-bottom:16px;}
+#login-err{color:var(--terra);font-size:12px;display:none;margin-top:6px;}
+.progress-bar{height:8px;background:var(--cream-dark);border-radius:100px;overflow:hidden;margin-bottom:16px;}
+.progress-fill{height:100%;background:var(--terra);width:0%;transition:width .2s;}
+</style>
+</head>
+<body>
+<div class="main" id="app">Cargando…</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
+  authDomain: "pedidos-de-produccion-ee3cb.firebaseapp.com",
+  databaseURL: "https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-produccion-ee3cb",
+  storageBucket: "pedidos-de-produccion-ee3cb.firebasestorage.app",
+  messagingSenderId: "744141794971",
+  appId: "1:744141794971:web:9639c8bf3834e4978ae03e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Nombres de la hoja "Hoja3" (lista de precios de menú actualizada) de Control_de_Costos.xlsx —
+// los únicos productos con preparación/receta con los que se va a trabajar por ahora.
+const HOJA3_NOMBRES = ["1/4 Café Puerto Blest","1/4 Kg México Puerto Bles","1/4 cafe","1/4 café Cherrys","1/4 kg café Perú Puerto Bles","Aerocano","Affogato","Affogatto","Alemana","Americano","Americano frío","Bagel","Bagel con jamón cocido, queso, huevo y palta","Bagel con queso crema, jamón crudo, tomate y rúcula","Bariloche","Bizcochos","Bizcochos de margarina","Bollitos B/N","Bollos Grandes","Boulevant","Budin x Kg","Budin x Unidad","Cabsha","Cafe 1/4 Cherry Peru","Café + tostada GRANO ANDINO con palta, huevos, jamón y queso y jugo de naranja","Café + tostada MULTICEREAL con palta, huevos, jamón y queso y jugo de naranja","Café + tostada PAN BLANCO con palta, huevos, jamón y queso y jugo de naranja","Café + tostada SALVADO con palta, huevos, jamón y queso y jugo de naranja","Café + tostada con palta, huevos, jamón y queso y jugo de naranja","Café Doble","Café Mediano","Café con 3 MEDIALUNAS jugo de de naranja","Café con 3 TORTILLAS y jugo de de naranja","Café con 3 churros rellenos con dulce de leche","Café con 3 medialunas / tortillas y jugo de de naranja","Café con leche","Café con porción de torta (mini cake)","Café con sandwich de baguette con jamón, queso, huevos y jugo de naranja","Café con tostadas GRANO ANDINO mermelada y queso y jugo de naranja","Café con tostadas MULTICEREAL mermelada y queso y jugo de naranja","Café con tostadas, PAN SALVADO mermelada y queso y jugo de naranja","Café con tostadas, mermelada y queso y jugo de naranja","Café con tostadas,PAN BLANCO mermelada y queso y jugo de naranja","Café en pocillo","Capuccino","Capuchino","Carrot cacke","Caseras","Caseritas","Chatas","CheeseCake Frio Frutos Rojos","CheeseCake Frio Maracuya","Cheesecake Horneado Frutos Rojos","Chips P/Sandwich","Chocolatada Caliente/ Fria","Chocotorta","Churros Rellenos x Unidad","Churros x Unidad","Coffee tonic","Combo TOSTADO (2 sándwiches tostados)","Cookies","Cortado Doble","Cortado Mediano","Cortado en Pocillo","Cremona","Croissant con jamón cocido y queso","Croissant con jamón crudo y queso azul","Cuernitos","Cupcake","Delicia con chocolates","Delicia con frutas","Dip de Palta","Donas","Doppio","Dulce de leche","Ensalada de fruta","Ensalada/frutas","Espresso","Facturas","Filtrado 1 Taza","Filtrado 2 Tazas","Flat White","Flautas","Focaccia","Focaccia Jamón Crudo, Queso y Almendras","Focaccia con jamón cocido, queso, tomate y lechuga","Focaccia con mortadela con pistachos, queso, tomates cherry y Rucula","Frapuccino","GANACHE CHOCOLATE","GANACHE DDL","Galletas de Agua x Bolsa","Huevo a la plancha","Huevo de pascuas","Huevo revuelto","Huevos de pascua rellenos","Imperial Ruso","Jamon Crudo","Jamon cocido","Lagrima Doble","Lagrima Mediana","Lagrima en Pocillo","Latte","Latte Dulce de leche y coco","Latte Frio de DDL y Coco","Latte Frio de Pistacho","Latte con Pistacho","Latte con avellanas","Latte con caramelo","Latte con vainilla","Latte frio con sirup de vainilla","Latte frío","Latte frío con avellanas","Latte frío con caramelo","Leche caliente/tibia","Lemon Pie","Macchiato","Marquise","Masas Finas","Masas Secas","Medialunas Saladas","Mermelada frutal","Mignon","Mini Cabsha","Mini Dona","Mini Lemon Pie","Mini Tarta Frutal","Mini Turron Salteño","Mini baguette con jamón cocido y queso","Mini baguette con queso de cabra, tomates cherry y albahaca","Mini baguette con salamín, queso, lechuga y tomate","Minifacturas","Mocaccino","Nutella (pasta de avellana)","Nutella porcion","Oreo","Pan Dulce","Pan Lactal Blanco","Pan Lactal Granos Andinos","Pan Lactal Multicereal","Pan Lactal Salvado","Pan Rallado x 500 gr","Pan Saborizado","Pan de Hamburguesa x 6","Pan de Leche","Pan de Navidad x kg","Pan de Papa x 4","Pan de Viena","Pan de navidad especial x 500 gr","Pan de navidad por 500 gr","Pan de papa grande","Pan especial navidad","Pan Árabe","Pizzeta de copetín","Pizzetas x 4","Plancha de bizcochuelo x kg","Plancha de hojaldre x kg","Plancha de merengue x kg","Plancha de pionono","Porcion de Alemana","Porcion de Brownie C/Fruta","Porcion de Brownie con chocolates","Porcion de Carrot Cake","Porcion de Cheesecake Frutos Rojos","Porcion de Cheesecake Maracuya","Porcion de Oreo","Porcion de Pistachos","Porcion de Selva Negra","Porcion de Tres Leches","Porción de Bariloche","Porción de Red Velvet","Porción de Tiramisu","Pre-Pizzas","Queso crema","Queso tybo","Red Velvet","Ristretto","Rogel","Roll de Canela","Rosca rellena","Rosca sin relleno","SEÑA DE PEDIDO","Sacramento de Jamón y queso","Sacramento de JyQ (mesa)","Salvado","Sandwich en Baguette de Salame y queso","Sandwich en Baguette de jamón cocido, queso, tomate y lechuga","Sandwich en Ciabatta de Lomito ahumado, muzarella, rúcula con oliva","Sandwich en Ciabatta de Muzzarella, provolone, albahaca y cherrys confitados","Sandwich en Miga de Jamón cocido y queso","Sandwich en Miga de cantimpalo y queso azul","Sandwich en Miga de jamón crudo y queso","Sandwich en Miga de ternera y huevo","Sandwich en Miga de ternera y tomate","Selva Negra","Spekell","Strudel","Submarino","Surtido Economico","Tarta Frutal","Tiramisu","Tomate","Torta de Duraznos","Torta de Hojaldre","Torta x Porcion","Tortillas","Tortillon","Tostado de cantimpalo","Tostado de ciabatta de cherrys","Tostado de ciabatta de lomito","Tostado de ternera y queso","Tostado jamón y queso","Tres Leches","Tres Leches (torta","Tres leches (torta)","Turron Salteño","Té","Yogurt GRIEGO con granola, frutas de estación y jugo de naranja","Yogurt NATURAL con granola, frutas de estación y jugo de naranja","Yogurt griego/natural solo","agua caliente","extra chocolate","sandwich en miga de ternera y queso"];
+
+function normKey(s) {
+  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+const HOJA3_SET = new Set(HOJA3_NOMBRES.map(normKey));
+
+// Reglas de "producto de retail" — solo del catálogo importado de Fudo (excel "productos"):
+// fiambres (toda la categoría), lácteos de Cosalta (por nombre, dentro de "Lacteos"), y bebidas
+// línea Coca-Cola (por nombre, dentro de "Bebidas"). Todo lo demás que no esté en Hoja3 se borra.
+function motivoConservar(p) {
+  if (HOJA3_SET.has(normKey(p.nombre))) return "Hoja3";
+  const nombre = (p.nombre || "").toLowerCase();
+  if (p.categoria === "Fiambres") return "Fiambres";
+  if (p.categoria === "Lacteos" && nombre.includes("cosalta")) return "Lácteos Cosalta";
+  if (p.categoria === "Bebidas" && (nombre.includes("coca cola") || nombre.includes("coca-cola"))) return "Bebidas Coca-Cola";
+  return null;
+}
+
+const app_ = document.getElementById("app");
+let productosSnapshot = null;
+
+function renderLogin() {
+  app_.innerHTML = `
+    <div class="page-title">🗑️ Limpiar catálogo de productos</div>
+    <div class="page-sub">Borra del catálogo todo producto que no sea ni un ítem de la lista de precios "Hoja3" ni un producto de retail curado (fiambres, lácteos Cosalta, bebidas Coca-Cola). Acción de un solo uso. Usa la misma contraseña de administración de Costeo &amp; Proveedores.</div>
+    <div class="section-block">
+      <input type="password" class="form-input" id="login-pass" placeholder="Contraseña">
+      <button class="btn btn-primary" id="login-btn">Ingresar</button>
+      <div id="login-err">Contraseña incorrecta.</div>
+    </div>`;
+  document.getElementById("login-btn").addEventListener("click", handleLogin);
+  document.getElementById("login-pass").addEventListener("keydown", e => { if (e.key === "Enter") handleLogin(); });
+}
+
+async function handleLogin() {
+  const val = document.getElementById("login-pass").value;
+  const snap = await get(ref(db, "costeo/config/adminPassword"));
+  const pass = snap.val() || "costeo2025";
+  if (val === pass) {
+    await renderPreview();
+  } else {
+    document.getElementById("login-err").style.display = "block";
+  }
+}
+
+async function renderPreview() {
+  app_.innerHTML = `<div class="page-title">Calculando…</div>`;
+  const snap = await get(ref(db, "costeo/productos"));
+  productosSnapshot = snap.val() || {};
+  const entries = Object.entries(productosSnapshot);
+
+  const conservar = [];
+  const borrar = [];
+  const motivos = {};
+  for (const [id, p] of entries) {
+    const motivo = motivoConservar(p);
+    if (motivo) {
+      conservar.push([id, p]);
+      motivos[motivo] = (motivos[motivo] || 0) + 1;
+    } else {
+      borrar.push([id, p]);
+    }
+  }
+
+  const listaBorrar = borrar.slice(0, 150).map(([, p]) => `• ${p.nombre}${p.categoria ? ` (${p.categoria})` : ""}`).join("\n")
+    + (borrar.length > 150 ? `\n… y ${borrar.length - 150} más.` : "");
+
+  app_.innerHTML = `
+    <div class="page-title">🗑️ Limpiar catálogo de productos</div>
+    <div class="page-sub">Revisá bien la lista de abajo antes de confirmar — esta acción NO se puede deshacer.</div>
+    <div class="section-block">
+      <div class="section-title">Resumen</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-value">${entries.length}</div><div class="stat-label">Productos actuales</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--green)">${conservar.length}</div><div class="stat-label">Se conservan</div></div>
+      </div>
+      <div class="alert-box alert-turq">ℹ️ Se conservan por: ${Object.entries(motivos).map(([m, n]) => `${m} (${n})`).join(" · ") || "—"}.</div>
+      <div class="alert-box alert-warn">⚠️ Se van a borrar ${borrar.length} productos que no están en la lista de precios "Hoja3" ni cumplen ninguna de las 3 reglas de retail (fiambres, lácteos Cosalta, bebidas Coca-Cola).</div>
+      <div class="section-title" style="margin-top:6px">Productos que se van a borrar (${borrar.length})</div>
+      <div class="list-box">${borrar.length ? listaBorrar : "(ninguno)"}</div>
+      ${borrar.length ? `
+        <label class="form-label" style="font-size:12px;color:var(--gray);display:block;margin-bottom:6px">Para confirmar, escribí <strong>BORRAR</strong> acá abajo:</label>
+        <input class="form-input" id="confirm-input" placeholder="BORRAR">
+        <button class="btn btn-primary" id="confirm-btn" disabled>🗑️ Borrar ${borrar.length} productos</button>
+      ` : `<div class="alert-box alert-turq">No hay nada para borrar — el catálogo ya está limpio.</div>`}
+    </div>`;
+
+  if (borrar.length) {
+    const input = document.getElementById("confirm-input");
+    const btn = document.getElementById("confirm-btn");
+    input.addEventListener("input", () => { btn.disabled = input.value.trim() !== "BORRAR"; });
+    btn.onclick = () => ejecutarBorrado(borrar);
+  }
+}
+
+async function ejecutarBorrado(borrar) {
+  if (!confirm(`¿Confirmás que querés borrar ${borrar.length} productos? Esta acción no se puede deshacer.`)) return;
+  const btn = document.getElementById("confirm-btn");
+  btn.disabled = true;
+  app_.insertAdjacentHTML("beforeend", `
+    <div class="section-block">
+      <div class="section-title">Progreso</div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="log-box" id="log-box"></div>
+    </div>`);
+  const logBox = document.getElementById("log-box");
+  const progressFill = document.getElementById("progress-fill");
+  const log = (msg) => { logBox.textContent += msg + "\n"; logBox.scrollTop = logBox.scrollHeight; };
+
+  let borrados = 0;
+  for (const [id, p] of borrar) {
+    await remove(ref(db, `costeo/productos/${id}`));
+    borrados++;
+    log(`🗑️  ${p.nombre}`);
+    progressFill.style.width = Math.round((borrados / borrar.length) * 100) + "%";
+  }
+  log(`\n✅ Listo: ${borrados} productos borrados.`);
+  app_.insertAdjacentHTML("beforeend", `
+    <div class="section-block">
+      <div class="alert-box alert-turq">Terminado. Podés ir a <a href="index.html">Costeo &amp; Proveedores</a> a revisar el catálogo. Esta página es de uso único.</div>
+    </div>`);
+}
+
+renderLogin();
+</script>
+</body>
+</html>

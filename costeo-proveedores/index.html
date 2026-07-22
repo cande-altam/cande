@@ -227,6 +227,7 @@ const state = {
   editingInsumoId: null,
   editingProductoId: null,
   viewingInsumoHistId: null,
+  viewingProductoRecetaId: null,
   insumosMergeMode: false,
   insumosMergeSeleccion: {},
   insumosMergeSurvivor: null,
@@ -1735,6 +1736,7 @@ function renderProductosTable() {
     const margenCell = fuente !== "sin_datos" && margen !== null
       ? `${fmtPct(margen)}${perdida ? ` <span class="badge badge-alerta">❌ Pérdida</span>` : (margenBajo ? ` <span class="badge badge-no-pagado">⚠️ Bajo</span>` : "")}`
       : "—";
+    const recetaAbierta = state.viewingProductoRecetaId === id;
     return `
       <tr>
         <td>${escapeHtml(p.nombre)}${costoActualizado ? ` <span class="badge badge-ok" title="El costo cambió en los últimos 14 días">🔄 Costo actualizado</span>` : ""}</td>
@@ -1743,10 +1745,12 @@ function renderProductosTable() {
         <td>${p.precioVenta ? fmtMoney(p.precioVenta) : "—"}</td>
         <td>${margenCell}</td>
         <td style="white-space:nowrap">
+          <button class="btn btn-ghost btn-sm" onclick="toggleRecetaProducto('${id}')">${recetaAbierta ? "Ocultar receta" : "📋 Receta"}</button>
           <button class="btn btn-ghost btn-sm" onclick="abrirFormProducto('${id}')">Editar</button>
           <button class="btn btn-danger btn-sm" onclick="eliminarProducto('${id}')">Eliminar</button>
         </td>
-      </tr>`;
+      </tr>
+      ${recetaAbierta ? recetaPanelHtml(id, p) : ""}`;
   }).join("");
 
   const statsHtml = `
@@ -1764,6 +1768,70 @@ function renderProductosTable() {
 
 window.toggleProductosSoloAlertas = function() {
   state.productosSoloAlertas = !state.productosSoloAlertas;
+  renderProductosTable();
+};
+
+// Panel de receta expandible por producto (ver/modificar/crear/eliminar), sin tener que abrir el
+// formulario completo de edición del producto. Las filas usan las mismas clases que el formulario
+// de edición (recipe-row/recipe-insumo/recipe-cantidad) pero las consultas siempre están acotadas
+// al contenedor de ESTE producto (por id de DOM), así que no chocan entre sí ni con el otro form.
+function recetaPanelHtml(id, p) {
+  const receta = p.receta || {};
+  const rows = Object.keys(receta).length
+    ? objToSortedEntries(receta, () => 0).map(([insumoId, cantidad]) => recipeRowHtml({ insumoId, cantidad }, { onchange: `recalcRecetaPanel('${id}')` })).join("")
+    : recipeRowHtml({}, { onchange: `recalcRecetaPanel('${id}')` });
+  const costo = calcCostoProducto(p);
+  return `
+    <tr><td colspan="6" style="background:var(--cream);padding:14px 18px">
+      <div class="text-muted" style="margin-bottom:8px;font-weight:600">🧾 Receta de "${escapeHtml(p.nombre)}"</div>
+      <div id="receta-panel-container-${id}">${rows}</div>
+      <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addRecetaPanelRow('${id}')">+ Agregar insumo</button>
+      <div style="margin:10px 0;font-size:13px">Costo total: <strong id="receta-panel-total-${id}">${fmtMoney(costo)}</strong></div>
+      <button class="btn btn-primary btn-sm" onclick="guardarRecetaPanel('${id}')">💾 Guardar receta</button>
+      <button class="btn btn-danger btn-sm" onclick="vaciarRecetaPanel('${id}')">🗑️ Vaciar receta</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleRecetaProducto('${id}')">Cerrar</button>
+    </td></tr>`;
+}
+window.toggleRecetaProducto = function(id) {
+  state.viewingProductoRecetaId = state.viewingProductoRecetaId === id ? null : id;
+  renderProductosTable();
+};
+window.addRecetaPanelRow = function(id) {
+  const container = document.getElementById(`receta-panel-container-${id}`);
+  if (container) container.insertAdjacentHTML("beforeend", recipeRowHtml({}, { onchange: `recalcRecetaPanel('${id}')` }));
+};
+window.recalcRecetaPanel = function(id) {
+  const container = document.getElementById(`receta-panel-container-${id}`);
+  if (!container) return 0;
+  let total = 0;
+  container.querySelectorAll(".recipe-row").forEach(row => {
+    const insumoId = row.querySelector(".recipe-insumo").value;
+    const cantidad = parseFloat(row.querySelector(".recipe-cantidad").value) || 0;
+    total += precioEfectivoInsumo(insumoId) * cantidad;
+  });
+  const el = document.getElementById(`receta-panel-total-${id}`);
+  if (el) el.textContent = fmtMoney(total);
+  return total;
+};
+window.guardarRecetaPanel = async function(id) {
+  const container = document.getElementById(`receta-panel-container-${id}`);
+  if (!container) return;
+  const receta = {};
+  container.querySelectorAll(".recipe-row").forEach(row => {
+    const insumoId = row.querySelector(".recipe-insumo").value;
+    const cantidad = parseFloat(row.querySelector(".recipe-cantidad").value);
+    if (insumoId && cantidad > 0) receta[insumoId] = cantidad;
+  });
+  await update(ref(db, `costeo/productos/${id}`), { receta });
+  state.productos[id] = { ...state.productos[id], receta };
+  showToast("✅ Receta guardada.", "success");
+  renderProductosTable();
+};
+window.vaciarRecetaPanel = async function(id) {
+  if (!confirm("¿Vaciar la receta de este producto? El costo va a volver a depender del costo manual (si lo cargaste), hasta que armes una receta nueva.")) return;
+  await update(ref(db, `costeo/productos/${id}`), { receta: {} });
+  state.productos[id] = { ...state.productos[id], receta: {} };
+  showToast("✅ Receta vaciada.", "success");
   renderProductosTable();
 };
 
