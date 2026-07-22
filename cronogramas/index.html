@@ -321,6 +321,28 @@
 
       <section class="card">
         <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Puesto de cada persona</span>
+          <p class="sub" style="padding:4px 0 0">Cambiá el puesto principal de alguien (ej: un cajero que pasa a atención) o agregale puestos de respaldo para que pueda cubrir otro rol cuando haga falta.</p>
+          <div class="field">
+            <label for="rolePerson">Persona</label>
+            <select id="rolePerson"></select>
+          </div>
+          <div class="field">
+            <label for="roleMain">Puesto principal</label>
+            <select id="roleMain"></select>
+          </div>
+          <button class="btn" id="btnSetRoleMain" style="margin-top:9px;width:100%">Cambiar puesto principal</button>
+          <div class="field" style="margin-top:14px">
+            <label>Puestos de respaldo (además del principal)</label>
+            <div class="daychecks" id="roleBackupChecks" style="flex-wrap:wrap"></div>
+          </div>
+          <button class="btn" id="btnSetRoleBackup" style="margin-top:9px;width:100%">Guardar respaldos</button>
+          <div class="mini-list" id="roleOverrideList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
           <span class="eyebrow">Franco fijo (día de descanso)</span>
           <p class="sub" style="padding:4px 0 0">Fijá el día de descanso semanal de cada persona. Si no lo fijás, el autocompletado le busca un día libre distinto cada semana.</p>
           <div class="field">
@@ -495,8 +517,8 @@ function key(d,loc,shift,role,idx){return `${d}|${loc}|${shift}|${role}|${idx}`;
 // eligible people for a role at a local
 function peopleFor(role,loc){
   return PEOPLE.filter(p=>{
-    const primary=p.role===role;
-    const isBackup=p.backup&&p.backup.includes(role);
+    const primary=roleFor(p.n)===role;
+    const isBackup=backupFor(p.n).includes(role);
     if(!primary&&!isBackup)return false;
     const locOk=p.loc==="both"||p.loc===loc;
     return primary?locOk:true; // un respaldo puede cruzar de local si hace falta (ej: Rodrigo cubre Compras en San Luis)
@@ -504,16 +526,26 @@ function peopleFor(role,loc){
 }
 
 /* ---------------- STATE ---------------- */
-let state={label:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{}};
+let state={label:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{}};
 const LS="candela_scheduler_v1";
 function persist(){localStorage.setItem(LS,JSON.stringify(state));}
-function loadLS(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.assign){state=Object.assign({label:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{}},s);}}catch(e){}}
+function loadLS(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.assign){state=Object.assign({label:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{}},s);}}catch(e){}}
+// puesto principal / de respaldo de una persona: prioriza lo que vos cambiaste en "Puesto de cada persona"
+// por sobre el default del código (igual que francoFor con el franco).
+function roleFor(name){
+  if(Object.prototype.hasOwnProperty.call(state.roleOverride,name))return state.roleOverride[name];
+  const p=BY_NAME[name];return p&&p.role;
+}
+function backupFor(name){
+  if(Object.prototype.hasOwnProperty.call(state.backupOverride,name))return state.backupOverride[name];
+  const p=BY_NAME[name];return (p&&p.backup)||[];
+}
 
 // normaliza state.fixed: junta reglas repetidas (misma persona/turno/local/rol/medio-turno) en una sola con los días combinados
 function dedupeFixed(){
   const map=new Map();
   state.fixed.forEach(f=>{
-    const half=!!f.half;const role=f.role||(BY_NAME[f.n]&&BY_NAME[f.n].role);
+    const half=!!f.half;const role=f.role||(BY_NAME[f.n]&&roleFor(f.n));
     const kk=`${f.n}|${f.shift}|${f.loc}|${role}|${half}`;
     if(!map.has(kk))map.set(kk,{id:f.id,seedTag:f.seedTag,n:f.n,days:new Set(),shift:f.shift,loc:f.loc,role,half});
     const e=map.get(kk);f.days.forEach(d=>e.days.add(d));if(f.seedTag&&!e.seedTag)e.seedTag=f.seedTag;
@@ -552,7 +584,7 @@ function isOut(name,d){const p=BY_NAME[name];if(!p)return false;if(francoFor(nam
 function regenerateFixedHalfExtras(){
   state.ex=state.ex.filter(e=>!e.auto);
   state.fixed.filter(f=>f.half).forEach(f=>{
-    const p=BY_NAME[f.n];if(!p)return;const loc=fxLocFor(f),role=f.role||p.role;
+    const p=BY_NAME[f.n];if(!p)return;const loc=fxLocFor(f),role=f.role||roleFor(f.n);
     f.days.forEach(d=>{
       if(isOut(f.n,d)||isClosed(d,loc,f.shift))return;
       state.ex.push({id:`auto-${f.id}-${d}`,auto:true,n:f.n,day:d,shift:f.shift,loc,role,half:true});
@@ -571,7 +603,7 @@ function autocomplete(){
   const franco={};
   const roleDayF={}; ["barista","cocina","ayudante","cajero","atencion","compras"].forEach(r=>roleDayF[r]=[0,0,0,0,0,0,0]);
   const globalF=[0,0,0,0,0,0,0];
-  PEOPLE.forEach(p=>{const d=francoFor(p.n);if(d!==undefined){franco[p.n]=d;roleDayF[p.role][d]++;globalF[d]++;}});
+  PEOPLE.forEach(p=>{const d=francoFor(p.n);if(d!==undefined){franco[p.n]=d;roleDayF[roleFor(p.n)][d]++;globalF[d]++;}});
   PEOPLE.filter(p=>francoFor(p.n)===undefined).forEach(p=>{
     const absent=absDaysFor(p.n);
     if(absent.length>=6)return; // out ~all week, no franco needed
@@ -580,8 +612,9 @@ function autocomplete(){
     let cand=[0,1,2,3,4].filter(d=>d!==mustDay&&!absent.includes(d)&&!fx.has(d)); // día libre entre semana, fuera de sus reglas fijas
     if(!cand.length)cand=[0,1,2,3,4].filter(d=>d!==mustDay&&!absent.includes(d));
     if(!cand.length)cand=[0,1,2,3,4,5,6].filter(d=>d!==mustDay&&!absent.includes(d));
-    cand.sort((a,b)=>(roleDayF[p.role][a]-roleDayF[p.role][b])||(globalF[a]-globalF[b]));
-    const d=cand[0];franco[p.n]=d;roleDayF[p.role][d]++;globalF[d]++;
+    const pr=roleFor(p.n);
+    cand.sort((a,b)=>(roleDayF[pr][a]-roleDayF[pr][b])||(globalF[a]-globalF[b]));
+    const d=cand[0];franco[p.n]=d;roleDayF[pr][d]++;globalF[d]++;
   });
   const outFor=(name,d)=>franco[name]===d||absDaysFor(name).includes(d);
 
@@ -594,7 +627,7 @@ function autocomplete(){
   });
 
   // ---- 2b. reglas fijas de puesto base (turno habitual de cada persona; las de medio turno ya se generaron arriba como refuerzo) ----
-  state.fixed.filter(f=>!f.half).forEach(f=>{const p=BY_NAME[f.n];if(!p)return;const loc=fxLocFor(f),role=f.role||p.role;
+  state.fixed.filter(f=>!f.half).forEach(f=>{const p=BY_NAME[f.n];if(!p)return;const loc=fxLocFor(f),role=f.role||roleFor(f.n);
     f.days.forEach(d=>{
       if(outFor(f.n,d)||isClosed(d,loc,f.shift))return;
       let busy=false;Object.keys(assign).forEach(kk=>{const[dd,,sh]=kk.split("|");if(+dd===d&&sh===f.shift&&assign[kk]===f.n)busy=true;});
@@ -621,7 +654,7 @@ function autocomplete(){
           return true;
         });
         cands.sort((a,b)=>{
-          const prA=a.role===row.role?0:1,prB=b.role===row.role?0:1; if(prA!==prB)return prA-prB;      // rol principal antes que respaldo
+          const prA=roleFor(a.n)===row.role?0:1,prB=roleFor(b.n)===row.role?0:1; if(prA!==prB)return prA-prB;      // rol principal antes que respaldo
           const dbA=busyDay.has(a.n)?1:0,dbB=busyDay.has(b.n)?1:0; if(dbA!==dbB)return dbA-dbB;          // evitar turno doble innecesario
           const hmA=a.loc===loc?0:1,hmB=b.loc===loc?0:1; if(hmA!==hmB)return hmA-hmB;                    // priorizar gente del local, reservar rotativos
           const crA=busyOther.has(a.n)?1:0,crB=busyOther.has(b.n)?1:0; if(crA!==crB)return crA-crB;      // evitar cruce de local el mismo día
@@ -774,7 +807,7 @@ function selHTML(d,loc,shift,role,idx,active,closed){
   const cur=state.assign[k]||"";
   if(!active)return `<td class="cell ${isWknd(d)?"wknd":""} ${closed?"closed":"inactive"}"><span class="celloff">${closed?"Cerrado":"·"}</span></td>`;
   const opts=peopleFor(role,loc).map(p=>{
-    return `<option value="${p.n}" ${p.n===cur?"selected":""}>${p.n}${p.role!==role?" ⤵":""}</option>`;
+    return `<option value="${p.n}" ${p.n===cur?"selected":""}>${p.n}${roleFor(p.n)!==role?" ⤵":""}</option>`;
   }).join("");
   // dupe detection for this cell
   let dupe=false;
@@ -792,7 +825,7 @@ function isDoubleShift(name,d){
 }
 function exAt(d,loc,shift,role){return state.ex.filter(e=>e.day===d&&e.loc===loc&&e.shift===shift&&e.role===role);}
 function extraCellHTML(e){
-  const opts=peopleFor(e.role,e.loc).map(p=>`<option value="${p.n}" ${p.n===e.n?"selected":""}>${p.n}${p.role!==e.role?" ⤵":""}</option>`).join("");
+  const opts=peopleFor(e.role,e.loc).map(p=>`<option value="${p.n}" ${p.n===e.n?"selected":""}>${p.n}${roleFor(p.n)!==e.role?" ⤵":""}</option>`).join("");
   let dupe=false;
   Object.keys(state.assign).forEach(kk=>{const[dd,,sh]=kk.split("|");if(+dd===e.day&&sh===e.shift&&state.assign[kk]===e.n)dupe=true;});
   state.ex.forEach(o=>{if(o!==e&&o.n===e.n&&o.day===e.day&&o.shift===e.shift)dupe=true;});
@@ -885,9 +918,10 @@ function renderTeam(v){
     const bad=wc===7, warn=wc>0&&wc<6;
     const heTag=(p.he||EVENT_HE.includes(p.n))?`<span class="pill he">HE</span>`:"";
     const absTag=absDaysFor(p.n).length?`<span class="pill abs">Aus.</span>`:"";
+    const pr=roleFor(p.n);
     return `<div class="tcard ${bad?"bad":warn?"warn":""}">
-      <div class="nm"><span class="swatch" style="background:${roleColor(p.role)}"></span>${p.n} ${heTag}${absTag}</div>
-      <div class="rl">${ROLE_LABEL[p.role].toLowerCase()} · ${p.loc==="both"?"rota":p.loc}</div>
+      <div class="nm"><span class="swatch" style="background:${roleColor(pr)}"></span>${p.n} ${heTag}${absTag}</div>
+      <div class="rl">${ROLE_LABEL[pr].toLowerCase()} · ${p.loc==="both"?"rota":p.loc}</div>
       <div class="dd"><b>${wc}</b> día${wc===1?"":"s"} · franco: ${francos.length?francos.join(" "):"—"}</div>
     </div>`;
   }).join("");
@@ -1120,7 +1154,7 @@ function openImportView(){
 
 /* ---------------- CONTROLS ---------------- */
 function fillPersonSelects(){
-  const opts=`<option value="">Elegí…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n} (${ROLE_LABEL[p.role].toLowerCase()})</option>`).join("");
+  const opts=`<option value="">Elegí…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
   document.getElementById("absPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n}</option>`).join("");
   document.getElementById("exPerson").innerHTML=opts;
   document.getElementById("exDay").innerHTML=DAYS.map((d,i)=>`<option value="${i}">${d[1]}</option>`).join("");
@@ -1130,13 +1164,16 @@ function fillPersonSelects(){
   const dayOpts=DAYS.map((d,i)=>`<option value="${i}">${d[1]}</option>`).join("");
   document.getElementById("ruleDay").innerHTML=dayOpts;
   document.getElementById("ruleNotaDay").innerHTML=dayOpts;
-  document.getElementById("fixedPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n} (${ROLE_LABEL[p.role].toLowerCase()})</option>`).join("");
+  document.getElementById("fixedPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
   document.getElementById("fixedDays").innerHTML=DAYS.map((d,i)=>`<label>${d[2]}<input type="checkbox" value="${i}"></label>`).join("");
   document.getElementById("fixedRole").innerHTML=Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join("");
   syncFixedLocVisibility();
   document.getElementById("francoPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n}</option>`).join("");
   document.getElementById("francoDay").innerHTML=`<option value="auto">Automático (variable cada semana)</option>`+DAYS.map((d,i)=>`<option value="${i}">${d[1]}</option>`).join("");
   syncFrancoDaySelection();
+  document.getElementById("rolePerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
+  document.getElementById("roleMain").innerHTML=Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join("");
+  syncRoleControls();
 }
 function syncFrancoDaySelection(){
   const n=document.getElementById("francoPerson").value;
@@ -1148,7 +1185,23 @@ function syncFixedLocVisibility(){
   const n=document.getElementById("fixedPerson").value;const p=BY_NAME[n];
   const wrap=document.getElementById("fixedLoc");if(!wrap)return;
   if(p&&p.loc!=="both"){wrap.value=p.loc;wrap.disabled=true;}else{wrap.disabled=false;}
-  const roleSel=document.getElementById("fixedRole");if(p&&roleSel)roleSel.value=p.role;
+  const roleSel=document.getElementById("fixedRole");if(p&&roleSel)roleSel.value=roleFor(n);
+}
+// puesto de cada persona: sincroniza el selector de puesto principal y las casillas de respaldo
+// con lo que ya tiene esa persona (override si lo cambiaste, si no el default del código)
+function syncRoleControls(){
+  const n=document.getElementById("rolePerson").value;
+  const mainSel=document.getElementById("roleMain");
+  const backupWrap=document.getElementById("roleBackupChecks");
+  if(!n){if(mainSel)mainSel.value="";if(backupWrap)backupWrap.innerHTML="";return;}
+  const main=roleFor(n);
+  if(mainSel)mainSel.value=main;
+  if(backupWrap){
+    const backups=backupFor(n);
+    backupWrap.innerHTML=Object.keys(ROLE_LABEL).filter(r=>r!==main).map(r=>
+      `<label style="flex-direction:row;gap:5px;align-items:center"><input type="checkbox" value="${r}" ${backups.includes(r)?"checked":""}>${ROLE_LABEL[r]}</label>`
+    ).join("");
+  }
 }
 function renderMini(){
   const al=document.getElementById("absList");
@@ -1164,7 +1217,7 @@ function renderMini(){
   }).join("");
   const fl=document.getElementById("fixedList");
   fl.innerHTML=state.fixed.map((f,i)=>{
-    const role=f.role||BY_NAME[f.n].role;
+    const role=f.role||roleFor(f.n);
     return `<div class="mini-row"><span class="pill he">${f.half?"½ Fijo":"Fijo"}</span> <b>${f.n}</b> · ${f.days.map(d=>DAYS[d][2]).join(",")} · ${f.shift==="M"?"AM":"PM"} · ${fxLocFor(f)} · ${ROLE_LABEL[role].toLowerCase()} <button class="x" data-i="${i}" data-t="fixed">×</button></div>`;
   }).join("");
   const frl=document.getElementById("francoList");
@@ -1174,9 +1227,25 @@ function renderMini(){
     const label=v==="auto"?"Automático (forzado)":DAYS[v][1];
     return `<div class="mini-row"><span class="pill he">Franco</span> <b>${n}</b> · ${label} <button class="x" data-i="${n}" data-t="franco">×</button></div>`;
   }).join(""):`<p class="sub" style="padding:0">Nadie tiene un franco fijado por vos todavía — el resto usa el default del sistema o el automático.</p>`;
+  const rol=document.getElementById("roleOverrideList");
+  if(rol){
+    const names=new Set([...Object.keys(state.roleOverride),...Object.keys(state.backupOverride)]);
+    const rows=[];
+    names.forEach(n=>{
+      if(Object.prototype.hasOwnProperty.call(state.roleOverride,n))
+        rows.push(`<div class="mini-row"><span class="pill he">Puesto</span> <b>${n}</b> · ahora ${ROLE_LABEL[state.roleOverride[n]].toLowerCase()} <button class="x" data-i="${n}" data-t="role">×</button></div>`);
+      if(Object.prototype.hasOwnProperty.call(state.backupOverride,n)){
+        const bk=state.backupOverride[n];
+        rows.push(`<div class="mini-row"><span class="pill he">Respaldo</span> <b>${n}</b> · ${bk.length?bk.map(r=>ROLE_LABEL[r].toLowerCase()).join(", "):"ninguno"} <button class="x" data-i="${n}" data-t="rolebackup">×</button></div>`);
+      }
+    });
+    rol.innerHTML=rows.length?rows.join(""):`<p class="sub" style="padding:0">Nadie tiene el puesto cambiado todavía — todos usan el default del sistema.</p>`;
+  }
   document.querySelectorAll(".mini-row .x").forEach(b=>b.addEventListener("click",()=>{
     const t=b.dataset.t;
     if(t==="franco"){delete state.francoFixed[b.dataset.i];renderMini();render();persist();return;}
+    if(t==="role"){delete state.roleOverride[b.dataset.i];fillPersonSelects();renderMini();render();persist();return;}
+    if(t==="rolebackup"){delete state.backupOverride[b.dataset.i];fillPersonSelects();renderMini();render();persist();return;}
     const i=+b.dataset.i;
     if(t==="abs")state.abs.splice(i,1);else if(t==="ex")state.ex.splice(i,1);else if(t==="rule")state.rules.splice(i,1);else state.fixed.splice(i,1);
     if(t==="fixed")regenerateFixedHalfExtras(); // si borraste una regla fija de medio turno, su refuerzo desaparece del calendario ya mismo
@@ -1185,6 +1254,24 @@ function renderMini(){
 }
 function initControls(){
   document.getElementById("btnAuto").addEventListener("click",autocomplete);
+  document.getElementById("rolePerson").addEventListener("change",syncRoleControls);
+  document.getElementById("btnSetRoleMain").addEventListener("click",()=>{
+    const n=document.getElementById("rolePerson").value;if(!n)return toast("Elegí una persona");
+    const r=document.getElementById("roleMain").value;
+    if(r===roleFor(n))return toast(`${n} ya tiene ese puesto`);
+    state.roleOverride[n]=r;
+    // si el puesto de respaldo elegido pasa a ser el principal, sacalo de los respaldos para no duplicar
+    if(state.backupOverride[n])state.backupOverride[n]=state.backupOverride[n].filter(x=>x!==r);
+    fillPersonSelects();renderMini();render();persist();
+    toast(`${n} ahora es ${ROLE_LABEL[r].toLowerCase()}`);
+  });
+  document.getElementById("btnSetRoleBackup").addEventListener("click",()=>{
+    const n=document.getElementById("rolePerson").value;if(!n)return toast("Elegí una persona");
+    const checked=[...document.querySelectorAll("#roleBackupChecks input:checked")].map(c=>c.value);
+    state.backupOverride[n]=checked;
+    fillPersonSelects();renderMini();render();persist();
+    toast(checked.length?`Respaldos de ${n} guardados`:`${n} ya no tiene puestos de respaldo`);
+  });
   document.getElementById("francoPerson").addEventListener("change",syncFrancoDaySelection);
   document.getElementById("btnSetFranco").addEventListener("click",()=>{
     const n=document.getElementById("francoPerson").value;if(!n)return toast("Elegí una persona");
@@ -1226,7 +1313,7 @@ function initControls(){
     const role=document.getElementById("fixedRole").value;
     const half=document.getElementById("fixedHalf").checked;
     const alreadyCovered=new Set();
-    state.fixed.forEach(f=>{if(f.n===n&&f.shift===shift&&f.loc===loc&&(f.role||BY_NAME[n].role)===role&&!!f.half===half)f.days.forEach(d=>alreadyCovered.add(d));});
+    state.fixed.forEach(f=>{if(f.n===n&&f.shift===shift&&f.loc===loc&&(f.role||roleFor(n))===role&&!!f.half===half)f.days.forEach(d=>alreadyCovered.add(d));});
     const newDays=days.filter(d=>!alreadyCovered.has(d));
     if(!newDays.length){renderMini();return toast(`${n} ya tiene esa regla fija — no hace falta repetirla`);}
     state.fixed.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),n,days:newDays,shift,loc,role,half});
