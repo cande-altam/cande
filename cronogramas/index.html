@@ -432,33 +432,33 @@ const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mi
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
 // loc: 'SL' | 'SLA' | 'both'
 const PEOPLE=[
-  {n:"Lucía",role:"barista",loc:"SL",franco:"jue"},
+  {n:"Lucía",role:"barista",loc:"SL",franco:"mar"},
   {n:"Luciana",role:"barista",loc:"both",franco:"vie"},
   {n:"Gabriel",role:"barista",loc:"both",franco:"lun"},
-  {n:"Leandro",role:"barista",loc:"SLA"},
+  {n:"Leandro",role:"barista",loc:"SLA",franco:"jue"},
   {n:"Mariano",role:"barista",loc:"both",he:true},
   {n:"Luis",role:"cocina",loc:"SL",franco:"jue"},
   {n:"Vanesa",role:"cocina",loc:"SL",franco:"mie"},
-  {n:"Rodrigo",role:"compras",loc:"SL",must:{day:"vie",loc:"SL",shift:"M",role:"compras"}},
+  {n:"Rodrigo",role:"compras",loc:"SL",franco:"dom",must:{day:"vie",loc:"SL",shift:"M",role:"compras"}},
   {n:"Lucas",role:"cocina",loc:"SLA",franco:"vie"},
-  {n:"Matías",role:"cocina",loc:"both"},
-  {n:"Lázaro",role:"ayudante",loc:"SL",backup:["compras"]},
-  {n:"Gonzalo",role:"cocina",loc:"both"},
-  {n:"Jhon",role:"ayudante",loc:"both",backup:["atencion"]},
+  {n:"Matías",role:"cocina",loc:"both",franco:"mar"},
+  {n:"Lázaro",role:"ayudante",loc:"SL",franco:"mie",backup:["compras"]},
+  {n:"Gonzalo",role:"cocina",loc:"both",franco:"lun"},
+  {n:"Jhon",role:"ayudante",loc:"both",franco:"mar",backup:["atencion"]},
   {n:"Natalia",role:"cajero",loc:"SL",franco:"dom"},
   {n:"Javier",role:"cajero",loc:"SL",franco:"jue"},
-  {n:"Aaron",role:"cajero",loc:"both"},
+  {n:"Aaron",role:"cajero",loc:"both",franco:"mie"},
   {n:"Érica",role:"atencion",loc:"SL",franco:"lun"},
-  {n:"Paula",role:"atencion",loc:"SL"},
+  {n:"Paula",role:"atencion",loc:"SL",franco:"mar"},
   {n:"Margarita",role:"atencion",loc:"SL",franco:"lun"},
-  {n:"Brenda",role:"atencion",loc:"SL",backup:["cajero"]},
-  {n:"Valentina",role:"atencion",loc:"both",he:true},
-  {n:"Guadalupe",role:"atencion",loc:"both",he:true},
-  {n:"Dana",role:"atencion",loc:"both",he:true,backup:["cajero"]},
-  {n:"Milagros",role:"atencion",loc:"both",must:{day:"lun",loc:"SLA",shift:"M",role:"atencion"}},
-  {n:"Zoe",role:"atencion",loc:"both",must:{day:"jue",loc:"SLA",shift:"M",role:"atencion"}},
+  {n:"Brenda",role:"atencion",loc:"SL",franco:"vie",backup:["cajero"]},
+  {n:"Valentina",role:"atencion",loc:"both",he:true,franco:"mar"},
+  {n:"Guadalupe",role:"atencion",loc:"both",he:true,franco:"jue"},
+  {n:"Dana",role:"atencion",loc:"both",he:true,franco:"vie",backup:["cajero"]},
+  {n:"Milagros",role:"atencion",loc:"both",franco:"mie",must:{day:"lun",loc:"SLA",shift:"M",role:"atencion"}},
+  {n:"Zoe",role:"atencion",loc:"both",franco:"vie",must:{day:"jue",loc:"SLA",shift:"M",role:"atencion"}},
   {n:"Rebeca",role:"atencion",loc:"SLA",franco:"mie"},
-  {n:"Cintia",role:"atencion",loc:"SL",franco:"dom"},
+  {n:"Cintia",role:"atencion",loc:"SL",franco:"jue"},
 ];
 const BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
 const EVENT_HE=["Dana","Brenda","Guadalupe","Aaron","Lucía","Luciana","Gabriel","Valentina"];
@@ -1294,6 +1294,33 @@ function seedFixedRules(){
   persist();
 }
 
+// reglas fijas de cocina/compras/cajero (de lunes a viernes; el finde de cocina lo sigue resolviendo
+// el cruce Gonzalo/Matías de arriba + el autocompletado, para no pisar ese armado especial)
+function seedCocinaComprasCajero(){
+  const TAG="cocina-compras-cajero-v1";
+  if(state.fixed.some(f=>f.seedTag===TAG))return;
+  let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,...extra});
+  state.fixed.push(
+    // Cocina San Luis
+    mk({n:"Vanesa",role:"cocina",days:[0,1,3,4],shift:"M",loc:"SL"}),
+    mk({n:"Matías",role:"cocina",days:[2],shift:"M",loc:"SL"}),
+    mk({n:"Luis",  role:"cocina",days:[0,1,2,4],shift:"T",loc:"SL"}),
+    mk({n:"Matías",role:"cocina",days:[3],shift:"T",loc:"SL"}),
+    // Cocina SLA
+    mk({n:"Lucas",  role:"cocina",days:[0],shift:"M",loc:"SLA"}),
+    mk({n:"Gonzalo",role:"cocina",days:[1,2,3,4],shift:"M",loc:"SLA"}),
+    mk({n:"Matías", role:"cocina",days:[0,4],shift:"T",loc:"SLA"}),
+    mk({n:"Lucas",  role:"cocina",days:[1,2,3],shift:"T",loc:"SLA"}),
+    // Compras San Luis (el viernes ya está cubierto por la disponibilidad obligatoria de Rodrigo)
+    mk({n:"Rodrigo",role:"compras",days:[0,1,2,3,5],shift:"M",loc:"SL"}),
+    mk({n:"Lázaro", role:"compras",days:[6],shift:"M",loc:"SL"}),
+    // Cajero San Luis, todos los días (el franco de cada uno hace que ese día lo cubra otra persona)
+    mk({n:"Natalia",role:"cajero",days:[0,1,2,3,4,5,6],shift:"M",loc:"SL"}),
+    mk({n:"Javier", role:"cajero",days:[0,1,2,3,4,5,6],shift:"T",loc:"SL"}),
+  );
+  persist();
+}
+
 /* ---------------- AUTH ---------------- */
 const AUTH_KEY="candela_cronogramas_auth";
 const AUTH_PASS="1412";
@@ -1321,6 +1348,7 @@ document.getElementById("authPass").focus();
 loadLS();
 state.ex.forEach(e=>{if(e.id==null)e.id=Date.now()+"-"+Math.round(Math.random()*1e6);});
 seedFixedRules();
+seedCocinaComprasCajero();
 dedupeFixed();
 regenerateFixedHalfExtras();
 dedupeEx();
