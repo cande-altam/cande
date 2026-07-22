@@ -15,9 +15,10 @@ Ubicado en `costeo-proveedores/`. Permite:
 
 - Registrar facturas de proveedores sacándoles una foto — opcionalmente escaneada automáticamente con IA (proveedor, monto, fecha, ítems), siempre revisable/editable antes de guardar.
 - Generar automáticamente la orden de pago de cada factura y marcarla pagada/no pagada.
-- Mantener un catálogo de insumos con su precio actual e historial de precios.
-- Cargar productos con su receta (qué insumos y en qué cantidad llevan) y calcular su costo automáticamente a partir del precio de los insumos.
+- Mantener un catálogo de insumos con su precio actual (por proveedor) e historial de precios. Un insumo puede tener su propia receta (para bases/preparaciones elaboradas como crema chantilly o bizcochuelo) — en ese caso su costo se calcula en vivo a partir de sus propios ingredientes, y ese costo se propaga automáticamente a cualquier producto que la use.
+- Cargar productos con su receta (qué insumos y en qué cantidad llevan, incluyendo bases) y calcular su costo automáticamente a partir del precio de los insumos. La pestaña **Productos** muestra de un vistazo si algún producto se está vendiendo a pérdida, con margen bajo, o si su costo cambió en los últimos días (por facturas cargadas).
 - Comparar la variación de precio de cada insumo contra la inflación mensual cargada a mano, y alertar cuáles subieron por encima de la inflación.
+- Guardar banco y alias de cobro de cada proveedor, además de sus datos de contacto.
 - Llevar el control de IVA crédito fiscal (pestaña **IVA**): cada factura puede cargar su IVA discriminado (a mano o vía el escaneo por IA), y el sistema lo suma por mes. Cargando también el IVA débito fiscal del mes (de las ventas, a mano) calcula el saldo a pagar o a favor.
 
 ### Acceso

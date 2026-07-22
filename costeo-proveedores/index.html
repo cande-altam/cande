@@ -221,6 +221,7 @@ const state = {
   facturasFiltro: "todas",
   pagosFiltro: "no_pagado",
   productosFiltro: "",
+  productosSoloAlertas: false,
   analisisPeriodo: 6,
   editingProveedorId: null,
   editingInsumoId: null,
@@ -1066,11 +1067,13 @@ window.guardarProveedor = async function() {
   const cuit = document.getElementById("prov-cuit").value.trim();
   const telefono = document.getElementById("prov-telefono").value.trim();
   const contacto = document.getElementById("prov-contacto").value.trim();
+  const banco = document.getElementById("prov-banco").value.trim();
+  const alias = document.getElementById("prov-alias").value.trim();
   const notas = document.getElementById("prov-notas").value.trim();
   if (!nombre) { showToast("⚠️ Ingresá el nombre del proveedor.", "warn"); return; }
 
   const id = state.editingProveedorId;
-  const data = { nombre, cuit, telefono, contacto, notas };
+  const data = { nombre, cuit, telefono, contacto, banco, alias, notas };
   try {
     if (id === "new") {
       await set(push(ref(db, "costeo/proveedores")), { ...data, creadoTs: Date.now() });
@@ -1107,6 +1110,10 @@ function renderProveedoresView(container) {
         <div class="form-group"><label class="form-label">Teléfono</label><input class="form-input" id="prov-telefono" value="${escapeHtml(editingData.telefono)}"></div>
         <div class="form-group"><label class="form-label">Razón Social</label><input class="form-input" id="prov-contacto" value="${escapeHtml(editingData.contacto)}"></div>
       </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Banco</label><input class="form-input" id="prov-banco" value="${escapeHtml(editingData.banco)}"></div>
+        <div class="form-group"><label class="form-label">Alias</label><input class="form-input" id="prov-alias" value="${escapeHtml(editingData.alias)}"></div>
+      </div>
       <div class="form-group" style="margin-bottom:14px"><label class="form-label">Notas</label><textarea class="form-input" id="prov-notas">${escapeHtml(editingData.notas)}</textarea></div>
       <button class="btn btn-primary" onclick="guardarProveedor()">💾 Guardar</button>
       <button class="btn btn-ghost" onclick="cerrarFormProveedor()">Cancelar</button>
@@ -1118,6 +1125,8 @@ function renderProveedoresView(container) {
       <td>${escapeHtml(p.cuit) || "—"}</td>
       <td>${escapeHtml(p.telefono) || "—"}</td>
       <td>${escapeHtml(p.contacto) || "—"}</td>
+      <td>${escapeHtml(p.banco) || "—"}</td>
+      <td>${escapeHtml(p.alias) || "—"}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-ghost btn-sm" onclick="abrirFormProveedor('${id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="eliminarProveedor('${id}')">Eliminar</button>
@@ -1134,7 +1143,7 @@ function renderProveedoresView(container) {
     </div>
     ${formHtml}
     <div class="section-block">
-      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>CUIT</th><th>Teléfono</th><th>Razón Social</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay proveedores cargados.</div>`}
+      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>CUIT</th><th>Teléfono</th><th>Razón Social</th><th>Banco</th><th>Alias</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay proveedores cargados.</div>`}
     </div>`;
 }
 
@@ -1151,24 +1160,56 @@ window.cerrarFormInsumo = function() {
   state.formOpen = false;
   render();
 };
+// Guarda el costo calculado de una base/preparación elaborada como su precio "_manual" — una vez
+// que un insumo tiene receta propia, esa receta manda sobre cualquier proveedor preferido anterior
+// (mismo criterio que un producto: si hay receta, el costo sale de ahí). Deja constancia en historial.
+async function guardarPrecioRecetaInsumo(insumoId, costo) {
+  const insumo = state.insumos[insumoId] || {};
+  const precios = { ...(insumo.precios || {}), _manual: { precio: costo, actualizadoTs: Date.now(), proveedorNombre: "Receta propia" } };
+  await update(ref(db, `costeo/insumos/${insumoId}`), { precios, proveedorPreferido: "_manual", precioActual: costo, actualizadoTs: Date.now() });
+  const hist = objToSortedEntries(insumo.historial, (a, b) => a[1].fecha.localeCompare(b[1].fecha));
+  const last = hist.length ? hist[hist.length - 1][1] : null;
+  const today = todayISO();
+  if (!last || last.fecha !== today || Math.abs((last.precio || 0) - costo) >= 0.005) {
+    await push(ref(db, `costeo/insumos/${insumoId}/historial`), { precio: costo, fecha: today, proveedorId: "", proveedorNombre: "Receta propia", facturaId: "" });
+  }
+  state.insumos[insumoId] = { ...state.insumos[insumoId], precios, proveedorPreferido: "_manual", precioActual: costo };
+}
 window.guardarInsumo = async function() {
   const nombre = document.getElementById("ins-nombre").value.trim();
   const unidad = document.getElementById("ins-unidad").value.trim();
   const precio = parseFloat(document.getElementById("ins-precio").value);
   if (!nombre) { showToast("⚠️ Ingresá el nombre del insumo.", "warn"); return; }
 
+  const recetaRows = Array.from(document.querySelectorAll("#insumo-recipe-container .insumo-recipe-row"));
+  const receta = {};
+  for (const row of recetaRows) {
+    const subId = row.querySelector(".insumo-recipe-insumo").value;
+    const cantidad = parseFloat(row.querySelector(".insumo-recipe-cantidad").value);
+    if (subId && cantidad > 0) receta[subId] = cantidad;
+  }
+  const tieneReceta = Object.keys(receta).length > 0;
+
   const id = state.editingInsumoId;
   try {
     if (id === "new") {
       const newRef = push(ref(db, "costeo/insumos"));
-      await set(newRef, { nombre, unidad, creadoTs: Date.now() });
-      state.insumos[newRef.key] = { nombre, unidad };
-      if (precio > 0) {
+      await set(newRef, { nombre, unidad, receta, creadoTs: Date.now() });
+      state.insumos[newRef.key] = { nombre, unidad, receta };
+      if (tieneReceta) {
+        const costo = Object.entries(receta).reduce((sum, [subId, cant]) => sum + precioEfectivoInsumo(subId) * cant, 0);
+        await guardarPrecioRecetaInsumo(newRef.key, costo);
+      } else if (precio > 0) {
         await actualizarPrecioInsumo(newRef.key, { proveedorId: "", proveedorNombre: "Carga manual", precio });
         await push(ref(db, `costeo/insumos/${newRef.key}/historial`), { precio, conIva: true, fecha: todayISO(), proveedorId: "", proveedorNombre: "Carga manual", facturaId: "" });
       }
     } else {
-      await update(ref(db, `costeo/insumos/${id}`), { nombre, unidad });
+      await update(ref(db, `costeo/insumos/${id}`), { nombre, unidad, receta });
+      state.insumos[id] = { ...state.insumos[id], nombre, unidad, receta };
+      if (tieneReceta) {
+        const costo = Object.entries(receta).reduce((sum, [subId, cant]) => sum + precioEfectivoInsumo(subId) * cant, 0);
+        await guardarPrecioRecetaInsumo(id, costo);
+      }
     }
     showToast("✅ Insumo guardado.", "success");
     state.editingInsumoId = null;
@@ -1313,11 +1354,29 @@ window.fusionarInsumos = async function(idsSeleccionados, survivorId) {
   render();
 };
 
+// Si el costo en vivo de una base/preparación (recalculado desde su propia receta) se movió
+// respecto al precioActual guardado — por ejemplo porque cambió el precio de un ingrediente suyo
+// al cargar una factura — lo vuelve a guardar, igual que actualizarCostoHistorialProducto hace con
+// los productos. Se llama al entrar a Insumos o Análisis, no en cada render.
+function actualizarPreciosBasesElaboradas() {
+  Object.entries(state.insumos).forEach(([id, ins]) => {
+    if (!ins.receta || !Object.keys(ins.receta).length) return;
+    const costo = precioEfectivoInsumo(id);
+    if (Math.abs((ins.precioActual || 0) - costo) < 0.005) return;
+    guardarPrecioRecetaInsumo(id, costo);
+  });
+}
+
 function renderInsumosView(container) {
   const editing = state.editingInsumoId;
   const editingData = editing && editing !== "new" ? (state.insumos[editing] || {}) : {};
   if (state.insumosMergeMode || state.mostrarDuplicados) state.formOpen = true;
   const duplicados = state.mostrarDuplicados ? buscarInsumosDuplicados() : [];
+  actualizarPreciosBasesElaboradas();
+
+  const insumoRecetaRows = editing && editing !== "new" && editingData.receta && Object.keys(editingData.receta).length
+    ? objToSortedEntries(editingData.receta, () => 0).map(([subId, cantidad]) => recipeRowHtml({ insumoId: subId, cantidad }, insumoRecipeRowOpts(editing))).join("")
+    : recipeRowHtml({}, insumoRecipeRowOpts(editing));
 
   const formHtml = editing ? `
     <div class="section-block">
@@ -1327,6 +1386,13 @@ function renderInsumosView(container) {
         <div class="form-group"><label class="form-label">Unidad</label><input class="form-input" id="ins-unidad" placeholder="kg, litros, unidad..." value="${escapeHtml(editingData.unidad)}"></div>
         ${editing === "new" ? `<div class="form-group"><label class="form-label">Precio inicial (opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="ins-precio"></div>` : `<input type="hidden" id="ins-precio">`}
       </div>
+      <div class="section-header" style="margin-top:10px">
+        <div class="section-title">🧪 Receta (opcional — solo si es una base/preparación elaborada, ej. crema chantilly, bizcochuelo)</div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addInsumoRecipeRow()">+ Agregar insumo</button>
+      </div>
+      <div id="insumo-recipe-container">${insumoRecetaRows}</div>
+      <div style="margin:8px 0 14px;font-size:13px">Costo calculado: <strong id="costo-insumo-preview">${fmtMoney(recalcCostoInsumoSilencioso(editingData.receta))}</strong></div>
+      <div class="text-muted" style="margin-bottom:10px">Si le cargás una receta, el precio de este insumo pasa a calcularse solo a partir de esos ingredientes (no del precio por proveedor) — así cualquier producto que lo use ve el costo al día.</div>
       <button class="btn btn-primary" onclick="guardarInsumo()">💾 Guardar</button>
       <button class="btn btn-ghost" onclick="cerrarFormInsumo()">Cancelar</button>
     </div>` : "";
@@ -1346,12 +1412,14 @@ function renderInsumosView(container) {
       </tr>`).join("");
     const preferidoNombre = precios[ins.proveedorPreferido]?.proveedorNombre || "";
     const checked = !!state.insumosMergeSeleccion[id];
+    const esElaborado = ins.receta && Object.keys(ins.receta).length > 0;
+    const costoVivo = precioEfectivoInsumo(id);
     return `
       <tr>
         ${state.insumosMergeMode ? `<td><input type="checkbox" ${checked ? "checked" : ""} onchange="toggleInsumoMergeCheck('${id}', this.checked)"></td>` : ""}
-        <td>${escapeHtml(ins.nombre)}</td>
+        <td>${escapeHtml(ins.nombre)}${esElaborado ? ` <span class="badge badge-ok" title="Base/preparación con receta propia">🧪 Base</span>` : ""}</td>
         <td>${escapeHtml(ins.unidad) || "—"}</td>
-        <td>${fmtMoney(ins.precioActual)}${preferidoNombre ? `<div class="text-muted" style="font-size:11px">${escapeHtml(preferidoNombre)}</div>` : ""}</td>
+        <td>${fmtMoney(costoVivo)}${esElaborado ? `<div class="text-muted" style="font-size:11px">receta propia</div>` : (preferidoNombre ? `<div class="text-muted" style="font-size:11px">${escapeHtml(preferidoNombre)}</div>` : "")}</td>
         <td>${hist.length}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" onclick="toggleHistorialInsumo('${id}')">${isOpen ? "Ocultar" : "Ver historial"}</button>
@@ -1376,7 +1444,7 @@ function renderInsumosView(container) {
           <input type="radio" name="merge-survivor" value="${id}" ${state.insumosMergeSurvivor === id ? "checked" : ""} onchange="state.insumosMergeSurvivor='${id}'">
           ${escapeHtml(state.insumos[id]?.nombre || "")}
         </label>`).join("")}
-      <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="fusionarInsumos(${JSON.stringify(seleccionIds)}, state.insumosMergeSurvivor || ${JSON.stringify(seleccionIds[0])})">Fusionar</button>
+      <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="fusionarInsumos(Object.keys(state.insumosMergeSeleccion), state.insumosMergeSurvivor || Object.keys(state.insumosMergeSeleccion)[0])">Fusionar</button>
     </div>` : "";
 
   container.innerHTML = `
@@ -1398,7 +1466,7 @@ function renderInsumosView(container) {
               <div class="mini-card">
                 <div>
                   <div class="mini-card-title">${escapeHtml(d.insA.nombre)} <span class="text-muted">vs.</span> ${escapeHtml(d.insB.nombre)}</div>
-                  <div class="mini-card-sub">${fmtMoney(d.insA.precioActual)} · ${fmtMoney(d.insB.precioActual)}</div>
+                  <div class="mini-card-sub">${fmtMoney(precioEfectivoInsumo(d.idA))} · ${fmtMoney(precioEfectivoInsumo(d.idB))}</div>
                 </div>
                 <button class="btn btn-turq btn-sm" onclick="fusionarDesdeSugerencia('${d.idA}','${d.idB}')">Revisar y fusionar</button>
               </div>`).join("")}
@@ -1413,29 +1481,57 @@ function renderInsumosView(container) {
 // =============================================================
 // PRODUCTOS Y RECETAS (costeo automático)
 // =============================================================
-function recipeRowHtml({ insumoId = "", cantidad = "" } = {}) {
+function recipeRowHtml({ insumoId = "", cantidad = "" } = {}, opts = {}) {
+  const { containerClass = "recipe-row", selectClass = "recipe-insumo", cantidadClass = "recipe-cantidad", onchange = "recalcCostoProducto()", excludeId = null } = opts;
   const options = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
-    .map(([id, ins]) => `<option value="${id}" ${id === insumoId ? "selected" : ""}>${escapeHtml(ins.nombre)}${ins.unidad ? " (" + escapeHtml(ins.unidad) + ")" : ""} — ${fmtMoney(ins.precioActual)}</option>`).join("");
+    .filter(([id]) => id !== excludeId)
+    .map(([id, ins]) => `<option value="${id}" ${id === insumoId ? "selected" : ""}>${escapeHtml(ins.nombre)}${ins.unidad ? " (" + escapeHtml(ins.unidad) + ")" : ""} — ${fmtMoney(precioEfectivoInsumo(id))}</option>`).join("");
   return `
-    <div class="recipe-row">
-      <select class="form-select recipe-insumo" onchange="recalcCostoProducto()">
+    <div class="${containerClass}">
+      <select class="form-select ${selectClass}" onchange="${onchange}">
         <option value="">— Insumo —</option>
         ${options}
       </select>
-      <input type="number" step="0.001" min="0" class="form-input recipe-cantidad" placeholder="Cantidad usada" value="${cantidad ?? ""}" oninput="recalcCostoProducto()">
-      <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.recipe-row').remove();recalcCostoProducto()">✕</button>
+      <input type="number" step="0.001" min="0" class="form-input ${cantidadClass}" placeholder="Cantidad usada" value="${cantidad ?? ""}" oninput="${onchange}">
+      <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.${containerClass}').remove();${onchange}">✕</button>
     </div>`;
 }
 window.addRecipeRow = function() {
   document.getElementById("recipe-container").insertAdjacentHTML("beforeend", recipeRowHtml());
 };
+
+// Misma fila de receta que usan los productos, pero para la receta opcional de un insumo
+// (bases/preparaciones elaboradas) — excluye el propio insumo de la lista para evitar auto-referencia.
+function insumoRecipeRowOpts(excludeId) {
+  return { containerClass: "insumo-recipe-row", selectClass: "insumo-recipe-insumo", cantidadClass: "insumo-recipe-cantidad", onchange: "recalcCostoInsumo()", excludeId: excludeId && excludeId !== "new" ? excludeId : null };
+}
+window.addInsumoRecipeRow = function() {
+  document.getElementById("insumo-recipe-container").insertAdjacentHTML("beforeend", recipeRowHtml({}, insumoRecipeRowOpts(state.editingInsumoId)));
+};
+window.recalcCostoInsumo = function() {
+  const rows = Array.from(document.querySelectorAll("#insumo-recipe-container .insumo-recipe-row"));
+  let total = 0;
+  for (const row of rows) {
+    const insumoId = row.querySelector(".insumo-recipe-insumo").value;
+    const cantidad = parseFloat(row.querySelector(".insumo-recipe-cantidad").value) || 0;
+    total += precioEfectivoInsumo(insumoId) * cantidad;
+  }
+  const el = document.getElementById("costo-insumo-preview");
+  if (el) el.textContent = fmtMoney(total);
+  return total;
+};
+function recalcCostoInsumoSilencioso(receta) {
+  if (!receta) return 0;
+  return Object.entries(receta).reduce((sum, [subId, cantidad]) => sum + precioEfectivoInsumo(subId) * (Number(cantidad) || 0), 0);
+}
+
 window.recalcCostoProducto = function() {
   const rows = Array.from(document.querySelectorAll("#recipe-container .recipe-row"));
   let total = 0;
   for (const row of rows) {
     const insumoId = row.querySelector(".recipe-insumo").value;
     const cantidad = parseFloat(row.querySelector(".recipe-cantidad").value) || 0;
-    const precio = state.insumos[insumoId]?.precioActual || 0;
+    const precio = precioEfectivoInsumo(insumoId);
     total += precio * cantidad;
   }
   const el = document.getElementById("costo-preview");
@@ -1443,11 +1539,28 @@ window.recalcCostoProducto = function() {
   return total;
 };
 
+// Precio "en vivo" de un insumo: si es una base/preparación elaborada (tiene receta propia,
+// ej. crema chantilly, bizcochuelo), se recalcula sumando el costo de sus propios ingredientes
+// en vez de usar el precioActual guardado — así cualquier producto que la use ve siempre el costo
+// al día, sin depender de que alguien vuelva a guardar la base a mano. visiting evita ciclos.
+function precioEfectivoInsumo(insumoId, visiting) {
+  const ins = state.insumos[insumoId];
+  if (!ins) return 0;
+  const receta = ins.receta || {};
+  if (Object.keys(receta).length) {
+    const seen = visiting || new Set();
+    if (seen.has(insumoId)) return ins.precioActual || 0;
+    seen.add(insumoId);
+    return Object.entries(receta).reduce((sum, [subId, cantidad]) => sum + precioEfectivoInsumo(subId, seen) * (Number(cantidad) || 0), 0);
+  }
+  return ins.precioActual || 0;
+}
+
 function calcCostoProducto(producto) {
   const receta = producto.receta || {};
   if (Object.keys(receta).length) {
     return Object.entries(receta).reduce((sum, [insumoId, cantidad]) => {
-      const precio = state.insumos[insumoId]?.precioActual || 0;
+      const precio = precioEfectivoInsumo(insumoId);
       return sum + precio * (Number(cantidad) || 0);
     }, 0);
   }
@@ -1558,11 +1671,17 @@ function renderProductosView(container) {
 
   const todosProductos = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre));
 
+  // Mantiene al día el costo calculado de las bases y el historial de costo de cada producto
+  // (mismo mecanismo que usa Análisis) con solo entrar a esta pestaña, no hace falta esperar
+  // a mirar Análisis para que la comparación de costo vs. precio de venta esté actualizada.
+  actualizarPreciosBasesElaboradas();
+  todosProductos.forEach(([id, p]) => { if (calcCostoProducto(p) > 0) actualizarCostoHistorialProducto(id, p); });
+
   container.innerHTML = `
     <div class="section-header">
       <div>
         <div class="page-title">Productos y recetas</div>
-        <div class="page-sub" style="margin-bottom:0">El costo se calcula automáticamente a partir de la receta. Si un producto no tiene receta armada, podés cargarle un costo manual (acá mismo, en la columna "Costo actual") para que igual entre en la comparación de Análisis.</div>
+        <div class="page-sub" style="margin-bottom:0">El costo se calcula automáticamente a partir de la receta. Si un producto no tiene receta armada, podés cargarle un costo manual (acá mismo, en la columna "Costo actual") para que igual entre en la comparación de costo vs. precio de venta.</div>
       </div>
       ${!editing ? `<button class="btn btn-primary" onclick="abrirFormProducto()">+ Nuevo producto</button>` : ""}
     </div>
@@ -1573,28 +1692,56 @@ function renderProductosView(container) {
   renderProductosTable();
 }
 
+// Umbral de margen "bajo" — no es pérdida todavía, pero está cerca; solo para alertar, no bloquea nada.
+const MARGEN_BAJO_UMBRAL = 20;
+
+function evaluarAlertaProducto(p) {
+  const costo = calcCostoProducto(p);
+  const venta = p.precioVenta || 0;
+  const margen = venta > 0 ? ((venta - costo) / venta) * 100 : null;
+  const perdida = venta > 0 && costo >= venta;
+  const margenBajo = !perdida && margen !== null && margen < MARGEN_BAJO_UMBRAL;
+  const hist = objToSortedEntries(p.costoHistorial, (a, b) => a[1].fecha.localeCompare(b[1].fecha)).map(([, h]) => h);
+  let costoActualizado = false;
+  if (hist.length >= 2) {
+    const ultimo = hist[hist.length - 1], anterior = hist[hist.length - 2];
+    const diasDesdeUltimo = (Date.now() - new Date(ultimo.fecha + "T00:00:00").getTime()) / 86400000;
+    costoActualizado = diasDesdeUltimo <= 14 && Math.abs(ultimo.costo - anterior.costo) >= 0.005;
+  }
+  return { costo, margen, perdida, margenBajo, costoActualizado };
+}
+
 function renderProductosTable() {
   const wrap = document.getElementById("productos-table-wrap");
   if (!wrap) return;
   const filtro = state.productosFiltro.trim().toLowerCase();
   const todosProductos = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre));
-  const productosFiltrados = filtro ? todosProductos.filter(([, p]) => p.nombre.toLowerCase().includes(filtro)) : todosProductos;
+  let productosFiltrados = filtro ? todosProductos.filter(([, p]) => p.nombre.toLowerCase().includes(filtro)) : todosProductos;
 
-  const rows = productosFiltrados.map(([id, p]) => {
-    const costo = calcCostoProducto(p);
-    const margen = p.precioVenta ? ((p.precioVenta - costo) / p.precioVenta * 100) : null;
+  const evaluados = productosFiltrados.map(([id, p]) => [id, p, evaluarAlertaProducto(p)]);
+  const numPerdida = evaluados.filter(([, , a]) => a.perdida).length;
+  const numMargenBajo = evaluados.filter(([, , a]) => a.margenBajo).length;
+  const numCostoActualizado = evaluados.filter(([, , a]) => a.costoActualizado).length;
+
+  const filasFinal = state.productosSoloAlertas ? evaluados.filter(([, , a]) => a.perdida || a.margenBajo) : evaluados;
+
+  const rows = filasFinal.map(([id, p, a]) => {
+    const { costo, margen, perdida, margenBajo, costoActualizado } = a;
     const fuente = costoProductoFuente(p);
     const tieneReceta = Object.keys(p.receta || {}).length > 0;
     const costoCell = tieneReceta
       ? `${fmtMoney(costo)} <span class="text-muted" style="font-size:11px">(receta)</span>`
       : `<input type="number" step="0.01" min="0" class="form-input" style="max-width:120px" value="${p.costoManual ?? ""}" placeholder="Costo manual" onchange="guardarCostoManualRapido('${id}', this.value)">`;
+    const margenCell = fuente !== "sin_datos" && margen !== null
+      ? `${fmtPct(margen)}${perdida ? ` <span class="badge badge-alerta">❌ Pérdida</span>` : (margenBajo ? ` <span class="badge badge-no-pagado">⚠️ Bajo</span>` : "")}`
+      : "—";
     return `
       <tr>
-        <td>${escapeHtml(p.nombre)}</td>
+        <td>${escapeHtml(p.nombre)}${costoActualizado ? ` <span class="badge badge-ok" title="El costo cambió en los últimos 14 días">🔄 Costo actualizado</span>` : ""}</td>
         <td>${tieneReceta ? `${Object.keys(p.receta).length} insumo(s)` : `<span class="text-muted">Sin receta</span>`}</td>
         <td>${costoCell}</td>
         <td>${p.precioVenta ? fmtMoney(p.precioVenta) : "—"}</td>
-        <td>${fuente !== "sin_datos" && margen !== null ? fmtPct(margen) : "—"}</td>
+        <td>${margenCell}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" onclick="abrirFormProducto('${id}')">Editar</button>
           <button class="btn btn-danger btn-sm" onclick="eliminarProducto('${id}')">Eliminar</button>
@@ -1602,10 +1749,23 @@ function renderProductosTable() {
       </tr>`;
   }).join("");
 
-  wrap.innerHTML = rows
+  const statsHtml = `
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">Vendiendo a pérdida</div><div class="stat-value">${numPerdida}</div></div>
+      <div class="stat-card"><div class="stat-label">Margen bajo (&lt;${MARGEN_BAJO_UMBRAL}%)</div><div class="stat-value">${numMargenBajo}</div></div>
+      <div class="stat-card"><div class="stat-label">Costo actualizado (14 días)</div><div class="stat-value">${numCostoActualizado}</div></div>
+    </div>
+    ${(numPerdida + numMargenBajo) > 0 ? `<button class="btn ${state.productosSoloAlertas ? "btn-turq" : "btn-ghost"} btn-sm" style="margin-bottom:14px" onclick="toggleProductosSoloAlertas()">${state.productosSoloAlertas ? "✕ Ver todos" : "⚠️ Ver solo alertas"}</button>` : ""}`;
+
+  wrap.innerHTML = statsHtml + (rows
     ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Producto</th><th>Receta</th><th>Costo actual</th><th>Precio venta</th><th>Margen</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`
-    : `<div class="empty-state">${filtro ? "Ningún producto coincide con la búsqueda." : "Todavía no hay productos cargados."}</div>`;
+    : `<div class="empty-state">${state.productosSoloAlertas ? "Ningún producto con alertas." : (filtro ? "Ningún producto coincide con la búsqueda." : "Todavía no hay productos cargados.")}</div>`);
 }
+
+window.toggleProductosSoloAlertas = function() {
+  state.productosSoloAlertas = !state.productosSoloAlertas;
+  renderProductosTable();
+};
 
 window.guardarCostoManualRapido = async function(id, val) {
   const costoManual = val ? parseFloat(val) : null;
@@ -1651,6 +1811,7 @@ function accumulatedInflation(months) {
 
 function renderAnalisisView(container) {
   state.formOpen = true;
+  actualizarPreciosBasesElaboradas();
   const periodo = state.analisisPeriodo;
   const cutoff = monthsAgoISO(periodo);
   const { pct: inflacionAcum, missing } = accumulatedInflation(periodo);
