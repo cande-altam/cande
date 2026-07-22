@@ -195,6 +195,7 @@ const TABS = [
   { key: "nueva-factura", label: "📷 Nueva factura" },
   { key: "facturas",      label: "🧾 Facturas" },
   { key: "pagos",         label: "💳 Órdenes de pago" },
+  { key: "iva",           label: "💰 IVA" },
   { key: "proveedores",   label: "🏭 Proveedores" },
   { key: "insumos",       label: "📦 Insumos" },
   { key: "productos",     label: "🍰 Productos" },
@@ -212,6 +213,8 @@ const state = {
   productos: {},
   facturas: {},
   inflacion: {},
+  ivaDebito: {},
+  ivaMes: null,
   config: {},
   _facturaFotoDataUrl: null,
   _facturaProveedorId: "",
@@ -362,6 +365,7 @@ function render() {
     case "nueva-factura": renderNuevaFacturaView(container); break;
     case "facturas": renderFacturasView(container); break;
     case "pagos": renderPagosView(container); break;
+    case "iva": renderIvaView(container); break;
     case "proveedores": renderProveedoresView(container); break;
     case "insumos": renderInsumosView(container); break;
     case "productos": renderProductosView(container); break;
@@ -396,6 +400,7 @@ function attachListeners() {
   onValue(ref(db, "costeo/productos"), snap => { state.productos = snap.val() || {}; if (!state.formOpen) render(); });
   onValue(ref(db, "costeo/facturas"), snap => { state.facturas = snap.val() || {}; if (!state.formOpen) render(); });
   onValue(ref(db, "costeo/inflacion"), snap => { state.inflacion = snap.val() || {}; if (!state.formOpen) render(); });
+  onValue(ref(db, "costeo/ivaDebito"), snap => { state.ivaDebito = snap.val() || {}; if (!state.formOpen) render(); });
   onValue(ref(db, "costeo/config"), snap => { state.config = snap.val() || {}; });
 }
 
@@ -556,10 +561,15 @@ function renderNuevaFacturaView(container) {
           <div class="text-muted" style="margin-top:4px" id="f-iva-label">Con IVA</div>
         </div>
         <div class="form-group">
-          <label class="form-label">Cargos / impuestos adicionales (opcional)</label>
+          <label class="form-label">IVA de la factura (opcional)</label>
+          <input type="number" step="0.01" min="0" class="form-input" id="f-iva-monto" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Otros cargos / impuestos (opcional)</label>
           <input type="number" step="0.01" min="0" class="form-input" id="f-cargos" placeholder="0.00">
         </div>
       </div>
+      <div class="text-muted" style="margin-bottom:14px">Cargá el IVA tal como figura discriminado en la factura — sirve para llevar el control de IVA crédito fiscal (lo ves resumido por mes en la pestaña "IVA").</div>
 
       <div class="section-header" style="margin-top:18px">
         <div class="section-title">📦 Insumos de esta factura</div>
@@ -715,6 +725,7 @@ function aplicarDatosEscaneados(data) {
   if (data.fecha && /^\d{4}-\d{2}-\d{2}$/.test(data.fecha)) document.getElementById("f-fecha").value = data.fecha;
   if (data.numeroFactura) document.getElementById("f-numero").value = data.numeroFactura;
   if (data.montoTotal != null && !Number.isNaN(Number(data.montoTotal))) document.getElementById("f-monto").value = data.montoTotal;
+  if (data.iva != null && !Number.isNaN(Number(data.iva))) document.getElementById("f-iva-monto").value = data.iva;
 
   if (Array.isArray(data.items) && data.items.length) {
     const cont = document.getElementById("items-container");
@@ -767,6 +778,8 @@ window.guardarFactura = async function() {
   const monto = parseFloat(document.getElementById("f-monto").value);
   const pagado = document.getElementById("f-estado-toggle").classList.contains("on");
   const preciosConIva = document.getElementById("f-iva-toggle").classList.contains("on");
+  const ivaVal = parseFloat(document.getElementById("f-iva-monto").value);
+  const iva = Number.isFinite(ivaVal) ? ivaVal : 0;
   const cargosAdicionalesVal = parseFloat(document.getElementById("f-cargos").value);
   const cargosAdicionales = Number.isFinite(cargosAdicionalesVal) ? cargosAdicionalesVal : 0;
 
@@ -825,7 +838,7 @@ window.guardarFactura = async function() {
 
     await set(facturaRef, {
       proveedorId, proveedorNombre, cuit, fecha, numeroFactura: numero,
-      montoTotal: monto, cargosAdicionales, preciosConIva,
+      montoTotal: monto, iva, cargosAdicionales, preciosConIva,
       estado: pagado ? "pagado" : "no_pagado",
       foto: state._facturaFotoDataUrl || "", items, creadoTs: Date.now()
     });
@@ -867,6 +880,7 @@ function renderFacturasView(container) {
       <td>${escapeHtml(f.proveedorNombre)}</td>
       <td>${escapeHtml(f.numeroFactura) || "—"}</td>
       <td>${fmtMoney(f.montoTotal)}</td>
+      <td>${f.iva > 0 ? fmtMoney(f.iva) : "—"}</td>
       <td>${(f.items || []).length} ítem(s)</td>
       <td>${f.foto ? `<a href="${f.foto}" target="_blank" rel="noopener">Ver foto</a>` : "—"}</td>
       <td><span class="badge ${f.estado === "pagado" ? "badge-pagado" : "badge-no-pagado"}">${f.estado === "pagado" ? "Pagado" : "No pagado"}</span></td>
@@ -885,7 +899,7 @@ function renderFacturasView(container) {
       ${entries.length === 0 ? `<div class="empty-state">No hay facturas en esta categoría.</div>` : `
         <div class="data-table-wrap">
           <table class="data-table">
-            <thead><tr><th>Fecha</th><th>Proveedor</th><th>N° Factura</th><th>Monto</th><th>Ítems</th><th>Foto</th><th>Estado</th><th></th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Proveedor</th><th>N° Factura</th><th>Monto</th><th>IVA</th><th>Ítems</th><th>Foto</th><th>Estado</th><th></th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
         </div>`}
@@ -929,6 +943,108 @@ function renderPagosView(container) {
     </div>
     <div class="card-list">
       ${entries.length === 0 ? `<div class="empty-state">No hay órdenes de pago en esta categoría.</div>` : cards}
+    </div>`;
+}
+
+// =============================================================
+// IVA — control de IVA crédito fiscal (compras) por mes
+// =============================================================
+window.setIvaMes = function(mes) {
+  state.ivaMes = mes;
+  render();
+};
+
+window.guardarIvaDebitoMes = async function(mes, input) {
+  const val = parseFloat(input.value);
+  if (!Number.isFinite(val)) return;
+  await set(ref(db, `costeo/ivaDebito/${mes}`), val);
+  showToast(`✅ IVA débito fiscal de ${monthLabel(mes)} guardado.`, "success");
+};
+
+function facturasDelMes(mes) {
+  return objToSortedEntries(state.facturas, (a, b) => (a[1].fecha || "").localeCompare(b[1].fecha || ""))
+    .filter(([, f]) => f.fecha && monthKey(f.fecha) === mes);
+}
+
+function renderIvaView(container) {
+  state.formOpen = true;
+  const mes = state.ivaMes || monthKey(todayISO());
+
+  const facturasMes = facturasDelMes(mes);
+  const ivaCredito = facturasMes.reduce((sum, [, f]) => sum + (Number(f.iva) || 0), 0);
+  const totalCompras = facturasMes.reduce((sum, [, f]) => sum + (Number(f.montoTotal) || 0), 0);
+  const otrosCargos = facturasMes.reduce((sum, [, f]) => sum + (Number(f.cargosAdicionales) || 0), 0);
+  const facturasSinIva = facturasMes.filter(([, f]) => !(f.iva > 0)).length;
+
+  const ivaDebito = state.ivaDebito[mes];
+  const saldo = ivaDebito != null ? ivaDebito - ivaCredito : null;
+
+  const rows = facturasMes.map(([id, f]) => `
+    <tr>
+      <td>${fmtDate(f.fecha)}</td>
+      <td>${escapeHtml(f.proveedorNombre)}</td>
+      <td>${escapeHtml(f.numeroFactura) || "—"}</td>
+      <td>${fmtMoney(f.montoTotal)}</td>
+      <td>${f.iva > 0 ? fmtMoney(f.iva) : `<span class="text-muted">sin cargar</span>`}</td>
+      <td>${f.cargosAdicionales > 0 ? fmtMoney(f.cargosAdicionales) : "—"}</td>
+    </tr>`).join("");
+
+  // Last 12 months, most recent first — quick trend view without changing the selector each time.
+  const today = new Date();
+  const meses12 = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    meses12.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  const resumenRows = meses12.map(key => {
+    const creditoMes = facturasDelMes(key).reduce((sum, [, f]) => sum + (Number(f.iva) || 0), 0);
+    return `
+      <tr>
+        <td>${monthLabel(key)}</td>
+        <td>${fmtMoney(creditoMes)}</td>
+        <td><input type="number" step="0.01" class="form-input" style="max-width:140px" value="${state.ivaDebito[key] ?? ""}" placeholder="$ IVA débito" onchange="guardarIvaDebitoMes('${key}', this)"></td>
+      </tr>`;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="page-title">Control de IVA</div>
+    <div class="page-sub">IVA crédito fiscal pagado en compras a proveedores, mes a mes, para saber cuánto IVA pagamos y cuánto queda por pagar.</div>
+
+    <div class="section-block">
+      <div class="section-header">
+        <div class="section-title">📅 Resumen del mes</div>
+        <input type="month" class="form-input" style="max-width:180px" value="${mes}" onchange="setIvaMes(this.value)">
+      </div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Total comprado</div><div class="stat-value">${fmtMoney(totalCompras)}</div></div>
+        <div class="stat-card"><div class="stat-label">IVA crédito fiscal (compras)</div><div class="stat-value">${fmtMoney(ivaCredito)}</div></div>
+        <div class="stat-card"><div class="stat-label">Otros cargos / impuestos</div><div class="stat-value">${fmtMoney(otrosCargos)}</div></div>
+      </div>
+      ${facturasSinIva > 0 ? `<div class="alert-box alert-warn">⚠️ ${facturasSinIva} factura(s) de ${monthLabel(mes)} no tienen el IVA cargado — completalo en cada factura para que este total sea exacto.</div>` : ""}
+
+      <div class="form-row" style="margin-top:6px;align-items:flex-end">
+        <div class="form-group" style="max-width:260px">
+          <label class="form-label">IVA débito fiscal del mes (ventas, opcional)</label>
+          <input type="number" step="0.01" min="0" class="form-input" value="${ivaDebito ?? ""}" placeholder="Cargalo a mano" onchange="guardarIvaDebitoMes('${mes}', this)">
+        </div>
+        ${saldo !== null ? `<div class="stat-card" style="flex:0 0 auto"><div class="stat-label">${saldo >= 0 ? "IVA a pagar" : "Saldo a favor"}</div><div class="stat-value" style="color:${saldo >= 0 ? "var(--terra)" : "var(--green)"}">${fmtMoney(Math.abs(saldo))}</div></div>` : `<div class="text-muted">Cargá el IVA débito fiscal (de tus ventas) para calcular cuánto falta pagar.</div>`}
+      </div>
+
+      ${facturasMes.length === 0 ? `<div class="empty-state">No hay facturas registradas en ${monthLabel(mes)}.</div>` : `
+        <div class="data-table-wrap" style="margin-top:10px">
+          <table class="data-table">
+            <thead><tr><th>Fecha</th><th>Proveedor</th><th>N° Factura</th><th>Monto</th><th>IVA</th><th>Otros cargos</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`}
+    </div>
+
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">📊 IVA crédito fiscal — últimos 12 meses</div>
+      <div class="text-muted" style="margin-bottom:12px">Podés cargar acá mismo el IVA débito fiscal de cada mes (de tus ventas) para tener el histórico completo.</div>
+      <div class="data-table-wrap">
+        <table class="data-table"><thead><tr><th>Mes</th><th>IVA crédito (compras)</th><th>IVA débito (ventas)</th></tr></thead><tbody>${resumenRows}</tbody></table>
+      </div>
     </div>`;
 }
 

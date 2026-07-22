@@ -18,6 +18,7 @@ Ubicado en `costeo-proveedores/`. Permite:
 - Mantener un catálogo de insumos con su precio actual e historial de precios.
 - Cargar productos con su receta (qué insumos y en qué cantidad llevan) y calcular su costo automáticamente a partir del precio de los insumos.
 - Comparar la variación de precio de cada insumo contra la inflación mensual cargada a mano, y alertar cuáles subieron por encima de la inflación.
+- Llevar el control de IVA crédito fiscal (pestaña **IVA**): cada factura puede cargar su IVA discriminado (a mano o vía el escaneo por IA), y el sistema lo suma por mes. Cargando también el IVA débito fiscal del mes (de las ventas, a mano) calcula el saldo a pagar o a favor.
 
 ### Acceso
 

@@ -13,6 +13,7 @@ Analizá la imagen y devolvé SOLO un JSON válido, sin texto adicional y sin bl
   "fecha": "YYYY-MM-DD" | null,
   "numeroFactura": string | null,
   "montoTotal": number | null,
+  "iva": number | null,
   "items": [
     { "nombre": string, "insumoId": string | null, "cantidad": number | null, "unidad": string | null, "precioUnitario": number | null }
   ]
@@ -21,6 +22,7 @@ Reglas:
 - Si no podés leer un dato con confianza, poné null. No inventes valores.
 - "proveedor" debe ser la RAZÓN SOCIAL del proveedor (el nombre legal/fiscal que figura en la factura, normalmente junto al CUIT o en el encabezado impositivo) — NO un nombre de fantasía, marca o logo comercial si son distintos de la razón social.
 - "montoTotal" es el total final de la factura (con IVA si corresponde), como número sin símbolos de moneda ni separadores de miles (usá punto decimal).
+- "iva" es el monto de IVA discriminado en la factura (suele figurar como "IVA 21%", "IVA 10.5%", o la suma de varias alícuotas de IVA si hay más de una) — un número en pesos, no un porcentaje. Si la factura es de un monotributista y no discrimina IVA, poné null. Si hay varias líneas de IVA a distintas alícuotas, sumalas en un solo número.
 - "items" son las líneas de detalle de la factura (insumos comprados). Si no hay detalle de líneas legible, devolvé un array vacío.
 - "fecha" en formato ISO YYYY-MM-DD.`;
 
