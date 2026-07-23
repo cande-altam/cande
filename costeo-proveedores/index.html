@@ -127,6 +127,10 @@ textarea.form-input{resize:vertical;min-height:60px;}
 .insumo-picker-item:last-child{border-bottom:none;}
 .insumo-picker-item:hover{background:var(--turq-pale);}
 .insumo-picker-item.insumo-picker-create{color:var(--terra);font-weight:600;}
+.item-hint{grid-column:1/-1;font-size:11px;line-height:1.5;}
+.item-hint:empty{display:none;}
+.item-warn{color:#c0392b;font-weight:600;background:#fdecea;border-radius:6px;padding:4px 8px;margin-top:3px;}
+.item-note{color:var(--terra);background:#fff5f3;border-radius:6px;padding:4px 8px;margin-top:3px;}
 
 /* CARDS LIST */
 .card-list{display:flex;flex-direction:column;gap:10px;}
@@ -433,7 +437,53 @@ function attachListeners() {
 // =============================================================
 // NUEVA FACTURA
 // =============================================================
-function itemRowHtml({ insumoId = "", nombre = "", precioUnitario = "" } = {}) {
+// Ayuda visible por ítem para detectar un escaneo mal interpretado ANTES de guardar: muestra la
+// cantidad/importe que la IA leyó (para poder notar de un vistazo si la cantidad está mal, ej. "10 kg"
+// cuando en realidad era "1 kg"), avisa si cantidad × precio no coincide con el importe de la línea,
+// avisa si el precio cambia fuerte respecto al último conocido, y aclara cuándo un precio guardado
+// NO va a actualizar el costo de los productos porque la regla de referencia lo mantiene sin cambios
+// (protege el margen: una cotización más barata de otro proveedor no baja la referencia sola).
+function itemHintHtml(insumoId, precioUnitario, cantidad, unidad, importe) {
+  const partes = [];
+  const cant = cantidad !== "" && cantidad != null ? Number(cantidad) : null;
+  const imp = importe !== "" && importe != null ? Number(importe) : null;
+  if (cant !== null && Number.isFinite(cant)) {
+    partes.push(`<span class="text-muted">Cant. detectada por IA: ${cant}${unidad ? " " + escapeHtml(unidad) : ""}${imp !== null && Number.isFinite(imp) ? ` · Importe de línea: ${fmtMoney(imp)}` : ""}</span>`);
+  }
+  const precio = parseFloat(precioUnitario);
+  if (cant !== null && Number.isFinite(cant) && cant > 0 && imp !== null && Number.isFinite(imp) && imp > 0 && precio > 0) {
+    const importeEsperado = cant * precio;
+    if (Math.abs(importeEsperado - imp) / imp > 0.03) {
+      partes.push(`<div class="item-warn">⚠️ Cantidad × precio (${fmtMoney(importeEsperado)}) no coincide con el importe de la línea (${fmtMoney(imp)}) — revisá la cantidad, puede estar mal leída por el escaneo.</div>`);
+    }
+  }
+  if (insumoId && state.insumos[insumoId] && precio > 0) {
+    const ins = state.insumos[insumoId];
+    const precioRef = precioEfectivoInsumo(insumoId);
+    if (precioRef > 0) {
+      const cambioPct = ((precio - precioRef) / precioRef) * 100;
+      if (Math.abs(cambioPct) >= 40) {
+        partes.push(`<div class="item-warn">⚠️ Este precio es ${fmtPct(Math.abs(cambioPct))} ${cambioPct > 0 ? "más alto" : "más bajo"} que el último conocido (${fmtMoney(precioRef)}) — revisá si está bien escaneado antes de guardar.</div>`);
+      } else {
+        partes.push(`<span class="text-muted">Último precio conocido: ${fmtMoney(precioRef)}</span>`);
+      }
+      const key = state._facturaProveedorId || "_manual";
+      const seActualizara = !ins.proveedorPreferido || ins.proveedorPreferido === key || !(ins.precios && ins.precios[ins.proveedorPreferido]) || precio > ins.precios[ins.proveedorPreferido].precio;
+      if (!seActualizara) {
+        partes.push(`<div class="item-note">ℹ️ Es menor al precio de referencia actual — se va a guardar en el historial, pero el costo de los productos NO va a cambiar (para bajarlo hay que elegirlo a mano con "Usar este" en Insumos).</div>`);
+      }
+    }
+  }
+  return partes.join("");
+}
+window.actualizarItemHint = function(precioInput) {
+  const row = precioInput.closest(".item-row");
+  const insumoId = row.querySelector(".item-insumo-id").value;
+  const hint = itemHintHtml(insumoId, precioInput.value, precioInput.dataset.cantidad, precioInput.dataset.unidad, precioInput.dataset.importe);
+  row.querySelector(".item-hint").innerHTML = hint;
+};
+
+function itemRowHtml({ insumoId = "", nombre = "", precioUnitario = "", cantidad = "", unidad = "", importe = "" } = {}) {
   const displayName = insumoId && state.insumos[insumoId] ? state.insumos[insumoId].nombre : (nombre || "");
   return `
     <div class="item-row">
@@ -444,8 +494,11 @@ function itemRowHtml({ insumoId = "", nombre = "", precioUnitario = "" } = {}) {
           oninput="handleInsumoSearchInput(this)" onfocus="handleInsumoSearchInput(this)" onblur="handleInsumoSearchBlur(this)">
         <div class="insumo-picker-results"></div>
       </div>
-      <input type="number" step="0.01" min="0" class="form-input item-precio" placeholder="$ unit." value="${precioUnitario ?? ""}">
+      <input type="number" step="0.01" min="0" class="form-input item-precio" placeholder="$ unit." value="${precioUnitario ?? ""}"
+        data-cantidad="${escapeHtml(cantidad ?? "")}" data-unidad="${escapeHtml(unidad ?? "")}" data-importe="${escapeHtml(importe ?? "")}"
+        oninput="actualizarItemHint(this)">
       <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.item-row').remove()">✕</button>
+      <div class="item-hint">${itemHintHtml(insumoId, precioUnitario, cantidad, unidad, importe)}</div>
     </div>`;
 }
 
@@ -495,6 +548,9 @@ window.selectInsumoPicker = function(el) {
   picker.querySelector(".item-insumo-id").value = el.dataset.id || "";
   picker.querySelector(".item-insumo-search").value = el.dataset.nombre || "";
   picker.querySelector(".insumo-picker-results").style.display = "none";
+  const row = picker.closest(".item-row");
+  const precioInput = row.querySelector(".item-precio");
+  if (precioInput) window.actualizarItemHint(precioInput);
 };
 
 window.handleInsumoSearchBlur = function(input) {
@@ -734,6 +790,56 @@ function matchProveedor(data) {
   return null;
 }
 
+// Rubros de proveedor disponibles (etiqueta libre por proveedor) y las palabras clave que
+// permiten adivinar a qué rubro corresponde un ítem comprado, para inferir el proveedor de un
+// recibo sin razón social ni CUIT legibles (algunos proveedores chicos —verdulero, carnicero—
+// solo dan un recibo de pago, no una factura con esos datos).
+const RUBROS_PROVEEDOR = ["Verdulería", "Carnicería/Fiambrería", "Panificados/Harinas", "Lácteos", "Bebidas", "Almacén/Varios", "Envases/Descartables", "Limpieza", "Otro"];
+const RUBRO_KEYWORDS = {
+  "Verdulería": ["manzana", "banana", "platano", "pera", "naranja", "limon", "mandarina", "frutilla", "fruta", "verdura", "lechuga", "tomate", "papa", "cebolla", "zanahoria", "zapallo", "verduleria", "citricos", "kiwi", "uva", "durazno", "banana", "ananá", "ananas", "palta", "choclo", "acelga", "espinaca", "zapallito", "berenjena", "morron"],
+  "Carnicería/Fiambrería": ["carne", "vacio", "asado", "pollo", "milanesa", "jamon", "salame", "salamin", "fiambre", "chorizo", "matambre", "bondiola", "peceto", "nalga", "cuadril", "bife", "pechuga", "carnicero", "carniceria"],
+  "Panificados/Harinas": ["harina", "levadura", "premezcla", "polvo de hornear", "almidon", "fecula", "semola", "afrecho", "salvado"],
+  "Lácteos": ["leche", "queso", "manteca", "crema de leche", "yogur", "dulce de leche", "ricota", "lacteo"],
+  "Bebidas": ["gaseosa", "agua mineral", "cerveza", "vino", "jugo", "soda", "coca cola", "sprite", "fanta", "bebida"],
+  "Almacén/Varios": ["azucar", "sal", "aceite", "vinagre", "conserva", "enlatado", "especias", "condimento", "cacao", "chocolate", "te en hebras", "cafe", "yerba", "almacen"],
+  "Envases/Descartables": ["caja", "bolsa", "film", "papel manteca", "envase", "descartable", "vaso", "bandeja", "etiqueta"],
+  "Limpieza": ["lavandina", "detergente", "jabon", "limpiador", "desinfectante", "alcohol en gel", "papel higienico", "rollo de cocina"]
+};
+function inferirRubroItems(nombres) {
+  const conteo = {};
+  for (const nombreRaw of nombres || []) {
+    const n = stripAccentsCosteo(nombreRaw || "").toLowerCase();
+    if (!n) continue;
+    for (const [rubro, kws] of Object.entries(RUBRO_KEYWORDS)) {
+      if (kws.some(kw => n.includes(stripAccentsCosteo(kw).toLowerCase()))) {
+        conteo[rubro] = (conteo[rubro] || 0) + 1;
+        break; // cada ítem cuenta para el primer rubro que le pega, no se reparte entre varios
+      }
+    }
+  }
+  const entries = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
+  return entries.length ? entries[0][0] : null;
+}
+// Cuando un recibo no trae proveedor ni CUIT legibles, intenta adivinar el proveedor por el rubro
+// de los productos comprados: si hay exactamente un proveedor cargado con ese rubro, lo
+// preselecciona (queda igual de editable, es solo una sugerencia); si hay más de uno o ninguno,
+// deja un aviso para que se elija/cargue a mano.
+function sugerirProveedorPorRubro(nombresItems) {
+  const rubro = inferirRubroItems(nombresItems);
+  if (!rubro) return;
+  const candidatos = Object.entries(state.proveedores).filter(([, p]) => p.rubro === rubro);
+  if (candidatos.length === 1) {
+    const sel = document.getElementById("f-proveedor");
+    sel.value = candidatos[0][0];
+    window.onFacturaProveedorChange(sel);
+    showToast(`🧾 Recibo sin proveedor identificado — se asignó a "${candidatos[0][1].nombre}" según los productos (rubro: ${rubro}). Revisalo antes de guardar.`, "warn");
+  } else if (candidatos.length > 1) {
+    showToast(`🧾 Recibo sin proveedor identificado. Por los productos parece ser del rubro "${rubro}" — elegí cuál proveedor es de la lista.`, "warn");
+  } else {
+    showToast(`🧾 Recibo sin proveedor identificado. Por los productos parece ser del rubro "${rubro}", pero no tenés ningún proveedor cargado con ese rubro — elegilo o cargalo manualmente.`, "warn");
+  }
+}
+
 function aplicarDatosEscaneados(data) {
   if (data.proveedor || data.cuit) {
     const sel = document.getElementById("f-proveedor");
@@ -746,6 +852,11 @@ function aplicarDatosEscaneados(data) {
       document.getElementById("f-proveedor-nuevo").style.display = "";
       document.getElementById("f-proveedor-nombre-nuevo").value = data.proveedor;
     }
+  } else if (Array.isArray(data.items) && data.items.length) {
+    // Recibo de pago sin razón social ni CUIT legibles (algunos proveedores chicos no entregan
+    // factura): tratamos de inferir el proveedor por el tipo de productos comprados (ej. frutas
+    // y verduras -> el verdulero), buscando entre los proveedores que ya tienen ese rubro cargado.
+    sugerirProveedorPorRubro(data.items.map(it => it.nombre));
   }
   if (data.cuit) document.getElementById("f-cuit").value = data.cuit;
   if (data.fecha && /^\d{4}-\d{2}-\d{2}$/.test(data.fecha)) document.getElementById("f-fecha").value = data.fecha;
@@ -763,7 +874,10 @@ function aplicarDatosEscaneados(data) {
       return itemRowHtml({
         insumoId: matchedId || "",
         nombre: it.nombre || "",
-        precioUnitario: it.precioUnitario ?? ""
+        precioUnitario: it.precioUnitario ?? "",
+        cantidad: it.cantidad ?? "",
+        unidad: it.unidad ?? "",
+        importe: it.importe ?? ""
       });
     }).join("");
   }
@@ -810,6 +924,11 @@ async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, 
   }
   await update(ref(db, `costeo/insumos/${insumoId}`), updates);
   state.insumos[insumoId] = { ...insumo, ...updates };
+  // referenciaActualizada = false avisa al llamador (ej. guardarFactura) que este precio quedó
+  // guardado en el historial del proveedor pero NO cambió el costo de referencia — para que no
+  // sea una sorpresa silenciosa cuando en realidad se esperaba una suba (ej. por un escaneo mal leído).
+  const referenciaActualizada = precioActualAnterior === null || Math.abs(precioActual - precioActualAnterior) > 0.005;
+  return { referenciaActualizada, precioActualAnterior, precioActualNuevo: precioActual };
 }
 
 window.setProveedorPreferido = async function(insumoId, proveedorId) {
@@ -856,6 +975,7 @@ window.guardarFactura = async function() {
 
     const itemRows = Array.from(document.querySelectorAll("#items-container .item-row"));
     const items = [];
+    const sinActualizarReferencia = [];
     for (const row of itemRows) {
       const insumoIdSel = row.querySelector(".item-insumo-id").value;
       const nombreTyped = row.querySelector(".item-insumo-search").value.trim();
@@ -874,7 +994,10 @@ window.guardarFactura = async function() {
       } else {
         nombre = state.insumos[insumoId]?.nombre || nombreTyped;
       }
-      await actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, precio: precioUnitario });
+      const resultadoPrecio = await actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, precio: precioUnitario });
+      if (resultadoPrecio && !resultadoPrecio.referenciaActualizada) {
+        sinActualizarReferencia.push({ nombre, precioUnitario, precioReferencia: resultadoPrecio.precioActualAnterior });
+      }
       items.push({ insumoId, nombre, precioUnitario });
     }
 
@@ -894,6 +1017,13 @@ window.guardarFactura = async function() {
       foto: state._facturaFotoDataUrl || "", items, creadoTs: Date.now()
     });
 
+    if (sinActualizarReferencia.length) {
+      // No dejar esto como una sorpresa silenciosa (fue justo el problema reportado): un precio
+      // guardado que no sube el costo de referencia amerita un aviso que el usuario tenga que
+      // cerrar, no un toast de 3 segundos que se puede perder.
+      const detalle = sinActualizarReferencia.map(x => `• ${x.nombre}: se guardó a ${fmtMoney(x.precioUnitario)}, pero el costo de referencia sigue en ${fmtMoney(x.precioReferencia)} (un precio menor no reemplaza solo al que ya se estaba usando).`).join("\n");
+      alert(`ℹ️ Factura guardada. ${sinActualizarReferencia.length} precio(s) NO actualizaron el costo de los productos:\n\n${detalle}\n\nSi te parece que en realidad debería haber subido (por ejemplo, un error de escaneo en la cantidad), corregilo desde Insumos.`);
+    }
     showToast("✅ Factura guardada correctamente.", "success");
     state._facturaFotoDataUrl = null;
     navigate("facturas");
@@ -1119,11 +1249,12 @@ window.guardarProveedor = async function() {
   const contacto = document.getElementById("prov-contacto").value.trim();
   const banco = document.getElementById("prov-banco").value.trim();
   const alias = document.getElementById("prov-alias").value.trim();
+  const rubro = document.getElementById("prov-rubro").value;
   const notas = document.getElementById("prov-notas").value.trim();
   if (!nombre) { showToast("⚠️ Ingresá el nombre del proveedor.", "warn"); return; }
 
   const id = state.editingProveedorId;
-  const data = { nombre, cuit, telefono, contacto, banco, alias, notas };
+  const data = { nombre, cuit, telefono, contacto, banco, alias, rubro, notas };
   try {
     if (id === "new") {
       await set(push(ref(db, "costeo/proveedores")), { ...data, creadoTs: Date.now() });
@@ -1164,6 +1295,16 @@ function renderProveedoresView(container) {
         <div class="form-group"><label class="form-label">Banco</label><input class="form-input" id="prov-banco" value="${escapeHtml(editingData.banco)}"></div>
         <div class="form-group"><label class="form-label">Alias</label><input class="form-input" id="prov-alias" value="${escapeHtml(editingData.alias)}"></div>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Rubro</label>
+          <select class="form-select" id="prov-rubro">
+            <option value="">Sin especificar</option>
+            ${RUBROS_PROVEEDOR.map(r => `<option value="${escapeHtml(r)}" ${editingData.rubro === r ? "selected" : ""}>${escapeHtml(r)}</option>`).join("")}
+          </select>
+          <div class="text-muted" style="font-size:11px">Se usa para sugerir el proveedor cuando se escanea un recibo sin razón social ni CUIT legibles (ej. frutas/verduras → el proveedor de rubro "Verdulería").</div>
+        </div>
+      </div>
       <div class="form-group" style="margin-bottom:14px"><label class="form-label">Notas</label><textarea class="form-input" id="prov-notas">${escapeHtml(editingData.notas)}</textarea></div>
       <button class="btn btn-primary" onclick="guardarProveedor()">💾 Guardar</button>
       <button class="btn btn-ghost" onclick="cerrarFormProveedor()">Cancelar</button>
@@ -1177,6 +1318,7 @@ function renderProveedoresView(container) {
       <td>${escapeHtml(p.contacto) || "—"}</td>
       <td>${escapeHtml(p.banco) || "—"}</td>
       <td>${escapeHtml(p.alias) || "—"}</td>
+      <td>${p.rubro ? `<span class="badge badge-ok">${escapeHtml(p.rubro)}</span>` : "—"}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-ghost btn-sm" onclick="abrirFormProveedor('${id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="eliminarProveedor('${id}')">Eliminar</button>
@@ -1193,7 +1335,7 @@ function renderProveedoresView(container) {
     </div>
     ${formHtml}
     <div class="section-block">
-      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>CUIT</th><th>Teléfono</th><th>Razón Social</th><th>Banco</th><th>Alias</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay proveedores cargados.</div>`}
+      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>CUIT</th><th>Teléfono</th><th>Razón Social</th><th>Banco</th><th>Alias</th><th>Rubro</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay proveedores cargados.</div>`}
     </div>`;
 }
 

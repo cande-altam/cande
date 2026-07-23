@@ -15,7 +15,7 @@ Analizá la imagen y devolvé SOLO un JSON válido, sin texto adicional y sin bl
   "montoTotal": number | null,
   "iva": number | null,
   "items": [
-    { "nombre": string, "insumoId": string | null, "cantidad": number | null, "unidad": string | null, "precioUnitario": number | null }
+    { "nombre": string, "insumoId": string | null, "cantidad": number | null, "unidad": string | null, "precioUnitario": number | null, "importe": number | null }
   ]
 }
 Reglas:
@@ -24,6 +24,7 @@ Reglas:
 - "montoTotal" es el total final de la factura (con IVA si corresponde), como número sin símbolos de moneda ni separadores de miles (usá punto decimal).
 - "iva" es el monto de IVA discriminado en la factura (suele figurar como "IVA 21%", "IVA 10.5%", o la suma de varias alícuotas de IVA si hay más de una) — un número en pesos, no un porcentaje. Si la factura es de un monotributista y no discrimina IVA, poné null. Si hay varias líneas de IVA a distintas alícuotas, sumalas en un solo número.
 - "items" son las líneas de detalle de la factura (insumos comprados). Si no hay detalle de líneas legible, devolvé un array vacío.
+- Para cada ítem: "cantidad" y "unidad" son los que figuran impresos en la línea (ej. "5", "kg"); "importe" es el subtotal de esa línea (cantidad × precio unitario, tal como figura impreso, sin IVA a menos que la factura solo muestre precios con IVA incluido). Prestá especial atención a no confundir la columna de cantidad con la de código de producto o de precio — son la causa más común de error. Si la factura solo muestra precio unitario e importe pero no cantidad explícita, podés inferir "cantidad" = importe / precioUnitario; si solo muestra cantidad e importe, inferí "precioUnitario" = importe / cantidad. Si algún valor no cierra o no es legible, poné null en ese campo en vez de adivinar.
 - "fecha" en formato ISO YYYY-MM-DD.`;
 
 const CATALOG_INSTRUCTIONS = `
