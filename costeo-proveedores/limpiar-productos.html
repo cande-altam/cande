@@ -81,7 +81,7 @@ const RETAIL_CATEGORIAS = new Set(["fiambres", "lacteos", "bebidas", "almacen", 
 // (esa lista es solo para las categorías de retail de arriba): café/bebidas de cafetería y
 // panadería/pastelería (incluida la variante "(mesas)" para los ítems de esas categorías que no
 // tienen "(mesas)" en el propio nombre, ej. "Porción de budin", "croissant economico").
-const CATEGORIAS_SIEMPRE_CONSERVAR = new Set(["bebidas cafeteria", "panaderia", "panaderia (mesas)", "pasteleria y dulces (mesas)"]);
+const CATEGORIAS_SIEMPRE_CONSERVAR = new Set(["bebidas cafeteria", "panaderia", "panaderia (mesas)", "pasteleria y dulces (mesas)", "especialidades", "factureria"]);
 
 // Reduce a minúsculas/sin acentos y separa en palabras sueltas (todo lo que no sea letra/número
 // se vuelve espacio), para poder matchear marcas/palabras sin importar mayúsculas, guiones, etc.
@@ -134,7 +134,7 @@ function motivoConservar(p) {
   if (nl.includes("para retirar")) return null;
   if (HOJA3_SET.has(normKey(nombre))) return "Hoja3";
   const cat = normKey(p.categoria || "");
-  if (CATEGORIAS_SIEMPRE_CONSERVAR.has(cat)) return "Panadería/Cafetería";
+  if (CATEGORIAS_SIEMPRE_CONSERVAR.has(cat)) return "Categoría protegida";
   if (RETAIL_CATEGORIAS.has(cat)) {
     const palabras = limpiarPalabras(nombre);
     if (EXCLUSION_RETAIL.some(regla => regla(palabras))) return null;
@@ -149,7 +149,7 @@ let productosSnapshot = null;
 function renderLogin() {
   app_.innerHTML = `
     <div class="page-title">🗑️ Limpiar catálogo de productos</div>
-    <div class="page-sub">Conserva los productos de la lista de precios "Hoja3", los de Bebidas Cafetería y Panadería/Pastelería completos, y los de retail (fiambres, lácteos, bebidas, almacén, té en hebras) salvo las marcas/ítems puntuales excluidos a mano. Borra "(PY)" de Pedidos Ya y "PARA RETIRAR"; nunca borra los "(mesas)" (se unifican aparte). Acción de un solo uso. Usa la misma contraseña de administración de Costeo &amp; Proveedores.</div>
+    <div class="page-sub">Conserva los productos de la lista de precios "Hoja3", los de Bebidas Cafetería, Panadería/Pastelería, Especialidades y Facturería completos, y los de retail (fiambres, lácteos, bebidas, almacén, té en hebras) salvo las marcas/ítems puntuales excluidos a mano. Borra "(PY)" de Pedidos Ya y "PARA RETIRAR"; nunca borra los "(mesas)" (se unifican aparte). Acción de un solo uso. Usa la misma contraseña de administración de Costeo &amp; Proveedores.</div>
     <div class="section-block">
       <input type="password" class="form-input" id="login-pass" placeholder="Contraseña">
       <button class="btn btn-primary" id="login-btn">Ingresar</button>

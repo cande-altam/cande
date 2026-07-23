@@ -200,7 +200,6 @@ const TABS = [
   { key: "proveedores",   label: "🏭 Proveedores" },
   { key: "insumos",       label: "📦 Insumos" },
   { key: "productos",     label: "🍰 Productos" },
-  { key: "recetas-bases", label: "📋 Recetas y Bases" },
   { key: "analisis",      label: "📈 Análisis" },
   { key: "config",        label: "⚙️ Configuración" },
 ];
@@ -225,7 +224,7 @@ const state = {
   productosFiltro: "",
   productosSoloAlertas: false,
   productosClasificacionFiltro: "todos",
-  recetasBasesTab: "recetas",
+  mostrarBases: false,
   analisisPeriodo: 6,
   editingProveedorId: null,
   editingInsumoId: null,
@@ -375,7 +374,6 @@ function render() {
     case "proveedores": renderProveedoresView(container); break;
     case "insumos": renderInsumosView(container); break;
     case "productos": renderProductosView(container); break;
-    case "recetas-bases": renderRecetasBasesView(container); break;
     case "analisis": renderAnalisisView(container); break;
     case "config": renderConfigView(container); break;
     default: container.innerHTML = `<div class="empty-state">Vista no encontrada.</div>`;
@@ -1459,9 +1457,10 @@ function renderInsumosView(container) {
         <div class="page-title">Insumos</div>
         <div class="page-sub" style="margin-bottom:0">Precio actual e historial de cada insumo.</div>
       </div>
-      ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${state.mostrarDuplicados ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarDuplicados()">${state.mostrarDuplicados ? "✕ Cerrar búsqueda" : "🔍 Buscar posibles duplicados"}</button><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar fusión" : "🔀 Fusionar duplicados"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
+      ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${state.mostrarBases ? "btn-turq" : "btn-ghost"}" onclick="toggleMostrarBases()">${state.mostrarBases ? "✕ Cerrar bases" : `🧪 Ver bases (${Object.values(state.insumos).filter(i => i.receta && Object.keys(i.receta).length).length})`}</button><button class="btn ${state.mostrarDuplicados ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarDuplicados()">${state.mostrarDuplicados ? "✕ Cerrar búsqueda" : "🔍 Buscar posibles duplicados"}</button><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar fusión" : "🔀 Fusionar duplicados"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
     </div>
     ${formHtml}
+    ${state.mostrarBases ? basesCardGridHtml() : ""}
     ${state.mostrarDuplicados ? `
       <div class="section-block">
         <div class="section-title" style="margin-bottom:10px">🔍 Posibles duplicados</div>
@@ -1747,14 +1746,18 @@ function evaluarAlertaProducto(p) {
 
 // Clasificación de productos para que se distinga de un vistazo qué es cada cosa:
 // - "retail": se compra ya terminado y se revende tal cual (fiambres, lácteos, bebidas, almacén, té en hebras).
-// - "preparacion": se arma/prepara en el momento con bases e insumos (cafetería, licuados, jugos).
-// - "elaborado": producto de panadería/pastelería/facturería/sandwiches con receta propia.
+// - "preparacion": se arma/prepara al momento con bases e insumos (cafetería, licuados, jugos, huevos,
+//   o una pieza horneada rellena/armada al pedido — ej. "Croissant relleno con...", "Huevo revuelto").
+// - "elaborado": producto de panadería/pastelería/especialidades/facturería/sandwiches con receta propia.
 const CATEGORIAS_RETAIL_PROD = new Set(["fiambres", "lacteos", "bebidas", "almacen", "te en hebras", "reventa"]);
-const CATEGORIAS_PREPARACION_PROD = new Set(["bebidas cafeteria", "cafe frio", "cafeteria tradicional", "cafeteria de especialidad", "desayunos / meriendas"]);
+const CATEGORIAS_PREPARACION_PROD = new Set(["bebidas cafeteria", "cafe frio", "cafeteria tradicional", "cafeteria de especialidad", "desayunos / meriendas", "extras"]);
+const PALABRAS_PREPARACION = ["relleno", "rellena", "rellenos", "rellenas", "revuelto", "revuelta", "preparado", "preparada"];
 function clasificarProducto(p) {
   const cat = stripAccentsCosteo(p.categoria || "").toLowerCase().trim();
   if (CATEGORIAS_RETAIL_PROD.has(cat)) return "retail";
   if (CATEGORIAS_PREPARACION_PROD.has(cat)) return "preparacion";
+  const nombre = stripAccentsCosteo(p.nombre || "").toLowerCase();
+  if (PALABRAS_PREPARACION.some(w => nombre.includes(w))) return "preparacion";
   return "elaborado";
 }
 const CLASIFICACION_LABEL = { elaborado: "🥐 Elaborado", preparacion: "☕ Preparación", retail: "🛒 Retail" };
@@ -1789,12 +1792,18 @@ function renderProductosTable() {
     const recetaAbierta = state.viewingProductoRecetaId === id;
     const esVersionMesa = p.nombre.toLowerCase().includes("(mesas)");
     const clasificacion = clasificarProducto(p);
+    const modelo = calcModeloCosteo(p);
+    const precioSugeridoRedondeado = modelo ? Math.round(modelo.precioSugerido / 100) * 100 : null;
+    const precioVentaCell = `
+      <input type="number" step="1" min="0" class="form-input" style="max-width:120px" value="${p.precioVenta ?? ""}" placeholder="Precio venta" onchange="guardarPrecioVentaRapido('${id}', this.value)">
+      ${precioSugeridoRedondeado !== null ? `<div class="text-muted" style="font-size:11px">Sugerido: ${fmtMoney(precioSugeridoRedondeado)}</div>` : ""}
+      ${p.precioVenta ? `<div class="text-muted" style="font-size:11px">Mesa (+10%): ${fmtMoney(p.precioVenta * 1.1)}</div>` : ""}`;
     return `
       <tr>
         <td>${escapeHtml(p.nombre)}<div class="text-muted" style="font-size:11px">${CLASIFICACION_LABEL[clasificacion]}${esVersionMesa ? " · 🍽️ Versión mesa" : ""}${costoActualizado ? " · 🔄 Costo actualizado" : ""}</div></td>
         <td>${tieneReceta ? `${Object.keys(p.receta).length} insumo(s)` : `<span class="text-muted">Sin receta</span>`}</td>
         <td>${costoCell}</td>
-        <td>${p.precioVenta ? `${fmtMoney(p.precioVenta)}<div class="text-muted" style="font-size:11px">Mesa (+10%): ${fmtMoney(p.precioVenta * 1.1)}</div>` : "—"}</td>
+        <td>${precioVentaCell}</td>
         <td>${margenCell}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" onclick="toggleRecetaProducto('${id}')">${recetaAbierta ? "Ocultar receta" : "📋 Receta"}</button>
@@ -1823,14 +1832,11 @@ window.toggleProductosSoloAlertas = function() {
   renderProductosTable();
 };
 
-// Panel de receta expandible por producto (ver/modificar/crear/eliminar), sin tener que abrir el
-// formulario completo de edición del producto. Las filas usan las mismas clases que el formulario
-// de edición (recipe-row/recipe-insumo/recipe-cantidad) pero las consultas siempre están acotadas
-// al contenedor de ESTE producto (por id de DOM), así que no chocan entre sí ni con el otro form.
-// Contenido del editor de receta de un producto (insumos/cantidades editables + costo total) —
-// se reutiliza tanto en el panel expandible de la tabla de Productos como en las cards de la
-// vista "Recetas y Bases". id/nombre/receta van acotados por id de DOM, así que da lo mismo
-// cuántas cards haya abiertas a la vez, nunca chocan entre sí.
+// Contenido del editor de receta de un producto (ver/modificar/crear/eliminar insumos, cantidades
+// y costo total), sin tener que abrir el formulario completo de edición del producto. Las filas
+// usan las mismas clases que ese formulario (recipe-row/recipe-insumo/recipe-cantidad) pero las
+// consultas siempre están acotadas al contenedor de ESTE producto (por id de DOM), así que no
+// chocan entre sí ni con el otro form aunque haya varios paneles abiertos a la vez.
 function recetaPanelContenido(id, p) {
   const receta = p.receta || {};
   const rows = Object.keys(receta).length
@@ -1953,52 +1959,24 @@ window.vaciarBaseCard = async function(id) {
   render();
 };
 
-// =============================================================
-// RECETAS Y BASES (vista dedicada, cards editables)
-// =============================================================
-function renderRecetasBasesView(container) {
-  state.formOpen = true;
-  actualizarPreciosBasesElaboradas();
-  const tab = state.recetasBasesTab || "recetas";
-
-  const productosElaborados = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
-    .filter(([, p]) => clasificarProducto(p) === "elaborado");
+// Grilla de cards de bases (insumos con receta propia) — se muestra de forma compacta arriba de
+// la tabla de Insumos, con un toggle, en vez de vivir en una pestaña separada.
+function basesCardGridHtml() {
   const basesInsumos = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
     .filter(([, ins]) => ins.receta && Object.keys(ins.receta).length > 0);
-
-  const recetasCards = productosElaborados.map(([id, p]) => `
-    <div class="section-block">
-      <div class="section-title" style="margin-bottom:10px">🧾 ${escapeHtml(p.nombre)}</div>
-      ${recetaPanelContenido(id, p)}
-    </div>`).join("");
-
   const basesCards = basesInsumos.map(([id, ins]) => `
     <div class="section-block">
       <div class="section-title" style="margin-bottom:10px">🧪 ${escapeHtml(ins.nombre)}</div>
       ${baseCardContenido(id, ins)}
     </div>`).join("");
-
-  container.innerHTML = `
-    <div class="section-header">
-      <div>
-        <div class="page-title">Recetas y Bases</div>
-        <div class="page-sub" style="margin-bottom:0">Todas las recetas de productos elaborados y las bases/preparaciones, con insumos, cantidades y costo editables acá mismo.</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-      <button class="btn ${tab === "recetas" ? "btn-turq" : "btn-ghost"}" onclick="setRecetasBasesTab('recetas')">🧾 Recetas (${productosElaborados.length})</button>
-      <button class="btn ${tab === "bases" ? "btn-turq" : "btn-ghost"}" onclick="setRecetasBasesTab('bases')">🧪 Bases (${basesInsumos.length})</button>
-    </div>
-    ${tab === "recetas" ? `
-      <div class="text-muted" style="margin-bottom:14px">Productos de panadería/pastelería/facturería/sandwiches con receta. Para cargar uno nuevo, andá a <a href="#" onclick="navigate('productos');abrirFormProducto();return false;">Productos → Nuevo producto</a>.</div>
-      ${productosElaborados.length ? `<div class="receta-card-grid">${recetasCards}</div>` : `<div class="empty-state">Todavía no hay productos elaborados cargados.</div>`}
-    ` : `
-      <div class="text-muted" style="margin-bottom:14px">Bases/preparaciones con receta propia (crema chantilly, bizcochuelo, almíbares, etc.) — su costo se recalcula solo a partir de sus ingredientes. Para cargar una nueva, andá a <a href="#" onclick="navigate('insumos');abrirFormInsumo();return false;">Insumos → Nuevo insumo</a> y armale una receta.</div>
-      ${basesInsumos.length ? `<div class="receta-card-grid">${basesCards}</div>` : `<div class="empty-state">Todavía no hay bases con receta cargada.</div>`}
-    `}`;
+  return `
+    <div class="section-block">
+      <div class="text-muted" style="margin-bottom:14px">Bases/preparaciones con receta propia (crema chantilly, bizcochuelo, almíbares, etc.) — su costo se recalcula solo a partir de sus ingredientes.</div>
+      ${basesInsumos.length ? `<div class="receta-card-grid">${basesCards}</div>` : `<div class="empty-state">Todavía no hay bases con receta cargada — abrí o creá un insumo y armale una receta.</div>`}
+    </div>`;
 }
-window.setRecetasBasesTab = function(val) {
-  state.recetasBasesTab = val;
+window.toggleMostrarBases = function() {
+  state.mostrarBases = !state.mostrarBases;
   render();
 };
 
@@ -2007,6 +1985,14 @@ window.guardarCostoManualRapido = async function(id, val) {
   await update(ref(db, `costeo/productos/${id}`), { costoManual });
   state.productos[id] = { ...state.productos[id], costoManual };
   showToast("✅ Costo guardado.", "success");
+  renderProductosTable();
+};
+
+window.guardarPrecioVentaRapido = async function(id, val) {
+  const precioVenta = val ? parseFloat(val) : null;
+  await update(ref(db, `costeo/productos/${id}`), { precioVenta });
+  state.productos[id] = { ...state.productos[id], precioVenta };
+  showToast("✅ Precio de venta guardado.", "success");
   renderProductosTable();
 };
 
