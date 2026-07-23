@@ -216,6 +216,9 @@ textarea.fc{resize:vertical;min-height:56px}
 .apform{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
 .ma-grid{display:flex;flex-direction:column;gap:4px}
 .ma-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--cream);border-radius:8px;border:1px solid var(--cream-dark)}
+.ma-actions{display:flex;align-items:center;gap:6px}
+.ma-cat-sel{font-size:12px;padding:3px 6px;border:1px solid var(--cream-dark);border-radius:6px;background:white;color:var(--black);cursor:pointer}
+.ma-cat-sel:focus{outline:none;border-color:var(--terra)}
 .ma-name{font-size:13px;font-weight:400;color:var(--black);flex:1}
 .delbtn{width:24px;height:24px;border-radius:5px;border:none;background:transparent;cursor:pointer;color:var(--gray-light);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .delbtn:hover{background:#fdecea;color:var(--terra)}
@@ -1763,7 +1766,12 @@ function renderMenuAdmin(){
               ${prods.map(p=>`
                 <div class="ma-item">
                   <span class="ma-name">${e(p.name)}</span>
-                  <button class="delbtn" onclick="delProduct('${p.id}'))" title="Eliminar">✕</button>
+                  <div class="ma-actions">
+                    <select class="ma-cat-sel" onchange="moveProduct('${p.id}',this.value)">
+                      ${Object.entries(TEAMS).map(([k,t])=>`<option value="${k}"${k===p.team?' selected':''}>${t.icon} ${t.name}</option>`).join('')}
+                    </select>
+                    <button class="delbtn" onclick="delProduct('${p.id}')" title="Eliminar">✕</button>
+                  </div>
                 </div>`).join('')}
             </div>
           </div>
@@ -1785,6 +1793,12 @@ function addProduct(){
 function delProduct(id){
   App.pin(()=>{
     db.ref(`menu/${id}`).remove().then(()=>toast('Producto eliminado'));
+  });
+}
+
+function moveProduct(id, newTeam){
+  App.pin(()=>{
+    db.ref(`menu/${id}/team`).set(newTeam).then(()=>toast(`Producto movido a ${TEAMS[newTeam].name}`));
   });
 }
 
