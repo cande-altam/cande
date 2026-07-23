@@ -83,6 +83,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:va
 .badge-alerta{background:#fdecea;color:#b83a25;}
 .badge-ok{background:var(--turq-pale);color:var(--turq-dark);}
 .badge-neutro{background:var(--cream);color:var(--gray);}
+.badge-suba{background:#fdecea;color:#c0392b;font-weight:700;}
+.badge-suba-abrupta{background:#c0392b;color:#fff;font-weight:800;font-size:12px;padding:4px 12px;box-shadow:0 2px 8px rgba(192,57,43,.35);animation:pulse-alerta 1.6s ease-in-out infinite;}
+.precio-subio{color:#c0392b;font-weight:800;}
+.form-input.precio-subio{border-color:#c0392b;box-shadow:0 0 0 2px rgba(192,57,43,.12);}
+@keyframes pulse-alerta{0%,100%{opacity:1;}50%{opacity:.72;}}
+.alerta-precio-card{border:1.5px solid #f0b4ac;background:#fff6f5;border-radius:var(--r-sm);padding:12px 16px;margin-bottom:10px;}
+.alerta-precio-card.abrupta{border-color:#c0392b;background:#fdecea;box-shadow:0 2px 10px rgba(192,57,43,.18);}
 
 /* FORMS */
 .form-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;}
@@ -200,6 +207,7 @@ const TABS = [
   { key: "proveedores",   label: "🏭 Proveedores" },
   { key: "insumos",       label: "📦 Insumos" },
   { key: "productos",     label: "🍰 Productos" },
+  { key: "recetas-bases", label: "📋 Recetas y Bases" },
   { key: "analisis",      label: "📈 Análisis" },
   { key: "config",        label: "⚙️ Configuración" },
 ];
@@ -224,7 +232,7 @@ const state = {
   productosFiltro: "",
   productosSoloAlertas: false,
   productosClasificacionFiltro: "todos",
-  mostrarBases: false,
+  recetasBasesTab: "recetas",
   analisisPeriodo: 6,
   editingProveedorId: null,
   editingInsumoId: null,
@@ -257,6 +265,18 @@ function fmtPct(n) {
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
   const sign = n > 0 ? "+" : "";
   return `${sign}${n.toFixed(1)}%`;
+}
+function diasDesdeFecha(iso) {
+  if (!iso) return Infinity;
+  return (Date.now() - new Date(iso + "T00:00:00").getTime()) / 86400000;
+}
+// Una suba de precio se considera "abrupta" (alerta grande, no solo un aviso de rutina) a partir
+// de este % en un solo salto. Las alertas se muestran mientras tengan menos de esta cantidad de
+// días — pasado eso, ya se asume que compras la vio y se apaga sola sin necesidad de "descartarla".
+const ALERTA_SUBA_ABRUPTA_UMBRAL = 15;
+const ALERTA_RECIENCIA_DIAS = 14;
+function alertaPrecioVigente(alertaPrecio) {
+  return !!alertaPrecio && diasDesdeFecha(alertaPrecio.fecha) <= ALERTA_RECIENCIA_DIAS;
 }
 function monthKey(iso) { return iso.slice(0, 7); }
 function monthsAgoISO(n) {
@@ -374,6 +394,7 @@ function render() {
     case "proveedores": renderProveedoresView(container); break;
     case "insumos": renderInsumosView(container); break;
     case "productos": renderProductosView(container); break;
+    case "recetas-bases": renderRecetasBasesView(container); break;
     case "analisis": renderAnalisisView(container); break;
     case "config": renderConfigView(container); break;
     default: container.innerHTML = `<div class="empty-state">Vista no encontrada.</div>`;
@@ -748,20 +769,45 @@ function aplicarDatosEscaneados(data) {
   }
 }
 
-// Updates (or creates) an insumo's price for a specific proveedor, keeping precioActual
-// in sync with whichever proveedor is marked as "preferido" for that insumo (defaults to
-// the first proveedor that ever priced it). Does not touch historial — callers push that separately.
+// Updates (or creates) an insumo's price for a specific proveedor, keeping precioActual en sync
+// según la regla de precios del negocio: si cambia de marca/proveedor y el precio nuevo es MAYOR
+// al que se venía usando, ese pasa a ser el valor de referencia (protege el margen, refleja la
+// suba enseguida). Si es MENOR, se mantiene el proveedor/precio que ya se estaba usando — una
+// cotización más barata de otra marca no baja la referencia sola, hay que elegirla a mano
+// ("Usar este"). Para el MISMO proveedor que ya era el preferido, siempre se toma su último precio.
 async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, precio }) {
   const insumo = state.insumos[insumoId] || {};
-  const precios = { ...(insumo.precios || {}) };
   const key = proveedorId || "_manual";
+  const proveedorPreferidoAnterior = insumo.proveedorPreferido;
+  const precioPreferidoAnterior = (proveedorPreferidoAnterior && insumo.precios && insumo.precios[proveedorPreferidoAnterior])
+    ? insumo.precios[proveedorPreferidoAnterior].precio
+    : null;
+
+  const precios = { ...(insumo.precios || {}) };
   precios[key] = { precio, actualizadoTs: Date.now(), proveedorNombre: proveedorNombre || "" };
 
-  let proveedorPreferido = insumo.proveedorPreferido;
-  if (!proveedorPreferido || !precios[proveedorPreferido]) proveedorPreferido = key;
+  let proveedorPreferido = proveedorPreferidoAnterior;
+  if (!proveedorPreferido || !precios[proveedorPreferido] || precioPreferidoAnterior === null || precio > precioPreferidoAnterior) {
+    proveedorPreferido = key;
+  }
   const precioActual = precios[proveedorPreferido]?.precio ?? precio;
 
   const updates = { precios, proveedorPreferido, precioActual, actualizadoTs: Date.now() };
+  // El valor de referencia efectivamente subió (no solo cambió de proveedor a igual/menor precio):
+  // deja una alerta con todos los datos para que compras la vea, con un umbral aparte para subas
+  // "abruptas" que necesitan una notificación más grande.
+  const precioActualAnterior = insumo.precioActual ?? null;
+  if (precioActualAnterior !== null && precioActual > precioActualAnterior + 0.005) {
+    const pct = precioActualAnterior > 0 ? ((precioActual - precioActualAnterior) / precioActualAnterior) * 100 : null;
+    updates.alertaPrecio = {
+      precioAnterior: precioActualAnterior,
+      precioNuevo: precioActual,
+      pct,
+      proveedorNombre: precios[proveedorPreferido]?.proveedorNombre || proveedorNombre || "",
+      fecha: todayISO(),
+      abrupta: pct !== null && pct >= ALERTA_SUBA_ABRUPTA_UMBRAL
+    };
+  }
   await update(ref(db, `costeo/insumos/${insumoId}`), updates);
   state.insumos[insumoId] = { ...insumo, ...updates };
 }
@@ -1418,12 +1464,28 @@ function renderInsumosView(container) {
     const checked = !!state.insumosMergeSeleccion[id];
     const esElaborado = ins.receta && Object.keys(ins.receta).length > 0;
     const costoVivo = precioEfectivoInsumo(id);
+    const alertaVigente = alertaPrecioVigente(ins.alertaPrecio);
+    const precioCellClass = alertaVigente ? "precio-subio" : "";
+    const alertaBadge = alertaVigente
+      ? `<div><span class="badge ${ins.alertaPrecio.abrupta ? "badge-suba-abrupta" : "badge-suba"}">${ins.alertaPrecio.abrupta ? "🚨 SUBA ABRUPTA" : "🔺 Subió"} ${fmtPct(ins.alertaPrecio.pct)}</span></div>`
+      : "";
+    // Registro de proveedores siempre visible (no escondido atrás de "Ver historial"): si hay más
+    // de uno, se listan todos con su precio y cuál es el que se usa para costear (⭐), para que
+    // quede claro de un vistazo que un mismo insumo puede tener varias marcas/proveedores a la vez.
+    const proveedoresCell = esElaborado
+      ? `<span class="text-muted">— (receta propia)</span>`
+      : precioEntries.length === 0
+        ? `<span class="text-muted">Sin proveedor cargado</span>`
+        : precioEntries.length === 1
+          ? escapeHtml(precioEntries[0][1].proveedorNombre) || "—"
+          : `<span class="badge badge-ok">${precioEntries.length} proveedores</span><div class="text-muted" style="font-size:11px;margin-top:3px">${precioEntries.map(([provId, p]) => `${escapeHtml(p.proveedorNombre) || "—"}: ${fmtMoney(p.precio)}${provId === ins.proveedorPreferido ? " ⭐" : ""}`).join("<br>")}</div>`;
     return `
       <tr>
         ${state.insumosMergeMode ? `<td><input type="checkbox" ${checked ? "checked" : ""} onchange="toggleInsumoMergeCheck('${id}', this.checked)"></td>` : ""}
         <td>${escapeHtml(ins.nombre)}${esElaborado ? ` <span class="badge badge-ok" title="Base/preparación con receta propia">🧪 Base</span>` : ""}</td>
         <td>${escapeHtml(ins.unidad) || "—"}</td>
-        <td>${fmtMoney(costoVivo)}${esElaborado ? `<div class="text-muted" style="font-size:11px">receta propia</div>` : (preferidoNombre ? `<div class="text-muted" style="font-size:11px">${escapeHtml(preferidoNombre)}</div>` : "")}</td>
+        <td>${proveedoresCell}</td>
+        <td><span class="${precioCellClass}">${fmtMoney(costoVivo)}</span>${esElaborado ? `<div class="text-muted" style="font-size:11px">receta propia</div>` : (preferidoNombre ? `<div class="text-muted" style="font-size:11px">${escapeHtml(preferidoNombre)}</div>` : "")}${alertaBadge}</td>
         <td>${hist.length}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" onclick="toggleHistorialInsumo('${id}')">${isOpen ? "Ocultar" : "Ver historial"}</button>
@@ -1431,7 +1493,7 @@ function renderInsumosView(container) {
           <button class="btn btn-danger btn-sm" onclick="eliminarInsumo('${id}')">Eliminar</button>
         </td>
       </tr>
-      ${isOpen ? `<tr><td colspan="${state.insumosMergeMode ? 6 : 5}" style="background:var(--cream);padding:14px 18px">
+      ${isOpen ? `<tr><td colspan="${state.insumosMergeMode ? 7 : 6}" style="background:var(--cream);padding:14px 18px">
         ${precioEntries.length ? `<div class="text-muted" style="margin-bottom:6px;font-weight:600">Precios por proveedor</div><table class="data-table"><thead><tr><th>Proveedor</th><th>Precio</th><th></th></tr></thead><tbody>${precioRows}</tbody></table>` : ""}
         <div class="text-muted" style="margin:${precioEntries.length ? "14px" : "0"} 0 6px;font-weight:600">Historial</div>
         ${hist.length ? `<table class="data-table"><thead><tr><th>Fecha</th><th>Precio</th><th>Proveedor</th></tr></thead><tbody>${histRows}</tbody></table>` : `<div class="text-muted">Sin historial de precios todavía.</div>`}
@@ -1457,10 +1519,9 @@ function renderInsumosView(container) {
         <div class="page-title">Insumos</div>
         <div class="page-sub" style="margin-bottom:0">Precio actual e historial de cada insumo.</div>
       </div>
-      ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${state.mostrarBases ? "btn-turq" : "btn-ghost"}" onclick="toggleMostrarBases()">${state.mostrarBases ? "✕ Cerrar bases" : `🧪 Ver bases (${Object.values(state.insumos).filter(i => i.receta && Object.keys(i.receta).length).length})`}</button><button class="btn ${state.mostrarDuplicados ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarDuplicados()">${state.mostrarDuplicados ? "✕ Cerrar búsqueda" : "🔍 Buscar posibles duplicados"}</button><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar fusión" : "🔀 Fusionar duplicados"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
+      ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${state.mostrarDuplicados ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarDuplicados()">${state.mostrarDuplicados ? "✕ Cerrar búsqueda" : "🔍 Buscar posibles duplicados"}</button><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar fusión" : "🔀 Fusionar duplicados"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
     </div>
     ${formHtml}
-    ${state.mostrarBases ? basesCardGridHtml() : ""}
     ${state.mostrarDuplicados ? `
       <div class="section-block">
         <div class="section-title" style="margin-bottom:10px">🔍 Posibles duplicados</div>
@@ -1479,7 +1540,7 @@ function renderInsumosView(container) {
       </div>` : ""}
     ${mergeBarHtml}
     <div class="section-block">
-      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr>${state.insumosMergeMode ? "<th></th>" : ""}<th>Nombre</th><th>Unidad</th><th>Precio actual</th><th>Registros</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay insumos cargados. Se crean automáticamente al registrar una factura, o podés agregarlos a mano.</div>`}
+      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr>${state.insumosMergeMode ? "<th></th>" : ""}<th>Nombre</th><th>Unidad</th><th>Proveedores</th><th>Precio actual</th><th>Registros</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Todavía no hay insumos cargados. Se crean automáticamente al registrar una factura, o podés agregarlos a mano.</div>`}
     </div>`;
 }
 
@@ -1609,6 +1670,20 @@ async function actualizarCostoHistorialProducto(id, producto) {
   if (last && last.fecha === today) return;
   if (last && Math.abs(last.costo - costoActual) < 0.005) return;
   await push(ref(db, `costeo/productos/${id}/costoHistorial`), { costo: costoActual, fecha: today });
+  // Igual que con insumos: si el costo genuinamente subió (no la primera carga), dejar una alerta
+  // con el detalle completo, marcando aparte las subas "abruptas" para una notificación más grande.
+  if (last && costoActual > last.costo + 0.005) {
+    const pct = last.costo > 0 ? ((costoActual - last.costo) / last.costo) * 100 : null;
+    await update(ref(db, `costeo/productos/${id}`), {
+      alertaPrecio: {
+        costoAnterior: last.costo,
+        costoNuevo: costoActual,
+        pct,
+        fecha: today,
+        abrupta: pct !== null && pct >= ALERTA_SUBA_ABRUPTA_UMBRAL
+      }
+    });
+  }
 }
 
 window.abrirFormProducto = function(id) {
@@ -1741,7 +1816,8 @@ function evaluarAlertaProducto(p) {
     const diasDesdeUltimo = (Date.now() - new Date(ultimo.fecha + "T00:00:00").getTime()) / 86400000;
     costoActualizado = diasDesdeUltimo <= 14 && Math.abs(ultimo.costo - anterior.costo) >= 0.005;
   }
-  return { costo, margen, perdida, margenBajo, costoActualizado };
+  const alertaSuba = alertaPrecioVigente(p.alertaPrecio) ? p.alertaPrecio : null;
+  return { costo, margen, perdida, margenBajo, costoActualizado, alertaSuba };
 }
 
 // Clasificación de productos para que se distinga de un vistazo qué es cada cosa:
@@ -1776,16 +1852,20 @@ function renderProductosTable() {
   const numPerdida = evaluados.filter(([, , a]) => a.perdida).length;
   const numMargenBajo = evaluados.filter(([, , a]) => a.margenBajo).length;
   const numCostoActualizado = evaluados.filter(([, , a]) => a.costoActualizado).length;
+  const numAlertaSuba = evaluados.filter(([, , a]) => a.alertaSuba).length;
 
   const filasFinal = state.productosSoloAlertas ? evaluados.filter(([, , a]) => a.perdida || a.margenBajo) : evaluados;
 
   const rows = filasFinal.map(([id, p, a]) => {
-    const { costo, margen, perdida, margenBajo, costoActualizado } = a;
+    const { costo, margen, perdida, margenBajo, costoActualizado, alertaSuba } = a;
     const fuente = costoProductoFuente(p);
     const tieneReceta = Object.keys(p.receta || {}).length > 0;
     const costoCell = tieneReceta
-      ? `${fmtMoney(costo)} <span class="text-muted" style="font-size:11px">(receta)</span>`
-      : `<input type="number" step="0.01" min="0" class="form-input" style="max-width:120px" value="${p.costoManual ?? ""}" placeholder="Costo manual" onchange="guardarCostoManualRapido('${id}', this.value)">`;
+      ? `<span class="${alertaSuba ? "precio-subio" : ""}">${fmtMoney(costo)}</span> <span class="text-muted" style="font-size:11px">(receta)</span>`
+      : `<input type="number" step="0.01" min="0" class="form-input ${alertaSuba ? "precio-subio" : ""}" style="max-width:120px" value="${p.costoManual ?? ""}" placeholder="Costo manual" onchange="guardarCostoManualRapido('${id}', this.value)">`;
+    const alertaSubaBadge = alertaSuba
+      ? `<div><span class="badge ${alertaSuba.abrupta ? "badge-suba-abrupta" : "badge-suba"}">${alertaSuba.abrupta ? "🚨 SUBA ABRUPTA" : "🔺 Subió"} ${fmtPct(alertaSuba.pct)}</span></div>`
+      : "";
     const margenCell = fuente !== "sin_datos" && margen !== null
       ? `${fmtPct(margen)}${perdida ? ` <span class="badge badge-alerta">❌ Pérdida</span>` : (margenBajo ? ` <span class="badge badge-no-pagado">⚠️ Bajo</span>` : "")}`
       : "—";
@@ -1802,7 +1882,7 @@ function renderProductosTable() {
       <tr>
         <td>${escapeHtml(p.nombre)}<div class="text-muted" style="font-size:11px">${CLASIFICACION_LABEL[clasificacion]}${esVersionMesa ? " · 🍽️ Versión mesa" : ""}${costoActualizado ? " · 🔄 Costo actualizado" : ""}</div></td>
         <td>${tieneReceta ? `${Object.keys(p.receta).length} insumo(s)` : `<span class="text-muted">Sin receta</span>`}</td>
-        <td>${costoCell}</td>
+        <td>${costoCell}${alertaSubaBadge}</td>
         <td>${precioVentaCell}</td>
         <td>${margenCell}</td>
         <td style="white-space:nowrap">
@@ -1819,6 +1899,7 @@ function renderProductosTable() {
       <div class="stat-card"><div class="stat-label">Vendiendo a pérdida</div><div class="stat-value">${numPerdida}</div></div>
       <div class="stat-card"><div class="stat-label">Margen bajo (&lt;${MARGEN_BAJO_UMBRAL}%)</div><div class="stat-value">${numMargenBajo}</div></div>
       <div class="stat-card"><div class="stat-label">Costo actualizado (14 días)</div><div class="stat-value">${numCostoActualizado}</div></div>
+      <div class="stat-card"><div class="stat-label">🔺 Subas de costo recientes</div><div class="stat-value" style="${numAlertaSuba ? "color:#c0392b" : ""}">${numAlertaSuba}</div></div>
     </div>
     ${(numPerdida + numMargenBajo) > 0 ? `<button class="btn ${state.productosSoloAlertas ? "btn-turq" : "btn-ghost"} btn-sm" style="margin-bottom:14px" onclick="toggleProductosSoloAlertas()">${state.productosSoloAlertas ? "✕ Ver todos" : "⚠️ Ver solo alertas"}</button>` : ""}`;
 
@@ -1959,24 +2040,52 @@ window.vaciarBaseCard = async function(id) {
   render();
 };
 
-// Grilla de cards de bases (insumos con receta propia) — se muestra de forma compacta arriba de
-// la tabla de Insumos, con un toggle, en vez de vivir en una pestaña separada.
-function basesCardGridHtml() {
+// =============================================================
+// RECETAS Y BASES (vista dedicada, cards con tablas editables)
+// =============================================================
+function renderRecetasBasesView(container) {
+  state.formOpen = true;
+  actualizarPreciosBasesElaboradas();
+  const tab = state.recetasBasesTab || "recetas";
+
+  const productosElaborados = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .filter(([, p]) => clasificarProducto(p) === "elaborado" || clasificarProducto(p) === "preparacion");
   const basesInsumos = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
     .filter(([, ins]) => ins.receta && Object.keys(ins.receta).length > 0);
+
+  const recetasCards = productosElaborados.map(([id, p]) => `
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">🧾 ${escapeHtml(p.nombre)} <span class="text-muted" style="font-size:11px;font-weight:400">${CLASIFICACION_LABEL[clasificarProducto(p)]}</span></div>
+      ${recetaPanelContenido(id, p)}
+    </div>`).join("");
+
   const basesCards = basesInsumos.map(([id, ins]) => `
     <div class="section-block">
       <div class="section-title" style="margin-bottom:10px">🧪 ${escapeHtml(ins.nombre)}</div>
       ${baseCardContenido(id, ins)}
     </div>`).join("");
-  return `
-    <div class="section-block">
-      <div class="text-muted" style="margin-bottom:14px">Bases/preparaciones con receta propia (crema chantilly, bizcochuelo, almíbares, etc.) — su costo se recalcula solo a partir de sus ingredientes.</div>
-      ${basesInsumos.length ? `<div class="receta-card-grid">${basesCards}</div>` : `<div class="empty-state">Todavía no hay bases con receta cargada — abrí o creá un insumo y armale una receta.</div>`}
-    </div>`;
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="page-title">Recetas y Bases</div>
+        <div class="page-sub" style="margin-bottom:0">Todas las recetas de productos elaborados/preparaciones y las bases, en cards con sus insumos, cantidades y costo editables acá mismo.</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="btn ${tab === "recetas" ? "btn-turq" : "btn-ghost"}" onclick="setRecetasBasesTab('recetas')">🧾 Recetas (${productosElaborados.length})</button>
+      <button class="btn ${tab === "bases" ? "btn-turq" : "btn-ghost"}" onclick="setRecetasBasesTab('bases')">🧪 Bases (${basesInsumos.length})</button>
+    </div>
+    ${tab === "recetas" ? `
+      <div class="text-muted" style="margin-bottom:14px">Productos de panadería/pastelería/especialidades/facturería/sandwiches y preparaciones (cafetería, rellenos, etc.) con receta. Para cargar uno nuevo, andá a <a href="#" onclick="navigate('productos');abrirFormProducto();return false;">Productos → Nuevo producto</a>.</div>
+      ${productosElaborados.length ? `<div class="receta-card-grid">${recetasCards}</div>` : `<div class="empty-state">Todavía no hay productos elaborados/preparaciones cargados.</div>`}
+    ` : `
+      <div class="text-muted" style="margin-bottom:14px">Bases/preparaciones con receta propia (crema chantilly, bizcochuelo, almíbares, etc.) — su costo se recalcula solo a partir de sus ingredientes. Para cargar una nueva, andá a <a href="#" onclick="navigate('insumos');abrirFormInsumo();return false;">Insumos → Nuevo insumo</a> y armale una receta.</div>
+      ${basesInsumos.length ? `<div class="receta-card-grid">${basesCards}</div>` : `<div class="empty-state">Todavía no hay bases con receta cargada.</div>`}
+    `}`;
 }
-window.toggleMostrarBases = function() {
-  state.mostrarBases = !state.mostrarBases;
+window.setRecetasBasesTab = function(val) {
+  state.recetasBasesTab = val;
   render();
 };
 
@@ -2084,6 +2193,21 @@ function renderAnalisisView(container) {
   const alertasPerdida = filasProd.filter(f => f.perdida);
   const alertasProdInflacion = filasProd.filter(f => !f.insuficiente && !f.perdida && f.delta > 0);
 
+  // Subas de precio recientes (insumos y productos), con todo el detalle para avisarle a compras:
+  // nombre, proveedor (cuando aplica), precio anterior, precio nuevo, % de suba y fecha. Las
+  // "abruptas" (>= ALERTA_SUBA_ABRUPTA_UMBRAL% en un solo salto) se destacan aparte, más grandes.
+  const alertasSubaInsumos = objToSortedEntries(state.insumos, () => 0)
+    .filter(([, ins]) => alertaPrecioVigente(ins.alertaPrecio))
+    .map(([id, ins]) => ({ id, nombre: ins.nombre, ...ins.alertaPrecio }));
+  const alertasSubaProductos = objToSortedEntries(state.productos, () => 0)
+    .filter(([, p]) => alertaPrecioVigente(p.alertaPrecio))
+    .map(([id, p]) => ({ id, nombre: p.nombre, precioAnterior: p.alertaPrecio.costoAnterior, precioNuevo: p.alertaPrecio.costoNuevo, pct: p.alertaPrecio.pct, fecha: p.alertaPrecio.fecha, abrupta: p.alertaPrecio.abrupta }));
+  const alertasSubaTodas = [
+    ...alertasSubaInsumos.map(a => ({ ...a, tipo: "insumo" })),
+    ...alertasSubaProductos.map(a => ({ ...a, tipo: "producto" }))
+  ].sort((a, b) => (b.abrupta - a.abrupta) || ((b.pct ?? 0) - (a.pct ?? 0)));
+  const numSubasAbruptas = alertasSubaTodas.filter(a => a.abrupta).length;
+
   // Modelo de costeo sugerido (28% variable / 37% fijo / 20% renta esperada / 15% merma): el
   // precio sugerido se despeja del costo real conocido, y se compara contra el precio de venta
   // que está cargado hoy para ver si quedó por debajo del modelo.
@@ -2147,9 +2271,35 @@ function renderAnalisisView(container) {
       <td><input type="number" step="0.1" class="form-input" style="max-width:120px" value="${state.inflacion[key] ?? ""}" placeholder="% mensual" onchange="guardarInflacionMes('${key}', this)"></td>
     </tr>`).join("");
 
+  const alertasSubaCards = alertasSubaTodas.map(a => `
+    <div class="alerta-precio-card ${a.abrupta ? "abrupta" : ""}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+        <div>
+          <strong>${a.tipo === "insumo" ? "🧂" : "🍽️"} ${escapeHtml(a.nombre)}</strong>
+          <span class="text-muted" style="font-size:11px">(${a.tipo === "insumo" ? "Insumo" : "Producto"})</span>
+          ${a.proveedorNombre ? `<div class="text-muted" style="font-size:12px">Proveedor: ${escapeHtml(a.proveedorNombre)}</div>` : ""}
+          <div style="font-size:13px;margin-top:4px">${fmtMoney(a.precioAnterior)} → <strong class="precio-subio">${fmtMoney(a.precioNuevo)}</strong></div>
+          <div class="text-muted" style="font-size:11px">${fmtDate(a.fecha)}</div>
+        </div>
+        <span class="badge ${a.abrupta ? "badge-suba-abrupta" : "badge-suba"}">${a.abrupta ? "🚨 SUBA ABRUPTA" : "🔺 Subió"} ${fmtPct(a.pct)}</span>
+      </div>
+    </div>`).join("");
+
   container.innerHTML = `
     <div class="page-title">Análisis de precios e inflación</div>
     <div class="page-sub">Comparación de la variación de precio de cada insumo, y del costo de cada producto vs. su precio de venta, contra la inflación acumulada del período.</div>
+
+    <div class="section-block">
+      <div class="section-header">
+        <div class="section-title">🚨 Alertas de subas de precio</div>
+      </div>
+      <div class="page-sub" style="margin-bottom:16px">Insumos y productos cuyo precio/costo de referencia subió en los últimos ${ALERTA_RECIENCIA_DIAS} días, con el detalle completo para avisar al área de compras. Una suba de ${ALERTA_SUBA_ABRUPTA_UMBRAL}% o más en un solo salto se marca como abrupta.</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Subas recientes</div><div class="stat-value">${alertasSubaTodas.length}</div></div>
+        <div class="stat-card"><div class="stat-label">🚨 Abruptas</div><div class="stat-value" style="${numSubasAbruptas ? "color:#c0392b" : ""}">${numSubasAbruptas}</div></div>
+      </div>
+      ${alertasSubaTodas.length ? alertasSubaCards : `<div class="empty-state">Sin subas de precio recientes. 👍</div>`}
+    </div>
 
     <div class="section-block">
       <div class="section-header">

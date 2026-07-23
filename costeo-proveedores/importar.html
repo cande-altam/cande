@@ -366,10 +366,19 @@ async function runImport() {
     } else if (precio > 0) {
       const insSnapCI = await get(ref(db, `costeo/insumos/${insId}`));
       const insumoCI = insSnapCI.val() || {};
+      const key = provId || "_manual";
+      // Regla de precios: si cambia de proveedor y el precio nuevo es mayor al que se venía usando,
+      // pasa a ser la referencia; si es menor, se mantiene el proveedor/precio que ya se usaba.
+      const proveedorPreferidoAnterior = insumoCI.proveedorPreferido;
+      const precioPreferidoAnterior = (proveedorPreferidoAnterior && insumoCI.precios && insumoCI.precios[proveedorPreferidoAnterior])
+        ? insumoCI.precios[proveedorPreferidoAnterior].precio
+        : null;
       const precios = { ...(insumoCI.precios || {}) };
-      precios[provId || "_manual"] = { precio, actualizadoTs: Date.now(), proveedorNombre };
-      let proveedorPreferido = insumoCI.proveedorPreferido;
-      if (!proveedorPreferido || !precios[proveedorPreferido]) proveedorPreferido = provId || "_manual";
+      precios[key] = { precio, actualizadoTs: Date.now(), proveedorNombre };
+      let proveedorPreferido = proveedorPreferidoAnterior;
+      if (!proveedorPreferido || !precios[proveedorPreferido] || precioPreferidoAnterior === null || precio > precioPreferidoAnterior) {
+        proveedorPreferido = key;
+      }
       const precioActual = precios[proveedorPreferido]?.precio ?? precio;
       await update(ref(db, `costeo/insumos/${insId}`), { precios, proveedorPreferido, precioActual, actualizadoTs: Date.now() });
       await push(ref(db, `costeo/insumos/${insId}/historial`), { precio, fecha: fechaCI, proveedorId: provId, proveedorNombre, facturaId: "" });
