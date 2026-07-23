@@ -57,6 +57,7 @@
   .weekbox input{background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 11px;width:190px}
   .btn{border:1px solid var(--line-strong);background:var(--panel-2);border-radius:9px;padding:8px 13px;cursor:pointer;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:.12s}
   .btn:hover{border-color:var(--ink-soft)}
+  .btn:disabled{opacity:.35;cursor:default;pointer-events:none}
   .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.primary:hover{filter:brightness(1.05)}
@@ -231,6 +232,10 @@
   #printOverlay .pv-confirm{margin:0 20px 20px;background:#fbf0d8;border:1px solid #e3c98a;border-radius:9px;padding:14px 16px}
   #printOverlay .pv-confirm p{margin:0 0 10px;font-size:13.5px;color:#4a3f1e;font-weight:600}
 
+  /* burbuja de error al pasar el mouse sobre un casillero con conflicto */
+  #cellTooltip{position:fixed;z-index:600;max-width:250px;background:var(--crit);color:#fff;font-size:12px;font-weight:600;line-height:1.4;padding:9px 12px;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.25);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+  #cellTooltip.show{opacity:1;transform:translateY(0)}
+
   /* auth gate */
   .authGate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;z-index:100}
   .authCard{width:100%;max-width:340px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:32px 28px;box-shadow:var(--shadow);text-align:center}
@@ -267,6 +272,8 @@
     </div>
     <button class="btn primary" id="btnAuto" title="Genera la semana respetando las reglas">✨ Autocompletar</button>
     <button class="btn" id="btnSave">💾 Guardar</button>
+    <button class="btn ghost icon-btn" id="btnUndo" title="Deshacer el último cambio" disabled>↩️</button>
+    <button class="btn ghost icon-btn" id="btnRedo" title="Rehacer" disabled>↪️</button>
     <button class="btn ghost" id="btnNew" title="Arranca una semana nueva copiando ésta como base">↻ Nueva semana</button>
     <button class="btn ghost icon-btn" id="btnPrint" title="Ver imagen del cronograma para guardar">⬇️</button>
     <button class="btn ghost icon-btn" id="btnExport" title="Exportar datos para pasar a otro dispositivo">📤</button>
@@ -446,6 +453,7 @@
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<div id="cellTooltip"></div>
 
 <script>
 "use strict";
@@ -528,8 +536,46 @@ function peopleFor(role,loc){
 /* ---------------- STATE ---------------- */
 let state={label:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{}};
 const LS="candela_scheduler_v1";
-function persist(){localStorage.setItem(LS,JSON.stringify(state));}
+// deshacer/rehacer: cada persist() guarda una foto de cómo estaba el estado ANTES de este cambio
+// (lo que ya había en localStorage), así que no hay que tocar cada botón de la app para que funcione.
+const UNDO_LIMIT=60;
+let undoStack=[],redoStack=[],suspendHistory=false;
+function persist(){
+  if(!suspendHistory){
+    const prev=localStorage.getItem(LS);
+    if(prev&&prev!==JSON.stringify(state)){undoStack.push(prev);if(undoStack.length>UNDO_LIMIT)undoStack.shift();redoStack.length=0;}
+  }
+  localStorage.setItem(LS,JSON.stringify(state));
+  syncUndoRedoButtons();
+}
 function loadLS(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.assign){state=Object.assign({label:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{}},s);}}catch(e){}}
+function restoreSnapshot(json){
+  state=JSON.parse(json);
+  suspendHistory=true; // esta escritura es parte del deshacer/rehacer, no un cambio nuevo del usuario
+  localStorage.setItem(LS,JSON.stringify(state));
+  suspendHistory=false;
+  fillPersonSelects();
+  document.getElementById("weekLabel").value=state.label||"";
+  renderMini();render();
+  syncUndoRedoButtons();
+}
+function undoLast(){
+  if(!undoStack.length)return;
+  redoStack.push(localStorage.getItem(LS));
+  restoreSnapshot(undoStack.pop());
+  toast("Cambio deshecho ↩️");
+}
+function redoLast(){
+  if(!redoStack.length)return;
+  undoStack.push(localStorage.getItem(LS));
+  restoreSnapshot(redoStack.pop());
+  toast("Cambio rehecho ↪️");
+}
+function syncUndoRedoButtons(){
+  const u=document.getElementById("btnUndo"),r=document.getElementById("btnRedo");
+  if(u)u.disabled=!undoStack.length;
+  if(r)r.disabled=!redoStack.length;
+}
 // puesto principal / de respaldo de una persona: prioriza lo que vos cambiaste en "Puesto de cada persona"
 // por sobre el default del código (igual que francoFor con el franco).
 function roleFor(name){
@@ -815,7 +861,12 @@ function selHTML(d,loc,shift,role,idx,active,closed){
     state.ex.forEach(e=>{if(e.n===cur&&e.day===d&&e.shift===shift)dupe=true;});}
   const he=cur&&isDoubleShift(cur,d);
   const cls=`cellsel ${cur?"filled":"empty"} ${dupe?"dupe":""} ${he?"he":""}`;
-  return `<td class="cell ${isWknd(d)?"wknd":""}"><select class="${cls}" data-k="${k}"><option value="">—</option>${opts}</select></td>`;
+  const errAttr=dupe?` data-err="${dupeMsg(cur,d,shift)}"`:"";
+  return `<td class="cell ${isWknd(d)?"wknd":""}"><select class="${cls}" data-k="${k}"${errAttr}><option value="">—</option>${opts}</select></td>`;
+}
+// mensaje de la burbuja de error: mismo texto que usa la auditoría para "está en dos lugares a la vez"
+function dupeMsg(name,d,shift){
+  return `⚠️ ${name} está en dos lugares a la vez el ${DAYS[d][1].toLowerCase()} a la ${shift==="M"?"mañana":"tarde"}.`;
 }
 function isDoubleShift(name,d){
   let m=false,t=false;
@@ -831,7 +882,8 @@ function extraCellHTML(e){
   state.ex.forEach(o=>{if(o!==e&&o.n===e.n&&o.day===e.day&&o.shift===e.shift)dupe=true;});
   const he=isDoubleShift(e.n,e.day);
   const badge=e.half?`<span class="halfbadge">½</span>`:"";
-  return `<td class="cell extra ${isWknd(e.day)?"wknd":""}"><div class="excell"><select class="cellsel filled ${dupe?"dupe":""} ${he?"he":""}" data-ex="${e.id}"><option value="">— quitar</option>${opts}</select>${badge}</div></td>`;
+  const errAttr=dupe?` data-err="${dupeMsg(e.n,e.day,e.shift)}"`:"";
+  return `<td class="cell extra ${isWknd(e.day)?"wknd":""}"><div class="excell"><select class="cellsel filled ${dupe?"dupe":""} ${he?"he":""}" data-ex="${e.id}"${errAttr}><option value="">— quitar</option>${opts}</select>${badge}</div></td>`;
 }
 function locTable(loc,title,tag,tagcls,worked){
   let h=`<section class="card"><div class="loc-head"><h2>${title}</h2><span class="loc-tag ${tagcls}">${tag}</span></div><div class="tbl-scroll"><table class="grid"><thead><tr><th>Puesto</th>`;
@@ -909,7 +961,25 @@ function renderSched(worked,empty){
       renderMini();render();persist();
     });
   });
+  document.querySelectorAll("[data-err]").forEach(el=>{
+    el.addEventListener("mouseenter",()=>showCellTooltip(el,el.dataset.err));
+    el.addEventListener("mouseleave",hideCellTooltip);
+    el.addEventListener("focus",()=>showCellTooltip(el,el.dataset.err));
+    el.addEventListener("blur",hideCellTooltip);
+  });
 }
+function showCellTooltip(el,msg){
+  const tt=document.getElementById("cellTooltip");
+  tt.textContent=msg;
+  tt.classList.add("show");
+  const r=el.getBoundingClientRect();
+  const w=Math.min(tt.offsetWidth||250,250);
+  let left=r.left+r.width/2-w/2;
+  left=Math.max(8,Math.min(left,window.innerWidth-w-8));
+  tt.style.left=left+"px";
+  tt.style.top=Math.max(8,r.top-tt.offsetHeight-8)+"px";
+}
+function hideCellTooltip(){document.getElementById("cellTooltip").classList.remove("show");}
 function renderTeam(v){
   const el=document.getElementById("team");
   el.innerHTML=PEOPLE.map(p=>{
@@ -1281,6 +1351,15 @@ function initControls(){
     toast(v==="auto"?`${n} vuelve a franco automático`:`Franco de ${n} fijado el ${DAYS[+v][1].toLowerCase()}`);
   });
   document.getElementById("btnSave").addEventListener("click",()=>{state.label=document.getElementById("weekLabel").value;persist();toast("Semana guardada 💾");});
+  document.getElementById("btnUndo").addEventListener("click",undoLast);
+  document.getElementById("btnRedo").addEventListener("click",redoLast);
+  document.addEventListener("keydown",e=>{
+    if(!(e.ctrlKey||e.metaKey))return;
+    const tag=(document.activeElement&&document.activeElement.tagName)||"";
+    if(["INPUT","TEXTAREA","SELECT"].includes(tag))return; // no pisar el deshacer nativo de un campo de texto
+    if(e.key==="z"&&!e.shiftKey){e.preventDefault();undoLast();}
+    else if(e.key==="y"||(e.key==="z"&&e.shiftKey)){e.preventDefault();redoLast();}
+  });
   document.getElementById("btnNew").addEventListener("click",()=>{
     state.label="";state.abs=[];state.ex=[];state.rules=[];
     document.getElementById("weekLabel").value="";
@@ -1451,6 +1530,7 @@ document.getElementById("btnLogout").addEventListener("click",()=>{
 document.getElementById("weekLabel").value=state.label||"";
 renderMini();
 render();
+undoStack.length=0;redoStack.length=0;syncUndoRedoButtons(); // el armado inicial (reglas semilla, etc.) no cuenta como "cambio" deshacible
 if(sessionStorage.getItem(AUTH_KEY)==="ok")showApp();
 </script>
 </body>
