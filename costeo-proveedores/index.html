@@ -1495,6 +1495,22 @@ window.toggleInsumoMergeCheck = function(id, checked) {
   render();
 };
 
+// Envoltorios para los handlers inline de la barra de fusión: el script corre como <script
+// type="module">, así que las variables de nivel superior como `state` viven en el scope del
+// módulo y NO son visibles desde un atributo onclick/onchange en línea (esos corren en el scope
+// global). Referenciar `state` directo ahí (como se hacía antes) tira ReferenceError en el
+// navegador real y el botón no hace nada — silenciosamente, porque el error queda en la consola.
+// Por eso cada handler inline solo puede llamar a una función ya colgada de `window`, nunca leer
+// `state` directamente en el string del atributo.
+window.setInsumoMergeSurvivor = function(id) {
+  state.insumosMergeSurvivor = id;
+};
+window.fusionarInsumosSeleccionados = async function() {
+  const ids = Object.keys(state.insumosMergeSeleccion);
+  const survivor = state.insumosMergeSurvivor || ids[0];
+  await fusionarInsumos(ids, survivor);
+};
+
 // Fusiona 2+ insumos duplicados en uno solo: combina precios por proveedor, historial,
 // y remapea las recetas de productos que referenciaban a los insumos absorbidos.
 window.fusionarInsumos = async function(idsSeleccionados, survivorId) {
@@ -1649,10 +1665,10 @@ function renderInsumosView(container) {
       <div class="text-muted" style="margin-bottom:10px">Elegí cuál se queda con el nombre. Los precios por proveedor y el historial de todos se combinan en el que elijas; los demás se eliminan.</div>
       ${seleccionIds.map(id => `
         <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
-          <input type="radio" name="merge-survivor" value="${id}" ${state.insumosMergeSurvivor === id ? "checked" : ""} onchange="state.insumosMergeSurvivor='${id}'">
+          <input type="radio" name="merge-survivor" value="${id}" ${state.insumosMergeSurvivor === id ? "checked" : ""} onchange="setInsumoMergeSurvivor('${id}')">
           ${escapeHtml(state.insumos[id]?.nombre || "")}
         </label>`).join("")}
-      <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="fusionarInsumos(Object.keys(state.insumosMergeSeleccion), state.insumosMergeSurvivor || Object.keys(state.insumosMergeSeleccion)[0])">Fusionar</button>
+      <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="fusionarInsumosSeleccionados()">Fusionar</button>
     </div>` : "";
 
   container.innerHTML = `
