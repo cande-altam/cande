@@ -349,7 +349,7 @@ async function runImport() {
     const precio = row.costoUnitario;
     if (!insId) {
       const newInsRef = push(ref(db, "costeo/insumos"));
-      const precios = precio > 0 ? { [provId || "_manual"]: { precio, actualizadoTs: Date.now(), proveedorNombre } } : {};
+      const precios = precio > 0 ? { [provId || "_manual"]: { precio, actualizadoTs: Date.now(), proveedorId: provId || "", proveedorNombre, marca: "" } } : {};
       await set(newInsRef, {
         nombre: row.nombre, unidad: "kg", precios,
         ...(precio > 0 ? { proveedorPreferido: provId || "_manual", precioActual: precio } : {}),
@@ -374,7 +374,7 @@ async function runImport() {
         ? insumoCI.precios[proveedorPreferidoAnterior].precio
         : null;
       const precios = { ...(insumoCI.precios || {}) };
-      precios[key] = { precio, actualizadoTs: Date.now(), proveedorNombre };
+      precios[key] = { precio, actualizadoTs: Date.now(), proveedorId: provId || "", proveedorNombre, marca: "" };
       let proveedorPreferido = proveedorPreferidoAnterior;
       if (!proveedorPreferido || !precios[proveedorPreferido] || precioPreferidoAnterior === null || precio > precioPreferidoAnterior) {
         proveedorPreferido = key;

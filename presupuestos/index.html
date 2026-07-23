@@ -290,6 +290,7 @@ const state = {
   presupuestos: {},
   config: {},
   filtro: "todos",
+  busqueda: "",
   viewingId: null,
   aceptandoId: null,
 };
@@ -560,6 +561,7 @@ window.guardarPresupuesto = async function() {
 // LISTADO DE PRESUPUESTOS
 // =============================================================
 window.setFiltro = function(f) { state.filtro = f; render(); };
+window.setBusqueda = function(val) { state.busqueda = val; render(); };
 window.verPresupuesto = function(id) { state.viewingId = id; render(); };
 window.cerrarVista = function() { state.viewingId = null; render(); };
 
@@ -658,8 +660,10 @@ function renderListadoView(container) {
     return;
   }
 
+  const busqueda = state.busqueda.trim().toLowerCase();
   const entries = objToSortedEntries(state.presupuestos, (a, b) => (b[1].creadoTs || 0) - (a[1].creadoTs || 0))
-    .filter(([, p]) => state.filtro === "todos" || p.estado === state.filtro);
+    .filter(([, p]) => state.filtro === "todos" || p.estado === state.filtro)
+    .filter(([, p]) => !busqueda || (p.cliente?.nombre || "").toLowerCase().includes(busqueda) || String(p.numero ?? "").includes(busqueda));
 
   const rows = entries.map(([id, p]) => `
     <tr>
@@ -685,8 +689,9 @@ function renderListadoView(container) {
     <div class="tabs">
       ${["todos", ...ESTADOS].map(f => `<button class="tab ${state.filtro === f ? "active" : ""}" onclick="setFiltro('${f}')">${f === "todos" ? "Todos" : ESTADO_LABELS[f]}</button>`).join("")}
     </div>
+    <div class="form-row" style="margin-bottom:14px"><div class="form-group" style="max-width:320px"><input class="form-input" placeholder="🔎 Buscar por cliente o N°..." value="${escapeHtml(state.busqueda)}" oninput="setBusqueda(this.value)"></div></div>
     <div class="section-block">
-      ${entries.length === 0 ? `<div class="empty-state">No hay presupuestos en esta categoría.</div>` : `
+      ${entries.length === 0 ? `<div class="empty-state">${busqueda ? "Ningún presupuesto coincide con la búsqueda." : "No hay presupuestos en esta categoría."}</div>` : `
         <div class="data-table-wrap">
           <table class="data-table">
             <thead><tr><th>N°</th><th>Cliente</th><th>Entrega</th><th>Ítems</th><th>Total</th><th>Estado</th><th></th></tr></thead>
