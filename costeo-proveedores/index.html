@@ -123,6 +123,7 @@ textarea.form-input{resize:vertical;min-height:60px;}
 
 /* CARDS LIST */
 .card-list{display:flex;flex-direction:column;gap:10px;}
+.receta-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;align-items:start;}
 .mini-card{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--r-sm);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow-sm);}
 .mini-card-title{font-size:13.5px;font-weight:600;color:var(--black);}
 .mini-card-sub{font-size:11.5px;color:var(--gray);margin-top:2px;}
@@ -199,6 +200,7 @@ const TABS = [
   { key: "proveedores",   label: "🏭 Proveedores" },
   { key: "insumos",       label: "📦 Insumos" },
   { key: "productos",     label: "🍰 Productos" },
+  { key: "recetas-bases", label: "📋 Recetas y Bases" },
   { key: "analisis",      label: "📈 Análisis" },
   { key: "config",        label: "⚙️ Configuración" },
 ];
@@ -222,6 +224,8 @@ const state = {
   pagosFiltro: "no_pagado",
   productosFiltro: "",
   productosSoloAlertas: false,
+  productosClasificacionFiltro: "todos",
+  recetasBasesTab: "recetas",
   analisisPeriodo: 6,
   editingProveedorId: null,
   editingInsumoId: null,
@@ -371,6 +375,7 @@ function render() {
     case "proveedores": renderProveedoresView(container); break;
     case "insumos": renderInsumosView(container); break;
     case "productos": renderProductosView(container); break;
+    case "recetas-bases": renderRecetasBasesView(container); break;
     case "analisis": renderAnalisisView(container); break;
     case "config": renderConfigView(container); break;
     default: container.innerHTML = `<div class="empty-state">Vista no encontrada.</div>`;
@@ -1576,6 +1581,24 @@ function costoProductoFuente(producto) {
   return "sin_datos";
 }
 
+// Modelo de costeo: el costo (de receta, o de compra para retail) representa el 28% del precio de
+// venta ideal; el resto se reparte en costos fijos (37%), renta esperada (20%) y mermas (15%).
+// Con el costo real conocido, se despeja el precio sugerido con una regla de tres simple:
+// costo / 0.28 = precioSugerido, y de ahí el resto de las porciones.
+const COSTEO_MODELO = { variable: 0.28, fijo: 0.37, renta: 0.20, merma: 0.15 };
+function calcModeloCosteo(producto) {
+  const costo = calcCostoProducto(producto);
+  if (!costo) return null;
+  const precioSugerido = costo / COSTEO_MODELO.variable;
+  return {
+    costo,
+    fijoSugerido: precioSugerido * COSTEO_MODELO.fijo,
+    rentaSugerida: precioSugerido * COSTEO_MODELO.renta,
+    mermaSugerida: precioSugerido * COSTEO_MODELO.merma,
+    precioSugerido
+  };
+}
+
 // Snapshots a producto's computed cost into costoHistorial (like insumo price historial),
 // so the Análisis view can compare cost variation over time — at most once per day, and only
 // when the cost actually moved, since this piggybacks on viewing Análisis rather than a cron.
@@ -1686,12 +1709,22 @@ function renderProductosView(container) {
       </div>
       ${!editing ? `<button class="btn btn-primary" onclick="abrirFormProducto()">+ Nuevo producto</button>` : ""}
     </div>
+    ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="btn ${state.productosClasificacionFiltro === "todos" ? "btn-turq" : "btn-ghost"} btn-sm" onclick="setProductosClasificacionFiltro('todos')">Todos</button>
+      <button class="btn ${state.productosClasificacionFiltro === "elaborado" ? "btn-turq" : "btn-ghost"} btn-sm" onclick="setProductosClasificacionFiltro('elaborado')">🥐 Elaborados</button>
+      <button class="btn ${state.productosClasificacionFiltro === "preparacion" ? "btn-turq" : "btn-ghost"} btn-sm" onclick="setProductosClasificacionFiltro('preparacion')">☕ Preparaciones</button>
+      <button class="btn ${state.productosClasificacionFiltro === "retail" ? "btn-turq" : "btn-ghost"} btn-sm" onclick="setProductosClasificacionFiltro('retail')">🛒 Retail</button>
+    </div>` : ""}
     ${!editing && todosProductos.length > 8 ? `<div class="form-row"><div class="form-group" style="max-width:320px"><input class="form-input" id="productos-filtro-input" placeholder="🔎 Buscar producto..." value="${escapeHtml(state.productosFiltro)}" oninput="setProductosFiltro(this.value)"></div></div>` : ""}
     ${formHtml}
     <div class="section-block" id="productos-table-wrap"></div>`;
 
   renderProductosTable();
 }
+window.setProductosClasificacionFiltro = function(val) {
+  state.productosClasificacionFiltro = val;
+  renderProductosTable();
+};
 
 // Umbral de margen "bajo" — no es pérdida todavía, pero está cerca; solo para alertar, no bloquea nada.
 const MARGEN_BAJO_UMBRAL = 20;
@@ -1712,12 +1745,29 @@ function evaluarAlertaProducto(p) {
   return { costo, margen, perdida, margenBajo, costoActualizado };
 }
 
+// Clasificación de productos para que se distinga de un vistazo qué es cada cosa:
+// - "retail": se compra ya terminado y se revende tal cual (fiambres, lácteos, bebidas, almacén, té en hebras).
+// - "preparacion": se arma/prepara en el momento con bases e insumos (cafetería, licuados, jugos).
+// - "elaborado": producto de panadería/pastelería/facturería/sandwiches con receta propia.
+const CATEGORIAS_RETAIL_PROD = new Set(["fiambres", "lacteos", "bebidas", "almacen", "te en hebras", "reventa"]);
+const CATEGORIAS_PREPARACION_PROD = new Set(["bebidas cafeteria", "cafe frio", "cafeteria tradicional", "cafeteria de especialidad", "desayunos / meriendas"]);
+function clasificarProducto(p) {
+  const cat = stripAccentsCosteo(p.categoria || "").toLowerCase().trim();
+  if (CATEGORIAS_RETAIL_PROD.has(cat)) return "retail";
+  if (CATEGORIAS_PREPARACION_PROD.has(cat)) return "preparacion";
+  return "elaborado";
+}
+const CLASIFICACION_LABEL = { elaborado: "🥐 Elaborado", preparacion: "☕ Preparación", retail: "🛒 Retail" };
+
 function renderProductosTable() {
   const wrap = document.getElementById("productos-table-wrap");
   if (!wrap) return;
   const filtro = state.productosFiltro.trim().toLowerCase();
   const todosProductos = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre));
   let productosFiltrados = filtro ? todosProductos.filter(([, p]) => p.nombre.toLowerCase().includes(filtro)) : todosProductos;
+  if (state.productosClasificacionFiltro !== "todos") {
+    productosFiltrados = productosFiltrados.filter(([, p]) => clasificarProducto(p) === state.productosClasificacionFiltro);
+  }
 
   const evaluados = productosFiltrados.map(([id, p]) => [id, p, evaluarAlertaProducto(p)]);
   const numPerdida = evaluados.filter(([, , a]) => a.perdida).length;
@@ -1737,12 +1787,14 @@ function renderProductosTable() {
       ? `${fmtPct(margen)}${perdida ? ` <span class="badge badge-alerta">❌ Pérdida</span>` : (margenBajo ? ` <span class="badge badge-no-pagado">⚠️ Bajo</span>` : "")}`
       : "—";
     const recetaAbierta = state.viewingProductoRecetaId === id;
+    const esVersionMesa = p.nombre.toLowerCase().includes("(mesas)");
+    const clasificacion = clasificarProducto(p);
     return `
       <tr>
-        <td>${escapeHtml(p.nombre)}${costoActualizado ? ` <span class="badge badge-ok" title="El costo cambió en los últimos 14 días">🔄 Costo actualizado</span>` : ""}</td>
+        <td>${escapeHtml(p.nombre)}<div class="text-muted" style="font-size:11px">${CLASIFICACION_LABEL[clasificacion]}${esVersionMesa ? " · 🍽️ Versión mesa" : ""}${costoActualizado ? " · 🔄 Costo actualizado" : ""}</div></td>
         <td>${tieneReceta ? `${Object.keys(p.receta).length} insumo(s)` : `<span class="text-muted">Sin receta</span>`}</td>
         <td>${costoCell}</td>
-        <td>${p.precioVenta ? fmtMoney(p.precioVenta) : "—"}</td>
+        <td>${p.precioVenta ? `${fmtMoney(p.precioVenta)}<div class="text-muted" style="font-size:11px">Mesa (+10%): ${fmtMoney(p.precioVenta * 1.1)}</div>` : "—"}</td>
         <td>${margenCell}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" onclick="toggleRecetaProducto('${id}')">${recetaAbierta ? "Ocultar receta" : "📋 Receta"}</button>
@@ -1775,26 +1827,34 @@ window.toggleProductosSoloAlertas = function() {
 // formulario completo de edición del producto. Las filas usan las mismas clases que el formulario
 // de edición (recipe-row/recipe-insumo/recipe-cantidad) pero las consultas siempre están acotadas
 // al contenedor de ESTE producto (por id de DOM), así que no chocan entre sí ni con el otro form.
-function recetaPanelHtml(id, p) {
+// Contenido del editor de receta de un producto (insumos/cantidades editables + costo total) —
+// se reutiliza tanto en el panel expandible de la tabla de Productos como en las cards de la
+// vista "Recetas y Bases". id/nombre/receta van acotados por id de DOM, así que da lo mismo
+// cuántas cards haya abiertas a la vez, nunca chocan entre sí.
+function recetaPanelContenido(id, p) {
   const receta = p.receta || {};
   const rows = Object.keys(receta).length
     ? objToSortedEntries(receta, () => 0).map(([insumoId, cantidad]) => recipeRowHtml({ insumoId, cantidad }, { onchange: `recalcRecetaPanel('${id}')` })).join("")
     : recipeRowHtml({}, { onchange: `recalcRecetaPanel('${id}')` });
   const costo = calcCostoProducto(p);
   return `
+    <div id="receta-panel-container-${id}">${rows}</div>
+    <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addRecetaPanelRow('${id}')">+ Agregar insumo</button>
+    <div style="margin:10px 0;font-size:13px">Costo total: <strong id="receta-panel-total-${id}">${fmtMoney(costo)}</strong></div>
+    <button class="btn btn-primary btn-sm" onclick="guardarRecetaPanel('${id}')">💾 Guardar receta</button>
+    <button class="btn btn-danger btn-sm" onclick="vaciarRecetaPanel('${id}')">🗑️ Vaciar receta</button>`;
+}
+function recetaPanelHtml(id, p) {
+  return `
     <tr><td colspan="6" style="background:var(--cream);padding:14px 18px">
       <div class="text-muted" style="margin-bottom:8px;font-weight:600">🧾 Receta de "${escapeHtml(p.nombre)}"</div>
-      <div id="receta-panel-container-${id}">${rows}</div>
-      <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addRecetaPanelRow('${id}')">+ Agregar insumo</button>
-      <div style="margin:10px 0;font-size:13px">Costo total: <strong id="receta-panel-total-${id}">${fmtMoney(costo)}</strong></div>
-      <button class="btn btn-primary btn-sm" onclick="guardarRecetaPanel('${id}')">💾 Guardar receta</button>
-      <button class="btn btn-danger btn-sm" onclick="vaciarRecetaPanel('${id}')">🗑️ Vaciar receta</button>
+      ${recetaPanelContenido(id, p)}
       <button class="btn btn-ghost btn-sm" onclick="toggleRecetaProducto('${id}')">Cerrar</button>
     </td></tr>`;
 }
 window.toggleRecetaProducto = function(id) {
   state.viewingProductoRecetaId = state.viewingProductoRecetaId === id ? null : id;
-  renderProductosTable();
+  render();
 };
 window.addRecetaPanelRow = function(id) {
   const container = document.getElementById(`receta-panel-container-${id}`);
@@ -1825,14 +1885,121 @@ window.guardarRecetaPanel = async function(id) {
   await update(ref(db, `costeo/productos/${id}`), { receta });
   state.productos[id] = { ...state.productos[id], receta };
   showToast("✅ Receta guardada.", "success");
-  renderProductosTable();
+  render();
 };
 window.vaciarRecetaPanel = async function(id) {
   if (!confirm("¿Vaciar la receta de este producto? El costo va a volver a depender del costo manual (si lo cargaste), hasta que armes una receta nueva.")) return;
   await update(ref(db, `costeo/productos/${id}`), { receta: {} });
   state.productos[id] = { ...state.productos[id], receta: {} };
   showToast("✅ Receta vaciada.", "success");
-  renderProductosTable();
+  render();
+};
+
+// Mismo mecanismo que recetaPanelContenido, pero para la receta propia de un insumo/base — excluye
+// el propio insumo de la lista (excludeId) para que no pueda referenciarse a sí mismo.
+function baseCardContenido(id, ins) {
+  const receta = ins.receta || {};
+  const rows = Object.keys(receta).length
+    ? objToSortedEntries(receta, () => 0).map(([subId, cantidad]) => recipeRowHtml({ insumoId: subId, cantidad }, { onchange: `recalcBaseCard('${id}')`, excludeId: id })).join("")
+    : recipeRowHtml({}, { onchange: `recalcBaseCard('${id}')`, excludeId: id });
+  const costo = precioEfectivoInsumo(id);
+  return `
+    <div id="base-card-container-${id}">${rows}</div>
+    <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addBaseCardRow('${id}')">+ Agregar insumo</button>
+    <div style="margin:10px 0;font-size:13px">Costo actual: <strong id="base-card-total-${id}">${fmtMoney(costo)}</strong></div>
+    <button class="btn btn-primary btn-sm" onclick="guardarBaseCard('${id}')">💾 Guardar receta</button>
+    <button class="btn btn-danger btn-sm" onclick="vaciarBaseCard('${id}')">🗑️ Vaciar receta</button>`;
+}
+window.addBaseCardRow = function(id) {
+  const container = document.getElementById(`base-card-container-${id}`);
+  if (container) container.insertAdjacentHTML("beforeend", recipeRowHtml({}, { onchange: `recalcBaseCard('${id}')`, excludeId: id }));
+};
+window.recalcBaseCard = function(id) {
+  const container = document.getElementById(`base-card-container-${id}`);
+  if (!container) return 0;
+  let total = 0;
+  container.querySelectorAll(".recipe-row").forEach(row => {
+    const insumoId = row.querySelector(".recipe-insumo").value;
+    const cantidad = parseFloat(row.querySelector(".recipe-cantidad").value) || 0;
+    total += precioEfectivoInsumo(insumoId) * cantidad;
+  });
+  const el = document.getElementById(`base-card-total-${id}`);
+  if (el) el.textContent = fmtMoney(total);
+  return total;
+};
+window.guardarBaseCard = async function(id) {
+  const container = document.getElementById(`base-card-container-${id}`);
+  if (!container) return;
+  const receta = {};
+  container.querySelectorAll(".recipe-row").forEach(row => {
+    const subId = row.querySelector(".recipe-insumo").value;
+    const cantidad = parseFloat(row.querySelector(".recipe-cantidad").value);
+    if (subId && cantidad > 0) receta[subId] = cantidad;
+  });
+  await update(ref(db, `costeo/insumos/${id}`), { receta });
+  state.insumos[id] = { ...state.insumos[id], receta };
+  if (Object.keys(receta).length) {
+    const costo = Object.entries(receta).reduce((sum, [subId, cant]) => sum + precioEfectivoInsumo(subId) * cant, 0);
+    await guardarPrecioRecetaInsumo(id, costo);
+  }
+  showToast("✅ Receta guardada.", "success");
+  render();
+};
+window.vaciarBaseCard = async function(id) {
+  if (!confirm("¿Vaciar la receta de esta base? Su costo va a dejar de calcularse solo — va a quedar en el último valor calculado hasta que cargues un precio manual desde Insumos.")) return;
+  await update(ref(db, `costeo/insumos/${id}`), { receta: {} });
+  state.insumos[id] = { ...state.insumos[id], receta: {} };
+  showToast("✅ Receta vaciada.", "success");
+  render();
+};
+
+// =============================================================
+// RECETAS Y BASES (vista dedicada, cards editables)
+// =============================================================
+function renderRecetasBasesView(container) {
+  state.formOpen = true;
+  actualizarPreciosBasesElaboradas();
+  const tab = state.recetasBasesTab || "recetas";
+
+  const productosElaborados = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .filter(([, p]) => clasificarProducto(p) === "elaborado");
+  const basesInsumos = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .filter(([, ins]) => ins.receta && Object.keys(ins.receta).length > 0);
+
+  const recetasCards = productosElaborados.map(([id, p]) => `
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">🧾 ${escapeHtml(p.nombre)}</div>
+      ${recetaPanelContenido(id, p)}
+    </div>`).join("");
+
+  const basesCards = basesInsumos.map(([id, ins]) => `
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">🧪 ${escapeHtml(ins.nombre)}</div>
+      ${baseCardContenido(id, ins)}
+    </div>`).join("");
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="page-title">Recetas y Bases</div>
+        <div class="page-sub" style="margin-bottom:0">Todas las recetas de productos elaborados y las bases/preparaciones, con insumos, cantidades y costo editables acá mismo.</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="btn ${tab === "recetas" ? "btn-turq" : "btn-ghost"}" onclick="setRecetasBasesTab('recetas')">🧾 Recetas (${productosElaborados.length})</button>
+      <button class="btn ${tab === "bases" ? "btn-turq" : "btn-ghost"}" onclick="setRecetasBasesTab('bases')">🧪 Bases (${basesInsumos.length})</button>
+    </div>
+    ${tab === "recetas" ? `
+      <div class="text-muted" style="margin-bottom:14px">Productos de panadería/pastelería/facturería/sandwiches con receta. Para cargar uno nuevo, andá a <a href="#" onclick="navigate('productos');abrirFormProducto();return false;">Productos → Nuevo producto</a>.</div>
+      ${productosElaborados.length ? `<div class="receta-card-grid">${recetasCards}</div>` : `<div class="empty-state">Todavía no hay productos elaborados cargados.</div>`}
+    ` : `
+      <div class="text-muted" style="margin-bottom:14px">Bases/preparaciones con receta propia (crema chantilly, bizcochuelo, almíbares, etc.) — su costo se recalcula solo a partir de sus ingredientes. Para cargar una nueva, andá a <a href="#" onclick="navigate('insumos');abrirFormInsumo();return false;">Insumos → Nuevo insumo</a> y armale una receta.</div>
+      ${basesInsumos.length ? `<div class="receta-card-grid">${basesCards}</div>` : `<div class="empty-state">Todavía no hay bases con receta cargada.</div>`}
+    `}`;
+}
+window.setRecetasBasesTab = function(val) {
+  state.recetasBasesTab = val;
+  render();
 };
 
 window.guardarCostoManualRapido = async function(id, val) {
@@ -1931,6 +2098,29 @@ function renderAnalisisView(container) {
   const alertasPerdida = filasProd.filter(f => f.perdida);
   const alertasProdInflacion = filasProd.filter(f => !f.insuficiente && !f.perdida && f.delta > 0);
 
+  // Modelo de costeo sugerido (28% variable / 37% fijo / 20% renta esperada / 15% merma): el
+  // precio sugerido se despeja del costo real conocido, y se compara contra el precio de venta
+  // que está cargado hoy para ver si quedó por debajo del modelo.
+  const filasModelo = productosCosteables.map(([id, p]) => {
+    const modelo = calcModeloCosteo(p);
+    const venta = p.precioVenta || 0;
+    const diffPct = modelo && venta > 0 ? ((venta - modelo.precioSugerido) / modelo.precioSugerido) * 100 : null;
+    return { id, p, modelo, venta, diffPct };
+  }).filter(f => f.modelo).sort((a, b) => (a.diffPct ?? 999) - (b.diffPct ?? 999));
+  const bajoModelo = filasModelo.filter(f => f.diffPct !== null && f.diffPct < 0);
+
+  const rowsModelo = filasModelo.map(f => `
+    <tr>
+      <td>${escapeHtml(f.p.nombre)}</td>
+      <td>${fmtMoney(f.modelo.costo)}</td>
+      <td>${fmtMoney(f.modelo.fijoSugerido)}</td>
+      <td>${fmtMoney(f.modelo.rentaSugerida)}</td>
+      <td>${fmtMoney(f.modelo.mermaSugerida)}</td>
+      <td><strong>${fmtMoney(f.modelo.precioSugerido)}</strong></td>
+      <td>${f.venta > 0 ? fmtMoney(f.venta) : "—"}</td>
+      <td>${f.diffPct === null ? "—" : `<span class="${f.diffPct < 0 ? "delta-pos" : "delta-neg"}">${fmtPct(f.diffPct)}</span>`}</td>
+    </tr>`).join("");
+
   const rowsProd = filasProd.map(f => `
     <tr>
       <td>${escapeHtml(f.p.nombre)}</td>
@@ -2016,6 +2206,25 @@ function renderAnalisisView(container) {
           <table class="data-table">
             <thead><tr><th>Producto</th><th>Precio de venta</th><th>Costo actual</th><th>Margen</th><th>Costo base</th><th>Variación</th><th>Estado</th></tr></thead>
             <tbody>${rowsProd}</tbody>
+          </table>
+        </div>`}
+    </div>
+
+    <div class="section-block">
+      <div class="section-header">
+        <div class="section-title">📐 Modelo de costeo sugerido</div>
+      </div>
+      <div class="page-sub" style="margin-bottom:16px">Costo variable ${COSTEO_MODELO.variable * 100}% · Costos fijos ${COSTEO_MODELO.fijo * 100}% · Renta esperada ${COSTEO_MODELO.renta * 100}% · Mermas ${COSTEO_MODELO.merma * 100}% del precio de venta. El precio sugerido se calcula despejando el costo real conocido de cada producto (por receta, o precio de compra para retail) como si fuera el ${COSTEO_MODELO.variable * 100}% del total.</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Por debajo del modelo</div><div class="stat-value">${bajoModelo.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Productos evaluados</div><div class="stat-value">${filasModelo.length}</div></div>
+      </div>
+      ${bajoModelo.length ? `<div class="alert-box alert-warn">⚠️ ${bajoModelo.length} producto(s) tienen un precio de venta por debajo de lo que sugiere el modelo (28/37/20/15) — no están dejando el margen ni la merma previstos.</div>` : ""}
+      ${filasModelo.length === 0 ? `<div class="empty-state">Todavía no hay productos con costo cargado.</div>` : `
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Producto</th><th>Costo (28%)</th><th>Fijo sugerido (37%)</th><th>Renta esperada (20%)</th><th>Merma (15%)</th><th>Precio sugerido</th><th>Precio actual</th><th>Diferencia</th></tr></thead>
+            <tbody>${rowsModelo}</tbody>
           </table>
         </div>`}
     </div>

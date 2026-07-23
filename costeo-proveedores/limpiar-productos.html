@@ -74,15 +74,65 @@ function normKey(s) {
 }
 const HOJA3_SET = new Set(HOJA3_NOMBRES.map(normKey));
 
-// Reglas de "producto de retail" — solo del catálogo importado de Fudo (excel "productos"):
-// fiambres (toda la categoría), lácteos de Cosalta (por nombre, dentro de "Lacteos"), y bebidas
-// línea Coca-Cola (por nombre, dentro de "Bebidas"). Todo lo demás que no esté en Hoja3 se borra.
+// Categorías de retail/reventa del catálogo de Fudo (se venden tal cual, no son preparaciones).
+const RETAIL_CATEGORIAS = new Set(["fiambres", "lacteos", "bebidas", "almacen", "te en hebras"]);
+
+// Reduce a minúsculas/sin acentos y separa en palabras sueltas (todo lo que no sea letra/número
+// se vuelve espacio), para poder matchear marcas/palabras sin importar mayúsculas, guiones, etc.
+function limpiarPalabras(s) {
+  return normKey(s).replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+// Marcas/ítems de retail que NO se conservan aunque estén en una categoría de retail — lista
+// dada a mano, producto por producto/marca. "milakut"/"mikra" son variantes con error de tipeo
+// que aparecen así en el catálogo de Fudo (Manteca Milakut, Yogur Mikra).
+const EXCLUSION_RETAIL = [
+  n => n.includes("actimel"),
+  n => n.includes("villa del sur"),
+  n => n.includes("villavicencio"),
+  n => n.includes("casancrem"),
+  n => n.includes("chocolatada") && ["milkaut", "milakut", "sancor"].some(b => n.includes(b)),
+  n => n.includes("cindor"),
+  n => n.includes("citric"),
+  n => n.includes("crema de leche") && n.includes("serenisima"),
+  n => n.includes("danette"),
+  n => n.includes("danonino"),
+  n => n.includes("dulce de leche") && ["serenisima", "sancor", "ilolay"].some(b => n.includes(b)),
+  n => n.includes("ensalada") && n.includes("fruta"),
+  n => n.includes("fideos"),
+  n => n.includes("noqui"),
+  n => n.includes("sorrentino"),
+  n => n.includes("raviole"),
+  n => n.includes("tapa") && n.includes("empanada"),
+  n => n.includes("pascualina"),
+  n => n.includes("flan"),
+  n => n.includes("gelatina"),
+  n => n.includes("gaseosa ser"),
+  n => n.includes("huevos de"),
+  n => n.includes("lata") && n.split(" ").includes("te"),
+  n => n.includes("leche") && ["sancor", "serenisima", "milkaut", "milakut", "ilolay", "tres ninas"].some(b => n.includes(b)),
+  n => n.includes("levite"),
+  n => n.includes("manteca") && ["sancor", "serenisima", "milkaut", "milakut"].some(b => n.includes(b)),
+  n => n.includes("postre") && (n.includes("ilolay") || n.includes("serenito")),
+  n => n.includes("queso") && (n.includes("cheddar") || n.includes("finlandia") || n.includes("tholem") || (n.includes("untable") && (n.includes("salut") || n.includes("tonadita")))),
+  n => n.includes("yogur") && !n.includes("mykra") && !n.includes("mikra"),
+];
+
 function motivoConservar(p) {
-  if (HOJA3_SET.has(normKey(p.nombre))) return "Hoja3";
-  const nombre = (p.nombre || "").toLowerCase();
-  if (p.categoria === "Fiambres") return "Fiambres";
-  if (p.categoria === "Lacteos" && nombre.includes("cosalta")) return "Lácteos Cosalta";
-  if (p.categoria === "Bebidas" && (nombre.includes("coca cola") || nombre.includes("coca-cola"))) return "Bebidas Coca-Cola";
+  const nombre = p.nombre || "";
+  const nl = nombre.toLowerCase();
+  // Los "(mesas)" nunca se borran — se unifican con su versión de mostrador aparte, no acá.
+  if (nl.includes("(mesas)")) return "Mesas";
+  // Pedidos Ya (siempre arrancan con "(PY)") se van a costear con otra fórmula más adelante.
+  if (normKey(nombre).startsWith("(py)")) return null;
+  if (nl.includes("para retirar")) return null;
+  if (HOJA3_SET.has(normKey(nombre))) return "Hoja3";
+  const cat = normKey(p.categoria || "");
+  if (RETAIL_CATEGORIAS.has(cat)) {
+    const palabras = limpiarPalabras(nombre);
+    if (EXCLUSION_RETAIL.some(regla => regla(palabras))) return null;
+    return "Retail";
+  }
   return null;
 }
 
@@ -92,7 +142,7 @@ let productosSnapshot = null;
 function renderLogin() {
   app_.innerHTML = `
     <div class="page-title">🗑️ Limpiar catálogo de productos</div>
-    <div class="page-sub">Borra del catálogo todo producto que no sea ni un ítem de la lista de precios "Hoja3" ni un producto de retail curado (fiambres, lácteos Cosalta, bebidas Coca-Cola). Acción de un solo uso. Usa la misma contraseña de administración de Costeo &amp; Proveedores.</div>
+    <div class="page-sub">Conserva los productos de la lista de precios "Hoja3" y los de retail (fiambres, lácteos, bebidas, almacén, té en hebras) salvo las marcas/ítems puntuales excluidos a mano. Borra "(PY)" de Pedidos Ya y "PARA RETIRAR"; nunca borra los "(mesas)" (se unifican aparte). Acción de un solo uso. Usa la misma contraseña de administración de Costeo &amp; Proveedores.</div>
     <div class="section-block">
       <input type="password" class="form-input" id="login-pass" placeholder="Contraseña">
       <button class="btn btn-primary" id="login-btn">Ingresar</button>
@@ -145,7 +195,7 @@ async function renderPreview() {
         <div class="stat-card"><div class="stat-value" style="color:var(--green)">${conservar.length}</div><div class="stat-label">Se conservan</div></div>
       </div>
       <div class="alert-box alert-turq">ℹ️ Se conservan por: ${Object.entries(motivos).map(([m, n]) => `${m} (${n})`).join(" · ") || "—"}.</div>
-      <div class="alert-box alert-warn">⚠️ Se van a borrar ${borrar.length} productos que no están en la lista de precios "Hoja3" ni cumplen ninguna de las 3 reglas de retail (fiambres, lácteos Cosalta, bebidas Coca-Cola).</div>
+      <div class="alert-box alert-warn">⚠️ Se van a borrar ${borrar.length} productos: son "(PY)" de Pedidos Ya, "PARA RETIRAR", o no están ni en "Hoja3" ni en una categoría de retail (fiambres/lácteos/bebidas/almacén/té en hebras) sin ser una de las marcas/ítems excluidos a mano.</div>
       <div class="section-title" style="margin-top:6px">Productos que se van a borrar (${borrar.length})</div>
       <div class="list-box">${borrar.length ? listaBorrar : "(ninguno)"}</div>
       ${borrar.length ? `
