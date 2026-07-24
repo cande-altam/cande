@@ -213,6 +213,7 @@ const TABS = [
   { key: "productos",     label: "🍰 Productos" },
   { key: "recetas-bases", label: "📋 Recetas y Bases" },
   { key: "analisis",      label: "📈 Análisis" },
+  { key: "consultas",     label: "💬 Consultas" },
   { key: "config",        label: "⚙️ Configuración" },
 ];
 
@@ -255,6 +256,9 @@ const state = {
   insumosMergeNombreFinal: "",
   mostrarDuplicados: false,
   mostrarVariantesMarca: false,
+  consultaPregunta: "",
+  consultaCargando: false,
+  consultaHistorial: [],
 };
 
 // ── Helpers ──────────────────────────────────────────────
@@ -413,6 +417,7 @@ function render() {
     case "productos": renderProductosView(container); break;
     case "recetas-bases": renderRecetasBasesView(container); break;
     case "analisis": renderAnalisisView(container); break;
+    case "consultas": renderConsultasView(container); break;
     case "config": renderConfigView(container); break;
     default: container.innerHTML = `<div class="empty-state">Vista no encontrada.</div>`;
   }
@@ -1482,6 +1487,47 @@ window.eliminarInsumo = async function(id) {
   await remove(ref(db, `costeo/insumos/${id}`));
   showToast("🗑️ Insumo eliminado.", "success");
 };
+// Reclasifica un insumo como producto (ej. algo que en realidad es de reventa y quedó cargado
+// como insumo) o un producto como insumo (ej. una materia prima que quedó cargada como producto),
+// sin perder el costo que ya tenía cargado. No se permite si eso rompería una receta existente.
+window.moverInsumoAProducto = async function(id) {
+  const ins = state.insumos[id];
+  if (!ins) return;
+  if (ins.receta && Object.keys(ins.receta).length) {
+    showToast("⚠️ Es una base con receta propia — vaciale la receta primero si de verdad es un producto.", "warn");
+    return;
+  }
+  const usadoEnReceta = Object.values(state.productos).some(p => p.receta && id in p.receta) || Object.entries(state.insumos).some(([oid, o]) => oid !== id && o.receta && id in o.receta);
+  if (usadoEnReceta) {
+    showToast("⚠️ Este insumo se usa en una o más recetas — sacalo de esas recetas antes de moverlo a Productos.", "warn");
+    return;
+  }
+  const costo = precioEfectivoInsumo(id);
+  if (!confirm(`¿Mover "${ins.nombre}" de Insumos a Productos? Se crea como producto de reventa con costo ${fmtMoney(costo)}, y se elimina de Insumos.`)) return;
+  await set(push(ref(db, "costeo/productos")), { nombre: ins.nombre, categoria: "Reventa", precioVenta: null, receta: {}, costoManual: costo || null, creadoTs: Date.now() });
+  await remove(ref(db, `costeo/insumos/${id}`));
+  showToast("✅ Movido a Productos.", "success");
+  render();
+};
+window.moverProductoAInsumo = async function(id) {
+  const p = state.productos[id];
+  if (!p) return;
+  if (p.receta && Object.keys(p.receta).length) {
+    showToast("⚠️ Este producto tiene receta propia — vaciale la receta primero si de verdad es un insumo.", "warn");
+    return;
+  }
+  const costo = p.costoManual || 0;
+  if (!confirm(`¿Mover "${p.nombre}" de Productos a Insumos? Se crea como insumo con precio manual ${fmtMoney(costo)}, y se elimina de Productos.`)) return;
+  const newInsRef = push(ref(db, "costeo/insumos"));
+  await set(newInsRef, { nombre: p.nombre, unidad: "", creadoTs: Date.now() });
+  if (costo > 0) {
+    await actualizarPrecioInsumo(newInsRef.key, { proveedorId: "", proveedorNombre: "Carga manual", precio: costo });
+    await push(ref(db, `costeo/insumos/${newInsRef.key}/historial`), { precio: costo, fecha: todayISO(), proveedorId: "", proveedorNombre: "Carga manual", marca: "", facturaId: "" });
+  }
+  await remove(ref(db, `costeo/productos/${id}`));
+  showToast("✅ Movido a Insumos.", "success");
+  render();
+};
 window.toggleHistorialInsumo = function(id) {
   state.viewingInsumoHistId = state.viewingInsumoHistId === id ? null : id;
   render();
@@ -1864,6 +1910,7 @@ function renderInsumosView(container) {
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" onclick="toggleHistorialInsumo('${id}')">${isOpen ? "Ocultar" : "Ver historial"}</button>
           <button class="btn btn-ghost btn-sm" onclick="abrirFormInsumo('${id}')">Editar</button>
+          <button class="btn btn-ghost btn-sm" onclick="moverInsumoAProducto('${id}')" title="Convertir en producto (ej. si en realidad es de reventa, no un insumo)">➡️ A Productos</button>
           <button class="btn btn-danger btn-sm" onclick="eliminarInsumo('${id}')">Eliminar</button>
         </td>
       </tr>
@@ -1900,7 +1947,7 @@ function renderInsumosView(container) {
         <div class="page-title">Insumos</div>
         <div class="page-sub" style="margin-bottom:0">Precio actual e historial de cada insumo.</div>
       </div>
-      ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${state.mostrarDuplicados ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarDuplicados()">${state.mostrarDuplicados ? "✕ Cerrar búsqueda" : "🔍 Buscar posibles duplicados"}</button><button class="btn ${state.mostrarVariantesMarca ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarVariantesMarca()">${state.mostrarVariantesMarca ? "✕ Cerrar búsqueda" : "🏷️ Detectar variantes de marca"}</button><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar fusión" : "🔀 Fusionar insumos"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
+      ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${state.mostrarDuplicados ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarDuplicados()">${state.mostrarDuplicados ? "✕ Cerrar búsqueda" : "🔍 Buscar posibles duplicados"}</button><button class="btn ${state.mostrarVariantesMarca ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarVariantesMarca()">${state.mostrarVariantesMarca ? "✕ Cerrar búsqueda" : "🏷️ Detectar variantes de marca"}</button><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar" : "🔀 Agrupar insumos a mano"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
     </div>
     ${formHtml}
     ${!editing ? buscadorHtml(state.insumosBusqueda, "Buscar por nombre, proveedor o marca...", "setInsumosBusqueda") : ""}
@@ -2103,6 +2150,7 @@ window.guardarProducto = async function() {
   const precioVenta = precioVentaRaw ? parseFloat(precioVentaRaw) : null;
   const costoManualRaw = document.getElementById("prod-costo-manual").value;
   const costoManual = costoManualRaw ? parseFloat(costoManualRaw) : null;
+  const categoria = document.getElementById("prod-categoria").value.trim();
   if (!nombre) { showToast("⚠️ Ingresá el nombre del producto.", "warn"); return; }
 
   const rows = Array.from(document.querySelectorAll("#recipe-container .recipe-row"));
@@ -2114,7 +2162,7 @@ window.guardarProducto = async function() {
   }
 
   const id = state.editingProductoId;
-  const data = { nombre, precioVenta, receta, costoManual };
+  const data = { nombre, precioVenta, receta, costoManual, categoria };
   try {
     if (id === "new") {
       await set(push(ref(db, "costeo/productos")), { ...data, creadoTs: Date.now() });
@@ -2147,6 +2195,7 @@ function renderProductosView(container) {
       <div class="form-row">
         <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="prod-nombre" value="${escapeHtml(editingData.nombre)}"></div>
         <div class="form-group"><label class="form-label">Precio de venta (opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="prod-precio-venta" value="${editingData.precioVenta ?? ""}"></div>
+        <div class="form-group"><label class="form-label">Categoría (opcional)</label><input class="form-input" id="prod-categoria" placeholder="ej. Fiambres, Panadería, Bebidas Cafetería..." value="${escapeHtml(editingData.categoria)}"></div>
       </div>
       <div class="section-header" style="margin-top:10px">
         <div class="section-title">🧾 Receta (insumos que lleva)</div>
@@ -2286,6 +2335,7 @@ function renderProductosTable() {
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" onclick="toggleRecetaProducto('${id}')">${recetaAbierta ? "Ocultar receta" : "📋 Receta"}</button>
           <button class="btn btn-ghost btn-sm" onclick="abrirFormProducto('${id}')">Editar</button>
+          <button class="btn btn-ghost btn-sm" onclick="moverProductoAInsumo('${id}')" title="Convertir en insumo (ej. si en realidad es una materia prima, no un producto)">➡️ A Insumos</button>
           <button class="btn btn-danger btn-sm" onclick="eliminarProducto('${id}')">Eliminar</button>
         </td>
       </tr>
@@ -2778,6 +2828,100 @@ function renderAnalisisView(container) {
         <table class="data-table"><thead><tr><th>Mes</th><th>% mensual</th></tr></thead><tbody>${inflacionRows}</tbody></table>
       </div>
     </div>`;
+}
+
+// =============================================================
+// CONSULTAS (preguntas en lenguaje natural sobre compras/precios, vía IA)
+// =============================================================
+// Arma un resumen compacto de los datos de compras (insumos con su historial de precios,
+// facturas con sus ítems, proveedores) para mandarle a la IA como contexto — así puede responder
+// preguntas como "¿cuándo compramos queso crema por última vez?" con datos reales, no inventados.
+// Recorta lo más viejo si hay demasiado (catálogo grande) para no mandar un contexto gigante.
+function construirContextoConsultas() {
+  const insumos = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre)).map(([, ins]) => {
+    const hist = objToSortedEntries(ins.historial, (a, b) => a[1].fecha.localeCompare(b[1].fecha)).map(([, h]) => h).slice(-30);
+    return {
+      nombre: ins.nombre,
+      unidad: ins.unidad || "",
+      precioActual: ins.precioActual || 0,
+      historialCompras: hist.map(h => ({ fecha: h.fecha, precio: h.precio, proveedor: h.proveedorNombre || "", marca: h.marca || "" }))
+    };
+  });
+  const facturas = objToSortedEntries(state.facturas, (a, b) => (b[1].fecha || "").localeCompare(a[1].fecha || "")).slice(0, 500).map(([, f]) => ({
+    fecha: f.fecha,
+    proveedor: f.proveedorNombre,
+    numeroFactura: f.numeroFactura || "",
+    montoTotal: f.montoTotal,
+    estado: f.estado,
+    items: (f.items || []).map(it => ({ nombre: it.nombre, precioUnitario: it.precioUnitario, marca: it.marca || "" }))
+  }));
+  const proveedores = objToSortedEntries(state.proveedores, (a, b) => a[1].nombre.localeCompare(b[1].nombre)).map(([, p]) => ({
+    nombre: p.nombre, cuit: p.cuit || "", rubro: p.rubro || ""
+  }));
+  return { insumos, facturas, proveedores };
+}
+
+window.hacerConsulta = async function() {
+  const input = document.getElementById("consulta-input");
+  const pregunta = input.value.trim();
+  if (!pregunta) { showToast("⚠️ Escribí una pregunta.", "warn"); return; }
+  state.consultaCargando = true;
+  render();
+  try {
+    const contexto = construirContextoConsultas();
+    const resp = await fetch("/.netlify/functions/consultar", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ pregunta, contexto })
+    });
+    const rawText = await resp.text();
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      const reason = resp.status === 504
+        ? "La consulta tardó demasiado y se agotó el tiempo de espera del servidor."
+        : `Respuesta inesperada del servidor (HTTP ${resp.status}).`;
+      throw new Error(reason);
+    }
+    if (!resp.ok) throw new Error(data.error || `Error al consultar (HTTP ${resp.status}).`);
+    state.consultaHistorial.push({ pregunta, respuesta: data.respuesta || "Sin respuesta.", fecha: todayISO() });
+    state.consultaPregunta = "";
+  } catch (err) {
+    console.error("Error al consultar:", err);
+    showToast(`⚠️ No se pudo consultar: ${err.message || "Error desconocido."}`, "warn");
+  } finally {
+    state.consultaCargando = false;
+    render();
+  }
+};
+
+function renderConsultasView(container) {
+  // Igual que Nueva Factura u otras vistas con un formulario activo: evita que un cambio de datos
+  // en otra pestaña (via onValue) pise lo que el usuario esté escribiendo acá.
+  state.formOpen = true;
+  const historial = state.consultaHistorial;
+
+  container.innerHTML = `
+    <div class="page-title">Consultas</div>
+    <div class="page-sub">Preguntale a la IA sobre compras, precios y proveedores, en base a los datos ya cargados. Ej.: "¿Cuándo compramos queso crema por última vez?", "¿Qué proveedor nos vende más barata la harina?", "¿Cuánto le compramos a Calsa este mes?"</div>
+    <div class="section-block">
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Tu pregunta</label>
+        <textarea class="form-input" id="consulta-input" rows="2" placeholder='Ej: "¿Cuándo compramos queso crema por última vez?"'>${escapeHtml(state.consultaPregunta)}</textarea>
+      </div>
+      <button class="btn btn-primary" id="consulta-btn" onclick="hacerConsulta()" ${state.consultaCargando ? "disabled" : ""}>${state.consultaCargando ? "Consultando..." : "🔎 Preguntar"}</button>
+    </div>
+    ${historial.length ? `
+      <div class="section-block">
+        <div class="section-title" style="margin-bottom:10px">Historial de esta sesión</div>
+        ${historial.slice().reverse().map(h => `
+          <div class="mini-card" style="flex-direction:column;align-items:stretch;gap:6px">
+            <div style="font-weight:600">${escapeHtml(h.pregunta)}</div>
+            <div style="white-space:pre-wrap">${escapeHtml(h.respuesta)}</div>
+            <div class="text-muted" style="font-size:11px">${fmtDate(h.fecha)}</div>
+          </div>`).join("")}
+      </div>` : `<div class="empty-state">Todavía no hiciste ninguna consulta.</div>`}`;
 }
 
 // =============================================================
