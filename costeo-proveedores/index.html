@@ -1555,6 +1555,29 @@ window.fusionarDesdeSugerencia = function(idA, idB) {
 // pedido "1 producto, diferentes proveedores y/o marcas". A diferencia de buscarInsumosDuplicados
 // (nombres casi IDÉNTICOS, típico de errores de tipeo), acá se agrupa por la primera palabra del
 // nombre, que en la inmensa mayoría del catálogo es el producto genérico y el resto es la marca.
+// Palabras que describen un TIPO/variedad de producto, no una marca — si la palabra que sigue al
+// nombre base es una de estas, NO se propone como variante de marca, porque en general se trata
+// de productos genuinamente distintos (ej. "Leche entera" y "Leche descremada" no son la misma
+// leche con otra marca; "Queso crema" y "Queso rallado" tampoco). La lista no es exhaustiva —
+// prioriza evitar sugerencias erróneas (falsos positivos) por sobre encontrar todas las variantes
+// reales posibles; siempre queda a criterio de quien revisa antes de fusionar.
+const PALABRAS_TIPO_NO_MARCA = new Set([
+  "entera", "enteras", "entero", "enteros", "descremada", "descremadas", "descremado", "descremados",
+  "semidescremada", "semidescremadas", "deslactosada", "deslactosadas", "light", "diet", "natural", "naturales",
+  "tradicional", "tradicionales", "especial", "especiales",
+  "crema", "rallado", "rallada", "ralladas", "rallados", "untable", "untables", "sardo", "duro", "dura", "blando", "blanda",
+  "molido", "molida", "molidos", "molidas", "picado", "picada", "picados", "picadas",
+  "cortado", "cortada", "cortados", "cortadas", "fileteado", "fileteada", "trozado", "trozada",
+  "polvo", "hebras", "grano", "granos", "rodajas", "cubos", "tiras",
+  "fresca", "fresco", "frescas", "frescos", "seca", "seco", "secas", "secos",
+  "congelada", "congelado", "congeladas", "congelados", "enlatada", "enlatado", "enlatadas", "enlatados",
+  "chico", "chica", "chicos", "chicas", "grande", "grandes", "mediano", "mediana", "medianos", "medianas",
+  "familiar", "individual", "gigante", "mini",
+  "salado", "salada", "salados", "saladas", "dulce", "dulces", "picante", "picantes",
+  "saborizado", "saborizada", "saborizados", "saborizadas", "integral", "integrales",
+  "blanco", "blanca", "blancos", "blancas", "negro", "negra", "negros", "negras",
+  "de", "del", "la", "el", "los", "las", "con", "sin", "para", "y"
+]);
 function buscarVariantesMarca() {
   const entries = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
     .filter(([, ins]) => !(ins.receta && Object.keys(ins.receta).length)); // las bases no tienen "marca"
@@ -1564,6 +1587,8 @@ function buscarVariantesMarca() {
     if (palabras.length < 2) continue; // sin una segunda palabra no hay marca candidata
     const baseKey = normalizeInsumoNombre(palabras[0]);
     if (baseKey.length < 4) continue; // evita agrupar por palabras muy cortas/genéricas (ej. "de")
+    const primeraPalabraResto = stripAccentsCosteo(palabras[1]).toLowerCase();
+    if (PALABRAS_TIPO_NO_MARCA.has(primeraPalabraResto) || /^\d+$/.test(primeraPalabraResto)) continue;
     (grupos[baseKey] ||= []).push({ id, ins, nombreBaseSugerido: palabras[0], marcaSugerida: palabras.slice(1).join(" ") });
   }
   return Object.values(grupos).filter(items => items.length >= 2);
@@ -1888,7 +1913,7 @@ function renderInsumosView(container) {
       <div class="section-block">
         <div class="section-title" style="margin-bottom:10px">🏷️ Posibles variantes de marca del mismo insumo</div>
         ${variantesMarca.length ? `
-          <div class="text-muted" style="margin-bottom:12px">Insumos que empiezan con la misma palabra y probablemente son EL MISMO producto con la marca ya incluida en el nombre (ej. "Levadura Leudex" y "Levadura Duquesa" → un único insumo "Levadura" con esas marcas como líneas de precio separadas). Revisá cada grupo: si de verdad son la misma cosa, fusionalos.</div>
+          <div class="text-muted" style="margin-bottom:12px">Insumos que podrían ser EL MISMO producto con la marca ya incluida en el nombre (ej. "Levadura Leudex" y "Levadura Duquesa" → un único insumo "Levadura" con esas marcas como líneas de precio separadas). Es una sugerencia automática, no infalible — revisá cada grupo con cuidado y fusioná solo los que de verdad sean la misma cosa; nada se fusiona sin que lo confirmes.</div>
           <div class="card-list">
             ${variantesMarca.map(items => `
               <div class="mini-card">
