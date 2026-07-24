@@ -251,7 +251,10 @@ const state = {
   insumosMergeMode: false,
   insumosMergeSeleccion: {},
   insumosMergeSurvivor: null,
+  insumosMergeMarcas: {},
+  insumosMergeNombreFinal: "",
   mostrarDuplicados: false,
+  mostrarVariantesMarca: false,
 };
 
 // ── Helpers ──────────────────────────────────────────────
@@ -1540,7 +1543,59 @@ window.fusionarDesdeSugerencia = function(idA, idB) {
   state.insumosMergeMode = true;
   state.insumosMergeSeleccion = { [idA]: true, [idB]: true };
   state.insumosMergeSurvivor = idA;
+  state.insumosMergeMarcas = {};
+  state.insumosMergeNombreFinal = "";
   state.mostrarDuplicados = false;
+  render();
+};
+
+// Detecta insumos que probablemente sean EL MISMO producto cargado varias veces con la marca ya
+// incluida en el nombre (ej. "Levadura Leudex" y "Levadura Duquesa" en vez de un único insumo
+// "Levadura" con esas dos marcas como líneas de precio separadas) — el problema real detrás del
+// pedido "1 producto, diferentes proveedores y/o marcas". A diferencia de buscarInsumosDuplicados
+// (nombres casi IDÉNTICOS, típico de errores de tipeo), acá se agrupa por la primera palabra del
+// nombre, que en la inmensa mayoría del catálogo es el producto genérico y el resto es la marca.
+function buscarVariantesMarca() {
+  const entries = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .filter(([, ins]) => !(ins.receta && Object.keys(ins.receta).length)); // las bases no tienen "marca"
+  const grupos = {};
+  for (const [id, ins] of entries) {
+    const palabras = ins.nombre.trim().split(/\s+/).filter(Boolean);
+    if (palabras.length < 2) continue; // sin una segunda palabra no hay marca candidata
+    const baseKey = normalizeInsumoNombre(palabras[0]);
+    if (baseKey.length < 4) continue; // evita agrupar por palabras muy cortas/genéricas (ej. "de")
+    (grupos[baseKey] ||= []).push({ id, ins, nombreBaseSugerido: palabras[0], marcaSugerida: palabras.slice(1).join(" ") });
+  }
+  return Object.values(grupos).filter(items => items.length >= 2);
+}
+
+window.toggleBuscarVariantesMarca = function() {
+  state.mostrarVariantesMarca = !state.mostrarVariantesMarca;
+  render();
+};
+
+window.fusionarGrupoDesdeSugerencia = function(idsCsv) {
+  const ids = idsCsv.split(",");
+  // Busca el grupo que CONTIENE a estos ids (no necesariamente coincide con exactitud: el estado
+  // pudo cambiar entre el render de la sugerencia y el click) y se queda solo con esos miembros.
+  const grupoCompleto = buscarVariantesMarca().find(items => ids.every(id => items.some(it => it.id === id)));
+  const grupo = grupoCompleto ? grupoCompleto.filter(it => ids.includes(it.id)) : null;
+  state.insumosMergeMode = true;
+  state.insumosMergeSeleccion = {};
+  state.insumosMergeMarcas = {};
+  ids.forEach(id => { state.insumosMergeSeleccion[id] = true; });
+  if (grupo) {
+    state.insumosMergeSurvivor = grupo[0].id;
+    state.insumosMergeNombreFinal = grupo[0].nombreBaseSugerido;
+    // La marca sugerida se asigna a TODOS los miembros del grupo, incluido el que queda como
+    // sobreviviente — sus propias líneas de precio también representaban una marca puntual
+    // (la que tenía en su nombre original) y no deben quedar sin etiquetar tras la fusión.
+    grupo.forEach(it => { state.insumosMergeMarcas[it.id] = it.marcaSugerida; });
+  } else {
+    state.insumosMergeSurvivor = ids[0];
+    state.insumosMergeNombreFinal = "";
+  }
+  state.mostrarVariantesMarca = false;
   render();
 };
 
@@ -1548,12 +1603,14 @@ window.toggleInsumosMergeMode = function() {
   state.insumosMergeMode = !state.insumosMergeMode;
   state.insumosMergeSeleccion = {};
   state.insumosMergeSurvivor = null;
+  state.insumosMergeMarcas = {};
+  state.insumosMergeNombreFinal = "";
   render();
 };
 
 window.toggleInsumoMergeCheck = function(id, checked) {
   if (checked) state.insumosMergeSeleccion[id] = true;
-  else delete state.insumosMergeSeleccion[id];
+  else { delete state.insumosMergeSeleccion[id]; delete state.insumosMergeMarcas[id]; }
   render();
 };
 
@@ -1567,15 +1624,27 @@ window.toggleInsumoMergeCheck = function(id, checked) {
 window.setInsumoMergeSurvivor = function(id) {
   state.insumosMergeSurvivor = id;
 };
+window.setInsumoMergeMarca = function(id, marca) {
+  state.insumosMergeMarcas[id] = marca;
+};
+window.setInsumoMergeNombreFinal = function(val) {
+  state.insumosMergeNombreFinal = val;
+};
 window.fusionarInsumosSeleccionados = async function() {
   const ids = Object.keys(state.insumosMergeSeleccion);
   const survivor = state.insumosMergeSurvivor || ids[0];
-  await fusionarInsumos(ids, survivor);
+  await fusionarInsumos(ids, survivor, state.insumosMergeMarcas, state.insumosMergeNombreFinal);
 };
 
 // Fusiona 2+ insumos duplicados en uno solo: combina precios por proveedor, historial,
 // y remapea las recetas de productos que referenciaban a los insumos absorbidos.
-window.fusionarInsumos = async function(idsSeleccionados, survivorId) {
+// marcasPorInsumo (opcional): { insumoId: "Marca asignada" } — para el caso "1 producto, varias
+// marcas" (ej. "Levadura Leudex" + "Levadura Duquesa" fusionados en un único "Levadura"): la marca
+// asignada a cada insumo absorbido se aplica a TODAS sus líneas de precio, así no se pierde el
+// detalle de qué marca era cada una una vez que dejan de ser insumos separados.
+// nombreFinal (opcional): si se pasa, renombra el insumo que queda (ej. "Levadura" en vez del
+// nombre que tenía uno de los absorbidos, que probablemente incluía la marca).
+window.fusionarInsumos = async function(idsSeleccionados, survivorId, marcasPorInsumo = {}, nombreFinal = "") {
   const ids = idsSeleccionados.filter(id => state.insumos[id]);
   if (ids.length < 2 || !ids.includes(survivorId)) return;
   if (!confirm(`¿Fusionar ${ids.length} insumos en "${state.insumos[survivorId].nombre}"? Los otros se eliminan (su historial y precios se conservan dentro del que queda).`)) return;
@@ -1583,22 +1652,63 @@ window.fusionarInsumos = async function(idsSeleccionados, survivorId) {
   const survivor = state.insumos[survivorId];
   const others = ids.filter(id => id !== survivorId);
 
-  let precios = { ...(survivor.precios || {}) };
-  let historial = { ...(survivor.historial || {}) };
-  for (const id of others) {
-    const o = state.insumos[id] || {};
-    for (const [provId, p] of Object.entries(o.precios || {})) {
-      if (!precios[provId] || (p.actualizadoTs || 0) > (precios[provId].actualizadoTs || 0)) precios[provId] = p;
+  // Determina el proveedorId real de una línea de precio ya existente, sea del esquema nuevo
+  // (con `proveedorId` guardado explícito) o del viejo (la clave ERA el proveedorId, o "_manual").
+  function proveedorIdDeEntry(key, p) {
+    if (p && p.proveedorId !== undefined && p.proveedorId !== null) return p.proveedorId;
+    if (key === "_manual") return "";
+    const idx = key.indexOf("::");
+    return idx >= 0 ? key.slice(0, idx) : key;
+  }
+  // Re-clava las líneas de precio de un insumo aplicándoles una marca (si se asignó una en la
+  // fusión): cada combinación proveedor+marca queda con su propia clave, sin pisar otras líneas
+  // del mismo proveedor. Se aplica tanto a los insumos absorbidos como al que queda como base —
+  // si ESE insumo también representaba una marca puntual (típico: "Levadura Duquesa" fusionada
+  // con "Levadura Leudex" en un único "Levadura"), sus propias líneas también deben etiquetarse.
+  function reclavarConMarca(preciosOrigen, marcaAsignada) {
+    const resultado = {};
+    for (const [oldKey, p] of Object.entries(preciosOrigen || {})) {
+      const marcaFinal = marcaAsignada || p.marca || "";
+      const proveedorIdFinal = proveedorIdDeEntry(oldKey, p);
+      const newKey = comboKeyPrecio(proveedorIdFinal, marcaFinal);
+      resultado[newKey] = { oldKey, entry: { ...p, proveedorId: proveedorIdFinal, marca: marcaFinal } };
     }
-    for (const [hid, h] of Object.entries(o.historial || {})) historial[`${id}_${hid}`] = h;
+    return resultado;
   }
 
-  let proveedorPreferido = survivor.proveedorPreferido && precios[survivor.proveedorPreferido] ? survivor.proveedorPreferido : Object.keys(precios)[0];
+  let precios = {};
+  const survivorKeyMap = {}; // clave vieja del sobreviviente -> clave nueva, por si le asignaron marca
+  const marcaSurvivor = normMarca(marcasPorInsumo[survivorId]);
+  for (const [newKey, { oldKey, entry }] of Object.entries(reclavarConMarca(survivor.precios, marcaSurvivor))) {
+    precios[newKey] = entry;
+    survivorKeyMap[oldKey] = newKey;
+  }
+
+  let historial = { ...(survivor.historial || {}) };
+  if (marcaSurvivor) {
+    for (const [hid, h] of Object.entries(historial)) {
+      if (!h.marca) historial[hid] = { ...h, marca: marcaSurvivor };
+    }
+  }
+
+  for (const id of others) {
+    const o = state.insumos[id] || {};
+    const marcaAsignada = normMarca(marcasPorInsumo[id]);
+    for (const [newKey, { entry }] of Object.entries(reclavarConMarca(o.precios, marcaAsignada))) {
+      if (!precios[newKey] || (entry.actualizadoTs || 0) > (precios[newKey].actualizadoTs || 0)) precios[newKey] = entry;
+    }
+    for (const [hid, h] of Object.entries(o.historial || {})) historial[`${id}_${hid}`] = marcaAsignada ? { ...h, marca: marcaAsignada } : h;
+  }
+
+  const survivorPreferidoNuevo = survivor.proveedorPreferido ? (survivorKeyMap[survivor.proveedorPreferido] || survivor.proveedorPreferido) : null;
+  let proveedorPreferido = survivorPreferidoNuevo && precios[survivorPreferidoNuevo] ? survivorPreferidoNuevo : Object.keys(precios)[0];
   const precioActual = proveedorPreferido ? (precios[proveedorPreferido]?.precio ?? 0) : (survivor.precioActual || 0);
+  const nombreFinalLimpio = String(nombreFinal || "").trim();
 
   await update(ref(db, `costeo/insumos/${survivorId}`), {
     precios, historial, precioActual, actualizadoTs: Date.now(),
-    ...(proveedorPreferido ? { proveedorPreferido } : {})
+    ...(proveedorPreferido ? { proveedorPreferido } : {}),
+    ...(nombreFinalLimpio ? { nombre: nombreFinalLimpio } : {})
   });
 
   for (const [prodId, p] of Object.entries(state.productos)) {
@@ -1620,6 +1730,8 @@ window.fusionarInsumos = async function(idsSeleccionados, survivorId) {
   state.insumosMergeMode = false;
   state.insumosMergeSeleccion = {};
   state.insumosMergeSurvivor = null;
+  state.insumosMergeMarcas = {};
+  state.insumosMergeNombreFinal = "";
   showToast("✅ Insumos fusionados.", "success");
   render();
 };
@@ -1640,8 +1752,9 @@ function actualizarPreciosBasesElaboradas() {
 function renderInsumosView(container) {
   const editing = state.editingInsumoId;
   const editingData = editing && editing !== "new" ? (state.insumos[editing] || {}) : {};
-  if (state.insumosMergeMode || state.mostrarDuplicados) state.formOpen = true;
+  if (state.insumosMergeMode || state.mostrarDuplicados || state.mostrarVariantesMarca) state.formOpen = true;
   const duplicados = state.mostrarDuplicados ? buscarInsumosDuplicados() : [];
+  const variantesMarca = state.mostrarVariantesMarca ? buscarVariantesMarca() : [];
   actualizarPreciosBasesElaboradas();
 
   const insumoRecetaRows = editing && editing !== "new" && editingData.receta && Object.keys(editingData.receta).length
@@ -1729,12 +1842,19 @@ function renderInsumosView(container) {
   const mergeBarHtml = state.insumosMergeMode && seleccionIds.length >= 2 ? `
     <div class="section-block" style="border-color:var(--terra)">
       <div class="section-title" style="margin-bottom:10px">🔀 Fusionar ${seleccionIds.length} insumos seleccionados</div>
-      <div class="text-muted" style="margin-bottom:10px">Elegí cuál se queda con el nombre. Los precios por proveedor y el historial de todos se combinan en el que elijas; los demás se eliminan.</div>
+      <div class="text-muted" style="margin-bottom:10px">Elegí cuál se queda como base. Si estos insumos en realidad son la misma cosa con la marca ya incluida en el nombre (ej. "Levadura Leudex" y "Levadura Duquesa" son la misma Levadura), asignale a cada uno — incluido el que quede como base — la marca que le corresponde antes de fusionar, así cada línea de precio queda con su marca y no se pierde el detalle.</div>
       ${seleccionIds.map(id => `
-        <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
-          <input type="radio" name="merge-survivor" value="${id}" ${state.insumosMergeSurvivor === id ? "checked" : ""} onchange="setInsumoMergeSurvivor('${id}')">
-          ${escapeHtml(state.insumos[id]?.nombre || "")}
-        </label>`).join("")}
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="radio" name="merge-survivor" value="${id}" ${state.insumosMergeSurvivor === id ? "checked" : ""} onchange="setInsumoMergeSurvivor('${id}')">
+            ${escapeHtml(state.insumos[id]?.nombre || "")}
+          </label>
+          <input class="form-input" style="max-width:180px" placeholder="Marca (opcional)" value="${escapeHtml(state.insumosMergeMarcas[id] || "")}" oninput="setInsumoMergeMarca('${id}', this.value)">
+        </div>`).join("")}
+      <div class="form-group" style="max-width:260px;margin-top:8px">
+        <label class="form-label">Nombre final (opcional)</label>
+        <input class="form-input" placeholder="ej. Levadura" value="${escapeHtml(state.insumosMergeNombreFinal)}" oninput="setInsumoMergeNombreFinal(this.value)">
+      </div>
       <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="fusionarInsumosSeleccionados()">Fusionar</button>
     </div>` : "";
 
@@ -1744,7 +1864,7 @@ function renderInsumosView(container) {
         <div class="page-title">Insumos</div>
         <div class="page-sub" style="margin-bottom:0">Precio actual e historial de cada insumo.</div>
       </div>
-      ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${state.mostrarDuplicados ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarDuplicados()">${state.mostrarDuplicados ? "✕ Cerrar búsqueda" : "🔍 Buscar posibles duplicados"}</button><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar fusión" : "🔀 Fusionar duplicados"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
+      ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${state.mostrarDuplicados ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarDuplicados()">${state.mostrarDuplicados ? "✕ Cerrar búsqueda" : "🔍 Buscar posibles duplicados"}</button><button class="btn ${state.mostrarVariantesMarca ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarVariantesMarca()">${state.mostrarVariantesMarca ? "✕ Cerrar búsqueda" : "🏷️ Detectar variantes de marca"}</button><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar fusión" : "🔀 Fusionar insumos"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
     </div>
     ${formHtml}
     ${!editing ? buscadorHtml(state.insumosBusqueda, "Buscar por nombre, proveedor o marca...", "setInsumosBusqueda") : ""}
@@ -1763,6 +1883,22 @@ function renderInsumosView(container) {
                 <button class="btn btn-turq btn-sm" onclick="fusionarDesdeSugerencia('${d.idA}','${d.idB}')">Revisar y fusionar</button>
               </div>`).join("")}
           </div>` : `<div class="empty-state">No se encontraron posibles duplicados por ahora.</div>`}
+      </div>` : ""}
+    ${state.mostrarVariantesMarca ? `
+      <div class="section-block">
+        <div class="section-title" style="margin-bottom:10px">🏷️ Posibles variantes de marca del mismo insumo</div>
+        ${variantesMarca.length ? `
+          <div class="text-muted" style="margin-bottom:12px">Insumos que empiezan con la misma palabra y probablemente son EL MISMO producto con la marca ya incluida en el nombre (ej. "Levadura Leudex" y "Levadura Duquesa" → un único insumo "Levadura" con esas marcas como líneas de precio separadas). Revisá cada grupo: si de verdad son la misma cosa, fusionalos.</div>
+          <div class="card-list">
+            ${variantesMarca.map(items => `
+              <div class="mini-card">
+                <div>
+                  <div class="mini-card-title">${items.map(it => escapeHtml(it.ins.nombre)).join(" · ")}</div>
+                  <div class="mini-card-sub">${items.map(it => fmtMoney(precioEfectivoInsumo(it.id))).join(" · ")}</div>
+                </div>
+                <button class="btn btn-turq btn-sm" onclick="fusionarGrupoDesdeSugerencia('${items.map(it => it.id).join(",")}')">Revisar y fusionar</button>
+              </div>`).join("")}
+          </div>` : `<div class="empty-state">No se encontraron variantes de marca por ahora.</div>`}
       </div>` : ""}
     ${mergeBarHtml}
     <div class="section-block">
