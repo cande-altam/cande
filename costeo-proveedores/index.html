@@ -1578,6 +1578,15 @@ const PALABRAS_TIPO_NO_MARCA = new Set([
   "blanco", "blanca", "blancos", "blancas", "negro", "negra", "negros", "negras",
   "de", "del", "la", "el", "los", "las", "con", "sin", "para", "y"
 ]);
+// La marca casi siempre es la ÚLTIMA palabra del nombre (no la segunda): "Baño de chocolate
+// semiamargo Alpino" y "Baño de chocolate semiamargo Lodiser" comparten TODO menos la última
+// palabra — la base real es "Baño de chocolate semiamargo" (varias palabras), no solo "Baño".
+// Uses esto para agrupar por "todas las palabras menos la última" en vez de solo la primera, así
+// nombres de varias palabras (con conectores como "de") también se agrupan bien. La última palabra
+// se descarta como candidata a marca si es un descriptor de tipo/variedad conocido (ver
+// PALABRAS_TIPO_NO_MARCA) — eso es justamente lo que mantiene separados a "Baño de chocolate
+// semiamargo" y "Baño de chocolate blanco": son productos distintos, no la misma cosa con otra
+// marca, aunque compartan casi todo el nombre.
 function buscarVariantesMarca() {
   const entries = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
     .filter(([, ins]) => !(ins.receta && Object.keys(ins.receta).length)); // las bases no tienen "marca"
@@ -1585,11 +1594,13 @@ function buscarVariantesMarca() {
   for (const [id, ins] of entries) {
     const palabras = ins.nombre.trim().split(/\s+/).filter(Boolean);
     if (palabras.length < 2) continue; // sin una segunda palabra no hay marca candidata
-    const baseKey = normalizeInsumoNombre(palabras[0]);
-    if (baseKey.length < 4) continue; // evita agrupar por palabras muy cortas/genéricas (ej. "de")
-    const primeraPalabraResto = stripAccentsCosteo(palabras[1]).toLowerCase();
-    if (PALABRAS_TIPO_NO_MARCA.has(primeraPalabraResto) || /^\d+$/.test(primeraPalabraResto)) continue;
-    (grupos[baseKey] ||= []).push({ id, ins, nombreBaseSugerido: palabras[0], marcaSugerida: palabras.slice(1).join(" ") });
+    const ultimaPalabra = palabras[palabras.length - 1];
+    const ultimaPalabraNorm = stripAccentsCosteo(ultimaPalabra).toLowerCase();
+    if (PALABRAS_TIPO_NO_MARCA.has(ultimaPalabraNorm) || /^\d+$/.test(ultimaPalabraNorm)) continue;
+    const palabrasBase = palabras.slice(0, -1);
+    const baseKey = normalizeInsumoNombre(palabrasBase.join(" "));
+    if (baseKey.length < 4) continue; // evita agrupar por bases muy cortas/genéricas (ej. "de")
+    (grupos[baseKey] ||= []).push({ id, ins, nombreBaseSugerido: palabrasBase.join(" "), marcaSugerida: ultimaPalabra });
   }
   return Object.values(grupos).filter(items => items.length >= 2);
 }
