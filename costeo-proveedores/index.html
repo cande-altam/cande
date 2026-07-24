@@ -1528,6 +1528,21 @@ window.moverProductoAInsumo = async function(id) {
   showToast("✅ Movido a Insumos.", "success");
   render();
 };
+// Agrega una línea de precio (proveedor+marca) más a un insumo YA EXISTENTE, sin crear otro
+// insumo ni pasar por "fusionar" — es la forma directa de armar, por ejemplo, las 4 combinaciones
+// de "Levadura" (Leudex/Duquesa × Calsa/Casa Naoum) bajo un único insumo, una por una.
+window.agregarPrecioInsumo = async function(id) {
+  if (!state.insumos[id]) return;
+  const proveedorId = document.getElementById(`add-precio-proveedor-${id}`).value;
+  const proveedorNombre = proveedorId ? (state.proveedores[proveedorId]?.nombre || "") : "Carga manual";
+  const marca = document.getElementById(`add-precio-marca-${id}`).value.trim();
+  const precio = parseFloat(document.getElementById(`add-precio-monto-${id}`).value);
+  if (!(precio > 0)) { showToast("⚠️ Ingresá un precio válido.", "warn"); return; }
+  await actualizarPrecioInsumo(id, { proveedorId, proveedorNombre, precio, marca });
+  await push(ref(db, `costeo/insumos/${id}/historial`), { precio, fecha: todayISO(), proveedorId, proveedorNombre, marca, facturaId: "" });
+  showToast("✅ Precio agregado.", "success");
+  render();
+};
 window.toggleHistorialInsumo = function(id) {
   state.viewingInsumoHistId = state.viewingInsumoHistId === id ? null : id;
   render();
@@ -1834,10 +1849,15 @@ function actualizarPreciosBasesElaboradas() {
 function renderInsumosView(container) {
   const editing = state.editingInsumoId;
   const editingData = editing && editing !== "new" ? (state.insumos[editing] || {}) : {};
-  if (state.insumosMergeMode || state.mostrarDuplicados || state.mostrarVariantesMarca) state.formOpen = true;
+  if (state.insumosMergeMode || state.mostrarDuplicados || state.mostrarVariantesMarca || state.viewingInsumoHistId) state.formOpen = true;
   const duplicados = state.mostrarDuplicados ? buscarInsumosDuplicados() : [];
   const variantesMarca = state.mostrarVariantesMarca ? buscarVariantesMarca() : [];
   actualizarPreciosBasesElaboradas();
+  // Para el formulario de "agregar otro proveedor/marca" que se abre dentro de cada insumo — no
+  // hace falta fusionar nada para que un insumo tenga varias líneas proveedor+marca, se cargan
+  // directo acá una por una (ver agregarPrecioInsumo).
+  const proveedorOptionsAgregarPrecio = objToSortedEntries(state.proveedores, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .map(([pid, p]) => `<option value="${pid}">${escapeHtml(p.nombre)}</option>`).join("");
 
   const insumoRecetaRows = editing && editing !== "new" && editingData.receta && Object.keys(editingData.receta).length
     ? objToSortedEntries(editingData.receta, () => 0).map(([subId, cantidad]) => recipeRowHtml({ insumoId: subId, cantidad }, insumoRecipeRowOpts(editing))).join("")
@@ -1916,7 +1936,29 @@ function renderInsumosView(container) {
       </tr>
       ${isOpen ? `<tr><td colspan="${state.insumosMergeMode ? 7 : 6}" style="background:var(--cream);padding:14px 18px">
         ${precioEntries.length ? `<div class="text-muted" style="margin-bottom:6px;font-weight:600">Precios por proveedor y marca</div><table class="data-table"><thead><tr><th>Proveedor</th><th>Marca</th><th>Precio</th><th></th></tr></thead><tbody>${precioRows}</tbody></table>` : ""}
-        <div class="text-muted" style="margin:${precioEntries.length ? "14px" : "0"} 0 6px;font-weight:600">Historial</div>
+        ${!esElaborado ? `
+        <div class="text-muted" style="margin:14px 0 6px;font-weight:600">+ Agregar otro proveedor/marca a este mismo insumo</div>
+        <div class="form-row" style="align-items:flex-end;margin-bottom:0">
+          <div class="form-group" style="max-width:200px">
+            <label class="form-label">Proveedor</label>
+            <select class="form-select" id="add-precio-proveedor-${id}">
+              <option value="">— Carga manual —</option>
+              ${proveedorOptionsAgregarPrecio}
+            </select>
+          </div>
+          <div class="form-group" style="max-width:150px">
+            <label class="form-label">Marca (opcional)</label>
+            <input class="form-input" id="add-precio-marca-${id}" placeholder="ej. Leudex">
+          </div>
+          <div class="form-group" style="max-width:130px">
+            <label class="form-label">Precio</label>
+            <input type="number" step="0.01" min="0" class="form-input" id="add-precio-monto-${id}">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="agregarPrecioInsumo('${id}')">+ Agregar precio</button>
+        </div>
+        <div class="text-muted" style="font-size:11px;margin-top:6px">No hace falta crear otro insumo ni fusionar nada: cada proveedor/marca que agregués acá queda como una línea de precio más de "${escapeHtml(ins.nombre)}". Si no ves el proveedor en la lista, cargalo primero en la pestaña Proveedores.</div>
+        ` : ""}
+        <div class="text-muted" style="margin:14px 0 6px;font-weight:600">Historial</div>
         ${hist.length ? `<table class="data-table"><thead><tr><th>Fecha</th><th>Precio</th><th>Proveedor</th><th>Marca</th></tr></thead><tbody>${histRows}</tbody></table>` : `<div class="text-muted">Sin historial de precios todavía.</div>`}
       </td></tr>` : ""}`;
   }).join("");
