@@ -1928,7 +1928,8 @@ function renderInsumosView(container) {
         <td><span class="${precioCellClass}">${fmtMoney(costoVivo)}</span>${esElaborado ? `<div class="text-muted" style="font-size:11px">receta propia</div>` : (preferidoNombre ? `<div class="text-muted" style="font-size:11px">${escapeHtml(preferidoNombre)}</div>` : "")}${alertaBadge}</td>
         <td>${hist.length}</td>
         <td style="white-space:nowrap">
-          <button class="btn btn-ghost btn-sm" onclick="toggleHistorialInsumo('${id}')">${isOpen ? "Ocultar" : "Ver historial"}</button>
+          ${!esElaborado ? `<button class="btn btn-turq btn-sm" onclick="toggleHistorialInsumo('${id}')" title="Agregar otro proveedor o marca de este mismo insumo">➕ Proveedor/Marca</button>` : ""}
+          <button class="btn btn-ghost btn-sm" onclick="toggleHistorialInsumo('${id}')">${isOpen ? "Ocultar" : "Ver precios e historial"}</button>
           <button class="btn btn-ghost btn-sm" onclick="abrirFormInsumo('${id}')">Editar</button>
           <button class="btn btn-ghost btn-sm" onclick="moverInsumoAProducto('${id}')" title="Convertir en producto (ej. si en realidad es de reventa, no un insumo)">➡️ A Productos</button>
           <button class="btn btn-danger btn-sm" onclick="eliminarInsumo('${id}')">Eliminar</button>
@@ -1937,7 +1938,8 @@ function renderInsumosView(container) {
       ${isOpen ? `<tr><td colspan="${state.insumosMergeMode ? 7 : 6}" style="background:var(--cream);padding:14px 18px">
         ${precioEntries.length ? `<div class="text-muted" style="margin-bottom:6px;font-weight:600">Precios por proveedor y marca</div><table class="data-table"><thead><tr><th>Proveedor</th><th>Marca</th><th>Precio</th><th></th></tr></thead><tbody>${precioRows}</tbody></table>` : ""}
         ${!esElaborado ? `
-        <div class="text-muted" style="margin:14px 0 6px;font-weight:600">+ Agregar otro proveedor/marca a este mismo insumo</div>
+        <div style="background:var(--white);border:1.5px solid var(--turq);border-radius:var(--r-sm);padding:12px 14px;margin:14px 0">
+        <div style="font-weight:700;margin-bottom:8px;color:var(--turq-dark)">➕ Agregar otro proveedor/marca a este mismo insumo</div>
         <div class="form-row" style="align-items:flex-end;margin-bottom:0">
           <div class="form-group" style="max-width:200px">
             <label class="form-label">Proveedor</label>
@@ -1957,6 +1959,7 @@ function renderInsumosView(container) {
           <button class="btn btn-primary btn-sm" onclick="agregarPrecioInsumo('${id}')">+ Agregar precio</button>
         </div>
         <div class="text-muted" style="font-size:11px;margin-top:6px">No hace falta crear otro insumo ni fusionar nada: cada proveedor/marca que agregués acá queda como una línea de precio más de "${escapeHtml(ins.nombre)}". Si no ves el proveedor en la lista, cargalo primero en la pestaña Proveedores.</div>
+        </div>
         ` : ""}
         <div class="text-muted" style="margin:14px 0 6px;font-weight:600">Historial</div>
         ${hist.length ? `<table class="data-table"><thead><tr><th>Fecha</th><th>Precio</th><th>Proveedor</th><th>Marca</th></tr></thead><tbody>${histRows}</tbody></table>` : `<div class="text-muted">Sin historial de precios todavía.</div>`}
