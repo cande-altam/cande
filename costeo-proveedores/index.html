@@ -961,7 +961,10 @@ function comboKeyPrecio(proveedorId, marca) {
 // una cotización más barata de otra marca/proveedor no baja la referencia sola, hay que elegirla a
 // mano ("Usar este"). Para la MISMA línea (mismo proveedor+marca) que ya era la preferida, siempre
 // se toma su último precio.
-async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, precio, marca }) {
+// Registra una compra/cotización de un insumo. Escribe SIEMPRE el historial además de la línea
+// proveedor+marca: el costeo se calcula sobre el historial (ver precioCosteoInsumo), así que si
+// un llamador se olvidara de registrarla, esa compra no contaría para el costo.
+async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, precio, marca, fecha, conIva, facturaId }) {
   const insumo = state.insumos[insumoId] || {};
   const key = comboKeyPrecio(proveedorId, marca);
   const precios = { ...(insumo.precios || {}) };
@@ -969,10 +972,8 @@ async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, 
   // de costeo) y guarda aparte la última compra real (`precioUltimo`). Así, si la última compra
   // salió más barata, queda registrada y visible para decidir dónde comprar, pero no abarata el
   // costeo — que es justamente la regla del negocio.
-  const lineaAnterior = precios[key];
   precios[key] = {
-    precio: Math.max(precio, Number(lineaAnterior?.precio) || 0),
-    precioUltimo: precio,
+    precio,                 // último precio conocido de esta línea proveedor+marca
     fechaUltimo: todayISO(),
     actualizadoTs: Date.now(),
     proveedorId: proveedorId || "",
@@ -980,12 +981,19 @@ async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, 
     marca: normMarca(marca)
   };
 
-  // REGLA DE COSTEO: para costear siempre se usa el precio MÁS ALTO entre todas las líneas
-  // proveedor+marca del insumo — sin excepción, ni siquiera si la baja viene de la última compra
-  // de la propia línea que era referencia. Una baja se destaca aparte (ver alertaBaja) para saber
-  // dónde conviene comprar, pero no abarata el costeo.
-  const proveedorPreferido = lineaPrecioMaxima(precios) || key;
-  const precioActual = precios[proveedorPreferido]?.precio ?? precio;
+  // precioActual queda como espejo persistido de la regla de costeo (ver precioCosteoInsumo):
+  // el más alto entre las compras de los últimos 2 meses. El llamador todavía no escribió esta
+  // compra en el historial, así que se la suma acá para que entre en el cálculo.
+  const insumoConCompraNueva = {
+    ...insumo,
+    precios,
+    historial: { ...(insumo.historial || {}), __nuevaCompra: { precio, fecha: todayISO() } }
+  };
+  const precioActual = precioCosteoInsumo(insumoConCompraNueva);
+  // ⭐ informativo: qué línea está fijando hoy el costo (la más cara entre las recientes).
+  const proveedorPreferido = (precios[key]?.precio === precioActual)
+    ? key
+    : (Object.keys(precios).find(k => precios[k]?.precio === precioActual) || lineaPrecioMaxima(precios) || key);
 
   const updates = { precios, proveedorPreferido, precioActual, actualizadoTs: Date.now() };
   // El valor de referencia efectivamente subió: deja una alerta con todos los datos para que
@@ -1017,7 +1025,17 @@ async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, 
     };
   }
   await update(ref(db, `costeo/insumos/${insumoId}`), updates);
-  state.insumos[insumoId] = { ...insumo, ...updates };
+  const histEntry = {
+    precio, fecha: fecha || todayISO(),
+    proveedorId: proveedorId || "", proveedorNombre: proveedorNombre || "",
+    marca: normMarca(marca), facturaId: facturaId || "",
+    ...(conIva === undefined ? {} : { conIva })
+  };
+  const histRef = await push(ref(db, `costeo/insumos/${insumoId}/historial`), histEntry);
+  state.insumos[insumoId] = {
+    ...insumo, ...updates,
+    historial: { ...(insumo.historial || {}), [histRef.key]: histEntry }
+  };
   // referenciaActualizada = false avisa al llamador (ej. guardarFactura) que este precio quedó
   // guardado en el historial del proveedor pero NO cambió el costo de referencia — para que no
   // sea una sorpresa silenciosa cuando en realidad se esperaba una suba (ej. por un escaneo mal leído).
@@ -1078,6 +1096,11 @@ window.guardarFactura = async function() {
       proveedorNombre = state.proveedores[proveedorId]?.nombre || "";
     }
 
+    // El id de la factura se reserva antes del loop para que cada compra quede enlazada a ella
+    // en el historial del insumo (push() genera la clave sin escribir todavía).
+    const facturaRef = push(ref(db, "costeo/facturas"));
+    const facturaId = facturaRef.key;
+
     const itemRows = Array.from(document.querySelectorAll("#items-container .item-row"));
     const items = [];
     const sinActualizarReferencia = [];
@@ -1100,20 +1123,11 @@ window.guardarFactura = async function() {
       } else {
         nombre = state.insumos[insumoId]?.nombre || nombreTyped;
       }
-      const resultadoPrecio = await actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, precio: precioUnitario, marca });
+      const resultadoPrecio = await actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, precio: precioUnitario, marca, fecha, conIva: preciosConIva, facturaId });
       if (resultadoPrecio && !resultadoPrecio.referenciaActualizada) {
         sinActualizarReferencia.push({ nombre, marca, precioUnitario, precioReferencia: resultadoPrecio.precioActualAnterior });
       }
       items.push({ insumoId, nombre, precioUnitario, marca });
-    }
-
-    const facturaRef = push(ref(db, "costeo/facturas"));
-    const facturaId = facturaRef.key;
-
-    for (const it of items) {
-      await push(ref(db, `costeo/insumos/${it.insumoId}/historial`), {
-        precio: it.precioUnitario, conIva: preciosConIva, fecha, proveedorId, proveedorNombre, marca: it.marca || "", facturaId
-      });
     }
 
     await set(facturaRef, {
@@ -1527,8 +1541,7 @@ window.guardarInsumo = async function() {
         const costo = Object.entries(receta).reduce((sum, [subId, cant]) => sum + precioEfectivoInsumo(subId) * cant, 0);
         await guardarPrecioRecetaInsumo(newRef.key, costo);
       } else if (precio > 0) {
-        await actualizarPrecioInsumo(newRef.key, { proveedorId: "", proveedorNombre: "Carga manual", precio, marca });
-        await push(ref(db, `costeo/insumos/${newRef.key}/historial`), { precio, conIva: true, fecha: todayISO(), proveedorId: "", proveedorNombre: "Carga manual", marca, facturaId: "" });
+        await actualizarPrecioInsumo(newRef.key, { proveedorId: "", proveedorNombre: "Carga manual", precio, marca, conIva: true });
       }
     } else {
       await update(ref(db, `costeo/insumos/${id}`), { nombre, unidad, receta });
@@ -1587,7 +1600,6 @@ window.moverProductoAInsumo = async function(id) {
   await set(newInsRef, { nombre: p.nombre, unidad: "", creadoTs: Date.now() });
   if (costo > 0) {
     await actualizarPrecioInsumo(newInsRef.key, { proveedorId: "", proveedorNombre: "Carga manual", precio: costo });
-    await push(ref(db, `costeo/insumos/${newInsRef.key}/historial`), { precio: costo, fecha: todayISO(), proveedorId: "", proveedorNombre: "Carga manual", marca: "", facturaId: "" });
   }
   await remove(ref(db, `costeo/productos/${id}`));
   showToast("✅ Movido a Insumos.", "success");
@@ -1604,7 +1616,6 @@ window.agregarPrecioInsumo = async function(id) {
   const precio = parseFloat(document.getElementById(`add-precio-monto-${id}`).value);
   if (!(precio > 0)) { showToast("⚠️ Ingresá un precio válido.", "warn"); return; }
   await actualizarPrecioInsumo(id, { proveedorId, proveedorNombre, precio, marca });
-  await push(ref(db, `costeo/insumos/${id}/historial`), { precio, fecha: todayISO(), proveedorId, proveedorNombre, marca, facturaId: "" });
   showToast("✅ Precio agregado.", "success");
   render();
 };
@@ -1957,22 +1968,23 @@ function renderInsumosView(container) {
       <tr><td>${fmtDate(h.fecha)}</td><td>${fmtMoney(h.precio)}</td><td>${escapeHtml(h.proveedorNombre) || "—"}</td><td>${escapeHtml(h.marca) || "—"}</td></tr>`).join("");
     const precios = ins.precios || {};
     const precioEntries = Object.entries(precios).sort((a, b) => (a[1].precio || 0) - (b[1].precio || 0));
+    const esElaborado = ins.receta && Object.keys(ins.receta).length > 0;
+    const costoVivo = precioEfectivoInsumo(id);
     const precioRows = precioEntries.map(([provId, p]) => `
       <tr>
         <td>${escapeHtml(p.proveedorNombre) || "—"}</td>
         <td>${escapeHtml(p.marca) || "—"}</td>
-        <td>${fmtMoney(p.precio)}${p.precioUltimo != null && p.precioUltimo < p.precio - 0.005
-          ? `<div class="text-muted" style="font-size:11px">última compra: <span style="color:var(--green);font-weight:600">${fmtMoney(p.precioUltimo)}</span>${p.fechaUltimo ? ` (${fmtDate(p.fechaUltimo)})` : ""}</div>`
-          : ""}</td>
-        <td>${provId === ins.proveedorPreferido
-          ? `<span class="badge badge-alerta" title="Es el precio más alto: es el que se usa para costear">⭐ Se usa para costear</span>`
-          : `<span class="badge badge-ok" title="Más barato que la referencia: sirve para saber dónde comprar, pero no se usa para costear">💡 Más barato</span>`}</td>
+        <td>${fmtMoney(p.precio)}${p.fechaUltimo ? `<div class="text-muted" style="font-size:11px">${fmtDate(p.fechaUltimo)}</div>` : ""}</td>
+        <td>${(() => {
+          const dias = diasDesdeFecha(p.fechaUltimo);
+          if (dias > COSTEO_VENTANA_DIAS) return `<span class="badge badge-neutro" title="Sin compras en los últimos ${COSTEO_VENTANA_DIAS} días: no entra en el costeo">⏳ Sin comprar hace +2 meses</span>`;
+          if (Math.abs((Number(p.precio) || 0) - costoVivo) < 0.005) return `<span class="badge badge-alerta" title="Es el precio más alto entre las compras de los últimos ${COSTEO_VENTANA_DIAS} días: define el costo">⭐ Define el costo</span>`;
+          return `<span class="badge badge-ok" title="Más barato que el que define el costo: sirve para saber dónde comprar">💡 Más barato</span>`;
+        })()}</td>
         <td><button class="btn btn-ghost btn-sm btn-icon" onclick="quitarPrecioInsumo('${id}','${escapeHtml(provId)}')" title="Quitar esta línea de precio (ej. si se cargó mal)">🗑️</button></td>
       </tr>`).join("");
     const preferidoNombre = precios[ins.proveedorPreferido]?.proveedorNombre || "";
     const checked = !!state.insumosMergeSeleccion[id];
-    const esElaborado = ins.receta && Object.keys(ins.receta).length > 0;
-    const costoVivo = precioEfectivoInsumo(id);
     const alertaVigente = alertaPrecioVigente(ins.alertaPrecio);
     const precioCellClass = alertaVigente ? "precio-subio" : "";
     const alertaBadge = alertaVigente
@@ -2012,7 +2024,7 @@ function renderInsumosView(container) {
         </td>
       </tr>
       ${isOpen ? `<tr><td colspan="${state.insumosMergeMode ? 7 : 6}" style="background:var(--cream);padding:14px 18px">
-        ${precioEntries.length ? `<div class="text-muted" style="margin-bottom:6px;font-weight:600">Precios por proveedor y marca <span style="font-weight:400">— para costear se usa siempre el más alto</span></div><table class="data-table"><thead><tr><th>Proveedor</th><th>Marca</th><th>Precio</th><th>Costeo</th><th></th></tr></thead><tbody>${precioRows}</tbody></table>` : ""}
+        ${precioEntries.length ? `<div class="text-muted" style="margin-bottom:6px;font-weight:600">Precios por proveedor y marca <span style="font-weight:400">— se costea con el más alto de las compras de los últimos 60 días</span></div><table class="data-table"><thead><tr><th>Proveedor</th><th>Marca</th><th>Último precio</th><th>Costeo</th><th></th></tr></thead><tbody>${precioRows}</tbody></table>` : ""}
         ${!esElaborado ? `
         <div style="background:var(--white);border:1.5px solid var(--turq);border-radius:var(--r-sm);padding:12px 14px;margin:14px 0">
         <div style="font-weight:700;margin-bottom:8px;color:var(--turq-dark)">➕ Agregar otro proveedor/marca a este mismo insumo</div>
@@ -2179,6 +2191,33 @@ window.recalcCostoProducto = function() {
 // ej. crema chantilly, bizcochuelo), se recalcula sumando el costo de sus propios ingredientes
 // en vez de usar el precioActual guardado — así cualquier producto que la use ve siempre el costo
 // al día, sin depender de que alguien vuelva a guardar la base a mano. visiting evita ciclos.
+// ─────────────────────────────────────────────────────────────────────────────
+// REGLA DE COSTEO (definida por el negocio)
+// Se costea con el precio MÁS ALTO entre las compras de los últimos COSTEO_VENTANA_DIAS.
+// De esa única regla salen las tres condiciones pedidas:
+//   · Solo pesan los proveedores/marcas a los que realmente se les compra (si no hay compra
+//     reciente de esa línea, no entra en el cálculo).
+//   · Una compra puntual más barata NO baja el costo: la compra cara reciente sigue mandando.
+//   · Una baja sostenida SÍ termina bajando el costo sola, cuando la compra cara queda fuera
+//     de la ventana de 2 meses y deja de contar.
+// Se calcula en vivo (no solo al guardar) justamente para que el paso del tiempo surta efecto.
+// ─────────────────────────────────────────────────────────────────────────────
+const COSTEO_VENTANA_DIAS = 60; // 2 meses
+
+function precioCosteoInsumo(ins) {
+  const hist = Object.values(ins?.historial || {}).filter(h => h && h.fecha);
+  const recientes = hist.filter(h => diasDesdeFecha(h.fecha) <= COSTEO_VENTANA_DIAS);
+  if (recientes.length) return Math.max(...recientes.map(h => Number(h.precio) || 0));
+  // Sin compras en la ventana: se usa la última compra conocida, para no quedarse sin costo.
+  if (hist.length) {
+    const ordenado = hist.slice().sort((a, b) => a.fecha.localeCompare(b.fecha));
+    return Number(ordenado[ordenado.length - 1].precio) || 0;
+  }
+  // Sin historial (ej. líneas cargadas por importación): el más alto de las líneas registradas.
+  const lineas = Object.values(ins?.precios || {}).map(p => Number(p?.precio) || 0);
+  return lineas.length ? Math.max(...lineas) : (Number(ins?.precioActual) || 0);
+}
+
 function precioEfectivoInsumo(insumoId, visiting) {
   const ins = state.insumos[insumoId];
   if (!ins) return 0;
@@ -2189,7 +2228,7 @@ function precioEfectivoInsumo(insumoId, visiting) {
     seen.add(insumoId);
     return Object.entries(receta).reduce((sum, [subId, cantidad]) => sum + precioEfectivoInsumo(subId, seen) * (Number(cantidad) || 0), 0);
   }
-  return ins.precioActual || 0;
+  return precioCosteoInsumo(ins);
 }
 
 function calcCostoProducto(producto) {
@@ -2200,6 +2239,13 @@ function calcCostoProducto(producto) {
       return sum + precio * (Number(cantidad) || 0);
     }, 0);
   }
+  // Producto de reventa vinculado a un insumo (caso fiambres: el jamón cocido se compra a varios
+  // proveedores/marcas y además se usa como insumo de otras recetas). Se carga UNA sola vez como
+  // insumo — con todas sus líneas proveedor+marca — y el producto toma de ahí su costo de compra,
+  // así se costea con la misma regla y no hay dos lugares donde mantener el precio.
+  if (producto.insumoVinculadoId && state.insumos[producto.insumoVinculadoId]) {
+    return precioEfectivoInsumo(producto.insumoVinculadoId) * (Number(producto.insumoVinculadoCantidad) || 1);
+  }
   // Sin receta armada: usamos el costo estimado a mano, si lo cargaron (útil para catálogos
   // grandes importados donde no es realista armar una receta ingrediente por ingrediente para todo).
   return Number(producto.costoManual) || 0;
@@ -2207,6 +2253,7 @@ function calcCostoProducto(producto) {
 
 function costoProductoFuente(producto) {
   if (producto.receta && Object.keys(producto.receta).length) return "receta";
+  if (producto.insumoVinculadoId && state.insumos[producto.insumoVinculadoId]) return "insumo";
   if (producto.costoManual > 0) return "manual";
   return "sin_datos";
 }
@@ -2277,6 +2324,9 @@ window.guardarProducto = async function() {
   const costoManualRaw = document.getElementById("prod-costo-manual").value;
   const costoManual = costoManualRaw ? parseFloat(costoManualRaw) : null;
   const categoria = document.getElementById("prod-categoria").value.trim();
+  const insumoVinculadoId = document.getElementById("prod-insumo-vinculado").value;
+  const cantVinculadaRaw = document.getElementById("prod-insumo-vinculado-cant").value;
+  const insumoVinculadoCantidad = insumoVinculadoId ? (parseFloat(cantVinculadaRaw) || 1) : null;
   if (!nombre) { showToast("⚠️ Ingresá el nombre del producto.", "warn"); return; }
 
   const rows = Array.from(document.querySelectorAll("#recipe-container .recipe-row"));
@@ -2288,7 +2338,7 @@ window.guardarProducto = async function() {
   }
 
   const id = state.editingProductoId;
-  const data = { nombre, precioVenta, receta, costoManual, categoria };
+  const data = { nombre, precioVenta, receta, costoManual, categoria, insumoVinculadoId, insumoVinculadoCantidad };
   try {
     if (id === "new") {
       await set(push(ref(db, "costeo/productos")), { ...data, creadoTs: Date.now() });
@@ -2334,7 +2384,19 @@ function renderProductosView(container) {
           <label class="form-label">Costo manual (opcional, si no armaste la receta)</label>
           <input type="number" step="0.01" min="0" class="form-input" id="prod-costo-manual" value="${editingData.costoManual ?? ""}" placeholder="0.00">
         </div>
+        <div class="form-group" style="max-width:300px">
+          <label class="form-label">O tomar el costo de un insumo (reventa)</label>
+          <select class="form-select" id="prod-insumo-vinculado">
+            <option value="">— No vinculado —</option>
+            ${objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre)).map(([iid, ins]) => `<option value="${iid}" ${editingData.insumoVinculadoId === iid ? "selected" : ""}>${escapeHtml(ins.nombre)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="form-group" style="max-width:150px">
+          <label class="form-label">Cantidad por unidad</label>
+          <input type="number" step="0.001" min="0" class="form-input" id="prod-insumo-vinculado-cant" value="${editingData.insumoVinculadoCantidad ?? ""}" placeholder="1">
+        </div>
       </div>
+      <div class="text-muted" style="margin-bottom:10px">Vinculalo a un insumo cuando lo comprás a varios proveedores/marcas (típico de fiambres: el jamón cocido se revende y además se usa en recetas). Así se carga una sola vez como insumo, con todas sus líneas de precio, y el producto se costea con la misma regla — el más alto de los últimos 2 meses.</div>
       <div class="text-muted" style="margin-bottom:10px">Si armaste la receta, el costo se calcula solo a partir de los insumos y este campo se ignora. Usalo para productos sin receta armada (ej. catálogo importado), así igual entran en la comparación de costo vs. precio de venta.</div>
       <button class="btn btn-primary" onclick="guardarProducto()">💾 Guardar</button>
       <button class="btn btn-ghost" onclick="cerrarFormProducto()">Cancelar</button>
@@ -2435,7 +2497,9 @@ function renderProductosTable() {
     const tieneReceta = Object.keys(p.receta || {}).length > 0;
     const costoCell = tieneReceta
       ? `<span class="${alertaSuba ? "precio-subio" : ""}">${fmtMoney(costo)}</span> <span class="text-muted" style="font-size:11px">(receta)</span>`
-      : `<input type="number" step="0.01" min="0" class="form-input ${alertaSuba ? "precio-subio" : ""}" style="max-width:120px" value="${p.costoManual ?? ""}" placeholder="Costo manual" onchange="guardarCostoManualRapido('${id}', this.value)">`;
+      : fuente === "insumo"
+        ? `<span class="${alertaSuba ? "precio-subio" : ""}">${fmtMoney(costo)}</span> <div class="text-muted" style="font-size:11px">🔗 ${escapeHtml(state.insumos[p.insumoVinculadoId]?.nombre || "")}</div>`
+        : `<input type="number" step="0.01" min="0" class="form-input ${alertaSuba ? "precio-subio" : ""}" style="max-width:120px" value="${p.costoManual ?? ""}" placeholder="Costo manual" onchange="guardarCostoManualRapido('${id}', this.value)">`;
     const alertaSubaBadge = alertaSuba
       ? `<div><span class="badge ${alertaSuba.abrupta ? "badge-suba-abrupta" : "badge-suba"}">${alertaSuba.abrupta ? "🚨 SUBA ABRUPTA" : "🔺 Subió"} ${fmtPct(alertaSuba.pct)}</span></div>`
       : "";
