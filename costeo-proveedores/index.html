@@ -75,6 +75,12 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:va
 .btn-danger{background:#fdecea;color:#b83a25;border:1px solid #f5c4bc;}
 .btn-danger:hover{background:var(--terra);color:#fff;border-color:var(--terra);}
 .btn-sm{padding:6px 13px;font-size:12px;border-radius:8px;}
+/* Botón cuadrado solo-ícono, para acciones frecuentes en filas de tabla sin llenarlas de texto.
+   Siempre con title= para que se entienda qué hace al pasar el mouse. */
+.btn-icon{padding:0;width:30px;height:30px;justify-content:center;font-size:14px;border-radius:8px;flex:0 0 auto;}
+.row-actions{display:flex;gap:5px;align-items:center;justify-content:flex-end;}
+/* Pie del panel expandido: acciones menos frecuentes / destructivas, lejos del flujo normal. */
+.panel-footer-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--cream-dark);}
 
 /* BADGES */
 .badge{font-size:11px;padding:3px 10px;border-radius:100px;font-weight:500;letter-spacing:.2px;display:inline-block;}
@@ -1928,11 +1934,11 @@ function renderInsumosView(container) {
         <td><span class="${precioCellClass}">${fmtMoney(costoVivo)}</span>${esElaborado ? `<div class="text-muted" style="font-size:11px">receta propia</div>` : (preferidoNombre ? `<div class="text-muted" style="font-size:11px">${escapeHtml(preferidoNombre)}</div>` : "")}${alertaBadge}</td>
         <td>${hist.length}</td>
         <td style="white-space:nowrap">
-          ${!esElaborado ? `<button class="btn btn-turq btn-sm" onclick="toggleHistorialInsumo('${id}')" title="Agregar otro proveedor o marca de este mismo insumo">➕ Proveedor/Marca</button>` : ""}
-          <button class="btn btn-ghost btn-sm" onclick="toggleHistorialInsumo('${id}')">${isOpen ? "Ocultar" : "Ver precios e historial"}</button>
-          <button class="btn btn-ghost btn-sm" onclick="abrirFormInsumo('${id}')">Editar</button>
-          <button class="btn btn-ghost btn-sm" onclick="moverInsumoAProducto('${id}')" title="Convertir en producto (ej. si en realidad es de reventa, no un insumo)">➡️ A Productos</button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarInsumo('${id}')">Eliminar</button>
+          <div class="row-actions">
+            ${!esElaborado ? `<button class="btn btn-turq btn-sm" onclick="toggleHistorialInsumo('${id}')" title="Agregar otro proveedor o marca de este mismo insumo">➕ Precio</button>` : ""}
+            <button class="btn btn-ghost btn-sm btn-icon" onclick="abrirFormInsumo('${id}')" title="Editar nombre y unidad">✏️</button>
+            <button class="btn btn-ghost btn-sm btn-icon" onclick="toggleHistorialInsumo('${id}')" title="${isOpen ? "Ocultar detalle" : "Ver precios, historial y más acciones"}">${isOpen ? "▴" : "▾"}</button>
+          </div>
         </td>
       </tr>
       ${isOpen ? `<tr><td colspan="${state.insumosMergeMode ? 7 : 6}" style="background:var(--cream);padding:14px 18px">
@@ -1963,6 +1969,10 @@ function renderInsumosView(container) {
         ` : ""}
         <div class="text-muted" style="margin:14px 0 6px;font-weight:600">Historial</div>
         ${hist.length ? `<table class="data-table"><thead><tr><th>Fecha</th><th>Precio</th><th>Proveedor</th><th>Marca</th></tr></thead><tbody>${histRows}</tbody></table>` : `<div class="text-muted">Sin historial de precios todavía.</div>`}
+        <div class="panel-footer-actions">
+          <button class="btn btn-ghost btn-sm" onclick="moverInsumoAProducto('${id}')" title="Convertir en producto (ej. si en realidad es de reventa, no un insumo)">➡️ Mover a Productos</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarInsumo('${id}')">🗑️ Eliminar insumo</button>
+        </div>
       </td></tr>` : ""}`;
   }).join("");
 
@@ -2378,10 +2388,10 @@ function renderProductosTable() {
         <td>${precioVentaCell}</td>
         <td>${margenCell}</td>
         <td style="white-space:nowrap">
-          <button class="btn btn-ghost btn-sm" onclick="toggleRecetaProducto('${id}')">${recetaAbierta ? "Ocultar receta" : "📋 Receta"}</button>
-          <button class="btn btn-ghost btn-sm" onclick="abrirFormProducto('${id}')">Editar</button>
-          <button class="btn btn-ghost btn-sm" onclick="moverProductoAInsumo('${id}')" title="Convertir en insumo (ej. si en realidad es una materia prima, no un producto)">➡️ A Insumos</button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarProducto('${id}')">Eliminar</button>
+          <div class="row-actions">
+            <button class="btn ${recetaAbierta ? "btn-turq" : "btn-ghost"} btn-sm" onclick="toggleRecetaProducto('${id}')" title="Ver, armar o modificar la receta">📋 Receta</button>
+            <button class="btn btn-ghost btn-sm btn-icon" onclick="abrirFormProducto('${id}')" title="Editar nombre, categoría y precio">✏️</button>
+          </div>
         </td>
       </tr>
       ${recetaAbierta ? recetaPanelHtml(id, p) : ""}`;
@@ -2430,6 +2440,10 @@ function recetaPanelHtml(id, p) {
       <div class="text-muted" style="margin-bottom:8px;font-weight:600">🧾 Receta de "${escapeHtml(p.nombre)}"</div>
       ${recetaPanelContenido(id, p)}
       <button class="btn btn-ghost btn-sm" onclick="toggleRecetaProducto('${id}')">Cerrar</button>
+      <div class="panel-footer-actions">
+        <button class="btn btn-ghost btn-sm" onclick="moverProductoAInsumo('${id}')" title="Convertir en insumo (ej. si en realidad es una materia prima, no un producto)">➡️ Mover a Insumos</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarProducto('${id}')">🗑️ Eliminar producto</button>
+      </div>
     </td></tr>`;
 }
 window.toggleRecetaProducto = function(id) {
