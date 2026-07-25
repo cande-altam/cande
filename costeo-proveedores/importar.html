@@ -367,17 +367,15 @@ async function runImport() {
       const insSnapCI = await get(ref(db, `costeo/insumos/${insId}`));
       const insumoCI = insSnapCI.val() || {};
       const key = provId || "_manual";
-      // Regla de precios: si cambia de proveedor y el precio nuevo es mayor al que se venía usando,
-      // pasa a ser la referencia; si es menor, se mantiene el proveedor/precio que ya se usaba.
-      const proveedorPreferidoAnterior = insumoCI.proveedorPreferido;
-      const precioPreferidoAnterior = (proveedorPreferidoAnterior && insumoCI.precios && insumoCI.precios[proveedorPreferidoAnterior])
-        ? insumoCI.precios[proveedorPreferidoAnterior].precio
-        : null;
+      // Regla de costeo (igual que en la app): siempre se usa el precio MÁS ALTO entre todas las
+      // líneas proveedor+marca del insumo. Una línea más barata queda registrada como referencia
+      // de compra, pero no baja el costo.
       const precios = { ...(insumoCI.precios || {}) };
       precios[key] = { precio, actualizadoTs: Date.now(), proveedorId: provId || "", proveedorNombre, marca: "" };
-      let proveedorPreferido = proveedorPreferidoAnterior;
-      if (!proveedorPreferido || !precios[proveedorPreferido] || precioPreferidoAnterior === null || precio > precioPreferidoAnterior) {
-        proveedorPreferido = key;
+      let proveedorPreferido = key, mejorPrecio = -Infinity;
+      for (const [k, p] of Object.entries(precios)) {
+        const v = Number(p?.precio) || 0;
+        if (v > mejorPrecio) { mejorPrecio = v; proveedorPreferido = k; }
       }
       const precioActual = precios[proveedorPreferido]?.precio ?? precio;
       await update(ref(db, `costeo/insumos/${insId}`), { precios, proveedorPreferido, precioActual, actualizadoTs: Date.now() });

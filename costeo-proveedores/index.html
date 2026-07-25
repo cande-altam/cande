@@ -90,6 +90,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:va
 .badge-ok{background:var(--turq-pale);color:var(--turq-dark);}
 .badge-neutro{background:var(--cream);color:var(--gray);}
 .badge-suba{background:#fdecea;color:#c0392b;font-weight:700;}
+.badge-baja{background:var(--green-pale);color:var(--green);font-weight:700;}
 .badge-suba-abrupta{background:#c0392b;color:#fff;font-weight:800;font-size:12px;padding:4px 12px;box-shadow:0 2px 8px rgba(192,57,43,.35);animation:pulse-alerta 1.6s ease-in-out infinite;}
 .precio-subio{color:#c0392b;font-weight:800;}
 .form-input.precio-subio{border-color:#c0392b;box-shadow:0 0 0 2px rgba(192,57,43,.12);}
@@ -510,7 +511,7 @@ function itemHintHtml(insumoId, precioUnitario, cantidad, unidad, importe, marca
       const key = comboKeyPrecio(state._facturaProveedorId, marca);
       const seActualizara = !ins.proveedorPreferido || ins.proveedorPreferido === key || !(ins.precios && ins.precios[ins.proveedorPreferido]) || precio > ins.precios[ins.proveedorPreferido].precio;
       if (!seActualizara) {
-        partes.push(`<div class="item-note">ℹ️ Es menor al precio de referencia actual — se va a guardar en el historial, pero el costo de los productos NO va a cambiar (para bajarlo hay que elegirlo a mano con "Usar este" en Insumos).</div>`);
+        partes.push(`<div class="item-note">💡 Es más barato que el precio con el que se costea — queda registrado y destacado como oportunidad de compra, pero el costo de los productos NO baja (siempre se costea con el precio más alto).</div>`);
       }
     }
   }
@@ -937,6 +938,16 @@ function aplicarDatosEscaneados(data) {
 function normMarca(s) {
   return String(s || "").trim();
 }
+// Devuelve la clave de la línea proveedor+marca con el precio más alto — la que se usa siempre
+// para costear. Ante empate, la primera por orden de clave (estable entre renders).
+function lineaPrecioMaxima(precios) {
+  let mejorKey = null, mejorPrecio = -Infinity;
+  for (const [k, p] of Object.entries(precios || {})) {
+    const v = Number(p?.precio) || 0;
+    if (v > mejorPrecio) { mejorPrecio = v; mejorKey = k; }
+  }
+  return mejorKey;
+}
 function comboKeyPrecio(proveedorId, marca) {
   const base = proveedorId || "_manual";
   const m = normMarca(marca);
@@ -953,24 +964,32 @@ function comboKeyPrecio(proveedorId, marca) {
 async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, precio, marca }) {
   const insumo = state.insumos[insumoId] || {};
   const key = comboKeyPrecio(proveedorId, marca);
-  const proveedorPreferidoAnterior = insumo.proveedorPreferido;
-  const precioPreferidoAnterior = (proveedorPreferidoAnterior && insumo.precios && insumo.precios[proveedorPreferidoAnterior])
-    ? insumo.precios[proveedorPreferidoAnterior].precio
-    : null;
-
   const precios = { ...(insumo.precios || {}) };
-  precios[key] = { precio, actualizadoTs: Date.now(), proveedorId: proveedorId || "", proveedorNombre: proveedorNombre || "", marca: normMarca(marca) };
+  // Cada línea proveedor+marca conserva como `precio` el MÁS ALTO que se le registró (es la base
+  // de costeo) y guarda aparte la última compra real (`precioUltimo`). Así, si la última compra
+  // salió más barata, queda registrada y visible para decidir dónde comprar, pero no abarata el
+  // costeo — que es justamente la regla del negocio.
+  const lineaAnterior = precios[key];
+  precios[key] = {
+    precio: Math.max(precio, Number(lineaAnterior?.precio) || 0),
+    precioUltimo: precio,
+    fechaUltimo: todayISO(),
+    actualizadoTs: Date.now(),
+    proveedorId: proveedorId || "",
+    proveedorNombre: proveedorNombre || "",
+    marca: normMarca(marca)
+  };
 
-  let proveedorPreferido = proveedorPreferidoAnterior;
-  if (!proveedorPreferido || !precios[proveedorPreferido] || precioPreferidoAnterior === null || precio > precioPreferidoAnterior) {
-    proveedorPreferido = key;
-  }
+  // REGLA DE COSTEO: para costear siempre se usa el precio MÁS ALTO entre todas las líneas
+  // proveedor+marca del insumo — sin excepción, ni siquiera si la baja viene de la última compra
+  // de la propia línea que era referencia. Una baja se destaca aparte (ver alertaBaja) para saber
+  // dónde conviene comprar, pero no abarata el costeo.
+  const proveedorPreferido = lineaPrecioMaxima(precios) || key;
   const precioActual = precios[proveedorPreferido]?.precio ?? precio;
 
   const updates = { precios, proveedorPreferido, precioActual, actualizadoTs: Date.now() };
-  // El valor de referencia efectivamente subió (no solo cambió de proveedor a igual/menor precio):
-  // deja una alerta con todos los datos para que compras la vea, con un umbral aparte para subas
-  // "abruptas" que necesitan una notificación más grande.
+  // El valor de referencia efectivamente subió: deja una alerta con todos los datos para que
+  // compras la vea, con un umbral aparte para subas "abruptas" que necesitan más visibilidad.
   const precioActualAnterior = insumo.precioActual ?? null;
   if (precioActualAnterior !== null && precioActual > precioActualAnterior + 0.005) {
     const pct = precioActualAnterior > 0 ? ((precioActual - precioActualAnterior) / precioActualAnterior) * 100 : null;
@@ -984,6 +1003,19 @@ async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, 
       abrupta: pct !== null && pct >= ALERTA_SUBA_ABRUPTA_UMBRAL
     };
   }
+  // La compra que se acaba de registrar salió MÁS BARATA que el precio con el que se costea:
+  // se destaca como oportunidad de compra, pero deliberadamente no toca precioActual.
+  if (precio < precioActual - 0.005) {
+    const pctBaja = precioActual > 0 ? ((precioActual - precio) / precioActual) * 100 : null;
+    updates.alertaBaja = {
+      precioReferencia: precioActual,
+      precioNuevo: precio,
+      pct: pctBaja,
+      proveedorNombre: proveedorNombre || "",
+      marca: normMarca(marca),
+      fecha: todayISO()
+    };
+  }
   await update(ref(db, `costeo/insumos/${insumoId}`), updates);
   state.insumos[insumoId] = { ...insumo, ...updates };
   // referenciaActualizada = false avisa al llamador (ej. guardarFactura) que este precio quedó
@@ -993,12 +1025,23 @@ async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, 
   return { referenciaActualizada, precioActualAnterior, precioActualNuevo: precioActual };
 }
 
-window.setProveedorPreferido = async function(insumoId, proveedorId) {
+// Como el costeo toma SIEMPRE el precio más alto, no hay forma (ni sentido) de elegir a mano una
+// línea más barata como referencia. Lo que sí hace falta es poder quitar una línea cargada por
+// error: si no, un precio mal tipeado quedaría inflando el costo para siempre.
+window.quitarPrecioInsumo = async function(insumoId, lineaKey) {
   const insumo = state.insumos[insumoId];
-  if (!insumo || !insumo.precios || !insumo.precios[proveedorId]) return;
-  const precioActual = insumo.precios[proveedorId].precio;
-  await update(ref(db, `costeo/insumos/${insumoId}`), { proveedorPreferido: proveedorId, precioActual, actualizadoTs: Date.now() });
-  showToast("✅ Proveedor preferido actualizado.", "success");
+  if (!insumo || !insumo.precios || !insumo.precios[lineaKey]) return;
+  const linea = insumo.precios[lineaKey];
+  const etiqueta = `${linea.proveedorNombre || "Carga manual"}${linea.marca ? " — " + linea.marca : ""}`;
+  if (!confirm(`¿Quitar la línea de precio "${etiqueta}" (${fmtMoney(linea.precio)}) de "${insumo.nombre}"?\n\nEl historial de compras no se toca. Si era la línea más cara, el costo pasa a calcularse con la siguiente más alta.`)) return;
+  const precios = { ...insumo.precios };
+  delete precios[lineaKey];
+  const proveedorPreferido = lineaPrecioMaxima(precios);
+  const precioActual = proveedorPreferido ? (precios[proveedorPreferido]?.precio ?? 0) : 0;
+  await update(ref(db, `costeo/insumos/${insumoId}`), { precios, proveedorPreferido: proveedorPreferido || "", precioActual, actualizadoTs: Date.now() });
+  state.insumos[insumoId] = { ...insumo, precios, proveedorPreferido: proveedorPreferido || "", precioActual };
+  showToast("🗑️ Línea de precio quitada.", "success");
+  render();
 };
 
 window.guardarFactura = async function() {
@@ -1796,11 +1839,9 @@ window.fusionarInsumos = async function(idsSeleccionados, survivorId, marcasPorI
   }
 
   let precios = {};
-  const survivorKeyMap = {}; // clave vieja del sobreviviente -> clave nueva, por si le asignaron marca
   const marcaSurvivor = normMarca(marcasPorInsumo[survivorId]);
-  for (const [newKey, { oldKey, entry }] of Object.entries(reclavarConMarca(survivor.precios, marcaSurvivor))) {
+  for (const [newKey, { entry }] of Object.entries(reclavarConMarca(survivor.precios, marcaSurvivor))) {
     precios[newKey] = entry;
-    survivorKeyMap[oldKey] = newKey;
   }
 
   let historial = { ...(survivor.historial || {}) };
@@ -1819,8 +1860,10 @@ window.fusionarInsumos = async function(idsSeleccionados, survivorId, marcasPorI
     for (const [hid, h] of Object.entries(o.historial || {})) historial[`${id}_${hid}`] = marcaAsignada ? { ...h, marca: marcaAsignada } : h;
   }
 
-  const survivorPreferidoNuevo = survivor.proveedorPreferido ? (survivorKeyMap[survivor.proveedorPreferido] || survivor.proveedorPreferido) : null;
-  let proveedorPreferido = survivorPreferidoNuevo && precios[survivorPreferidoNuevo] ? survivorPreferidoNuevo : Object.keys(precios)[0];
+  // Igual que en actualizarPrecioInsumo: tras fusionar, se costea con la línea MÁS CARA de todas
+  // las que quedaron (las del sobreviviente y las de los absorbidos), no con la que traía el
+  // sobreviviente.
+  const proveedorPreferido = lineaPrecioMaxima(precios);
   const precioActual = proveedorPreferido ? (precios[proveedorPreferido]?.precio ?? 0) : (survivor.precioActual || 0);
   const nombreFinalLimpio = String(nombreFinal || "").trim();
 
@@ -1918,8 +1961,13 @@ function renderInsumosView(container) {
       <tr>
         <td>${escapeHtml(p.proveedorNombre) || "—"}</td>
         <td>${escapeHtml(p.marca) || "—"}</td>
-        <td>${fmtMoney(p.precio)}</td>
-        <td>${provId === ins.proveedorPreferido ? `<span class="badge badge-ok">⭐ Preferido</span>` : `<button class="btn btn-ghost btn-sm" onclick="setProveedorPreferido('${id}','${escapeHtml(provId)}')">Usar este</button>`}</td>
+        <td>${fmtMoney(p.precio)}${p.precioUltimo != null && p.precioUltimo < p.precio - 0.005
+          ? `<div class="text-muted" style="font-size:11px">última compra: <span style="color:var(--green);font-weight:600">${fmtMoney(p.precioUltimo)}</span>${p.fechaUltimo ? ` (${fmtDate(p.fechaUltimo)})` : ""}</div>`
+          : ""}</td>
+        <td>${provId === ins.proveedorPreferido
+          ? `<span class="badge badge-alerta" title="Es el precio más alto: es el que se usa para costear">⭐ Se usa para costear</span>`
+          : `<span class="badge badge-ok" title="Más barato que la referencia: sirve para saber dónde comprar, pero no se usa para costear">💡 Más barato</span>`}</td>
+        <td><button class="btn btn-ghost btn-sm btn-icon" onclick="quitarPrecioInsumo('${id}','${escapeHtml(provId)}')" title="Quitar esta línea de precio (ej. si se cargó mal)">🗑️</button></td>
       </tr>`).join("");
     const preferidoNombre = precios[ins.proveedorPreferido]?.proveedorNombre || "";
     const checked = !!state.insumosMergeSeleccion[id];
@@ -1929,6 +1977,12 @@ function renderInsumosView(container) {
     const precioCellClass = alertaVigente ? "precio-subio" : "";
     const alertaBadge = alertaVigente
       ? `<div><span class="badge ${ins.alertaPrecio.abrupta ? "badge-suba-abrupta" : "badge-suba"}">${ins.alertaPrecio.abrupta ? "🚨 SUBA ABRUPTA" : "🔺 Subió"} ${fmtPct(ins.alertaPrecio.pct)}</span></div>`
+      : "";
+    // Una compra más barata que la referencia se destaca, pero NO baja el costeo: se muestra en
+    // verde y con la aclaración explícita para que no se confunda con el precio que se está usando.
+    const bajaVigente = alertaPrecioVigente(ins.alertaBaja) && !esElaborado;
+    const bajaBadge = bajaVigente
+      ? `<div><span class="badge badge-baja" title="Última compra a ${escapeHtml(ins.alertaBaja.proveedorNombre) || "—"}${ins.alertaBaja.marca ? " — " + escapeHtml(ins.alertaBaja.marca) : ""} por ${fmtMoney(ins.alertaBaja.precioNuevo)}. No se usa para costear.">💡 Se consigue ${fmtPct(-ins.alertaBaja.pct)} más barato</span></div>`
       : "";
     // Registro de proveedores siempre visible (no escondido atrás de "Ver historial"): si hay más
     // de uno, se listan todos con su precio y cuál es el que se usa para costear (⭐), para que
@@ -1947,7 +2001,7 @@ function renderInsumosView(container) {
         <td>${escapeHtml(ins.nombre)}${esElaborado ? ` <span class="badge badge-ok" title="Base/preparación con receta propia">🧪 Base</span>` : ""}</td>
         <td>${escapeHtml(ins.unidad) || "—"}</td>
         <td>${proveedoresCell}</td>
-        <td><span class="${precioCellClass}">${fmtMoney(costoVivo)}</span>${esElaborado ? `<div class="text-muted" style="font-size:11px">receta propia</div>` : (preferidoNombre ? `<div class="text-muted" style="font-size:11px">${escapeHtml(preferidoNombre)}</div>` : "")}${alertaBadge}</td>
+        <td><span class="${precioCellClass}">${fmtMoney(costoVivo)}</span>${esElaborado ? `<div class="text-muted" style="font-size:11px">receta propia</div>` : (preferidoNombre ? `<div class="text-muted" style="font-size:11px">${escapeHtml(preferidoNombre)}</div>` : "")}${alertaBadge}${bajaBadge}</td>
         <td>${hist.length}</td>
         <td style="white-space:nowrap">
           <div class="row-actions">
@@ -1958,7 +2012,7 @@ function renderInsumosView(container) {
         </td>
       </tr>
       ${isOpen ? `<tr><td colspan="${state.insumosMergeMode ? 7 : 6}" style="background:var(--cream);padding:14px 18px">
-        ${precioEntries.length ? `<div class="text-muted" style="margin-bottom:6px;font-weight:600">Precios por proveedor y marca</div><table class="data-table"><thead><tr><th>Proveedor</th><th>Marca</th><th>Precio</th><th></th></tr></thead><tbody>${precioRows}</tbody></table>` : ""}
+        ${precioEntries.length ? `<div class="text-muted" style="margin-bottom:6px;font-weight:600">Precios por proveedor y marca <span style="font-weight:400">— para costear se usa siempre el más alto</span></div><table class="data-table"><thead><tr><th>Proveedor</th><th>Marca</th><th>Precio</th><th>Costeo</th><th></th></tr></thead><tbody>${precioRows}</tbody></table>` : ""}
         ${!esElaborado ? `
         <div style="background:var(--white);border:1.5px solid var(--turq);border-radius:var(--r-sm);padding:12px 14px;margin:14px 0">
         <div style="font-weight:700;margin-bottom:8px;color:var(--turq-dark)">➕ Agregar otro proveedor/marca a este mismo insumo</div>
@@ -2740,6 +2794,13 @@ function renderAnalisisView(container) {
   ].sort((a, b) => (b.abrupta - a.abrupta) || ((b.pct ?? 0) - (a.pct ?? 0)));
   const numSubasAbruptas = alertasSubaTodas.filter(a => a.abrupta).length;
 
+  // Bajas recientes: compras que salieron más baratas que el precio con el que se costea. No
+  // afectan el costeo (siempre se usa el más alto), pero sirven para saber dónde conviene comprar.
+  const alertasBaja = objToSortedEntries(state.insumos, () => 0)
+    .filter(([, ins]) => alertaPrecioVigente(ins.alertaBaja) && !(ins.receta && Object.keys(ins.receta).length))
+    .map(([id, ins]) => ({ id, nombre: ins.nombre, ...ins.alertaBaja }))
+    .sort((a, b) => (b.pct ?? 0) - (a.pct ?? 0));
+
   // Modelo de costeo sugerido (28% variable / 37% fijo / 20% renta esperada / 15% merma): el
   // precio sugerido se despeja del costo real conocido, y se compara contra el precio de venta
   // que está cargado hoy para ver si quedó por debajo del modelo.
@@ -2831,6 +2892,25 @@ function renderAnalisisView(container) {
         <div class="stat-card"><div class="stat-label">🚨 Abruptas</div><div class="stat-value" style="${numSubasAbruptas ? "color:#c0392b" : ""}">${numSubasAbruptas}</div></div>
       </div>
       ${alertasSubaTodas.length ? alertasSubaCards : `<div class="empty-state">Sin subas de precio recientes. 👍</div>`}
+    </div>
+
+    <div class="section-block">
+      <div class="section-header">
+        <div class="section-title">💡 Oportunidades de compra (bajas recientes)</div>
+      </div>
+      <div class="page-sub" style="margin-bottom:16px">Compras de los últimos ${ALERTA_RECIENCIA_DIAS} días que salieron <strong>más baratas</strong> que el precio con el que se costea. Sirven para saber dónde y qué conviene comprar — <strong>no bajan el costo de los productos</strong>, porque para costear siempre se usa el precio más alto registrado.</div>
+      ${alertasBaja.length ? alertasBaja.map(a => `
+        <div class="alerta-precio-card" style="border-color:var(--green);background:var(--green-pale)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+            <div>
+              <strong>🧂 ${escapeHtml(a.nombre)}</strong>
+              ${a.proveedorNombre ? `<div class="text-muted" style="font-size:12px">Proveedor: ${escapeHtml(a.proveedorNombre)}${a.marca ? ` — Marca: ${escapeHtml(a.marca)}` : ""}</div>` : ""}
+              <div style="font-size:13px;margin-top:4px">Se costea a ${fmtMoney(a.precioReferencia)} · se consiguió a <strong style="color:var(--green)">${fmtMoney(a.precioNuevo)}</strong></div>
+              <div class="text-muted" style="font-size:11px">${fmtDate(a.fecha)}</div>
+            </div>
+            <span class="badge badge-baja">💡 ${fmtPct(-a.pct)} más barato</span>
+          </div>
+        </div>`).join("") : `<div class="empty-state">Sin bajas de precio recientes.</div>`}
     </div>
 
     <div class="section-block">
