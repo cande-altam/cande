@@ -379,6 +379,20 @@ window.navigate = function(view) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
+// Los formularios de edición se renderizan arriba de todo en su vista. Si el usuario estaba
+// scrolleado (ej. mirando el insumo #40 de una lista larga) y toca "Editar", el formulario aparece
+// fuera de pantalla y da la sensación de que el botón no hizo nada. Esto lo trae a la vista.
+function enfocarFormularioAbierto(inputId) {
+  setTimeout(() => {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    // Defensivo: si el entorno no implementa scrollIntoView/focus, el formulario igual quedó
+    // abierto y usable — no vale la pena romper por no poder desplazar la pantalla.
+    try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch {}
+    try { el.focus({ preventScroll: true }); } catch {}
+  }, 0);
+}
+
 window.toggleMobileNav = function() {
   state.mobileNavOpen = !state.mobileNavOpen;
   render();
@@ -1299,6 +1313,7 @@ window.abrirFormProveedor = function(id) {
   state.editingProveedorId = id || "new";
   state.formOpen = true;
   render();
+  enfocarFormularioAbierto("prov-nombre");
 };
 window.cerrarFormProveedor = function() {
   state.editingProveedorId = null;
@@ -1417,6 +1432,7 @@ window.abrirFormInsumo = function(id) {
   state.editingInsumoId = id || "new";
   state.formOpen = true;
   render();
+  enfocarFormularioAbierto("ins-nombre");
 };
 window.cerrarFormInsumo = function() {
   state.editingInsumoId = null;
@@ -2190,6 +2206,7 @@ window.abrirFormProducto = function(id) {
   state.editingProductoId = id || "new";
   state.formOpen = true;
   render();
+  enfocarFormularioAbierto("prod-nombre");
   if (id && id !== "new") {
     setTimeout(() => window.recalcCostoProducto(), 0);
   }
