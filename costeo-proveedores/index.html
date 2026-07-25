@@ -115,10 +115,15 @@ textarea.form-input{resize:vertical;min-height:60px;}
 /* TABLE */
 .data-table-wrap{overflow-x:auto;}
 .data-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--white);}
-.data-table th{text-align:left;padding:10px 14px;color:var(--gray);border-bottom:1.5px solid var(--cream-dark);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;}
-.data-table td{padding:10px 14px;border-bottom:1px solid var(--cream-mid);color:var(--black);font-weight:300;vertical-align:middle;}
+/* Encabezado fijo: en listas largas se pierde de vista qué columna es cada cosa. */
+.data-table th{text-align:left;padding:10px 14px;color:var(--gray);border-bottom:1.5px solid var(--cream-dark);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;position:sticky;top:0;background:var(--white);z-index:2;}
+.data-table td{padding:12px 14px;border-bottom:1px solid var(--cream-mid);color:var(--black);font-weight:300;vertical-align:middle;}
 .data-table tr:last-child td{border-bottom:none;}
-.data-table tr:hover td{background:rgba(155,214,204,.08);}
+.data-table tbody tr:hover td{background:rgba(155,214,204,.10);}
+/* La fila abierta queda marcada, y su panel se lee como continuación de ella y no como otra fila. */
+.data-table tr.fila-abierta td{background:var(--turq-pale);box-shadow:inset 3px 0 0 var(--turq);}
+.data-table tr.fila-detalle td{border-bottom:2px solid var(--cream-dark);}
+.data-table tr.fila-detalle:hover td{background:var(--cream);}
 
 /* ITEM ROWS (factura / receta) */
 .item-row{display:grid;grid-template-columns:2fr 1fr 1fr 32px;gap:8px;align-items:start;padding:6px 0;}
@@ -372,10 +377,14 @@ window.handleLogout = function() {
 };
 
 // ── Navigation ───────────────────────────────────────────
+// Cambiar de pestaña sí debe volver al tope: se avisa a render() para que no restaure la posición
+// anterior y no pelee con este scroll.
+let _resetScrollEnProximoRender = false;
 window.navigate = function(view) {
   state.view = view;
   state.formOpen = false;
   state.mobileNavOpen = false;
+  _resetScrollEnProximoRender = true;
   render();
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
@@ -406,6 +415,12 @@ function render() {
     root.innerHTML = renderLogin();
     return;
   }
+  // render() reconstruye TODO el DOM, y eso resetea el scroll al tope. Como prácticamente cualquier
+  // interacción pasa por acá (abrir una fila, guardar un precio, tildar un filtro), sin esto la
+  // página "salta" al inicio en cada click y se pierde de vista lo que se estaba mirando.
+  // Se guarda la posición y se restaura al final; navigate() la lleva al tope a propósito después.
+  const scrollPrevio = _resetScrollEnProximoRender ? 0 : window.scrollY;
+  _resetScrollEnProximoRender = false;
   root.innerHTML = `
     <div class="header">
       <div class="logo">
@@ -442,6 +457,7 @@ function render() {
     case "config": renderConfigView(container); break;
     default: container.innerHTML = `<div class="empty-state">Vista no encontrada.</div>`;
   }
+  if (scrollPrevio > 0) window.scrollTo(0, scrollPrevio);
 }
 
 function renderLogin() {
@@ -2008,7 +2024,7 @@ function renderInsumosView(container) {
           ? etiquetaLinea(precioEntries[0][1])
           : `<span class="badge badge-ok">${precioEntries.length} líneas</span><div class="text-muted" style="font-size:11px;margin-top:3px">${precioEntries.map(([provId, p]) => `${etiquetaLinea(p)}: ${fmtMoney(p.precio)}${provId === ins.proveedorPreferido ? " ⭐" : ""}`).join("<br>")}</div>`;
     return `
-      <tr>
+      <tr class="${isOpen ? "fila-abierta" : ""}">
         ${state.insumosMergeMode ? `<td><input type="checkbox" ${checked ? "checked" : ""} onchange="toggleInsumoMergeCheck('${id}', this.checked)"></td>` : ""}
         <td>${escapeHtml(ins.nombre)}${esElaborado ? ` <span class="badge badge-ok" title="Base/preparación con receta propia">🧪 Base</span>` : ""}</td>
         <td>${escapeHtml(ins.unidad) || "—"}</td>
@@ -2023,7 +2039,7 @@ function renderInsumosView(container) {
           </div>
         </td>
       </tr>
-      ${isOpen ? `<tr><td colspan="${state.insumosMergeMode ? 7 : 6}" style="background:var(--cream);padding:14px 18px">
+      ${isOpen ? `<tr class="fila-detalle"><td colspan="${state.insumosMergeMode ? 7 : 6}" style="background:var(--cream);padding:16px 18px">
         ${precioEntries.length ? `<div class="text-muted" style="margin-bottom:6px;font-weight:600">Precios por proveedor y marca <span style="font-weight:400">— se costea con el más alto de las compras de los últimos 60 días</span></div><table class="data-table"><thead><tr><th>Proveedor</th><th>Marca</th><th>Último precio</th><th>Costeo</th><th></th></tr></thead><tbody>${precioRows}</tbody></table>` : ""}
         ${!esElaborado ? `
         <div style="background:var(--white);border:1.5px solid var(--turq);border-radius:var(--r-sm);padding:12px 14px;margin:14px 0">
@@ -2516,7 +2532,7 @@ function renderProductosTable() {
       ${precioSugeridoRedondeado !== null ? `<div class="text-muted" style="font-size:11px">Sugerido: ${fmtMoney(precioSugeridoRedondeado)}</div>` : ""}
       ${p.precioVenta ? `<div class="text-muted" style="font-size:11px">Mesa (+10%): ${fmtMoney(p.precioVenta * 1.1)}</div>` : ""}`;
     return `
-      <tr>
+      <tr class="${recetaAbierta ? "fila-abierta" : ""}">
         <td>${escapeHtml(p.nombre)}<div class="text-muted" style="font-size:11px">${CLASIFICACION_LABEL[clasificacion]}${esVersionMesa ? " · 🍽️ Versión mesa" : ""}${costoActualizado ? " · 🔄 Costo actualizado" : ""}</div></td>
         <td>${tieneReceta ? `${Object.keys(p.receta).length} insumo(s)` : `<span class="text-muted">Sin receta</span>`}</td>
         <td>${costoCell}${alertaSubaBadge}</td>
@@ -2571,7 +2587,7 @@ function recetaPanelContenido(id, p) {
 }
 function recetaPanelHtml(id, p) {
   return `
-    <tr><td colspan="6" style="background:var(--cream);padding:14px 18px">
+    <tr class="fila-detalle"><td colspan="6" style="background:var(--cream);padding:16px 18px">
       <div class="text-muted" style="margin-bottom:8px;font-weight:600">🧾 Receta de "${escapeHtml(p.nombre)}"</div>
       ${recetaPanelContenido(id, p)}
       <button class="btn btn-ghost btn-sm" onclick="toggleRecetaProducto('${id}')">Cerrar</button>

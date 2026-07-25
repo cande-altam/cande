@@ -372,11 +372,15 @@ window.handleLogout = function() {
 };
 
 // ── Navigation ───────────────────────────────────────────
+// Cambiar de pestaña sí debe volver al tope; el resto de los re-render conservan la posición
+// (ver render()), porque si no la página salta al inicio en cada click.
+let _resetScrollEnProximoRender = false;
 window.navigate = function(view) {
   state.view = view;
   state.formOpen = false;
   state.mobileNavOpen = false;
   state.viewingId = null;
+  _resetScrollEnProximoRender = true;
   render();
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
@@ -387,6 +391,9 @@ function render() {
   const root = document.getElementById("app");
   if (!state.loggedIn) { root.innerHTML = renderLogin(); return; }
 
+  // render() reconstruye todo el DOM y eso resetea el scroll: se guarda y restaura la posición.
+  const scrollPrevio = _resetScrollEnProximoRender ? 0 : window.scrollY;
+  _resetScrollEnProximoRender = false;
   root.innerHTML = `
     <div class="header no-print">
       <div class="logo">
@@ -412,6 +419,7 @@ function render() {
     case "config": renderConfigView(container); break;
     default: container.innerHTML = `<div class="empty-state">Vista no encontrada.</div>`;
   }
+  if (scrollPrevio > 0) window.scrollTo(0, scrollPrevio);
 }
 
 function renderLogin() {
