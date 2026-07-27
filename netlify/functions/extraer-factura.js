@@ -60,12 +60,22 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: "Body inválido." }) };
   }
 
-  const { imageBase64, mediaType, insumosConocidos } = payload;
+  const { imageBase64, mediaType, insumosConocidos, pistas } = payload;
   if (!imageBase64) {
     return { statusCode: 400, body: JSON.stringify({ error: "Falta la imagen." }) };
   }
 
   let prompt = BASE_PROMPT;
+  // Segundo intento: el primero no pudo identificar la factura y el usuario contestó lo que sabía.
+  // Con esos datos como ancla el modelo suele poder leer el resto (sabe qué proveedor buscar en el
+  // encabezado, con qué CUIT contrastar, y no tiene que adivinar el número de comprobante).
+  if (pistas && (pistas.proveedorNombre || pistas.cuit || pistas.numero)) {
+    const partes = [];
+    if (pistas.proveedorNombre) partes.push(`el proveedor es "${pistas.proveedorNombre}"`);
+    if (pistas.cuit) partes.push(`su CUIT es ${pistas.cuit}`);
+    if (pistas.numero) partes.push(`el N° de comprobante es ${pistas.numero}`);
+    prompt += `\n\nIMPORTANTE — el usuario ya confirmó estos datos de la factura porque el primer intento de lectura falló: ${partes.join(", ")}. Tomalos como ciertos (devolvelos tal cual en los campos correspondientes) y concentrate en leer lo que falta: fecha, monto total, IVA y sobre todo el detalle de ítems con sus cantidades y precios. Si aun así no podés leer algo, dejalo en null y declaralo en "camposIlegibles".`;
+  }
   if (Array.isArray(insumosConocidos) && insumosConocidos.length) {
     // Defensive cap so a very large catalog can't balloon the request indefinitely.
     const lista = insumosConocidos.slice(0, 600)

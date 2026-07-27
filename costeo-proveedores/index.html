@@ -245,6 +245,9 @@ const state = {
   config: {},
   _facturaFotoDataUrl: null,
   _facturaProveedorId: "",
+  _escaneoPistas: null,
+  _facturaFotoFile: null,
+  _escaneoReintentoChico: false,
   facturasFiltro: "todas",
   facturasBusqueda: "",
   pagosFiltro: "no_pagado",
@@ -823,18 +826,34 @@ function compressImageToDataUrl(file, maxDim, quality) {
   });
 }
 
+// Resolución de la foto que se le manda a la IA.
+//
+// Historia (importa, porque el equilibrio es delicado): a 1000px/0.6 el texto chico de una factura
+// se volvía ilegible y varias no se reconocían. Se subió a 2000px/0.9 y eso lo arregló, pero rompió
+// TODO: el modelo de visión usa hasta ~2576px de lado largo, así que una foto de 2000px consume
+// cerca del triple de tokens de imagen que una de 1568px, y cada escaneo se pasaba del tiempo
+// máximo que la función serverless puede tardar en responder — con lo cual dejaba de reconocerse
+// cualquier factura, no solo las difíciles.
+// 1568px es el punto justo: sigue siendo suficiente para leer números de comprobante y cantidades,
+// y vuelve a entrar cómodo en el tiempo disponible.
+const ESCANEO_DIM = 1568, ESCANEO_CALIDAD = 0.85;
+// Si aun así se pasa de tiempo (facturas muy largas, conexión lenta), se reintenta solo con una
+// versión más chica: es preferible un escaneo un poco menos fino a ninguno.
+const ESCANEO_DIM_REINTENTO = 1100, ESCANEO_CALIDAD_REINTENTO = 0.7;
+
 window.handleFacturaFotoChange = async function(e) {
   const file = e.target.files[0];
   if (!file) return;
   try {
     // Dos versiones de la foto, a propósito:
     //  · la que se ARCHIVA va comprimida, porque se guarda embebida en la Realtime Database.
-    //  · la que se MANDA A LA IA va en alta, porque a 1000px/0.6 el texto chico de una factura
-    //    (números de comprobante, cantidades, precios unitarios) se vuelve ilegible y era la causa
-    //    principal de que algunas facturas no se pudieran reconocer.
+    //  · la que se MANDA A LA IA va más grande, para que se lea el texto chico.
     const dataUrl = await compressImageToDataUrl(file, 1000, 0.6);
     state._facturaFotoDataUrl = dataUrl;
-    state._facturaFotoScanDataUrl = await compressImageToDataUrl(file, 2000, 0.9);
+    // Se guarda el archivo original para poder recomprimirlo más chico en un reintento.
+    state._facturaFotoFile = file;
+    state._escaneoReintentoChico = false;
+    state._facturaFotoScanDataUrl = await compressImageToDataUrl(file, ESCANEO_DIM, ESCANEO_CALIDAD);
     document.getElementById("factura-foto-preview").innerHTML = `<img src="${dataUrl}" class="photo-thumb">`;
     document.getElementById("scan-btn").disabled = false;
     // Auto-scan as soon as a photo is chosen (camera or gallery) — the manual button stays
@@ -875,7 +894,10 @@ window.escanearFactura = async function() {
     const resp = await fetch("/.netlify/functions/extraer-factura", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ imageBase64: base64, mediaType: "image/jpeg", insumosConocidos })
+      // Las pistas son lo que el usuario contestó cuando el primer escaneo no pudo identificar la
+      // factura (proveedor, CUIT, N°): con eso el segundo intento puede reconocer los ítems y
+      // completar el resto, en vez de volver a fallar igual.
+      body: JSON.stringify({ imageBase64: base64, mediaType: "image/jpeg", insumosConocidos, pistas: state._escaneoPistas || null })
     });
 
     const rawText = await resp.text();
@@ -885,10 +907,11 @@ window.escanearFactura = async function() {
     } catch {
       // Netlify itself returns an HTML/plain-text body on timeouts (504) or crashes (502),
       // not JSON. Surface that instead of a silent generic failure.
-      const reason = resp.status === 504
+      const err = new Error(resp.status === 504
         ? "El escaneo tardó demasiado y se agotó el tiempo de espera del servidor."
-        : `Respuesta inesperada del servidor (HTTP ${resp.status}).`;
-      throw new Error(reason);
+        : `Respuesta inesperada del servidor (HTTP ${resp.status}).`);
+      err.porTiempo = resp.status === 504 || resp.status === 502;
+      throw err;
     }
     if (!resp.ok) throw new Error(data.error || `Error al escanear la factura (HTTP ${resp.status}).`);
 
@@ -897,7 +920,26 @@ window.escanearFactura = async function() {
   } catch (err) {
     console.error("Error al escanear factura:", err);
     const msg = err && err.message ? err.message : "Error desconocido.";
+    // Si se pasó de tiempo, casi siempre es por el tamaño de la foto: se reintenta UNA vez con una
+    // versión más chica antes de darse por vencido. Es la diferencia entre "no reconoce nada" y
+    // "reconoce igual, un poco menos fino".
+    if (err && err.porTiempo && !state._escaneoReintentoChico && state._facturaFotoFile) {
+      state._escaneoReintentoChico = true;
+      try {
+        showToast("⏳ Tardó demasiado — reintentando con una versión más liviana de la foto...", "warn");
+        state._facturaFotoScanDataUrl = await compressImageToDataUrl(state._facturaFotoFile, ESCANEO_DIM_REINTENTO, ESCANEO_CALIDAD_REINTENTO);
+        btn.disabled = false;
+        await window.escanearFactura();
+        return;
+      } catch (err2) {
+        console.error("Reintento de escaneo también falló:", err2);
+      }
+    }
     showToast(`⚠️ No se pudo escanear: ${msg}`, "warn");
+    // Un toast dura 3 segundos y se pierde. Cuando el escaneo falla del todo es JUSTO el momento
+    // en que hay que preguntarle al usuario, no en el que hay que quedarse callado: se muestra el
+    // mismo panel de preguntas que cuando el escaneo salió incompleto.
+    mostrarPendientesDelEscaneo({}, { errorEscaneo: msg });
   } finally {
     btn.disabled = false; btn.textContent = "🤖 Escanear con IA";
   }
@@ -974,34 +1016,152 @@ function sugerirProveedorPorRubro(nombresItems) {
 // Tras escanear, arma un panel con lo que quedó pendiente para poder avanzar: qué campos la IA
 // declaró ilegibles, si la foto salió mala, y sobre todo si falta el proveedor (sin proveedor no
 // se puede reconocer bien el resto ni asociar los precios a nadie).
-function mostrarPendientesDelEscaneo(data) {
+// Tras escanear (o tras fallar el escaneo), arma un panel que le PREGUNTA al usuario lo que hace
+// falta para poder identificar la factura y avanzar. No alcanza con avisar: los campos se
+// contestan acá mismo y el botón de reintentar le pasa esas respuestas a la IA como pistas, que es
+// lo que permite reconocer los ítems cuando sola no pudo.
+//
+// "Proveedor identificado" significa que matcheó contra uno YA CARGADO. Que el escaneo haya leído
+// un nombre suelto no alcanza: si se lo da por bueno, se termina creando un proveedor duplicado en
+// silencio (era justamente el caso que quedaba sin preguntar nada).
+function estadoProveedorEscaneo() {
+  const sel = document.getElementById("f-proveedor");
+  if (!sel) return "falta";
+  if (sel.value && sel.value !== "__new__") return "ok";
+  if (sel.value === "__new__") {
+    const nombre = document.getElementById("f-proveedor-nombre-nuevo")?.value.trim();
+    return nombre ? "nuevo" : "falta";
+  }
+  return "falta";
+}
+
+function mostrarPendientesDelEscaneo(data, opts) {
   const cont = document.getElementById("escaneo-pendientes");
   if (!cont) return;
-  const faltaProveedor = !document.getElementById("f-proveedor").value;
-  const ilegibles = Array.isArray(data.camposIlegibles) ? data.camposIlegibles.filter(Boolean) : [];
-  const calidad = data.calidadImagen || "";
+  const { errorEscaneo } = opts || {};
+  const estadoProv = estadoProveedorEscaneo();
+  const ilegibles = Array.isArray(data?.camposIlegibles) ? data.camposIlegibles.filter(Boolean) : [];
+  const calidad = data?.calidadImagen || "";
+  const fecha = document.getElementById("f-fecha")?.value || "";
+  const monto = parseFloat(document.getElementById("f-monto")?.value);
+  const numero = document.getElementById("f-numero")?.value.trim() || "";
+  // El formulario siempre arranca con una fila vacía, así que contar filas no sirve: lo que importa
+  // es si alguna tiene un insumo elegido o un nombre escrito.
+  const hayItems = Array.from(document.querySelectorAll("#items-container .item-row")).some(row =>
+    (row.querySelector(".item-insumo-id")?.value || "").trim() || (row.querySelector(".item-insumo-search")?.value || "").trim());
+  // El escaneo puede "salir bien" y no haber leído nada: la IA no siempre declara camposIlegibles.
+  // Se detecta por el resultado, no por lo que la IA diga de sí misma.
+  // La fecha no cuenta acá: el formulario la arranca con la de hoy, así que nunca está vacía.
+  const escaneoVacio = !errorEscaneo && estadoProv === "falta" && !(monto > 0) && !hayItems;
+
+  const preguntas = [];
   const avisos = [];
 
-  if (faltaProveedor) {
-    avisos.push(`<div class="item-warn" style="margin:0 0 8px">🏭 <strong>No se pudo identificar el proveedor.</strong> Elegilo en la lista de arriba, o escribí su CUIT, para poder continuar con el reconocimiento de los productos y asociarles el precio.</div>`);
+  if (errorEscaneo) {
+    avisos.push(`<div class="item-warn" style="margin:0 0 8px">🤖 <strong>No se pudo leer la factura automáticamente.</strong> ${escapeHtml(errorEscaneo)}</div>`);
+  } else if (escaneoVacio) {
+    avisos.push(`<div class="item-warn" style="margin:0 0 8px">🤖 <strong>La foto se leyó, pero no se reconoció ningún dato.</strong> Suele pasar con fotos movidas, con poca luz o con la factura cortada.</div>`);
   }
   if (calidad === "mala" || calidad === "regular") {
-    avisos.push(`<div class="item-note" style="margin:0 0 8px">📷 La foto salió <strong>${escapeHtml(calidad)}</strong>. Si algún dato quedó mal, sacá otra foto con más luz y sin sombras, y tocá "Reintentar escaneo" — o completá a mano lo que falte.</div>`);
+    avisos.push(`<div class="item-note" style="margin:0 0 8px">📷 La foto salió <strong>${escapeHtml(calidad)}</strong>. Conviene revisar los números antes de guardar, o sacar otra con más luz y sin sombras.</div>`);
   }
   if (ilegibles.length) {
-    avisos.push(`<div class="item-note" style="margin:0 0 8px">✍️ No se pudieron leer con seguridad: <strong>${ilegibles.map(escapeHtml).join(", ")}</strong>. Completalos a mano antes de guardar.</div>`);
+    avisos.push(`<div class="item-note" style="margin:0 0 8px">✍️ No se pudieron leer con seguridad: <strong>${ilegibles.map(escapeHtml).join(", ")}</strong>.</div>`);
   }
-  if (!avisos.length) {
-    cont.innerHTML = "";
-    showToast("✅ Factura escaneada. Revisá los datos antes de guardar.", "success");
+
+  // Preguntas concretas, en orden de utilidad para el reconocimiento automático.
+  if (estadoProv !== "ok") {
+    preguntas.push(estadoProv === "nuevo"
+      ? `🏭 El escaneo leyó <strong>"${escapeHtml(document.getElementById("f-proveedor-nombre-nuevo").value.trim())}"</strong>, pero no coincide con ningún proveedor que tengas cargado. ¿Es un proveedor nuevo, o es uno que ya tenés con otro nombre? Elegilo de la lista o confirmá su CUIT.`
+      : `🏭 <strong>¿De qué proveedor es esta factura?</strong> Con el nombre o el CUIT se puede reconocer el resto de los datos y asociarle los precios.`);
+  }
+  if (!fecha) preguntas.push(`📅 <strong>¿Qué fecha tiene la factura?</strong>`);
+  if (!(monto > 0)) preguntas.push(`💵 <strong>¿Cuál es el monto total?</strong>`);
+  if (!numero && !errorEscaneo && !escaneoVacio) preguntas.push(`🧾 <strong>¿Cuál es el N° de comprobante?</strong> Sirve sobre todo para no cargar dos veces la misma factura.`);
+  if (!hayItems && !escaneoVacio && !errorEscaneo) preguntas.push(`📦 No se reconoció ningún ítem. Si la factura tiene detalle de productos, cargalos abajo para que actualicen los precios.`);
+
+  // Avisar del duplicado ACÁ, apenas se escanea, y no recién al apretar guardar: si la factura ya
+  // está cargada, no tiene sentido que el usuario revise y complete todo el formulario primero.
+  const selProv = document.getElementById("f-proveedor");
+  const dup = estadoProv === "ok"
+    ? detectarFacturaDuplicada({ proveedorId: selProv.value, numero, fecha, monto })
+    : null;
+  const dupHtml = dup ? `<div class="section-block" style="border-color:var(--terra);margin-bottom:14px">
+    <div class="section-title" style="margin-bottom:8px">${dup.certeza === "alta" ? "🚫 Esta factura ya está cargada" : "⚠️ Esta factura podría estar cargada ya"}</div>
+    <div class="item-warn" style="margin:0">${escapeHtml(descripcionFacturaDuplicada(dup))}<div class="text-muted" style="font-size:11px;margin-top:4px">Coincide por: ${escapeHtml(dup.motivo)}. Si igual es otra factura distinta, podés guardarla — te va a pedir confirmación.</div></div>
+  </div>` : "";
+
+  if (!avisos.length && !preguntas.length) {
+    cont.innerHTML = dupHtml;
+    showToast(dup
+      ? (dup.certeza === "alta" ? "🚫 Esta factura ya está cargada." : "⚠️ Esta factura podría estar cargada ya — revisá el aviso.")
+      : "✅ Factura escaneada. Revisá los datos antes de guardar.", dup ? "warn" : "success");
     return;
   }
-  cont.innerHTML = `<div class="section-block" style="border-color:var(--terra);margin-bottom:14px">
-    <div class="section-title" style="margin-bottom:10px">⚠️ Falta confirmar algunos datos</div>
+
+  const proveedorOptions = objToSortedEntries(state.proveedores, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .map(([id, p]) => `<option value="${id}">${escapeHtml(p.nombre)}${p.cuit ? " — " + escapeHtml(p.cuit) : ""}</option>`).join("");
+
+  cont.innerHTML = dupHtml + `<div class="section-block" style="border-color:var(--terra);margin-bottom:14px">
+    <div class="section-title" style="margin-bottom:10px">🤔 Necesito algunos datos para identificar esta factura</div>
     ${avisos.join("")}
+    ${preguntas.length ? `<ul style="margin:0 0 12px 18px;padding:0;line-height:1.7">${preguntas.map(p => `<li>${p}</li>`).join("")}</ul>` : ""}
+    <div class="form-row" style="align-items:flex-end;margin-bottom:8px">
+      <div class="form-group" style="max-width:240px">
+        <label class="form-label">Proveedor</label>
+        <select class="form-select" id="pend-proveedor">
+          <option value="">— Elegir de los cargados —</option>
+          ${proveedorOptions}
+        </select>
+      </div>
+      <div class="form-group" style="max-width:170px">
+        <label class="form-label">…o su CUIT</label>
+        <input class="form-input" id="pend-cuit" placeholder="30-11111111-1" value="${escapeHtml(document.getElementById("f-cuit")?.value || "")}">
+      </div>
+      <div class="form-group" style="max-width:170px">
+        <label class="form-label">N° de comprobante</label>
+        <input class="form-input" id="pend-numero" placeholder="0001-00012345" value="${escapeHtml(numero)}">
+      </div>
+      <button type="button" class="btn btn-primary btn-sm" onclick="responderPendientesDelEscaneo()">🤖 Reintentar con estos datos</button>
+    </div>
+    <div class="text-muted" style="font-size:11px">Con lo que completes acá, se vuelve a leer la misma foto — normalmente alcanza para reconocer los ítems. Si preferís, también podés cargar todo a mano abajo y guardar igual.</div>
   </div>`;
-  showToast("⚠️ El escaneo quedó incompleto — revisá los avisos.", "warn");
+  showToast(errorEscaneo || escaneoVacio
+    ? "🤔 No se pudo identificar la factura — contestá las preguntas para seguir."
+    : "⚠️ El escaneo quedó incompleto — revisá los avisos.", "warn");
 }
+
+// Toma lo que el usuario contestó en el panel, lo vuelca al formulario y reintenta el escaneo
+// pasándolo como pista. Es lo que convierte el aviso en una conversación: la IA arranca el segundo
+// intento sabiendo de quién es la factura.
+window.responderPendientesDelEscaneo = async function() {
+  const provSel = document.getElementById("pend-proveedor")?.value || "";
+  const cuit = document.getElementById("pend-cuit")?.value.trim() || "";
+  const numero = document.getElementById("pend-numero")?.value.trim() || "";
+
+  if (provSel) {
+    const sel = document.getElementById("f-proveedor");
+    sel.value = provSel;
+    window.onFacturaProveedorChange(sel);
+  }
+  if (cuit && !document.getElementById("f-cuit").value.trim()) document.getElementById("f-cuit").value = cuit;
+  if (numero) document.getElementById("f-numero").value = numero;
+
+  const proveedorNombre = provSel ? (state.proveedores[provSel]?.nombre || "") : "";
+  if (!proveedorNombre && !cuit && !numero) {
+    showToast("⚠️ Completá al menos el proveedor, el CUIT o el N° de comprobante.", "warn");
+    return;
+  }
+  state._escaneoPistas = { proveedorNombre, cuit, numero };
+  if (!state._facturaFotoDataUrl) {
+    // Sin foto no hay nada que reescanear, pero los datos que contestó igual quedan cargados.
+    showToast("✅ Datos cargados. Completá el resto a mano y guardá.", "success");
+    document.getElementById("escaneo-pendientes").innerHTML = "";
+    return;
+  }
+  await window.escanearFactura();
+  state._escaneoPistas = null;
+};
 
 function aplicarDatosEscaneados(data) {
   if (data.proveedor || data.cuit) {
@@ -1285,17 +1445,59 @@ window.quitarPrecioInsumo = async function(insumoId, lineaKey) {
   render();
 };
 
-// Detecta si una factura ya fue cargada, para no duplicarla. Criterio principal: mismo proveedor
-// y mismo N° de comprobante (es único por proveedor). Si la factura no trae número, se cae al
-// combo proveedor + fecha + monto, que en la práctica no se repite.
+// Detecta si una factura ya fue cargada, para no duplicarla.
+//
+// El N° de comprobante es el dato MÁS frágil de todos: es el que peor lee el OCR (dígitos
+// confundidos, y muy seguido se pierde el prefijo del punto de venta, "0001-00012345" → "00012345").
+// Por eso las señales se evalúan de forma INDEPENDIENTE y alcanza con que dé una: antes el número
+// era el criterio principal y además anulaba al de fecha+monto, así que un solo dígito mal leído
+// hacía que la misma factura entrara dos veces sin ningún aviso.
+function normNumeroComprobante(s) {
+  return String(s || "").replace(/[^0-9a-zA-Z]/g, "").toLowerCase();
+}
+function mismoNumeroComprobante(a, b) {
+  const na = normNumeroComprobante(a), nb = normNumeroComprobante(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  // Uno puede venir sin el prefijo del punto de venta. Se exige una cola larga en común para que
+  // no coincidan por casualidad dos comprobantes cortos distintos.
+  const largo = na.length >= nb.length ? na : nb;
+  const corto = na.length >= nb.length ? nb : na;
+  return corto.length >= 6 && largo.endsWith(corto);
+}
+function diasEntreFechas(a, b) {
+  if (!a || !b) return Infinity;
+  return Math.abs(new Date(a + "T00:00:00").getTime() - new Date(b + "T00:00:00").getTime()) / 86400000;
+}
+const DUP_DIAS_TOLERANCIA = 3;
+
 function detectarFacturaDuplicada({ proveedorId, numero, fecha, monto, excluirId }) {
-  const numeroNorm = String(numero || "").replace(/[\s-]/g, "").toLowerCase();
-  return Object.entries(state.facturas).find(([id, f]) => {
-    if (id === excluirId) return false;
-    if (f.proveedorId !== proveedorId) return false;
-    if (numeroNorm) return String(f.numeroFactura || "").replace(/[\s-]/g, "").toLowerCase() === numeroNorm;
-    return f.fecha === fecha && Math.abs((Number(f.montoTotal) || 0) - (Number(monto) || 0)) < 0.005;
-  }) || null;
+  const montoNum = Number(monto) || 0;
+  let posible = null;
+  for (const [id, f] of Object.entries(state.facturas)) {
+    if (id === excluirId) continue;
+    if (f.proveedorId !== proveedorId) continue;
+    const mismoMonto = montoNum > 0 && Math.abs((Number(f.montoTotal) || 0) - montoNum) < 0.005;
+
+    if (mismoNumeroComprobante(f.numeroFactura, numero)) {
+      return { id, factura: f, certeza: "alta", motivo: `mismo N° de comprobante (${f.numeroFactura})` };
+    }
+    if (mismoMonto && f.fecha === fecha) {
+      return { id, factura: f, certeza: "alta", motivo: "misma fecha y mismo monto total" };
+    }
+    // Señal más débil, pero es la que salva el caso real: la misma factura escaneada dos veces
+    // con la fecha o el número leídos distinto. Se avisa como "posible" y decide el usuario.
+    if (mismoMonto && diasEntreFechas(f.fecha, fecha) <= DUP_DIAS_TOLERANCIA && !posible) {
+      posible = { id, factura: f, certeza: "posible", motivo: `mismo monto total y fecha muy cercana (${fmtDate(f.fecha)})` };
+    }
+  }
+  return posible;
+}
+
+// Texto compartido por el aviso del escaneo y por el confirm() de guardado.
+function descripcionFacturaDuplicada(dup) {
+  const d = dup.factura;
+  return `${d.proveedorNombre || "—"} · ${d.numeroFactura ? "N° " + d.numeroFactura : "sin N°"} · ${fmtDate(d.fecha)} · ${fmtMoney(d.montoTotal)}`;
 }
 
 window.guardarFactura = async function() {
@@ -1322,9 +1524,10 @@ window.guardarFactura = async function() {
   // + monto, que en la práctica no se repite.
   const duplicada = detectarFacturaDuplicada({ proveedorId: proveedorSel, numero, fecha, monto });
   if (duplicada) {
-    const d = duplicada[1];
-    const detalle = `${escapeHtml(d.proveedorNombre)} · ${d.numeroFactura ? "N° " + d.numeroFactura : "sin N°"} · ${fmtDate(d.fecha)} · ${fmtMoney(d.montoTotal)}`;
-    if (!confirm(`⚠️ Esta factura ya parece estar cargada:\n\n${detalle}\n\n¿Guardarla igual? (si es una factura distinta que coincide por casualidad, confirmá)`)) return;
+    const encabezado = duplicada.certeza === "alta"
+      ? "⚠️ Esta factura YA ESTÁ CARGADA:"
+      : "⚠️ Esta factura podría estar cargada ya:";
+    if (!confirm(`${encabezado}\n\n${descripcionFacturaDuplicada(duplicada)}\nCoincide por: ${duplicada.motivo}.\n\n¿Guardarla igual? (si de verdad es otra factura distinta, confirmá)`)) return;
   }
 
   const saveBtn = document.getElementById("guardar-factura-btn");
