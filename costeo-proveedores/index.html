@@ -215,6 +215,11 @@ const db = getDatabase(app);
 
 const DEFAULT_ADMIN_PASS = "costeo2025";
 
+// Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
+// Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
+// mostrando una versión vieja aunque el deploy ya haya salido.
+const APP_VERSION = "2026-07-27 18:35";
+
 const TABS = [
   { key: "nueva-factura", label: "📷 Nueva factura" },
   { key: "facturas",      label: "🧾 Facturas" },
@@ -714,7 +719,8 @@ function renderNuevaFacturaView(container) {
         </div>
         <div class="form-group" style="flex:0 0 auto;min-width:auto">
           <button type="button" class="btn btn-primary" id="scan-btn" onclick="escanearFactura()" disabled>🤖 Reintentar escaneo</button>
-          <div class="text-muted" style="margin-top:6px;max-width:220px">El escaneo se hace automáticamente al subir la foto. Usá este botón para reintentar, o completá el formulario a mano si no tenés foto.</div>
+          <button type="button" class="btn btn-ghost btn-sm" id="scan-alta-btn" onclick="escanearFacturaAltaResolucion()" disabled title="Manda la foto con el máximo detalle. Tarda más, pero lee facturas con letra muy chica o muy cargadas.">🔍 Reintentar en alta resolución</button>
+          <div class="text-muted" style="margin-top:6px;max-width:220px">El escaneo se hace automáticamente al subir la foto. Si quedó mal leída, probá "alta resolución" — tarda más pero lee mejor la letra chica.</div>
         </div>
       </div>
 
@@ -840,6 +846,24 @@ const ESCANEO_DIM = 1568, ESCANEO_CALIDAD = 0.85;
 // Si aun así se pasa de tiempo (facturas muy largas, conexión lenta), se reintenta solo con una
 // versión más chica: es preferible un escaneo un poco menos fino a ninguno.
 const ESCANEO_DIM_REINTENTO = 1100, ESCANEO_CALIDAD_REINTENTO = 0.7;
+// Reintento manual para las facturas difíciles (letra muy chica, muchas líneas apretadas): el
+// usuario elige pagar la espera más larga a cambio de más detalle. A propósito NO es el default:
+// ponerlo por default fue justamente lo que hizo que dejara de reconocerse cualquier factura.
+const ESCANEO_DIM_ALTA = 2200, ESCANEO_CALIDAD_ALTA = 0.92;
+
+window.escanearFacturaAltaResolucion = async function() {
+  if (!state._facturaFotoFile) { showToast("⚠️ Subí primero una foto de la factura.", "warn"); return; }
+  try {
+    showToast("🔍 Reintentando con el máximo detalle — puede tardar bastante más...", "warn");
+    state._facturaFotoScanDataUrl = await compressImageToDataUrl(state._facturaFotoFile, ESCANEO_DIM_ALTA, ESCANEO_CALIDAD_ALTA);
+    // Se permite el fallback automático a una versión chica si esta se pasa de tiempo.
+    state._escaneoReintentoChico = false;
+    await window.escanearFactura();
+  } catch (err) {
+    console.error(err);
+    showToast("⚠️ No se pudo procesar la foto en alta resolución.", "warn");
+  }
+};
 
 window.handleFacturaFotoChange = async function(e) {
   const file = e.target.files[0];
@@ -856,6 +880,7 @@ window.handleFacturaFotoChange = async function(e) {
     state._facturaFotoScanDataUrl = await compressImageToDataUrl(file, ESCANEO_DIM, ESCANEO_CALIDAD);
     document.getElementById("factura-foto-preview").innerHTML = `<img src="${dataUrl}" class="photo-thumb">`;
     document.getElementById("scan-btn").disabled = false;
+    document.getElementById("scan-alta-btn").disabled = false;
     // Auto-scan as soon as a photo is chosen (camera or gallery) — the manual button stays
     // enabled below in case the auto-scan fails and the user wants to retry.
     await window.escanearFactura();
@@ -4083,8 +4108,51 @@ function renderConfigView(container) {
     <div class="section-block">
       <div class="section-title" style="margin-bottom:10px">🤖 Escaneo automático de facturas</div>
       <div class="text-muted">El escaneo con IA depende de una función del servidor (Netlify Functions) con una clave de la API de Anthropic configurada como variable de entorno <code>ANTHROPIC_API_KEY</code>. Si no está configurada, o el escaneo falla, el formulario de "Nueva factura" se completa manualmente sin ningún problema — no es un requisito para usar la app.</div>
+      <div style="margin-top:12px">
+        <button class="btn btn-ghost btn-sm" onclick="probarEscaneo()">🩺 Probar la conexión del escaneo</button>
+        <div id="cfg-diag" class="text-muted" style="margin-top:8px"></div>
+      </div>
+    </div>
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">ℹ️ Versión</div>
+      <div class="text-muted">Estás usando la versión <strong>${escapeHtml(APP_VERSION)}</strong>. Si este número no coincide con el de la última actualización, el navegador te está mostrando una copia guardada: recargá con la página forzando la actualización (en el celular, cerrá y volvé a abrir la pestaña; en la compu, Ctrl+Shift+R o Cmd+Shift+R).</div>
     </div>`;
 }
+
+// Diagnóstico de un solo click: dice si la función de escaneo está publicada y respondiendo, que
+// es lo primero a descartar cuando "no reconoce ninguna factura". Manda una imagen mínima de 1x1
+// para no gastar una foto real ni tiempo de la IA.
+window.probarEscaneo = async function() {
+  const out = document.getElementById("cfg-diag");
+  out.textContent = "Probando...";
+  const PIXEL = "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==";
+  try {
+    const t0 = Date.now();
+    const resp = await fetch("/.netlify/functions/extraer-factura", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ imageBase64: PIXEL, mediaType: "image/jpeg" })
+    });
+    const ms = Date.now() - t0;
+    const texto = await resp.text();
+    if (resp.status === 404) {
+      out.innerHTML = `❌ La función de escaneo <strong>no está publicada</strong> (HTTP 404). Por eso ninguna factura se reconoce. Hay que revisar el deploy de Netlify.`;
+      return;
+    }
+    let data = null;
+    try { data = JSON.parse(texto); } catch {}
+    if (resp.ok) {
+      out.innerHTML = `✅ La función responde correctamente (${ms} ms). El escaneo está operativo.`;
+    } else if (data && /ANTHROPIC_API_KEY/.test(data.error || "")) {
+      out.innerHTML = `❌ Falta configurar <code>ANTHROPIC_API_KEY</code> en Netlify (Site settings → Environment variables). Sin esa clave el escaneo no puede funcionar.`;
+    } else if (resp.status === 504 || resp.status === 502) {
+      out.innerHTML = `⚠️ La función existe pero se pasó de tiempo (HTTP ${resp.status}, ${ms} ms). Con fotos reales va a fallar seguido: es el límite de tiempo del plan de Netlify.`;
+    } else {
+      out.innerHTML = `⚠️ La función respondió HTTP ${resp.status} en ${ms} ms: ${escapeHtml((data && data.error) || texto).slice(0, 300)}`;
+    }
+  } catch (err) {
+    out.innerHTML = `❌ No se pudo contactar la función de escaneo: ${escapeHtml(err && err.message ? err.message : "error desconocido")}`;
+  }
+};
 
 // ── Bootstrap ────────────────────────────────────────────
 attachListeners();
