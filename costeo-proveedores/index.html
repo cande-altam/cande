@@ -126,10 +126,10 @@ textarea.form-input{resize:vertical;min-height:60px;}
 .data-table tr.fila-detalle:hover td{background:var(--cream);}
 
 /* ITEM ROWS (factura / receta) */
-.item-row{display:grid;grid-template-columns:2fr 1fr 1fr 32px;gap:8px;align-items:start;padding:6px 0;}
+.item-row{display:grid;grid-template-columns:1.9fr 1fr .7fr .8fr 1fr 32px;gap:8px;align-items:start;padding:6px 0;}
 .item-row-header{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--cream-dark);margin-bottom:4px;}
 .item-row-wrap{overflow-x:auto;}
-@media(max-width:700px){.item-row,.item-row-header{grid-template-columns:repeat(4,160px);min-width:520px;}}
+@media(max-width:900px){.item-row,.item-row-header{grid-template-columns:repeat(6,150px);min-width:920px;}}
 .recipe-row{display:grid;grid-template-columns:2fr 1fr 32px;gap:8px;align-items:center;padding:6px 0;}
 
 /* INSUMO SEARCH PICKER */
@@ -498,37 +498,53 @@ function attachListeners() {
 // avisa si el precio cambia fuerte respecto al último conocido, y aclara cuándo un precio guardado
 // NO va a actualizar el costo de los productos porque la regla de referencia lo mantiene sin cambios
 // (protege el margen: una cotización más barata de otro proveedor no baja la referencia sola).
-function itemHintHtml(insumoId, precioUnitario, cantidad, unidad, importe, marca) {
+function itemHintHtml(insumoId, precioLinea, cantidad, unidad, importe, marca, contenidoPorUnidad) {
   const partes = [];
-  const cant = cantidad !== "" && cantidad != null ? Number(cantidad) : null;
-  const imp = importe !== "" && importe != null ? Number(importe) : null;
-  if (cant !== null && Number.isFinite(cant)) {
-    partes.push(`<span class="text-muted">Cant. detectada por IA: ${cant}${unidad ? " " + escapeHtml(unidad) : ""}${imp !== null && Number.isFinite(imp) ? ` · Importe de línea: ${fmtMoney(imp)}` : ""}</span>`);
+  const num = (v) => { const n = Number(v); return v !== "" && v != null && Number.isFinite(n) ? n : null; };
+  const cant = num(cantidad);
+  const cont = num(contenidoPorUnidad);
+  const precio = num(precioLinea);
+  const ins = insumoId ? state.insumos[insumoId] : null;
+  const unidadMedida = (ins?.unidad || unidad || "unidad");
+
+  // Precio real por unidad de medida: el de la factura suele ser por bulto (balde de 25 kg,
+  // fardo de 6). Se divide por el contenido para obtener el costo con el que hay que costear.
+  const precioPorUnidadMedida = precio !== null ? precio / (cont && cont > 0 ? cont : 1) : null;
+  if (precio !== null && cont && cont > 1) {
+    partes.push(`<div class="item-note">📦 ${cont} ${escapeHtml(unidadMedida)} por unidad → se va a guardar <strong>${fmtMoney(precioPorUnidadMedida)}</strong> por ${escapeHtml(unidadMedida)} (no ${fmtMoney(precio)}).</div>`);
   }
-  const precio = parseFloat(precioUnitario);
-  if (cant !== null && Number.isFinite(cant) && cant > 0 && imp !== null && Number.isFinite(imp) && imp > 0 && precio > 0) {
-    const importeEsperado = cant * precio;
-    if (Math.abs(importeEsperado - imp) / imp > 0.03) {
-      partes.push(`<div class="item-warn">⚠️ Cantidad × precio (${fmtMoney(importeEsperado)}) no coincide con el importe de la línea (${fmtMoney(imp)}) — revisá la cantidad, puede estar mal leída por el escaneo.</div>`);
+
+  const imp = num(importe);
+  if (cant !== null && imp !== null) {
+    partes.push(`<span class="text-muted">Importe de línea leído: ${fmtMoney(imp)}</span>`);
+  }
+  // Control de coherencia: cantidad x precio de línea debería dar el importe impreso.
+  if (cant !== null && cant > 0 && imp !== null && imp > 0 && precio !== null && precio > 0) {
+    const esperado = cant * precio;
+    if (Math.abs(esperado - imp) / imp > 0.03) {
+      const contSugerido = Math.round((imp / (cant * precio)) * 1000) / 1000;
+      partes.push(`<div class="item-warn">⚠️ Cantidad × precio (${fmtMoney(esperado)}) no coincide con el importe de la línea (${fmtMoney(imp)}). Revisá la cantidad o el precio${contSugerido > 1 ? ` — podría faltar el contenido por unidad (¿${contSugerido}?)` : ""}.</div>`);
     }
   }
-  if (insumoId && state.insumos[insumoId] && precio > 0) {
-    const ins = state.insumos[insumoId];
+
+  if (ins && precioPorUnidadMedida !== null && precioPorUnidadMedida > 0) {
     const precioRef = precioEfectivoInsumo(insumoId);
     if (precioRef > 0) {
-      const cambioPct = ((precio - precioRef) / precioRef) * 100;
+      const cambioPct = ((precioPorUnidadMedida - precioRef) / precioRef) * 100;
       if (Math.abs(cambioPct) >= 40) {
-        partes.push(`<div class="item-warn">⚠️ Este precio es ${fmtPct(Math.abs(cambioPct))} ${cambioPct > 0 ? "más alto" : "más bajo"} que el último conocido (${fmtMoney(precioRef)}) — revisá si está bien escaneado antes de guardar.</div>`);
+        // Un desvío grande casi siempre es un bulto no declarado: se sugiere el factor exacto.
+        const factor = Math.round((precioPorUnidadMedida / precioRef) * 100) / 100;
+        partes.push(`<div class="item-warn">⚠️ ${fmtPct(Math.abs(cambioPct))} ${cambioPct > 0 ? "más alto" : "más bajo"} que el último precio conocido (${fmtMoney(precioRef)} por ${escapeHtml(unidadMedida)}).${cambioPct > 0 && factor >= 2 ? ` ¿No será que cada unidad trae <strong>${factor}</strong> ${escapeHtml(unidadMedida)}? Cargalo en "Contenido c/u".` : " Revisá antes de guardar."}</div>`);
       } else {
-        partes.push(`<span class="text-muted">Último precio conocido: ${fmtMoney(precioRef)}</span>`);
+        partes.push(`<span class="text-muted">Último precio conocido: ${fmtMoney(precioRef)} por ${escapeHtml(unidadMedida)}</span>`);
       }
-      // Cada combinación proveedor+marca es su propia línea de precio (ver comboKeyPrecio) — la
-      // suba/baja de referencia se evalúa contra ESA línea, no contra el insumo en general.
       const key = comboKeyPrecio(state._facturaProveedorId, marca);
-      const seActualizara = !ins.proveedorPreferido || ins.proveedorPreferido === key || !(ins.precios && ins.precios[ins.proveedorPreferido]) || precio > ins.precios[ins.proveedorPreferido].precio;
-      if (!seActualizara) {
-        partes.push(`<div class="item-note">💡 Es más barato que el precio con el que se costea — queda registrado y destacado como oportunidad de compra, pero el costo de los productos NO baja (siempre se costea con el precio más alto).</div>`);
+      const noSubeReferencia = precioPorUnidadMedida < precioRef - 0.005;
+      if (noSubeReferencia) {
+        partes.push(`<div class="item-note">💡 Es más barato que el precio con el que se costea — queda registrado y destacado como oportunidad de compra, pero el costo de los productos NO baja (siempre se costea con el más alto de los últimos 2 meses).</div>`);
       }
+    } else if (ins.contenidoPorUnidad && !cont) {
+      partes.push(`<div class="item-note">📦 Este insumo tiene configurado ${ins.contenidoPorUnidad} ${escapeHtml(unidadMedida)} por unidad. Cargalo en "Contenido c/u" si esta factura también viene por bulto.</div>`);
     }
   }
   return partes.join("");
@@ -537,11 +553,13 @@ window.actualizarItemHint = function(precioInput) {
   const row = precioInput.closest(".item-row");
   const insumoId = row.querySelector(".item-insumo-id").value;
   const marca = row.querySelector(".item-marca")?.value || "";
-  const hint = itemHintHtml(insumoId, precioInput.value, precioInput.dataset.cantidad, precioInput.dataset.unidad, precioInput.dataset.importe, marca);
+  const cantidad = row.querySelector(".item-cantidad")?.value || "";
+  const contenido = row.querySelector(".item-contenido")?.value || "";
+  const hint = itemHintHtml(insumoId, precioInput.value, cantidad, precioInput.dataset.unidad, precioInput.dataset.importe, marca, contenido);
   row.querySelector(".item-hint").innerHTML = hint;
 };
 
-function itemRowHtml({ insumoId = "", nombre = "", precioUnitario = "", cantidad = "", unidad = "", importe = "", marca = "" } = {}) {
+function itemRowHtml({ insumoId = "", nombre = "", precioUnitario = "", cantidad = "", unidad = "", importe = "", marca = "", contenidoPorUnidad = "" } = {}) {
   const displayName = insumoId && state.insumos[insumoId] ? state.insumos[insumoId].nombre : (nombre || "");
   return `
     <div class="item-row">
@@ -553,11 +571,13 @@ function itemRowHtml({ insumoId = "", nombre = "", precioUnitario = "", cantidad
         <div class="insumo-picker-results"></div>
       </div>
       <input type="text" class="form-input item-marca" placeholder="Marca (opcional)" value="${escapeHtml(marca ?? "")}" oninput="actualizarItemHint(this.closest('.item-row').querySelector('.item-precio'))">
-      <input type="number" step="0.01" min="0" class="form-input item-precio" placeholder="$ unit." value="${precioUnitario ?? ""}"
-        data-cantidad="${escapeHtml(cantidad ?? "")}" data-unidad="${escapeHtml(unidad ?? "")}" data-importe="${escapeHtml(importe ?? "")}"
+      <input type="number" step="0.001" min="0" class="form-input item-cantidad" placeholder="1" value="${cantidad ?? ""}" title="Cuántas unidades de compra entraron (bultos, baldes, fardos...)" oninput="actualizarItemHint(this.closest('.item-row').querySelector('.item-precio'))">
+      <input type="number" step="0.001" min="0" class="form-input item-contenido" placeholder="1" value="${contenidoPorUnidad ?? ""}" title="Cuántas unidades de medida trae cada unidad de compra (ej. balde de 25 kg → 25)" oninput="actualizarItemHint(this.closest('.item-row').querySelector('.item-precio'))">
+      <input type="number" step="0.01" min="0" class="form-input item-precio" placeholder="$" value="${precioUnitario ?? ""}"
+        data-unidad="${escapeHtml(unidad ?? "")}" data-importe="${escapeHtml(importe ?? "")}"
         oninput="actualizarItemHint(this)">
       <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.item-row').remove()">✕</button>
-      <div class="item-hint">${itemHintHtml(insumoId, precioUnitario, cantidad, unidad, importe, marca)}</div>
+      <div class="item-hint">${itemHintHtml(insumoId, precioUnitario, cantidad, unidad, importe, marca, contenidoPorUnidad)}</div>
     </div>`;
 }
 
@@ -715,13 +735,15 @@ function renderNuevaFacturaView(container) {
       </div>
       <div class="text-muted" style="margin-bottom:14px">Cargá el IVA tal como figura discriminado en la factura — sirve para llevar el control de IVA crédito fiscal (lo ves resumido por mes en la pestaña "IVA").</div>
 
+      <div id="escaneo-pendientes"></div>
+
       <div class="section-header" style="margin-top:18px">
         <div class="section-title">📦 Insumos de esta factura</div>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addItemRow()">+ Agregar ítem</button>
       </div>
       <div class="item-row-wrap">
         <div class="item-row item-row-header">
-          <div>Insumo</div><div>Marca</div><div>Precio unit.</div><div></div>
+          <div>Insumo</div><div>Marca</div><div>Cantidad</div><div>Contenido c/u</div><div>Precio de línea</div><div></div>
         </div>
         <div id="items-container">${itemRowHtml()}</div>
       </div>
@@ -769,9 +791,14 @@ window.handleFacturaFotoChange = async function(e) {
   const file = e.target.files[0];
   if (!file) return;
   try {
-    // Kept fairly small since the photo is stored inline in Realtime Database (no Storage bucket).
+    // Dos versiones de la foto, a propósito:
+    //  · la que se ARCHIVA va comprimida, porque se guarda embebida en la Realtime Database.
+    //  · la que se MANDA A LA IA va en alta, porque a 1000px/0.6 el texto chico de una factura
+    //    (números de comprobante, cantidades, precios unitarios) se vuelve ilegible y era la causa
+    //    principal de que algunas facturas no se pudieran reconocer.
     const dataUrl = await compressImageToDataUrl(file, 1000, 0.6);
     state._facturaFotoDataUrl = dataUrl;
+    state._facturaFotoScanDataUrl = await compressImageToDataUrl(file, 2000, 0.9);
     document.getElementById("factura-foto-preview").innerHTML = `<img src="${dataUrl}" class="photo-thumb">`;
     document.getElementById("scan-btn").disabled = false;
     // Auto-scan as soon as a photo is chosen (camera or gallery) — the manual button stays
@@ -801,8 +828,14 @@ window.escanearFactura = async function() {
   const btn = document.getElementById("scan-btn");
   btn.disabled = true; btn.textContent = "🤖 Escaneando...";
   try {
-    const base64 = state._facturaFotoDataUrl.split(",")[1];
-    const insumosConocidos = Object.entries(state.insumos).map(([id, ins]) => ({ id, nombre: ins.nombre }));
+    const base64 = (state._facturaFotoScanDataUrl || state._facturaFotoDataUrl).split(",")[1];
+    // Se le pasa unidad, contenido por unidad y último precio conocido para que pueda detectar
+    // sola cuando el precio de la factura es por bulto y no por unidad de medida.
+    const insumosConocidos = Object.entries(state.insumos).map(([id, ins]) => ({
+      id, nombre: ins.nombre, unidad: ins.unidad || "",
+      contenidoPorUnidad: ins.contenidoPorUnidad || null,
+      ultimoPrecio: Math.round(precioEfectivoInsumo(id) * 100) / 100 || null
+    }));
     const resp = await fetch("/.netlify/functions/extraer-factura", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -824,7 +857,7 @@ window.escanearFactura = async function() {
     if (!resp.ok) throw new Error(data.error || `Error al escanear la factura (HTTP ${resp.status}).`);
 
     aplicarDatosEscaneados(data);
-    showToast("✅ Factura escaneada. Revisá los datos antes de guardar.", "success");
+    mostrarPendientesDelEscaneo(data);
   } catch (err) {
     console.error("Error al escanear factura:", err);
     const msg = err && err.message ? err.message : "Error desconocido.";
@@ -902,6 +935,38 @@ function sugerirProveedorPorRubro(nombresItems) {
   }
 }
 
+// Tras escanear, arma un panel con lo que quedó pendiente para poder avanzar: qué campos la IA
+// declaró ilegibles, si la foto salió mala, y sobre todo si falta el proveedor (sin proveedor no
+// se puede reconocer bien el resto ni asociar los precios a nadie).
+function mostrarPendientesDelEscaneo(data) {
+  const cont = document.getElementById("escaneo-pendientes");
+  if (!cont) return;
+  const faltaProveedor = !document.getElementById("f-proveedor").value;
+  const ilegibles = Array.isArray(data.camposIlegibles) ? data.camposIlegibles.filter(Boolean) : [];
+  const calidad = data.calidadImagen || "";
+  const avisos = [];
+
+  if (faltaProveedor) {
+    avisos.push(`<div class="item-warn" style="margin:0 0 8px">🏭 <strong>No se pudo identificar el proveedor.</strong> Elegilo en la lista de arriba, o escribí su CUIT, para poder continuar con el reconocimiento de los productos y asociarles el precio.</div>`);
+  }
+  if (calidad === "mala" || calidad === "regular") {
+    avisos.push(`<div class="item-note" style="margin:0 0 8px">📷 La foto salió <strong>${escapeHtml(calidad)}</strong>. Si algún dato quedó mal, sacá otra foto con más luz y sin sombras, y tocá "Reintentar escaneo" — o completá a mano lo que falte.</div>`);
+  }
+  if (ilegibles.length) {
+    avisos.push(`<div class="item-note" style="margin:0 0 8px">✍️ No se pudieron leer con seguridad: <strong>${ilegibles.map(escapeHtml).join(", ")}</strong>. Completalos a mano antes de guardar.</div>`);
+  }
+  if (!avisos.length) {
+    cont.innerHTML = "";
+    showToast("✅ Factura escaneada. Revisá los datos antes de guardar.", "success");
+    return;
+  }
+  cont.innerHTML = `<div class="section-block" style="border-color:var(--terra);margin-bottom:14px">
+    <div class="section-title" style="margin-bottom:10px">⚠️ Falta confirmar algunos datos</div>
+    ${avisos.join("")}
+  </div>`;
+  showToast("⚠️ El escaneo quedó incompleto — revisá los avisos.", "warn");
+}
+
 function aplicarDatosEscaneados(data) {
   if (data.proveedor || data.cuit) {
     const sel = document.getElementById("f-proveedor");
@@ -940,7 +1005,10 @@ function aplicarDatosEscaneados(data) {
         cantidad: it.cantidad ?? "",
         unidad: it.unidad ?? "",
         importe: it.importe ?? "",
-        marca: it.marca ?? ""
+        marca: it.marca ?? "",
+        // Si la IA no lo detectó, se usa el que ya esté configurado en el insumo (aprendido de
+        // una factura anterior), así no hay que volver a cargarlo cada vez.
+        contenidoPorUnidad: it.contenidoPorUnidad ?? (matchedId ? (state.insumos[matchedId]?.contenidoPorUnidad ?? "") : "")
       });
     }).join("");
   }
@@ -1078,6 +1146,19 @@ window.quitarPrecioInsumo = async function(insumoId, lineaKey) {
   render();
 };
 
+// Detecta si una factura ya fue cargada, para no duplicarla. Criterio principal: mismo proveedor
+// y mismo N° de comprobante (es único por proveedor). Si la factura no trae número, se cae al
+// combo proveedor + fecha + monto, que en la práctica no se repite.
+function detectarFacturaDuplicada({ proveedorId, numero, fecha, monto, excluirId }) {
+  const numeroNorm = String(numero || "").replace(/[\s-]/g, "").toLowerCase();
+  return Object.entries(state.facturas).find(([id, f]) => {
+    if (id === excluirId) return false;
+    if (f.proveedorId !== proveedorId) return false;
+    if (numeroNorm) return String(f.numeroFactura || "").replace(/[\s-]/g, "").toLowerCase() === numeroNorm;
+    return f.fecha === fecha && Math.abs((Number(f.montoTotal) || 0) - (Number(monto) || 0)) < 0.005;
+  }) || null;
+}
+
 window.guardarFactura = async function() {
   const proveedorSel = document.getElementById("f-proveedor").value;
   const proveedorNombreNuevo = document.getElementById("f-proveedor-nombre-nuevo").value.trim();
@@ -1096,6 +1177,16 @@ window.guardarFactura = async function() {
   if (proveedorSel === "__new__" && !proveedorNombreNuevo) { showToast("⚠️ Escribí el nombre del nuevo proveedor.", "warn"); return; }
   if (!fecha) { showToast("⚠️ Elegí la fecha.", "warn"); return; }
   if (!(monto > 0)) { showToast("⚠️ Ingresá el monto total.", "warn"); return; }
+
+  // Antes de escribir nada: avisar si esta factura ya parece estar cargada. Se considera la
+  // misma si coincide proveedor + N° de comprobante, o (cuando no hay número) proveedor + fecha
+  // + monto, que en la práctica no se repite.
+  const duplicada = detectarFacturaDuplicada({ proveedorId: proveedorSel, numero, fecha, monto });
+  if (duplicada) {
+    const d = duplicada[1];
+    const detalle = `${escapeHtml(d.proveedorNombre)} · ${d.numeroFactura ? "N° " + d.numeroFactura : "sin N°"} · ${fmtDate(d.fecha)} · ${fmtMoney(d.montoTotal)}`;
+    if (!confirm(`⚠️ Esta factura ya parece estar cargada:\n\n${detalle}\n\n¿Guardarla igual? (si es una factura distinta que coincide por casualidad, confirmá)`)) return;
+  }
 
   const saveBtn = document.getElementById("guardar-factura-btn");
   saveBtn.disabled = true; saveBtn.textContent = "Guardando...";
@@ -1123,10 +1214,16 @@ window.guardarFactura = async function() {
     for (const row of itemRows) {
       const insumoIdSel = row.querySelector(".item-insumo-id").value;
       const nombreTyped = row.querySelector(".item-insumo-search").value.trim();
-      const precioUnitario = parseFloat(row.querySelector(".item-precio").value);
+      const precioLinea = parseFloat(row.querySelector(".item-precio").value);
       const marca = row.querySelector(".item-marca")?.value.trim() || "";
+      const cantidadCompra = parseFloat(row.querySelector(".item-cantidad")?.value) || null;
+      const contenidoPorUnidad = parseFloat(row.querySelector(".item-contenido")?.value) || null;
       if (!insumoIdSel && !nombreTyped) continue;
-      if (!(precioUnitario > 0)) continue;
+      if (!(precioLinea > 0)) continue;
+      // El precio de la factura suele ser por bulto (balde de 25 kg, fardo de 6). Lo que se
+      // guarda como precio del insumo es SIEMPRE por unidad de medida, así el costeo de las
+      // recetas (que usan kg, litros, unidades) queda en la misma escala.
+      const precioUnitario = contenidoPorUnidad && contenidoPorUnidad > 0 ? precioLinea / contenidoPorUnidad : precioLinea;
 
       let insumoId = insumoIdSel;
       let nombre;
@@ -1143,7 +1240,13 @@ window.guardarFactura = async function() {
       if (resultadoPrecio && !resultadoPrecio.referenciaActualizada) {
         sinActualizarReferencia.push({ nombre, marca, precioUnitario, precioReferencia: resultadoPrecio.precioActualAnterior });
       }
-      items.push({ insumoId, nombre, precioUnitario, marca });
+      // Si el ítem vino por bulto, se guarda el factor en el insumo para que la próxima factura
+      // ya venga bien interpretada sin tener que volver a cargarlo.
+      if (contenidoPorUnidad && contenidoPorUnidad > 1 && state.insumos[insumoId]?.contenidoPorUnidad !== contenidoPorUnidad) {
+        await update(ref(db, `costeo/insumos/${insumoId}`), { contenidoPorUnidad });
+        state.insumos[insumoId] = { ...state.insumos[insumoId], contenidoPorUnidad };
+      }
+      items.push({ insumoId, nombre, precioUnitario, marca, cantidad: cantidadCompra, contenidoPorUnidad, precioLinea });
     }
 
     await set(facturaRef, {
@@ -1536,6 +1639,8 @@ window.guardarInsumo = async function() {
   const unidad = document.getElementById("ins-unidad").value.trim();
   const precio = parseFloat(document.getElementById("ins-precio").value);
   const marca = document.getElementById("ins-marca").value.trim();
+  const contenidoRaw = document.getElementById("ins-contenido").value;
+  const contenidoPorUnidad = contenidoRaw ? (parseFloat(contenidoRaw) || 1) : null;
   if (!nombre) { showToast("⚠️ Ingresá el nombre del insumo.", "warn"); return; }
 
   const recetaRows = Array.from(document.querySelectorAll("#insumo-recipe-container .insumo-recipe-row"));
@@ -1551,8 +1656,8 @@ window.guardarInsumo = async function() {
   try {
     if (id === "new") {
       const newRef = push(ref(db, "costeo/insumos"));
-      await set(newRef, { nombre, unidad, receta, creadoTs: Date.now() });
-      state.insumos[newRef.key] = { nombre, unidad, receta };
+      await set(newRef, { nombre, unidad, receta, contenidoPorUnidad, creadoTs: Date.now() });
+      state.insumos[newRef.key] = { nombre, unidad, receta, contenidoPorUnidad };
       if (tieneReceta) {
         const costo = Object.entries(receta).reduce((sum, [subId, cant]) => sum + precioEfectivoInsumo(subId) * cant, 0);
         await guardarPrecioRecetaInsumo(newRef.key, costo);
@@ -1560,8 +1665,8 @@ window.guardarInsumo = async function() {
         await actualizarPrecioInsumo(newRef.key, { proveedorId: "", proveedorNombre: "Carga manual", precio, marca, conIva: true });
       }
     } else {
-      await update(ref(db, `costeo/insumos/${id}`), { nombre, unidad, receta });
-      state.insumos[id] = { ...state.insumos[id], nombre, unidad, receta };
+      await update(ref(db, `costeo/insumos/${id}`), { nombre, unidad, receta, contenidoPorUnidad });
+      state.insumos[id] = { ...state.insumos[id], nombre, unidad, receta, contenidoPorUnidad };
       if (tieneReceta) {
         const costo = Object.entries(receta).reduce((sum, [subId, cant]) => sum + precioEfectivoInsumo(subId) * cant, 0);
         await guardarPrecioRecetaInsumo(id, costo);
@@ -1961,6 +2066,7 @@ function renderInsumosView(container) {
       <div class="form-row">
         <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="ins-nombre" value="${escapeHtml(editingData.nombre)}"></div>
         <div class="form-group"><label class="form-label">Unidad</label><input class="form-input" id="ins-unidad" placeholder="kg, litros, unidad..." value="${escapeHtml(editingData.unidad)}"></div>
+        <div class="form-group"><label class="form-label">Contenido por unidad de compra</label><input type="number" step="0.001" min="0" class="form-input" id="ins-contenido" placeholder="1" value="${editingData.contenidoPorUnidad ?? ""}"><div class="text-muted" style="font-size:11px">Cuántas unidades de medida trae cada unidad que comprás. Ej.: el dulce de leche Campo Quijano viene en baldes de 25 kg → 25. Una gaseosa en fardo de 6 → 6. Suelto → 1.</div></div>
         ${editing === "new" ? `<div class="form-group"><label class="form-label">Precio inicial (opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="ins-precio"></div><div class="form-group"><label class="form-label">Marca (opcional)</label><input class="form-input" id="ins-marca" placeholder="ej. Leudex"></div>` : `<input type="hidden" id="ins-precio"><input type="hidden" id="ins-marca">`}
       </div>
       <div class="section-header" style="margin-top:10px">

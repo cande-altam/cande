@@ -15,8 +15,10 @@ Analizá la imagen y devolvé SOLO un JSON válido, sin texto adicional y sin bl
   "montoTotal": number | null,
   "iva": number | null,
   "items": [
-    { "nombre": string, "insumoId": string | null, "marca": string | null, "cantidad": number | null, "unidad": string | null, "precioUnitario": number | null, "importe": number | null }
-  ]
+    { "nombre": string, "insumoId": string | null, "marca": string | null, "cantidad": number | null, "unidad": string | null, "contenidoPorUnidad": number | null, "unidadContenido": string | null, "precioUnitario": number | null, "importe": number | null }
+  ],
+  "calidadImagen": "buena" | "regular" | "mala",
+  "camposIlegibles": [string]
 }
 Reglas:
 - Si no podés leer un dato con confianza, poné null. No inventes valores.
@@ -26,14 +28,19 @@ Reglas:
 - "items" son las líneas de detalle de la factura (insumos comprados). Si no hay detalle de líneas legible, devolvé un array vacío.
 - "marca" de cada ítem: la marca comercial del producto SI figura impresa en la línea de detalle (ej. "Levadura Leudex", "Levadura Duquesa") — un mismo insumo puede comprarse en varias marcas distintas al mismo o a distinto proveedor, y cada marca puede tener su propio precio, así que es importante no perderla. Si no hay marca legible o el ítem no es de ese tipo (ej. es un insumo genérico sin marca), poné null.
 - Para cada ítem: "cantidad" y "unidad" son los que figuran impresos en la línea (ej. "5", "kg"); "importe" es el subtotal de esa línea (cantidad × precio unitario, tal como figura impreso, sin IVA a menos que la factura solo muestre precios con IVA incluido). Prestá especial atención a no confundir la columna de cantidad con la de código de producto o de precio — son la causa más común de error. Si la factura solo muestra precio unitario e importe pero no cantidad explícita, podés inferir "cantidad" = importe / precioUnitario; si solo muestra cantidad e importe, inferí "precioUnitario" = importe / cantidad. Si algún valor no cierra o no es legible, poné null en ese campo en vez de adivinar.
-- "fecha" en formato ISO YYYY-MM-DD.`;
+- "fecha" en formato ISO YYYY-MM-DD.
+- "contenidoPorUnidad" / "unidadContenido": MUY IMPORTANTE. Muchos productos se venden por bulto/fardo/balde/caja, y el precio de la línea es el del BULTO, no el de la unidad de medida real. Ejemplos: "Dulce de leche Campo Quijano x 25 kg" → contenidoPorUnidad: 25, unidadContenido: "kg" (cada unidad comprada trae 25 kg); "Gaseosa 500ml fardo x6" → contenidoPorUnidad: 6, unidadContenido: "unidad"; "Aceite caja x 12 botellas" → 12 / "unidad". Buscá esta información en el texto del ítem (x25kg, x 6, fardo, caja, balde, pack, bidón). Si el ítem se vende suelto, sin bulto, poné contenidoPorUnidad: 1. Si no podés determinarlo con confianza, poné null — NO adivines.
+- "calidadImagen": tu evaluación de qué tan legible está la foto ("buena" si se lee todo con claridad, "regular" si hay partes dudosas, "mala" si gran parte es ilegible).
+- "camposIlegibles": lista de los nombres de los campos que NO pudiste leer con confianza y dejaste en null por eso (ej. ["numeroFactura", "cuit", "items[2].precioUnitario"]). Si pudiste leer todo con confianza, devolvé un array vacío. Sé honesto acá: es preferible declarar que no se leyó a inventar un valor.`;
 
 const CATALOG_INSTRUCTIONS = `
 
 Además, tenés una lista de insumos YA CARGADOS en el sistema (id y nombre). Para cada ítem de la factura, fijate si corresponde a uno de esos insumos ya existentes, aunque el texto de la factura tenga mayúsculas, abreviaturas, marca o tamaño de envase distintos al nombre guardado (ejemplo: "LECHE ENT. SACHET X 1LT" es el mismo insumo que "Leche entera"). Si estás razonablemente seguro de la coincidencia, poné el "id" EXACTO de ese insumo en "insumoId" del ítem. Si el ítem no corresponde a ningún insumo de la lista (es nuevo), poné "insumoId": null — nunca inventes un id que no esté en la lista.
 - "nombre" de cada ítem: si coincide con un insumo de la lista, copiá su nombre EXACTO tal como aparece en la lista; si es un insumo nuevo, un nombre corto y claro, sin marca ni tamaño de envase.
 
-Lista de insumos ya cargados (id → nombre):
+Para cada insumo de la lista te paso, cuando se conocen: su unidad de medida, el contenido por unidad que ya está configurado (cuántas unidades de medida trae cada unidad de compra) y el último precio conocido POR UNIDAD DE MEDIDA. Usalos como control de coherencia: si el precio unitario que leés en la factura es muy distinto del último conocido (por ejemplo 25 veces mayor), es casi seguro que el precio de la factura es por bulto y no por unidad de medida — en ese caso completá "contenidoPorUnidad" con el factor que corresponda en vez de forzar el precio.
+
+Lista de insumos ya cargados (id → nombre · unidad · contenido por unidad · último precio conocido):
 `;
 
 exports.handler = async (event) => {
@@ -63,7 +70,13 @@ exports.handler = async (event) => {
     // Defensive cap so a very large catalog can't balloon the request indefinitely.
     const lista = insumosConocidos.slice(0, 600)
       .filter((it) => it && it.id && it.nombre)
-      .map((it) => `${it.id} → ${it.nombre}`)
+      .map((it) => {
+        const partes = [`${it.id} → ${it.nombre}`];
+        if (it.unidad) partes.push(`unidad: ${it.unidad}`);
+        if (it.contenidoPorUnidad) partes.push(`contenido por unidad: ${it.contenidoPorUnidad}`);
+        if (it.ultimoPrecio) partes.push(`último precio conocido: ${it.ultimoPrecio}`);
+        return partes.join(" · ");
+      })
       .join("\n");
     prompt += CATALOG_INSTRUCTIONS + lista;
   }
