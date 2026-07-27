@@ -222,6 +222,7 @@ const TABS = [
   { key: "iva",           label: "💰 IVA" },
   { key: "proveedores",   label: "🏭 Proveedores" },
   { key: "insumos",       label: "📦 Insumos" },
+  { key: "listas",        label: "🏷️ Listas de precios" },
   { key: "productos",     label: "🍰 Productos" },
   { key: "recetas-bases", label: "📋 Recetas y Bases" },
   { key: "analisis",      label: "📈 Análisis" },
@@ -271,6 +272,17 @@ const state = {
   consultaPregunta: "",
   consultaCargando: false,
   consultaHistorial: [],
+  listasPrecios: {},
+  listasBusqueda: "",
+  listaProveedorId: "",
+  listaFecha: "",
+  listaTexto: "",
+  listaCargando: false,
+  viewingListaId: null,
+  listaLineas: null,     // null = todavía no se leyó ninguna lista; [] = se leyó y no trajo líneas
+  listaMeta: null,       // datos que devolvió la IA sobre la lista (calidad, notas, campos ilegibles)
+  _listaFotoDataUrl: null,
+  _listaFotoScanDataUrl: null,
 };
 
 // ── Helpers ──────────────────────────────────────────────
@@ -296,8 +308,11 @@ function fmtPct(n) {
 }
 // Buscador genérico reutilizado en las distintas vistas de listado (Facturas, Pagos, Proveedores,
 // Insumos, Recetas y Bases): un input de texto que llama a `setter(valor)` en cada tecla.
+// El id estable es lo que le permite a render() devolverle el foco y el cursor después de
+// reconstruir el DOM: sin eso el buscador perdía el foco a cada tecla y solo se podía escribir
+// de a una letra.
 function buscadorHtml(value, placeholder, setter) {
-  return `<div class="form-row" style="margin-bottom:14px"><div class="form-group" style="max-width:320px"><input class="form-input" placeholder="🔎 ${escapeHtml(placeholder)}" value="${escapeHtml(value)}" oninput="${setter}(this.value)"></div></div>`;
+  return `<div class="form-row" style="margin-bottom:14px"><div class="form-group" style="max-width:320px"><input class="form-input" id="buscador-${escapeHtml(setter)}" placeholder="🔎 ${escapeHtml(placeholder)}" value="${escapeHtml(value)}" oninput="${setter}(this.value)"></div></div>`;
 }
 function diasDesdeFecha(iso) {
   if (!iso) return Infinity;
@@ -421,6 +436,14 @@ function render() {
   // Se guarda la posición y se restaura al final; navigate() la lleva al tope a propósito después.
   const scrollPrevio = _resetScrollEnProximoRender ? 0 : window.scrollY;
   _resetScrollEnProximoRender = false;
+  // Mismo problema que el scroll: al reconstruir el DOM se pierde el foco. En un campo que
+  // re-renderiza mientras se escribe (los buscadores) eso significa poder tipear una sola letra
+  // por click. Se guarda qué campo estaba enfocado y dónde tenía el cursor, y se restaura al final.
+  const _activo = document.activeElement;
+  const focoId = _activo && _activo.id ? _activo.id : null;
+  const focoSel = focoId && typeof _activo.selectionStart === "number"
+    ? [_activo.selectionStart, _activo.selectionEnd]
+    : null;
   root.innerHTML = `
     <div class="header">
       <div class="logo">
@@ -450,6 +473,7 @@ function render() {
     case "iva": renderIvaView(container); break;
     case "proveedores": renderProveedoresView(container); break;
     case "insumos": renderInsumosView(container); break;
+    case "listas": renderListasView(container); break;
     case "productos": renderProductosView(container); break;
     case "recetas-bases": renderRecetasBasesView(container); break;
     case "analisis": renderAnalisisView(container); break;
@@ -458,6 +482,17 @@ function render() {
     default: container.innerHTML = `<div class="empty-state">Vista no encontrada.</div>`;
   }
   if (scrollPrevio > 0) window.scrollTo(0, scrollPrevio);
+  if (focoId) {
+    const el = document.getElementById(focoId);
+    // Defensivo: si el campo ya no existe tras el re-render (o el entorno no implementa focus),
+    // simplemente no se restaura nada — nunca vale la pena romper el render por esto.
+    if (el) {
+      try { el.focus({ preventScroll: true }); } catch {}
+      if (focoSel && typeof el.setSelectionRange === "function") {
+        try { el.setSelectionRange(focoSel[0], focoSel[1]); } catch {}
+      }
+    }
+  }
 }
 
 function renderLogin() {
@@ -486,6 +521,7 @@ function attachListeners() {
   onValue(ref(db, "costeo/facturas"), snap => { state.facturas = snap.val() || {}; if (!state.formOpen) render(); });
   onValue(ref(db, "costeo/inflacion"), snap => { state.inflacion = snap.val() || {}; if (!state.formOpen) render(); });
   onValue(ref(db, "costeo/ivaDebito"), snap => { state.ivaDebito = snap.val() || {}; if (!state.formOpen) render(); });
+  onValue(ref(db, "costeo/listasPrecios"), snap => { state.listasPrecios = snap.val() || {}; if (!state.formOpen) render(); });
   onValue(ref(db, "costeo/config"), snap => { state.config = snap.val() || {}; });
 }
 
@@ -1062,7 +1098,10 @@ async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, 
     actualizadoTs: Date.now(),
     proveedorId: proveedorId || "",
     proveedorNombre: proveedorNombre || "",
-    marca: normMarca(marca)
+    marca: normMarca(marca),
+    // Una compra real reemplaza al precio de lista de esta misma línea: ya no es una cotización,
+    // es lo que efectivamente se pagó, y ese dato manda sobre lo que decía la lista.
+    origen: "compra"
   };
 
   // precioActual queda como espejo persistido de la regla de costeo (ver precioCosteoInsumo):
@@ -1125,6 +1164,106 @@ async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, 
   // sea una sorpresa silenciosa cuando en realidad se esperaba una suba (ej. por un escaneo mal leído).
   const referenciaActualizada = precioActualAnterior === null || Math.abs(precioActual - precioActualAnterior) > 0.005;
   return { referenciaActualizada, precioActualAnterior, precioActualNuevo: precioActual };
+}
+
+// Aplica a un insumo un precio salido de la LISTA DE PRECIOS de un proveedor (no de una compra).
+// Diferencias deliberadas contra actualizarPrecioInsumo():
+//  · NO escribe en el historial. El historial son compras reales — es lo que hace que "solo pesan
+//    los proveedores a los que realmente les comprás" siga siendo cierto, y lo que alimenta las
+//    consultas del tipo "¿cuándo compramos queso crema por última vez?".
+//  · La línea queda marcada con origen "lista" y su fecha de vigencia, así precioCosteoInsumo la
+//    puede tratar con la regla que corresponde (solo puede subir el costo, nunca bajarlo).
+async function aplicarPrecioListaInsumo(insumoId, { proveedorId, proveedorNombre, precio, marca, fechaLista, listaId }) {
+  const insumo = state.insumos[insumoId] || {};
+  const key = comboKeyPrecio(proveedorId, marca);
+  const precios = { ...(insumo.precios || {}) };
+  precios[key] = {
+    precio,
+    fechaUltimo: fechaLista || todayISO(),
+    fechaLista: fechaLista || todayISO(),
+    actualizadoTs: Date.now(),
+    proveedorId: proveedorId || "",
+    proveedorNombre: proveedorNombre || "",
+    marca: normMarca(marca),
+    origen: "lista",
+    listaId: listaId || ""
+  };
+  const precioActualAnterior = precioCosteoInsumo(insumo);
+  const precioActual = precioCosteoInsumo({ ...insumo, precios });
+  const proveedorPreferido = (precios[key]?.precio === precioActual)
+    ? key
+    : (Object.keys(precios).find(k => precios[k]?.precio === precioActual) || lineaPrecioMaxima(precios) || key);
+
+  const updates = { precios, proveedorPreferido, precioActual, actualizadoTs: Date.now() };
+  if (precioActual > precioActualAnterior + 0.005) {
+    const pct = precioActualAnterior > 0 ? ((precioActual - precioActualAnterior) / precioActualAnterior) * 100 : null;
+    updates.alertaPrecio = {
+      precioAnterior: precioActualAnterior,
+      precioNuevo: precioActual,
+      pct,
+      proveedorNombre: proveedorNombre || "",
+      marca: normMarca(marca),
+      fecha: todayISO(),
+      abrupta: pct !== null && pct >= ALERTA_SUBA_ABRUPTA_UMBRAL,
+      fuente: "lista"
+    };
+  } else if (precio < precioActual - 0.005) {
+    // La lista trae este insumo MÁS BARATO que el precio con el que se costea. No baja el costo
+    // (no es una compra todavía), pero es exactamente la información que sirve para decidir dónde
+    // comprar, así que se destaca.
+    const pctBaja = precioActual > 0 ? ((precioActual - precio) / precioActual) * 100 : null;
+    updates.alertaBaja = {
+      precioReferencia: precioActual,
+      precioNuevo: precio,
+      pct: pctBaja,
+      proveedorNombre: proveedorNombre || "",
+      marca: normMarca(marca),
+      fecha: todayISO(),
+      fuente: "lista"
+    };
+  }
+  await update(ref(db, `costeo/insumos/${insumoId}`), updates);
+  state.insumos[insumoId] = { ...insumo, ...updates };
+  return { precioAnterior: precioActualAnterior, precioNuevo: precioActual, subio: precioActual > precioActualAnterior + 0.005 };
+}
+
+// Un producto de reventa que aparece en la lista de un proveedor. Dos casos:
+//  · Si está vinculado a un insumo (caso fiambres: el jamón cocido se vende y además se usa en
+//    recetas), el precio va al insumo — es el único lugar donde se mantiene ese costo.
+//  · Si no, actualiza su costo de compra, y solo si sube: misma regla que los insumos.
+async function aplicarPrecioListaProducto(productoId, { proveedorId, proveedorNombre, precio, marca, fechaLista, listaId }) {
+  const producto = state.productos[productoId] || {};
+  if (producto.insumoVinculadoId && state.insumos[producto.insumoVinculadoId]) {
+    const r = await aplicarPrecioListaInsumo(producto.insumoVinculadoId, { proveedorId, proveedorNombre, precio, marca, fechaLista, listaId });
+    return { ...r, viaInsumoId: producto.insumoVinculadoId };
+  }
+  const costoAnterior = Number(producto.costoManual) || 0;
+  const listaPrecio = {
+    precio, fecha: fechaLista || todayISO(),
+    proveedorId: proveedorId || "", proveedorNombre: proveedorNombre || "",
+    marca: normMarca(marca), listaId: listaId || ""
+  };
+  const subio = precio > costoAnterior + 0.005;
+  const updates = { listaPrecio, actualizadoTs: Date.now() };
+  if (subio) {
+    updates.costoManual = precio;
+    const pct = costoAnterior > 0 ? ((precio - costoAnterior) / costoAnterior) * 100 : null;
+    updates.alertaPrecio = {
+      precioAnterior: costoAnterior, precioNuevo: precio, pct,
+      proveedorNombre: proveedorNombre || "", marca: normMarca(marca),
+      fecha: todayISO(), abrupta: pct !== null && pct >= ALERTA_SUBA_ABRUPTA_UMBRAL, fuente: "lista"
+    };
+  } else if (precio < costoAnterior - 0.005) {
+    const pctBaja = costoAnterior > 0 ? ((costoAnterior - precio) / costoAnterior) * 100 : null;
+    updates.alertaBaja = {
+      precioReferencia: costoAnterior, precioNuevo: precio, pct: pctBaja,
+      proveedorNombre: proveedorNombre || "", marca: normMarca(marca),
+      fecha: todayISO(), fuente: "lista"
+    };
+  }
+  await update(ref(db, `costeo/productos/${productoId}`), updates);
+  state.productos[productoId] = { ...producto, ...updates };
+  return { precioAnterior: costoAnterior, precioNuevo: subio ? precio : costoAnterior, subio };
 }
 
 // Como el costeo toma SIEMPRE el precio más alto, no hay forma (ni sentido) de elegir a mano una
@@ -2096,10 +2235,12 @@ function renderInsumosView(container) {
       <tr>
         <td>${escapeHtml(p.proveedorNombre) || "—"}</td>
         <td>${escapeHtml(p.marca) || "—"}</td>
-        <td>${fmtMoney(p.precio)}${p.fechaUltimo ? `<div class="text-muted" style="font-size:11px">${fmtDate(p.fechaUltimo)}</div>` : ""}</td>
+        <td>${fmtMoney(p.precio)}${p.fechaUltimo ? `<div class="text-muted" style="font-size:11px">${fmtDate(p.fechaUltimo)}</div>` : ""}${esLineaDeLista(p) ? `<div><span class="badge badge-neutro" title="Precio tomado de la lista que mandó el proveedor, no de una compra ya hecha">🏷️ Lista de precios</span></div>` : ""}</td>
         <td>${(() => {
-          const dias = diasDesdeFecha(p.fechaUltimo);
-          if (dias > COSTEO_VENTANA_DIAS) return `<span class="badge badge-neutro" title="Sin compras en los últimos ${COSTEO_VENTANA_DIAS} días: no entra en el costeo">⏳ Sin comprar hace +2 meses</span>`;
+          const dias = diasDesdeFecha(p.fechaLista || p.fechaUltimo);
+          if (dias > COSTEO_VENTANA_DIAS) return esLineaDeLista(p)
+            ? `<span class="badge badge-neutro" title="Lista de hace más de ${COSTEO_VENTANA_DIAS} días: ya no entra en el costeo">⏳ Lista vencida (+2 meses)</span>`
+            : `<span class="badge badge-neutro" title="Sin compras en los últimos ${COSTEO_VENTANA_DIAS} días: no entra en el costeo">⏳ Sin comprar hace +2 meses</span>`;
           if (Math.abs((Number(p.precio) || 0) - costoVivo) < 0.005) return `<span class="badge badge-alerta" title="Es el precio más alto entre las compras de los últimos ${COSTEO_VENTANA_DIAS} días: define el costo">⭐ Define el costo</span>`;
           return `<span class="badge badge-ok" title="Más barato que el que define el costo: sirve para saber dónde comprar">💡 Más barato</span>`;
         })()}</td>
@@ -2121,7 +2262,7 @@ function renderInsumosView(container) {
     // Registro de proveedores siempre visible (no escondido atrás de "Ver historial"): si hay más
     // de uno, se listan todos con su precio y cuál es el que se usa para costear (⭐), para que
     // quede claro de un vistazo que un mismo insumo puede tener varias marcas/proveedores a la vez.
-    const etiquetaLinea = p => `${escapeHtml(p.proveedorNombre) || "—"}${p.marca ? ` — ${escapeHtml(p.marca)}` : ""}`;
+    const etiquetaLinea = p => `${escapeHtml(p.proveedorNombre) || "—"}${p.marca ? ` — ${escapeHtml(p.marca)}` : ""}${esLineaDeLista(p) ? " 🏷️" : ""}`;
     const proveedoresCell = esElaborado
       ? `<span class="text-muted">— (receta propia)</span>`
       : precioEntries.length === 0
@@ -2323,10 +2464,18 @@ window.recalcCostoProducto = function() {
 //   · Una baja sostenida SÍ termina bajando el costo sola, cuando la compra cara queda fuera
 //     de la ventana de 2 meses y deja de contar.
 // Se calcula en vivo (no solo al guardar) justamente para que el paso del tiempo surta efecto.
+//
+// Las LISTAS DE PRECIOS que mandan los proveedores entran en el mismo "más alto", pero solo
+// pueden SUBIR el costo, nunca bajarlo: una lista nueva más cara es lo que se va a pagar en la
+// próxima compra y tiene que reflejarse enseguida (protege el margen), mientras que una lista
+// más barata no es todavía una compra real — queda destacada como oportunidad y el costo recién
+// baja cuando la compra cara sale de la ventana. Una compra real de esa misma línea reemplaza
+// al precio de lista: si ya sabés lo que efectivamente pagaste, manda ese dato.
 // ─────────────────────────────────────────────────────────────────────────────
 const COSTEO_VENTANA_DIAS = 60; // 2 meses
 
-function precioCosteoInsumo(ins) {
+// El más alto entre las COMPRAS reales (historial), con la ventana de 2 meses.
+function precioComprasInsumo(ins) {
   const hist = Object.values(ins?.historial || {}).filter(h => h && h.fecha);
   const recientes = hist.filter(h => diasDesdeFecha(h.fecha) <= COSTEO_VENTANA_DIAS);
   if (recientes.length) return Math.max(...recientes.map(h => Number(h.precio) || 0));
@@ -2338,6 +2487,28 @@ function precioCosteoInsumo(ins) {
   // Sin historial (ej. líneas cargadas por importación): el más alto de las líneas registradas.
   const lineas = Object.values(ins?.precios || {}).map(p => Number(p?.precio) || 0);
   return lineas.length ? Math.max(...lineas) : (Number(ins?.precioActual) || 0);
+}
+
+// El más alto entre las líneas cargadas desde una lista de precios de proveedor que siga vigente
+// (misma ventana de 2 meses: una lista vieja deja de pesar sola, igual que una compra vieja).
+function precioListaVigenteInsumo(ins) {
+  let max = 0;
+  for (const p of Object.values(ins?.precios || {})) {
+    if (!esLineaDeLista(p)) continue;
+    const fecha = p.fechaLista || p.fechaUltimo;
+    if (!fecha || diasDesdeFecha(fecha) > COSTEO_VENTANA_DIAS) continue;
+    max = Math.max(max, Number(p.precio) || 0);
+  }
+  return max;
+}
+
+// Las líneas cargadas antes de que existieran las listas no tienen `origen`: se asumen compras.
+function esLineaDeLista(p) {
+  return !!p && p.origen === "lista";
+}
+
+function precioCosteoInsumo(ins) {
+  return Math.max(precioComprasInsumo(ins), precioListaVigenteInsumo(ins));
 }
 
 function precioEfectivoInsumo(insumoId, visiting) {
@@ -3173,6 +3344,413 @@ function renderAnalisisView(container) {
 }
 
 // =============================================================
+// LISTAS DE PRECIOS DE PROVEEDOR
+// =============================================================
+// Los proveedores mandan periódicamente su lista de precios (foto, PDF, planilla o un mensaje de
+// WhatsApp). Esto permite cargarla de una vez en lugar de ir insumo por insumo: la IA la lee, cada
+// línea se matchea contra el catálogo, se revisa en pantalla y recién ahí se aplica.
+//
+// Una lista NO es una compra: no toca el historial de compras. Lo que hace es actualizar la línea
+// proveedor+marca del insumo marcándola con origen "lista", y desde ahí entra al costeo con su
+// propia regla (ver precioListaVigenteInsumo): puede subir el costo, nunca bajarlo.
+
+window.setListasBusqueda = function(val) { state.listasBusqueda = val; render(); };
+window.setListaProveedor = function(val) { state.listaProveedorId = val; };
+window.setListaFecha = function(val) { state.listaFecha = val; };
+window.setListaTexto = function(val) { state.listaTexto = val; };
+
+window.handleListaFotoChange = async function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    // Mismo criterio que las facturas: alta resolución para la IA, comprimida para archivar.
+    state._listaFotoDataUrl = await compressImageToDataUrl(file, 1000, 0.6);
+    state._listaFotoScanDataUrl = await compressImageToDataUrl(file, 2000, 0.9);
+    const prev = document.getElementById("lista-foto-preview");
+    if (prev) prev.innerHTML = `<img src="${state._listaFotoDataUrl}" class="photo-thumb">`;
+    await window.leerListaPrecios();
+  } catch (err) {
+    console.error(err);
+    showToast("⚠️ No se pudo procesar la foto.", "warn");
+  }
+};
+
+// Normaliza lo que devuelve la IA a las filas editables de la tabla de revisión. Cada fila conoce
+// su destino (insumo existente, producto existente, insumo nuevo o ignorar) y se puede corregir a
+// mano antes de aplicar — la IA sugiere, el usuario decide.
+function normalizarLineasLista(items) {
+  return (items || []).map(it => {
+    const insumoId = it.insumoId && state.insumos[it.insumoId] ? it.insumoId : "";
+    const productoId = !insumoId && it.productoId && state.productos[it.productoId] ? it.productoId : "";
+    const matchLocal = insumoId || productoId ? "" : matchInsumoId(it.nombre);
+    const destino = insumoId ? `i:${insumoId}`
+      : productoId ? `p:${productoId}`
+      : matchLocal ? `i:${matchLocal}`
+      : "__nuevo__";
+    const precio = Number(it.precio);
+    const cont = Number(it.contenidoPorUnidad);
+    // Si la línea está cotizada por bulto, lo que se guarda es el precio por unidad de medida —
+    // exactamente el mismo criterio que en las facturas, para que ambos caminos sean comparables.
+    const precioUnitario = Number.isFinite(precio) && Number.isFinite(cont) && cont > 0 ? precio / cont : precio;
+    return {
+      nombre: String(it.nombre || "").trim(),
+      destino,
+      marca: String(it.marca || "").trim(),
+      codigo: String(it.codigo || "").trim(),
+      unidad: String(it.unidad || "").trim(),
+      contenidoPorUnidad: Number.isFinite(cont) && cont > 0 ? cont : "",
+      precioLista: Number.isFinite(precio) ? precio : "",
+      precio: Number.isFinite(precioUnitario) ? Math.round(precioUnitario * 10000) / 10000 : "",
+      // Una línea sin precio legible no se puede aplicar: arranca destildada para que no pase de largo.
+      aplicar: Number.isFinite(precioUnitario) && precioUnitario > 0 && destino !== "__nuevo__"
+    };
+  });
+}
+
+window.leerListaPrecios = async function() {
+  const texto = (state.listaTexto || "").trim();
+  if (!state._listaFotoScanDataUrl && !texto) {
+    showToast("⚠️ Subí una foto de la lista o pegá el texto.", "warn");
+    return;
+  }
+  state.listaCargando = true;
+  render();
+  try {
+    const insumosConocidos = Object.entries(state.insumos).map(([id, ins]) => ({
+      id, nombre: ins.nombre, unidad: ins.unidad || "",
+      contenidoPorUnidad: ins.contenidoPorUnidad || null,
+      ultimoPrecio: Math.round(precioEfectivoInsumo(id) * 100) / 100 || null
+    }));
+    const productosConocidos = Object.entries(state.productos)
+      .filter(([, p]) => !(p.receta && Object.keys(p.receta).length))
+      .map(([id, p]) => ({ id, nombre: p.nombre, costo: Math.round(calcCostoProducto(p) * 100) / 100 || null }));
+    const prov = state.proveedores[state.listaProveedorId];
+    const body = {
+      insumosConocidos, productosConocidos,
+      proveedorNombre: prov ? prov.nombre : ""
+    };
+    if (state._listaFotoScanDataUrl) {
+      body.imageBase64 = state._listaFotoScanDataUrl.split(",")[1];
+      body.mediaType = "image/jpeg";
+    }
+    if (texto) body.texto = texto;
+
+    const resp = await fetch("/.netlify/functions/extraer-lista-precios", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body)
+    });
+    const rawText = await resp.text();
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      throw new Error(resp.status === 504
+        ? "La lectura tardó demasiado y se agotó el tiempo de espera. Probá cargar la lista por partes."
+        : `Respuesta inesperada del servidor (HTTP ${resp.status}).`);
+    }
+    if (!resp.ok) throw new Error(data.error || `Error al leer la lista (HTTP ${resp.status}).`);
+
+    state.listaLineas = normalizarLineasLista(data.items);
+    state.listaMeta = {
+      proveedorLeido: data.proveedor || "",
+      cuit: data.cuit || "",
+      calidadImagen: data.calidadImagen || "",
+      camposIlegibles: Array.isArray(data.camposIlegibles) ? data.camposIlegibles.filter(Boolean) : [],
+      notas: data.notas || ""
+    };
+    if (!state.listaFecha && data.fecha && /^\d{4}-\d{2}-\d{2}$/.test(data.fecha)) state.listaFecha = data.fecha;
+    // Si el usuario no eligió proveedor, se intenta reconocerlo por lo que diga la lista.
+    if (!state.listaProveedorId) {
+      const match = matchProveedor({ proveedor: data.proveedor, cuit: data.cuit });
+      if (match) state.listaProveedorId = match[0];
+    }
+    showToast(state.listaLineas.length
+      ? `📋 Se leyeron ${state.listaLineas.length} líneas. Revisalas antes de aplicar.`
+      : "⚠️ No se reconoció ninguna línea de precios en la lista.", state.listaLineas.length ? "success" : "warn");
+  } catch (err) {
+    console.error("Error al leer lista de precios:", err);
+    showToast(`⚠️ No se pudo leer la lista: ${err && err.message ? err.message : "Error desconocido."}`, "warn");
+  } finally {
+    state.listaCargando = false;
+    render();
+  }
+};
+
+window.setListaLineaDestino = function(idx, val) {
+  const linea = (state.listaLineas || [])[idx];
+  if (!linea) return;
+  linea.destino = val;
+  if (val === "__ignorar__" || val === "__nuevo__") linea.aplicar = false;
+  render();
+};
+window.setListaLineaPrecio = function(idx, val) {
+  const linea = (state.listaLineas || [])[idx];
+  if (!linea) return;
+  const n = Number(val);
+  linea.precio = Number.isFinite(n) && n > 0 ? n : "";
+  render();
+};
+window.setListaLineaMarca = function(idx, val) {
+  const linea = (state.listaLineas || [])[idx];
+  if (linea) linea.marca = val;
+};
+window.toggleListaLinea = function(idx, checked) {
+  const linea = (state.listaLineas || [])[idx];
+  if (!linea) return;
+  linea.aplicar = !!checked;
+  render();
+};
+// Atajos para no tener que tildar de a una en una lista de 80 renglones. "Solo las que suben" es
+// el caso habitual: lo único que cambia el costeo son las subas.
+window.listaSeleccionar = function(modo) {
+  for (const linea of state.listaLineas || []) {
+    const aplicable = linea.destino !== "__ignorar__" && linea.destino !== "__nuevo__" && Number(linea.precio) > 0;
+    if (!aplicable) { linea.aplicar = false; continue; }
+    if (modo === "todas") linea.aplicar = true;
+    else if (modo === "ninguna") linea.aplicar = false;
+    else if (modo === "suben") linea.aplicar = comparacionLineaLista(linea).estado === "sube";
+  }
+  render();
+};
+
+window.cancelarLista = function() {
+  state.listaLineas = null;
+  state.listaMeta = null;
+  state.listaTexto = "";
+  state._listaFotoDataUrl = null;
+  state._listaFotoScanDataUrl = null;
+  render();
+};
+
+// Compara el precio de la lista contra el costo con el que se está costeando hoy, para poder
+// mostrar de un vistazo qué va a cambiar realmente antes de aplicar nada.
+function comparacionLineaLista(linea) {
+  const precio = Number(linea.precio);
+  if (!(precio > 0)) return { estado: "sin-precio", actual: null, pct: null };
+  const [tipo, id] = String(linea.destino || "").split(":");
+  let actual = null;
+  if (tipo === "i" && state.insumos[id]) actual = precioEfectivoInsumo(id);
+  else if (tipo === "p" && state.productos[id]) actual = calcCostoProducto(state.productos[id]);
+  else return { estado: "nuevo", actual: null, pct: null };
+  if (!(actual > 0)) return { estado: "sube", actual: 0, pct: null };
+  const pct = ((precio - actual) / actual) * 100;
+  if (precio > actual + 0.005) return { estado: "sube", actual, pct };
+  if (precio < actual - 0.005) return { estado: "baja", actual, pct };
+  return { estado: "igual", actual, pct: 0 };
+}
+
+window.aplicarListaPrecios = async function() {
+  const lineas = (state.listaLineas || []).filter(l => l.aplicar && Number(l.precio) > 0 && l.destino !== "__ignorar__" && l.destino !== "__nuevo__");
+  if (!lineas.length) { showToast("⚠️ No hay ninguna línea tildada para aplicar.", "warn"); return; }
+  const proveedorId = state.listaProveedorId || "";
+  const proveedorNombre = state.proveedores[proveedorId]?.nombre || state.listaMeta?.proveedorLeido || "";
+  if (!proveedorId) {
+    if (!confirm("No elegiste proveedor para esta lista.\n\nLos precios se van a guardar como carga manual, sin quedar asociados a ningún proveedor — vas a perder el detalle de dónde conviene comprar. ¿Seguir igual?")) return;
+  }
+  const fechaLista = state.listaFecha || todayISO();
+  const btn = document.getElementById("lista-aplicar-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Aplicando..."; }
+  try {
+    const listaRef = push(ref(db, "costeo/listasPrecios"));
+    const listaId = listaRef.key;
+    let subieron = 0, sinCambio = 0;
+    const detalle = [];
+    for (const linea of lineas) {
+      const [tipo, id] = String(linea.destino).split(":");
+      const args = { proveedorId, proveedorNombre, precio: Number(linea.precio), marca: linea.marca, fechaLista, listaId };
+      const r = tipo === "p" ? await aplicarPrecioListaProducto(id, args) : await aplicarPrecioListaInsumo(id, args);
+      if (r.subio) subieron++; else sinCambio++;
+      detalle.push({
+        nombre: linea.nombre || "", tipo: tipo === "p" ? "producto" : "insumo", destinoId: id,
+        marca: normMarca(linea.marca), precio: Number(linea.precio),
+        precioAnterior: r.precioAnterior ?? null, subio: !!r.subio
+      });
+    }
+    await set(listaRef, {
+      proveedorId, proveedorNombre, fecha: fechaLista, fechaCarga: todayISO(),
+      origen: state._listaFotoDataUrl ? "foto" : "texto",
+      totalLineas: (state.listaLineas || []).length,
+      aplicadas: lineas.length, subieron, sinCambio,
+      notas: state.listaMeta?.notas || "",
+      ...(state._listaFotoDataUrl ? { foto: state._listaFotoDataUrl } : {}),
+      detalle
+    });
+    state.listasPrecios[listaId] = { proveedorId, proveedorNombre, fecha: fechaLista, aplicadas: lineas.length, subieron, sinCambio, totalLineas: (state.listaLineas || []).length, detalle };
+    showToast(`✅ Lista aplicada: ${lineas.length} precios cargados, ${subieron} subieron el costo.`, "success");
+    window.cancelarLista();
+  } catch (err) {
+    console.error("Error al aplicar la lista de precios:", err);
+    showToast("❌ Error al aplicar la lista. Reintentá.", "danger");
+    if (btn) { btn.disabled = false; btn.textContent = "✅ Aplicar precios"; }
+  }
+};
+
+window.eliminarLista = async function(id) {
+  const l = state.listasPrecios[id];
+  if (!l) return;
+  if (!confirm(`¿Borrar el registro de la lista de ${l.proveedorNombre || "proveedor sin nombre"} del ${fmtDate(l.fecha)}?\n\nSolo se borra el registro de que la cargaste: los precios que ya se aplicaron a los insumos NO se revierten.`)) return;
+  await remove(ref(db, `costeo/listasPrecios/${id}`));
+  delete state.listasPrecios[id];
+  showToast("🗑️ Registro de lista eliminado.", "success");
+  render();
+};
+
+window.toggleListaDetalle = function(id) {
+  state.viewingListaId = state.viewingListaId === id ? null : id;
+  render();
+};
+
+function opcionesDestinoLista(destino) {
+  const insumoOpts = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .map(([id, ins]) => `<option value="i:${escapeHtml(id)}" ${destino === `i:${id}` ? "selected" : ""}>${escapeHtml(ins.nombre)}${ins.unidad ? ` (${escapeHtml(ins.unidad)})` : ""}</option>`).join("");
+  const productoOpts = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .filter(([, p]) => !(p.receta && Object.keys(p.receta).length))
+    .map(([id, p]) => `<option value="p:${escapeHtml(id)}" ${destino === `p:${id}` ? "selected" : ""}>${escapeHtml(p.nombre)}</option>`).join("");
+  return `
+    <option value="__nuevo__" ${destino === "__nuevo__" ? "selected" : ""}>— Sin identificar (no se aplica) —</option>
+    <option value="__ignorar__" ${destino === "__ignorar__" ? "selected" : ""}>🚫 Ignorar esta línea</option>
+    <optgroup label="Insumos">${insumoOpts}</optgroup>
+    <optgroup label="Productos de reventa">${productoOpts}</optgroup>`;
+}
+
+function renderListasView(container) {
+  state.formOpen = true;
+  const proveedorOptions = objToSortedEntries(state.proveedores, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .map(([id, p]) => `<option value="${id}" ${state.listaProveedorId === id ? "selected" : ""}>${escapeHtml(p.nombre)}</option>`).join("");
+
+  const lineas = state.listaLineas;
+  const tildadas = (lineas || []).filter(l => l.aplicar && Number(l.precio) > 0).length;
+
+  const avisosHtml = (() => {
+    if (!state.listaMeta) return "";
+    const avisos = [];
+    if (state.listaMeta.calidadImagen === "mala" || state.listaMeta.calidadImagen === "regular") {
+      avisos.push(`<div class="item-note">📷 La foto salió <strong>${escapeHtml(state.listaMeta.calidadImagen)}</strong>. Revisá los precios con atención, o sacá otra foto con más luz.</div>`);
+    }
+    if (state.listaMeta.camposIlegibles?.length) {
+      avisos.push(`<div class="item-note">✍️ No se pudieron leer con seguridad: <strong>${state.listaMeta.camposIlegibles.map(escapeHtml).join(", ")}</strong>.</div>`);
+    }
+    if (state.listaMeta.notas) {
+      avisos.push(`<div class="item-note">ℹ️ ${escapeHtml(state.listaMeta.notas)}</div>`);
+    }
+    if (state.listaMeta.proveedorLeido && !state.listaProveedorId) {
+      avisos.push(`<div class="item-warn">🏭 La lista dice ser de <strong>${escapeHtml(state.listaMeta.proveedorLeido)}</strong>, pero no hay ningún proveedor cargado con ese nombre o CUIT. Elegilo arriba (o cargalo en Proveedores) para que los precios queden asociados a él.</div>`);
+    }
+    return avisos.length ? `<div style="margin-bottom:12px">${avisos.join("")}</div>` : "";
+  })();
+
+  const revisionHtml = lineas ? `
+    <div class="section-block">
+      <div class="section-header">
+        <div class="section-title">📋 Revisá las ${lineas.length} líneas leídas</div>
+        <div class="row-actions">
+          <button class="btn btn-ghost btn-sm" onclick="listaSeleccionar('suben')" title="Tildar solo las líneas cuyo precio es mayor al costo actual — son las únicas que cambian el costeo">🔺 Solo las que suben</button>
+          <button class="btn btn-ghost btn-sm" onclick="listaSeleccionar('todas')">Tildar todas</button>
+          <button class="btn btn-ghost btn-sm" onclick="listaSeleccionar('ninguna')">Destildar todas</button>
+        </div>
+      </div>
+      ${avisosHtml}
+      <div class="text-muted" style="margin-bottom:10px">Solo se aplican las líneas tildadas. Un precio de lista <strong>más alto</strong> que el costo actual lo actualiza enseguida; uno <strong>más bajo</strong> se guarda y se destaca como oportunidad de compra, pero no baja el costeo hasta que la compres de verdad.</div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th style="width:34px"></th><th>Línea de la lista</th><th>Se aplica a</th><th>Marca</th><th>Precio de lista</th><th>Costo actual</th><th></th></tr></thead>
+          <tbody>
+            ${lineas.map((l, idx) => {
+              const cmp = comparacionLineaLista(l);
+              const badge = cmp.estado === "sube" ? `<span class="badge badge-suba">🔺 Sube ${fmtPct(cmp.pct)}</span>`
+                : cmp.estado === "baja" ? `<span class="badge badge-baja" title="No baja el costeo: queda como oportunidad de compra">💡 ${fmtPct(cmp.pct)} más barato</span>`
+                : cmp.estado === "igual" ? `<span class="badge badge-neutro">= Sin cambio</span>`
+                : cmp.estado === "nuevo" ? `<span class="badge badge-neutro">Sin identificar</span>`
+                : `<span class="badge badge-neutro">Sin precio</span>`;
+              const aplicable = l.destino !== "__ignorar__" && l.destino !== "__nuevo__" && Number(l.precio) > 0;
+              return `
+              <tr class="${l.aplicar ? "fila-abierta" : ""}">
+                <td><input type="checkbox" ${l.aplicar ? "checked" : ""} ${aplicable ? "" : "disabled"} onchange="toggleListaLinea(${idx}, this.checked)"></td>
+                <td>${escapeHtml(l.nombre) || "—"}${l.codigo ? `<div class="text-muted" style="font-size:11px">cód. ${escapeHtml(l.codigo)}</div>` : ""}${l.contenidoPorUnidad ? `<div class="text-muted" style="font-size:11px">📦 x${l.contenidoPorUnidad} — lista ${fmtMoney(l.precioLista)} → ${fmtMoney(l.precio)} por unidad</div>` : ""}</td>
+                <td><select class="form-select" style="min-width:190px" onchange="setListaLineaDestino(${idx}, this.value)">${opcionesDestinoLista(l.destino)}</select></td>
+                <td><input class="form-input" style="min-width:110px" value="${escapeHtml(l.marca)}" placeholder="Marca" onchange="setListaLineaMarca(${idx}, this.value)"></td>
+                <td><input type="number" step="0.01" min="0" class="form-input" style="min-width:110px" value="${l.precio === "" ? "" : l.precio}" onchange="setListaLineaPrecio(${idx}, this.value)"></td>
+                <td>${cmp.actual === null ? "—" : fmtMoney(cmp.actual)}</td>
+                <td>${badge}</td>
+              </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+      <div class="panel-footer-actions">
+        <button class="btn btn-primary" id="lista-aplicar-btn" onclick="aplicarListaPrecios()" ${tildadas ? "" : "disabled"}>✅ Aplicar ${tildadas} precio${tildadas === 1 ? "" : "s"}</button>
+        <button class="btn btn-ghost" onclick="cancelarLista()">Descartar esta lista</button>
+      </div>
+    </div>` : "";
+
+  const busqueda = state.listasBusqueda.trim().toLowerCase();
+  const historialRows = objToSortedEntries(state.listasPrecios, (a, b) => (b[1].fecha || "").localeCompare(a[1].fecha || ""))
+    .filter(([, l]) => !busqueda || (l.proveedorNombre || "").toLowerCase().includes(busqueda) || (l.fecha || "").includes(busqueda))
+    .map(([id, l]) => {
+      const abierta = state.viewingListaId === id;
+      const detalle = Array.isArray(l.detalle) ? l.detalle : [];
+      return `
+      <tr class="${abierta ? "fila-abierta" : ""}">
+        <td>${fmtDate(l.fecha)}</td>
+        <td>${escapeHtml(l.proveedorNombre) || "—"}</td>
+        <td>${l.aplicadas ?? 0} de ${l.totalLineas ?? 0}</td>
+        <td>${l.subieron ? `<span class="badge badge-suba">🔺 ${l.subieron} subieron</span>` : `<span class="badge badge-neutro">Sin subas</span>`}</td>
+        <td style="white-space:nowrap"><div class="row-actions">
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="toggleListaDetalle('${id}')" title="${abierta ? "Ocultar detalle" : "Ver qué precios se aplicaron"}">${abierta ? "▴" : "▾"}</button>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="eliminarLista('${id}')" title="Borrar el registro de esta lista">🗑️</button>
+        </div></td>
+      </tr>
+      ${abierta ? `<tr class="fila-detalle"><td colspan="5" style="background:var(--cream);padding:16px 18px">
+        ${l.notas ? `<div class="item-note" style="margin-bottom:10px">ℹ️ ${escapeHtml(l.notas)}</div>` : ""}
+        ${detalle.length ? `<table class="data-table"><thead><tr><th>Ítem</th><th>Marca</th><th>Precio de lista</th><th>Costo anterior</th><th></th></tr></thead><tbody>
+          ${detalle.map(d => `<tr><td>${escapeHtml(d.nombre) || "—"}${d.tipo === "producto" ? ` <span class="badge badge-neutro">producto</span>` : ""}</td><td>${escapeHtml(d.marca) || "—"}</td><td>${fmtMoney(d.precio)}</td><td>${d.precioAnterior === null || d.precioAnterior === undefined ? "—" : fmtMoney(d.precioAnterior)}</td><td>${d.subio ? `<span class="badge badge-suba">🔺 Subió el costo</span>` : `<span class="badge badge-neutro">No cambió el costo</span>`}</td></tr>`).join("")}
+        </tbody></table>` : `<div class="text-muted">Sin detalle guardado para esta lista.</div>`}
+        ${l.foto ? `<div style="margin-top:12px"><img src="${l.foto}" class="photo-thumb" style="max-width:320px"></div>` : ""}
+      </td></tr>` : ""}`;
+    }).join("");
+
+  container.innerHTML = `
+    <div class="page-title">Listas de precios</div>
+    <div class="page-sub">Cargá de una sola vez la lista de precios que te manda un proveedor —sacale una foto o pegá el texto del WhatsApp/mail— en vez de ir insumo por insumo. Se lee con IA, la revisás línea por línea y aplicás solo lo que quieras.</div>
+    ${!lineas ? `
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:14px">🏷️ Cargar una lista de precios</div>
+      <div class="form-row">
+        <div class="form-group" style="max-width:260px">
+          <label class="form-label">Proveedor</label>
+          <select class="form-select" id="lista-proveedor" onchange="setListaProveedor(this.value)">
+            <option value="">— Elegir proveedor —</option>
+            ${proveedorOptions}
+          </select>
+        </div>
+        <div class="form-group" style="max-width:180px">
+          <label class="form-label">Vigente desde</label>
+          <input type="date" class="form-input" id="lista-fecha" value="${escapeHtml(state.listaFecha)}" onchange="setListaFecha(this.value)">
+          <div class="text-muted" style="font-size:11px">Si la dejás vacía se usa la fecha de hoy.</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">📷 Foto de la lista</label>
+          <input type="file" accept="image/*" class="form-input" id="lista-foto" onchange="handleListaFotoChange(event)">
+          <div id="lista-foto-preview"></div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">…o pegá el texto de la lista</label>
+        <textarea class="form-input" id="lista-texto" rows="6" placeholder="Pegá acá el mensaje de WhatsApp, el mail o el texto copiado del PDF con la lista de precios." oninput="setListaTexto(this.value)">${escapeHtml(state.listaTexto)}</textarea>
+        <div class="text-muted" style="font-size:11px">Si la lista es muy larga (varias páginas), cargala por partes: una foto o un bloque de texto por vez.</div>
+      </div>
+      <button class="btn btn-primary" onclick="leerListaPrecios()" ${state.listaCargando ? "disabled" : ""}>${state.listaCargando ? "🤖 Leyendo lista..." : "🤖 Leer lista"}</button>
+    </div>` : ""}
+    ${revisionHtml}
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">Listas cargadas</div>
+      ${buscadorHtml(state.listasBusqueda, "Buscar por proveedor o fecha...", "setListasBusqueda")}
+      ${historialRows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Vigente desde</th><th>Proveedor</th><th>Aplicadas</th><th>Impacto</th><th></th></tr></thead><tbody>${historialRows}</tbody></table></div>` : `<div class="empty-state">Todavía no cargaste ninguna lista de precios.</div>`}
+    </div>`;
+}
+
+// =============================================================
 // CONSULTAS (preguntas en lenguaje natural sobre compras/precios, vía IA)
 // =============================================================
 // Arma un resumen compacto de los datos de compras (insumos con su historial de precios,
@@ -3182,11 +3760,18 @@ function renderAnalisisView(container) {
 function construirContextoConsultas() {
   const insumos = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre)).map(([, ins]) => {
     const hist = objToSortedEntries(ins.historial, (a, b) => a[1].fecha.localeCompare(b[1].fecha)).map(([, h]) => h).slice(-30);
+    // Las líneas de lista van aparte de las compras: es la diferencia entre "lo que nos cotizaron"
+    // y "lo que efectivamente compramos", y preguntas como "¿cuándo compramos X por última vez?"
+    // se responden mal si se mezclan.
+    const preciosLista = Object.values(ins.precios || {}).filter(esLineaDeLista).map(p => ({
+      proveedor: p.proveedorNombre || "", marca: p.marca || "", precio: p.precio, fechaLista: p.fechaLista || p.fechaUltimo || ""
+    }));
     return {
       nombre: ins.nombre,
       unidad: ins.unidad || "",
       precioActual: ins.precioActual || 0,
-      historialCompras: hist.map(h => ({ fecha: h.fecha, precio: h.precio, proveedor: h.proveedorNombre || "", marca: h.marca || "" }))
+      historialCompras: hist.map(h => ({ fecha: h.fecha, precio: h.precio, proveedor: h.proveedorNombre || "", marca: h.marca || "" })),
+      ...(preciosLista.length ? { preciosDeListaSinComprar: preciosLista } : {})
     };
   });
   const facturas = objToSortedEntries(state.facturas, (a, b) => (b[1].fecha || "").localeCompare(a[1].fecha || "")).slice(0, 500).map(([, f]) => ({
@@ -3200,7 +3785,10 @@ function construirContextoConsultas() {
   const proveedores = objToSortedEntries(state.proveedores, (a, b) => a[1].nombre.localeCompare(b[1].nombre)).map(([, p]) => ({
     nombre: p.nombre, cuit: p.cuit || "", rubro: p.rubro || ""
   }));
-  return { insumos, facturas, proveedores };
+  const listasPrecios = objToSortedEntries(state.listasPrecios, (a, b) => (b[1].fecha || "").localeCompare(a[1].fecha || "")).slice(0, 60).map(([, l]) => ({
+    fecha: l.fecha, proveedor: l.proveedorNombre || "", aplicadas: l.aplicadas || 0, subieron: l.subieron || 0
+  }));
+  return { insumos, facturas, proveedores, listasPrecios };
 }
 
 window.hacerConsulta = async function() {
