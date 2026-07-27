@@ -896,7 +896,9 @@ function isDoubleShift(name,d){
 }
 function exAt(d,loc,shift,role){return state.ex.filter(e=>e.day===d&&e.loc===loc&&e.shift===shift&&e.role===role);}
 function extraCellHTML(e){
-  const opts=peopleFor(e.role,e.loc).map(p=>`<option value="${p.n}" ${p.n===e.n?"selected":""}>${p.n}${roleFor(p.n)!==e.role?" ⤵":""}</option>`).join("");
+  // a diferencia de la grilla base, "Personas extra" es refuerzo libre: cualquiera puede cubrir
+  // cualquier puesto puntual, no solo quienes ya tienen ese rol como principal o de respaldo.
+  const opts=PEOPLE.map(p=>`<option value="${p.n}" ${p.n===e.n?"selected":""}>${p.n}${roleFor(p.n)!==e.role?" ⤵":""}</option>`).join("");
   let dupe=false;
   Object.keys(state.assign).forEach(kk=>{const[dd,,sh]=kk.split("|");if(+dd===e.day&&sh===e.shift&&state.assign[kk]===e.n)dupe=true;});
   state.ex.forEach(o=>{if(o!==e&&o.n===e.n&&o.day===e.day&&o.shift===e.shift)dupe=true;});
@@ -922,19 +924,28 @@ function locTable(loc,title,tag,tagcls,worked){
         for(let d=0;d<7;d++)h+=selHTML(d,loc,shift,row.role,row.idx,sellable(d,loc,shift),isClosed(d,loc,shift));
         h+=`</tr>`;
       });
-      const maxE=Math.max(0,...DAYS.map((_,d)=>exAt(d,loc,shift,role).length));
-      for(let r=0;r<maxE;r++){
-        h+=`<tr><td class="puesto extra">${brows[0].label} +</td>`;
-        for(let d=0;d<7;d++){
-          const e=exAt(d,loc,shift,role)[r];
-          h+=(e&&!isClosed(d,loc,shift))?extraCellHTML(e):`<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
-        }
-        h+=`</tr>`;
-      }
+      h+=extraRowsHTML(loc,shift,role,brows[0].label);
     });
+    // refuerzos con un puesto que este local no tiene como fila base (ej: Bacha/Envíos en SLA):
+    // sin esto, "Personas extra" los guardaba pero no aparecían en ningún lado.
+    const extraOnlyRoles=[...new Set(state.ex.filter(e=>e.loc===loc&&e.shift===shift&&!roles.includes(e.role)).map(e=>e.role))];
+    extraOnlyRoles.forEach(role=>{h+=extraRowsHTML(loc,shift,role,ROLE_LABEL[role]||role);});
   });
   h+=restRows(loc,worked);
   h+=`</tbody></table></div></section>`;
+  return h;
+}
+function extraRowsHTML(loc,shift,role,label){
+  let h="";
+  const maxE=Math.max(0,...DAYS.map((_,d)=>exAt(d,loc,shift,role).length));
+  for(let r=0;r<maxE;r++){
+    h+=`<tr><td class="puesto extra">${label} +</td>`;
+    for(let d=0;d<7;d++){
+      const e=exAt(d,loc,shift,role)[r];
+      h+=(e&&!isClosed(d,loc,shift))?extraCellHTML(e):`<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
+    }
+    h+=`</tr>`;
+  }
   return h;
 }
 function restRows(loc,worked){
