@@ -63,6 +63,11 @@
   .btn.primary:hover{filter:brightness(1.05)}
   .btn.ghost{background:transparent}
   .icon-btn{width:38px;height:38px;padding:0;justify-content:center;border-radius:10px}
+  .syncStatus{font-size:16px;opacity:.45;cursor:default;user-select:none;line-height:1}
+  .syncStatus.saving{opacity:1;animation:syncPulse 1s ease-in-out infinite}
+  .syncStatus.ok{opacity:.75}
+  .syncStatus.error{opacity:1;filter:grayscale(.3)}
+  @keyframes syncPulse{0%,100%{opacity:.35}50%{opacity:1}}
 
   .layout{display:grid;grid-template-columns:290px 1fr;gap:18px;margin-top:18px;align-items:start}
   @media (max-width:1000px){
@@ -284,6 +289,7 @@
     <div class="weekbox">
       <input id="weekLabel" type="text" placeholder="Semana (ej: 13–19/07)" aria-label="Etiqueta de la semana">
     </div>
+    <span id="syncStatus" class="syncStatus" title="Conectando…">☁️</span>
     <button class="btn primary" id="btnAuto" title="Genera la semana respetando las reglas">✨ Autocompletar</button>
     <button class="btn" id="btnSave">💾 Guardar</button>
     <button class="btn ghost icon-btn" id="btnUndo" title="Deshacer el último cambio" disabled>↩️</button>
@@ -469,6 +475,61 @@
 <div class="toast" id="toast"></div>
 <div id="cellTooltip"></div>
 
+<script type="module">
+// Sincronización entre dispositivos (Firebase Realtime Database).
+// Mismo proyecto que ya usa el módulo "Presupuestos" de este sitio — la API key de Firebase
+// no es secreta (la seguridad la dan las reglas de la base, no ocultar esta key), por eso ya
+// está en la lista de exclusión del escaneo de secretos de Netlify.
+// Va en un <script type="module"> aparte (import de ES modules) para no tocar el script
+// principal, que sigue siendo un script clásico. Se comunican por eventos en window, así que
+// si Firebase no carga (sin internet, red corporativa, etc.) el resto de la app sigue
+// funcionando igual que antes, solo con localStorage.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
+  authDomain: "pedidos-de-produccion-ee3cb.firebaseapp.com",
+  databaseURL: "https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-produccion-ee3cb",
+  storageBucket: "pedidos-de-produccion-ee3cb.firebasestorage.app",
+  messagingSenderId: "744141794971",
+  appId: "1:744141794971:web:9639c8bf3834e4978ae03e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const cloudRef = ref(db, "cronogramas/state");
+
+let lastSeenJSON = null; // para no reprocesar el eco de lo que nosotros mismos guardamos
+let pushTimer = null;
+
+window.CloudSync = {
+  push(stateObj){
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(()=>{
+      const json = JSON.stringify(stateObj);
+      if(json===lastSeenJSON)return;
+      lastSeenJSON = json;
+      window.dispatchEvent(new CustomEvent("cloudsync-saving"));
+      set(cloudRef, stateObj)
+        .then(()=>window.dispatchEvent(new CustomEvent("cloudsync-saved")))
+        .catch(err=>{console.error("cloudsync:",err);window.dispatchEvent(new CustomEvent("cloudsync-error"));});
+    }, 400);
+  }
+};
+
+onValue(cloudRef, snap=>{
+  const remote = snap.val();
+  const remoteJSON = remote==null ? null : JSON.stringify(remote);
+  if(remoteJSON!==null && remoteJSON===lastSeenJSON)return; // eco de nuestro propio guardado
+  if(remoteJSON!==null)lastSeenJSON = remoteJSON;
+  window.dispatchEvent(new CustomEvent("cloudsync-update",{detail:remote}));
+}, err=>{
+  console.error("cloudsync onValue:",err);
+  window.dispatchEvent(new CustomEvent("cloudsync-error"));
+});
+</script>
+
 <script>
 "use strict";
 /* ---------------- DATA MODEL ---------------- */
@@ -548,7 +609,8 @@ function peopleFor(role,loc){
 }
 
 /* ---------------- STATE ---------------- */
-let state={label:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{}};
+function defaultState(){return {label:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{}};}
+let state=defaultState();
 const LS="candela_scheduler_v1";
 // deshacer/rehacer: cada persist() guarda una foto de cómo estaba el estado ANTES de este cambio
 // (lo que ya había en localStorage), así que no hay que tocar cada botón de la app para que funcione.
@@ -561,8 +623,9 @@ function persist(){
   }
   localStorage.setItem(LS,JSON.stringify(state));
   syncUndoRedoButtons();
+  if(!suspendHistory&&window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);}
 }
-function loadLS(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.assign){state=Object.assign({label:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{}},s);}}catch(e){}}
+function loadLS(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.assign){state=Object.assign(defaultState(),s);}}catch(e){}}
 function restoreSnapshot(json){
   state=JSON.parse(json);
   suspendHistory=true; // esta escritura es parte del deshacer/rehacer, no un cambio nuevo del usuario
@@ -572,6 +635,7 @@ function restoreSnapshot(json){
   document.getElementById("weekLabel").value=state.label||"";
   renderMini();render();
   syncUndoRedoButtons();
+  if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);} // el deshacer/rehacer también se sincroniza a otros dispositivos
 }
 function undoLast(){
   if(!undoStack.length)return;
@@ -1576,14 +1640,55 @@ document.getElementById("authBtn").addEventListener("click",attemptAuth);
 document.getElementById("authPass").addEventListener("keydown",e=>{if(e.key==="Enter")attemptAuth();});
 document.getElementById("authPass").focus();
 
+/* ---------------- SINCRONIZACIÓN ENTRE DISPOSITIVOS ---------------- */
+// reglas semilla + limpieza que hay que correr sí o sí, venga el estado de localStorage
+// (arranque normal) o recién llegado de la nube (por si viene de una versión vieja del código).
+function runMigrations(){
+  state.ex.forEach(e=>{if(e.id==null)e.id=Date.now()+"-"+Math.round(Math.random()*1e6);});
+  seedFixedRules();
+  seedCocinaComprasCajero();
+  dedupeFixed();
+  regenerateFixedHalfExtras();
+  dedupeEx();
+}
+function setSyncStatus(kind){
+  const el=document.getElementById("syncStatus");if(!el)return;
+  el.className="syncStatus "+kind;
+  el.title={connecting:"Conectando con la nube…",ok:"Sincronizado con la nube",saving:"Guardando en la nube…",
+    error:"Sin conexión con la nube — tus cambios se guardan en este dispositivo y se sincronizan apenas vuelva la conexión"}[kind]||"";
+}
+let cloudFirstSyncDone=false;
+function applyRemoteState(remote){
+  const isFirst=!cloudFirstSyncDone; cloudFirstSyncDone=true;
+  if(remote==null){
+    // todavía no hay nada guardado en la nube (primera vez que se usa desde algún dispositivo):
+    // subimos lo que ya tenemos acá para sembrarla.
+    persist();
+    setSyncStatus("ok");
+    return;
+  }
+  if(JSON.stringify(remote)===JSON.stringify(state)){setSyncStatus("ok");return;} // ya estábamos al día
+  suspendHistory=true; // esto llega de otro dispositivo, no es una acción de este usuario: no cuenta para deshacer
+  state=Object.assign(defaultState(),remote);
+  runMigrations(); // por si este dispositivo tiene reglas nuevas que la nube todavía no vio
+  localStorage.setItem(LS,JSON.stringify(state));
+  suspendHistory=false;
+  fillPersonSelects();
+  document.getElementById("weekLabel").value=state.label||"";
+  renderMini();render();
+  syncUndoRedoButtons();
+  persist(); // si las migraciones cambiaron algo, se lo mandamos de vuelta a la nube
+  setSyncStatus("ok");
+  if(!isFirst)toast("Cronograma actualizado desde otro dispositivo ☁️");
+}
+window.addEventListener("cloudsync-update",e=>applyRemoteState(e.detail));
+window.addEventListener("cloudsync-saving",()=>setSyncStatus("saving"));
+window.addEventListener("cloudsync-saved",()=>setSyncStatus("ok"));
+window.addEventListener("cloudsync-error",()=>setSyncStatus("error"));
+
 /* ---------------- BOOT ---------------- */
 loadLS();
-state.ex.forEach(e=>{if(e.id==null)e.id=Date.now()+"-"+Math.round(Math.random()*1e6);});
-seedFixedRules();
-seedCocinaComprasCajero();
-dedupeFixed();
-regenerateFixedHalfExtras();
-dedupeEx();
+runMigrations();
 persist();
 fillPersonSelects();
 initControls();
