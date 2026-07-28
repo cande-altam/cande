@@ -53,6 +53,11 @@
   .mark{width:38px;height:38px;border-radius:11px;background:radial-gradient(120% 120% at 30% 20%,var(--terracota),#c74027);display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-size:22px;line-height:1;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
   .brand h1{font-size:20px;letter-spacing:.2px}
   .brand p{margin:1px 0 0;font-size:11.5px;color:var(--ink-soft);letter-spacing:.4px;text-transform:uppercase}
+  .appVersion{text-transform:none;letter-spacing:0;opacity:.55;cursor:default}
+  .syncBanner{display:none;align-items:center;gap:10px;background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:11px;padding:10px 14px;font-size:12.5px;font-weight:600;margin-bottom:14px}
+  .syncBanner.show{display:flex}
+  .syncBanner button{margin-left:auto;border:none;background:transparent;color:inherit;font-size:16px;cursor:pointer;line-height:1;padding:2px;opacity:.7}
+  .syncBanner button:hover{opacity:1}
   .weekbox{display:flex;align-items:center;gap:8px}
   .weekbox input{background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 11px;width:190px}
   .btn{border:1px solid var(--line-strong);background:var(--panel-2);border-radius:9px;padding:8px 13px;cursor:pointer;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:.12s}
@@ -283,7 +288,7 @@
       <div class="mark">C</div>
       <div>
         <h1>Cronogramas</h1>
-        <p>Candela · Café &amp; Patisserie</p>
+        <p>Candela · Café &amp; Patisserie <span class="appVersion" id="appVersion" title="Versión que está corriendo en este navegador. Si no coincide con la de otro dispositivo, ese navegador tiene una copia guardada vieja: recargá forzando la actualización (celular: cerrá y volvé a abrir la pestaña; compu: Ctrl+Shift+R / Cmd+Shift+R)."></span></p>
       </div>
     </div>
     <div class="weekbox">
@@ -453,6 +458,10 @@
 
     <!-- MAIN -->
     <main>
+      <div class="syncBanner no-print" id="syncBanner">
+        <span id="syncBannerMsg">⚠️ No se pudo conectar con la sincronización en la nube. Tus cambios se guardan en este dispositivo, pero no van a verse en otros hasta que vuelva la conexión.</span>
+        <button type="button" id="syncBannerClose" title="Cerrar">✕</button>
+      </div>
       <section class="card alerts no-print" style="margin-bottom:18px">
         <h2>Auditoría en vivo</h2>
         <div class="counts" id="counts"></div>
@@ -513,7 +522,7 @@ window.CloudSync = {
       window.dispatchEvent(new CustomEvent("cloudsync-saving"));
       set(cloudRef, stateObj)
         .then(()=>window.dispatchEvent(new CustomEvent("cloudsync-saved")))
-        .catch(err=>{console.error("cloudsync:",err);window.dispatchEvent(new CustomEvent("cloudsync-error"));});
+        .catch(err=>{console.error("cloudsync:",err);window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));});
     }, 400);
   }
 };
@@ -526,12 +535,17 @@ onValue(cloudRef, snap=>{
   window.dispatchEvent(new CustomEvent("cloudsync-update",{detail:remote}));
 }, err=>{
   console.error("cloudsync onValue:",err);
-  window.dispatchEvent(new CustomEvent("cloudsync-error"));
+  window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
 });
 </script>
 
 <script>
 "use strict";
+// Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador
+// (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
+// el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
+// diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
+const APP_VERSION="2026-07-28 16:40";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -1656,6 +1670,15 @@ function setSyncStatus(kind){
   el.className="syncStatus "+kind;
   el.title={connecting:"Conectando con la nube…",ok:"Sincronizado con la nube",saving:"Guardando en la nube…",
     error:"Sin conexión con la nube — tus cambios se guardan en este dispositivo y se sincronizan apenas vuelva la conexión"}[kind]||"";
+  const banner=document.getElementById("syncBanner");
+  if(banner)banner.classList.toggle("show",kind==="error");
+}
+function showSyncError(detail){
+  setSyncStatus("error");
+  const msgEl=document.getElementById("syncBannerMsg");
+  if(msgEl&&detail&&detail.code)
+    msgEl.textContent=`⚠️ No se pudo conectar con la sincronización en la nube (${detail.code}). Tus cambios se guardan en este dispositivo, pero no van a verse en otros hasta que se resuelva esto.`;
+  console.error("cloudsync error:",detail);
 }
 let cloudFirstSyncDone=false;
 function applyRemoteState(remote){
@@ -1684,9 +1707,11 @@ function applyRemoteState(remote){
 window.addEventListener("cloudsync-update",e=>applyRemoteState(e.detail));
 window.addEventListener("cloudsync-saving",()=>setSyncStatus("saving"));
 window.addEventListener("cloudsync-saved",()=>setSyncStatus("ok"));
-window.addEventListener("cloudsync-error",()=>setSyncStatus("error"));
+window.addEventListener("cloudsync-error",e=>showSyncError(e.detail));
+document.getElementById("syncBannerClose").addEventListener("click",()=>document.getElementById("syncBanner").classList.remove("show"));
 
 /* ---------------- BOOT ---------------- */
+document.getElementById("appVersion").textContent="v"+APP_VERSION;
 loadLS();
 runMigrations();
 persist();
