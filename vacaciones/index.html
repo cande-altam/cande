@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Candela · Vacaciones</title>
+<style>
+  :root{
+    --crema:#EEEBD7; --terracota:#E15D46; --turquesa:#9BD6CC; --negro:#22201F;
+    --bg:#F5F3E7; --panel:#FFFFFF; --panel-2:#FBFAF2; --ink:#22201F; --ink-soft:#5C574E;
+    --line:#DED9C4; --line-strong:#C9C3AC; --accent:#E15D46; --accent-ink:#B23a26;
+    --teal:#7FC6BA; --teal-ink:#2C6F63; --teal-soft:#E4F2EF;
+    --warn:#C98A1E; --warn-soft:#FBF0D8; --crit:#C23A22; --crit-soft:#F8E2DC;
+    --ok:#2C6F63; --ok-soft:#E4F2EF;
+    --chip:#F1EEDD; --shadow:0 1px 2px rgba(34,32,31,.06),0 6px 20px rgba(34,32,31,.06);
+    --font-display:'DM Serif Display','Playfair Display',Georgia,'Times New Roman',serif;
+    --font-body:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#1A1917; --panel:#242220; --panel-2:#2B2825; --ink:#EEEBD7; --ink-soft:#B4AE9C;
+      --line:#3A362F; --line-strong:#4A453B; --accent:#E9765F; --accent-ink:#F0937F;
+      --teal:#6FB7AB; --teal-ink:#9BD6CC; --teal-soft:#233531;
+      --warn:#E0B54C; --warn-soft:#3A3220; --crit:#E9765F; --crit-soft:#3B2621;
+      --ok:#9BD6CC; --ok-soft:#233531; --chip:#2F2C28; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1A1917; --panel:#242220; --panel-2:#2B2825; --ink:#EEEBD7; --ink-soft:#B4AE9C;
+    --line:#3A362F; --line-strong:#4A453B; --accent:#E9765F; --accent-ink:#F0937F;
+    --teal:#6FB7AB; --teal-ink:#9BD6CC; --teal-soft:#233531;
+    --warn:#E0B54C; --warn-soft:#3A3220; --crit:#E9765F; --crit-soft:#3B2621;
+    --ok:#9BD6CC; --ok-soft:#233531; --chip:#2F2C28; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --bg:#F5F3E7; --panel:#FFFFFF; --panel-2:#FBFAF2; --ink:#22201F; --ink-soft:#5C574E;
+    --line:#DED9C4; --line-strong:#C9C3AC; --accent:#E15D46; --accent-ink:#B23a26;
+    --teal:#7FC6BA; --teal-ink:#2C6F63; --teal-soft:#E4F2EF;
+    --warn:#C98A1E; --warn-soft:#FBF0D8; --crit:#C23A22; --crit-soft:#F8E2DC;
+    --ok:#2C6F63; --ok-soft:#E4F2EF; --chip:#F1EEDD; --shadow:0 1px 2px rgba(34,32,31,.06),0 6px 20px rgba(34,32,31,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:var(--font-display);font-weight:400;margin:0;text-wrap:balance}
+  button,select,input,textarea{font-family:inherit;font-size:inherit;color:inherit}
+  .wrap{max-width:1320px;margin:0 auto;padding:18px 20px 80px}
+
+  .top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);position:sticky;top:8px;z-index:40}
+  .brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+  .mark{width:38px;height:38px;border-radius:11px;background:radial-gradient(120% 120% at 30% 20%,var(--terracota),#c74027);display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-size:22px;line-height:1;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+  .brand h1{font-size:20px;letter-spacing:.2px}
+  .brand p{margin:1px 0 0;font-size:11.5px;color:var(--ink-soft);letter-spacing:.4px;text-transform:uppercase}
+  .appVersion{text-transform:none;letter-spacing:0;opacity:.55;cursor:default}
+  .btn{border:1px solid var(--line-strong);background:var(--panel-2);border-radius:9px;padding:8px 13px;cursor:pointer;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:.12s}
+  .btn:hover{border-color:var(--ink-soft)}
+  .btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:5px 9px;font-size:11.5px}
+  .icon-btn{width:38px;height:38px;padding:0;justify-content:center;border-radius:10px}
+  .syncStatus{font-size:16px;opacity:.45;cursor:default;user-select:none;line-height:1}
+  .syncStatus.saving{opacity:1;animation:syncPulse 1s ease-in-out infinite}
+  .syncStatus.ok{opacity:.75}
+  .syncStatus.error{opacity:1;filter:grayscale(.3)}
+  @keyframes syncPulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .syncBanner{display:none;align-items:center;gap:10px;background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:11px;padding:10px 14px;font-size:12.5px;font-weight:600;margin-bottom:14px}
+  .syncBanner.show{display:flex}
+  .syncBanner button{margin-left:auto;border:none;background:transparent;color:inherit;font-size:16px;cursor:pointer;line-height:1;padding:2px;opacity:.7}
+  .syncBanner button:hover{opacity:1}
+
+  .layout{display:grid;grid-template-columns:340px 1fr;gap:18px;margin-top:18px;align-items:start}
+  @media (max-width:1000px){.layout{grid-template-columns:1fr;display:flex;flex-direction:column}main{order:1}.rail{order:2}}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+  .card h2{font-size:16px;padding:14px 16px 0}
+  .card .sub{font-size:12px;color:var(--ink-soft);padding:2px 16px 0}
+  .card-body{padding:14px 16px}
+  .rail{display:flex;flex-direction:column;gap:16px;position:sticky;top:88px}
+  @media (max-width:1000px){.rail{position:static}}
+  .railToggle{display:none}
+  .railBody{display:flex;flex-direction:column;gap:16px}
+  @media (max-width:1000px){
+    .railToggle{display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px;font-weight:700;font-size:14px;box-shadow:var(--shadow);cursor:pointer;color:var(--ink)}
+    .railToggle .car{transition:transform .15s}
+    .railToggle[aria-expanded="true"] .car{transform:rotate(180deg)}
+    .railBody{display:none;margin-top:14px}
+    .railBody.open{display:flex}
+  }
+
+  .eyebrow{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent-ink);font-weight:700}
+  .field{margin-top:12px}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:600}
+  .field select,.field input[type=text],.field input[type=date],.field input[type=number],.field textarea{width:100%;background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 10px}
+  .field textarea{resize:vertical;min-height:56px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+  .mini-list{margin-top:10px;display:flex;flex-direction:column;gap:7px;max-height:340px;overflow:auto}
+  .mini-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:7px 9px;font-size:12.5px;flex-wrap:wrap}
+  .mini-row .x{margin-left:auto;cursor:pointer;color:var(--ink-soft);border:none;background:none;font-size:15px;line-height:1;padding:2px 4px}
+  .mini-row .x:hover{color:var(--crit)}
+  .pill{display:inline-block;padding:1px 7px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.3px}
+  .pill.conf{background:var(--ok-soft);color:var(--ok)}
+  .pill.pend{background:var(--warn-soft);color:var(--warn)}
+  .pill.aprox{background:var(--chip);color:var(--ink-soft)}
+
+  /* balance table */
+  .tbl-scroll{overflow-x:auto;padding:12px 16px 16px}
+  table.bal{border-collapse:separate;border-spacing:0;width:100%;min-width:760px}
+  table.bal th,table.bal td{padding:8px 10px;text-align:center;font-variant-numeric:tabular-nums}
+  table.bal thead th{position:sticky;top:0;background:var(--panel);z-index:2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-soft);border-bottom:2px solid var(--line-strong)}
+  table.bal thead th:first-child,table.bal td:first-child{text-align:left}
+  table.bal td{border-bottom:1px solid var(--line)}
+  table.bal tr:hover td{background:var(--panel-2)}
+  .persona-cell{font-weight:600;white-space:nowrap}
+  .persona-cell .ant{display:block;font-weight:400;font-size:10.5px;color:var(--ink-soft);text-transform:none;letter-spacing:0}
+  .saldo-cell{font-weight:800;font-family:var(--font-display)}
+  .saldo-cell.pos{color:var(--ok)}
+  .saldo-cell.zero{color:var(--ink-soft)}
+  .saldo-cell.warn{color:var(--warn)}
+  .editIcon{border:none;background:transparent;color:var(--ink-soft);cursor:pointer;font-size:11px;margin-left:4px;opacity:.55;padding:1px 3px}
+  .editIcon:hover{opacity:1;color:var(--accent-ink)}
+
+  /* calendario */
+  .calHead{display:flex;align-items:center;gap:10px;padding:14px 16px 0}
+  .calHead h2{flex:1}
+  .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:12px 16px 16px}
+  .calGrid .dow{background:var(--panel-2);padding:6px 4px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--ink-soft)}
+  .calGrid .day{background:var(--panel);min-height:78px;padding:5px;font-size:11px}
+  .calGrid .day.otherMonth{background:var(--panel-2);opacity:.4}
+  .calGrid .day.today{box-shadow:inset 0 0 0 2px var(--accent)}
+  .calGrid .daynum{font-weight:700;font-size:11px;color:var(--ink-soft);margin-bottom:3px}
+  .calChip{display:block;font-size:10px;font-weight:700;border-radius:5px;padding:1px 5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .calChip.conf{background:var(--ok-soft);color:var(--ok)}
+  .calChip.pend{background:var(--warn-soft);color:var(--warn)}
+
+  .alert{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:10px;margin-top:8px;font-size:12.5px;border:1px solid transparent}
+  .alert .dot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex:none}
+  .alert.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+  .alert.warn .dot{background:var(--warn)}
+  .alert.ok{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 30%,transparent)}
+  .alert.ok .dot{background:var(--ok)}
+  .alert b{font-weight:700}
+  .alert-empty{color:var(--ok);font-weight:600;display:flex;align-items:center;gap:8px;padding:6px 0}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--negro);color:var(--crema);padding:11px 18px;border-radius:11px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .footer-note{font-size:11.5px;color:var(--ink-soft);margin-top:14px;text-align:center}
+
+  /* auth gate (igual que Cronogramas) */
+  .authGate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;z-index:100}
+  .authCard{width:100%;max-width:340px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:32px 28px;box-shadow:var(--shadow);text-align:center}
+  .authCard .mark{width:44px;height:44px;border-radius:12px;background:radial-gradient(120% 120% at 30% 20%,var(--terracota),#c74027);display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-size:24px;line-height:1;margin:0 auto 16px}
+  .authCard h2{font-size:20px;margin-bottom:6px}
+  .authSub{color:var(--ink-soft);font-size:12.5px;margin-bottom:22px}
+  .authCard input{width:100%;background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:11px 13px;font-size:14px;text-align:center;letter-spacing:2px;margin-bottom:12px}
+  .authCard .btn{width:100%;justify-content:center}
+  .authErr{color:var(--crit);font-size:12.5px;margin-top:12px}
+
+  @media (max-width:640px){
+    .wrap{padding:12px 12px 70px}
+    .top{position:static;padding:12px 14px;gap:10px}
+    .brand{width:100%}
+  }
+</style>
+</head>
+<body>
+
+<div id="authGate" class="authGate">
+  <div class="authCard">
+    <div class="mark">C</div>
+    <h2>Vacaciones</h2>
+    <p class="authSub">Acceso exclusivo del equipo de Candela</p>
+    <input id="authPass" type="password" placeholder="Contraseña" autocomplete="off" inputmode="numeric">
+    <button class="btn primary" id="authBtn">Ingresar</button>
+    <p id="authErr" class="authErr" style="display:none">Contraseña incorrecta.</p>
+  </div>
+</div>
+<div class="wrap" id="appWrap" style="display:none">
+  <header class="top">
+    <div class="brand">
+      <div class="mark">C</div>
+      <div>
+        <h1>Vacaciones</h1>
+        <p>Candela · Café &amp; Patisserie <span class="appVersion" id="appVersion" title="Versión que está corriendo en este navegador."></span></p>
+      </div>
+    </div>
+    <span id="syncStatus" class="syncStatus" title="Conectando…">☁️</span>
+    <button class="btn ghost icon-btn" id="btnUndo" title="Deshacer el último cambio" disabled>↩️</button>
+    <button class="btn ghost icon-btn" id="btnRedo" title="Rehacer" disabled>↪️</button>
+    <button class="btn ghost icon-btn" id="btnTheme" title="Cambiar tema">◐</button>
+    <button class="btn ghost icon-btn" id="btnLogout" title="Cerrar sesión">🚪</button>
+  </header>
+
+  <div class="syncBanner" id="syncBanner">
+    <span id="syncBannerMsg">⚠️ No se pudo conectar con la sincronización en la nube. Tus cambios se guardan en este dispositivo, pero no van a verse en otros hasta que vuelva la conexión.</span>
+    <button type="button" id="syncBannerClose" title="Cerrar">✕</button>
+  </div>
+
+  <div class="layout">
+    <aside class="rail">
+      <button class="railToggle" id="railToggle" aria-expanded="false" aria-controls="railBody">
+        <span>🏖️ Agregar / ajustar vacaciones</span><span class="car">▾</span>
+      </button>
+      <div class="railBody" id="railBody">
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Cargar vacaciones tomadas</span>
+          <p class="sub" style="padding:4px 0 0">El período sugerido es el más viejo que todavía tenga saldo — cambialo si corresponde a otro año.</p>
+          <div class="field">
+            <label for="vPerson">Persona</label>
+            <select id="vPerson"></select>
+          </div>
+          <div class="row2 field">
+            <div><label for="vDesde">Desde</label><input type="date" id="vDesde"></div>
+            <div><label for="vHasta">Hasta</label><input type="date" id="vHasta"></div>
+          </div>
+          <div class="row2 field">
+            <div><label for="vPeriodo">Del período</label><select id="vPeriodo"></select></div>
+            <div><label for="vEstado">Estado</label><select id="vEstado"><option value="confirmada">Confirmada</option><option value="pendiente">A confirmar</option></select></div>
+          </div>
+          <div class="field"><label for="vNota">Nota (opcional)</label><input type="text" id="vNota" placeholder="Ej: se adelantan 2 días"></div>
+          <button class="btn primary" id="btnAddVac" style="margin-top:11px;width:100%">+ Agregar vacación</button>
+          <div class="mini-list" id="vacList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body">
+          <span class="eyebrow">Cómo se calculan los días</span>
+          <ul style="margin:8px 0 0;padding-left:18px;font-size:12px;color:var(--ink-soft);line-height:1.7">
+            <li>Ley de Contrato de Trabajo, art. 150: 14 / 21 / 28 / 35 días corridos según antigüedad al 31/12 de cada año (≤5, ≤10, ≤20, +20 años).</li>
+            <li>Quien ingresó a mitad de año: si trabajó al menos medio año, día completo; si no, proporcional (1 día cada 20 trabajados).</li>
+            <li>Podés ajustar el número a mano con el lápiz ✎ si el valor real difiere (por convenio, acuerdo particular, etc.).</li>
+          </ul>
+        </div>
+      </section>
+      </div>
+    </aside>
+
+    <main>
+      <section class="card alerts" style="margin-bottom:18px">
+        <h2>Vencidos / a programar</h2>
+        <div class="card-body" id="alertList"></div>
+      </section>
+
+      <section class="card" style="margin-bottom:18px">
+        <h2>Balance por persona</h2>
+        <p class="sub">Días que corresponden por ley, menos lo ya tomado, por período.</p>
+        <div class="tbl-scroll">
+          <table class="bal" id="balTable"></table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="calHead">
+          <button class="btn icon-btn" id="calPrev" title="Mes anterior">‹</button>
+          <h2 id="calTitle">Calendario</h2>
+          <button class="btn icon-btn" id="calNext" title="Mes siguiente">›</button>
+        </div>
+        <div class="calGrid" id="calGrid"></div>
+      </section>
+
+      <p class="footer-note">Hecho para Candela · los datos se sincronizan entre dispositivos.</p>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+// Sincronización entre dispositivos (Firebase Realtime Database) — mismo proyecto y patrón que
+// usan Cronogramas y Presupuestos en este sitio. Ver comentarios equivalentes en cronogramas/index.html.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
+  authDomain: "pedidos-de-produccion-ee3cb.firebaseapp.com",
+  databaseURL: "https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-produccion-ee3cb",
+  storageBucket: "pedidos-de-produccion-ee3cb.firebasestorage.app",
+  messagingSenderId: "744141794971",
+  appId: "1:744141794971:web:9639c8bf3834e4978ae03e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const cloudRef = ref(db, "vacaciones/state");
+
+let lastSeenJSON = null;
+let pushTimer = null;
+
+window.CloudSync = {
+  push(stateObj){
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(()=>{
+      const json = JSON.stringify(stateObj);
+      if(json===lastSeenJSON)return;
+      lastSeenJSON = json;
+      window.dispatchEvent(new CustomEvent("cloudsync-saving"));
+      set(cloudRef, stateObj)
+        .then(()=>window.dispatchEvent(new CustomEvent("cloudsync-saved")))
+        .catch(err=>{console.error("cloudsync:",err);window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));});
+    }, 400);
+  }
+};
+
+onValue(cloudRef, snap=>{
+  const remote = snap.val();
+  const remoteJSON = remote==null ? null : JSON.stringify(remote);
+  if(remoteJSON!==null && remoteJSON===lastSeenJSON)return;
+  if(remoteJSON!==null)lastSeenJSON = remoteJSON;
+  window.dispatchEvent(new CustomEvent("cloudsync-update",{detail:remote}));
+}, err=>{
+  console.error("cloudsync onValue:",err);
+  window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
+});
+</script>
+
+<script>
+"use strict";
+const APP_VERSION="2026-07-28 18:00";
+/* ---------------- DATOS DEL EQUIPO ---------------- */
+const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+// fecha de ingreso de cada persona (aprox:true = fecha aproximada, ajustar si hace falta precisión).
+const PEOPLE=[
+  {n:"Lucía",ingreso:"2023-12-01"},
+  {n:"Luciana",ingreso:"2023-12-01"},
+  {n:"Gabriel",ingreso:"2024-06-01"},
+  {n:"Leandro",ingreso:"2024-08-01"},
+  {n:"Mariano",ingreso:"2025-10-01"},
+  {n:"Luis",ingreso:"2023-12-01"},
+  {n:"Vanesa",ingreso:"2025-06-18"},
+  {n:"Rodrigo",ingreso:"2024-01-01"},
+  {n:"Lucas",ingreso:"2024-05-01"},
+  {n:"Matías",ingreso:"2026-06-01",aprox:true},
+  {n:"Lázaro",ingreso:"2025-01-01",aprox:true},
+  {n:"Gonzalo",ingreso:"2025-01-01",aprox:true},
+  {n:"Jhon",ingreso:"2026-06-01",aprox:true},
+  {n:"Natalia",ingreso:"2019-11-21"},
+  {n:"Javier",ingreso:"2019-11-21"},
+  {n:"Aaron",ingreso:"2023-12-01"},
+  {n:"Érica",ingreso:"2019-11-21"},
+  {n:"Paula",ingreso:"2022-10-05"},
+  {n:"Margarita",ingreso:"2023-01-01"},
+  {n:"Brenda",ingreso:"2024-04-01"},
+  {n:"Valentina",ingreso:"2024-08-08"},
+  {n:"Guadalupe",ingreso:"2024-04-24"},
+  {n:"Dana",ingreso:"2024-08-06"},
+  {n:"Milagros",ingreso:"2023-12-01"},
+  {n:"Zoe",ingreso:"2024-08-01"},
+  {n:"Rebeca",ingreso:"2024-06-01"},
+  {n:"Cintia",ingreso:"2023-10-11"},
+];
+const BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
+
+/* ---------------- CÁLCULO DE DÍAS (Ley de Contrato de Trabajo, art. 150/151/153) ----------------
+   Días según antigüedad al 31/12 del año que corresponde (art. 150): ≤5 años → 14, ≤10 → 21, ≤20 → 28, +20 → 35.
+   Quien no trabajó el año completo: día completo si llegó a la mitad del año (art. 151, aproximando "días
+   hábiles" con días corridos por simplicidad); si no, proporcional a 1 día cada 20 trabajados (art. 153).
+   No se suman días extra de convenio (Panaderos/Pastelería/Gastronómicos): solo Ley, según lo pedido. */
+function tramoLCT(anios){
+  if(anios<=5)return 14;
+  if(anios<=10)return 21;
+  if(anios<=20)return 28;
+  return 35;
+}
+const MS_DIA=86400000;
+function fecha(iso){return new Date(iso+"T00:00:00");}
+function hoy(){return new Date();}
+function isoHoy(){const d=hoy();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function diffDias(a,b){return Math.round((b-a)/MS_DIA);}
+function anioActual(){return hoy().getFullYear();}
+
+function diasCorresponden(ingresoISO,anio){
+  const ingreso=fecha(ingresoISO);
+  const inicioAnio=fecha(anio+"-01-01");
+  const finAnio=fecha(anio+"-12-31");
+  if(ingreso>finAnio)return{dias:0,proporcional:false,diasTrabajados:0,tramo:0};
+  const anios=diffDias(ingreso,finAnio)/365.2425;
+  const tramo=tramoLCT(anios);
+  const trabajoTodoElAnio=ingreso<=inicioAnio;
+  const desde=trabajoTodoElAnio?inicioAnio:ingreso;
+  const diasTrabajados=diffDias(desde,finAnio)+1;
+  if(trabajoTodoElAnio||diasTrabajados>=182)return{dias:tramo,proporcional:false,anioIncompleto:!trabajoTodoElAnio,diasTrabajados,tramo};
+  return{dias:Math.floor(diasTrabajados/20),proporcional:true,diasTrabajados,tramo};
+}
+function diasCorrespondenEfectivos(name,anio){
+  const p=BY_NAME[name];if(!p)return{dias:0,proporcional:false,manual:false};
+  if(state.overrides[name]&&state.overrides[name][anio]!=null)
+    return{dias:state.overrides[name][anio],proporcional:false,manual:true};
+  return diasCorresponden(p.ingreso,anio);
+}
+function rangoDias(desdeISO,hastaISO){return diffDias(fecha(desdeISO),fecha(hastaISO))+1;}
+function tomadosPorPeriodo(name,periodo){
+  return state.taken.filter(t=>t.n===name&&t.periodo===periodo).reduce((s,t)=>s+rangoDias(t.desde,t.hasta),0);
+}
+function saldoPeriodo(name,periodo){
+  return diasCorrespondenEfectivos(name,periodo).dias-tomadosPorPeriodo(name,periodo);
+}
+const PRIMER_PERIODO=2025; // el balance solo trackea desde acá (saldo 2025/26 + lo que se va sumando); coincide con las columnas de la tabla
+function aniosDesdeIngreso(name){
+  const p=BY_NAME[name];if(!p)return[anioActual()];
+  const anioIngreso=Math.max(fecha(p.ingreso).getFullYear(),PRIMER_PERIODO);
+  const arr=[];for(let y=anioIngreso;y<=anioActual();y++)arr.push(y);
+  return arr.length?arr:[anioActual()];
+}
+function periodosConSaldo(name){
+  return aniosDesdeIngreso(name).filter(y=>saldoPeriodo(name,y)>0);
+}
+function periodoSugerido(name){
+  const c=periodosConSaldo(name);
+  return c.length?c[0]:anioActual();
+}
+function saldoTotal(name){
+  return aniosDesdeIngreso(name).reduce((s,y)=>s+saldoPeriodo(name,y),0);
+}
+
+/* ---------------- ESTADO ---------------- */
+function defaultState(){return{taken:[],overrides:{}};}
+let state=defaultState();
+const LS="candela_vacaciones_v1";
+const UNDO_LIMIT=60;
+let undoStack=[],redoStack=[],suspendHistory=false;
+function persist(){
+  if(!suspendHistory){
+    const prev=localStorage.getItem(LS);
+    if(prev&&prev!==JSON.stringify(state)){undoStack.push(prev);if(undoStack.length>UNDO_LIMIT)undoStack.shift();redoStack.length=0;}
+  }
+  localStorage.setItem(LS,JSON.stringify(state));
+  syncUndoRedoButtons();
+  if(!suspendHistory&&window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);}
+}
+function loadLS(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.taken){state=Object.assign(defaultState(),s);}}catch(e){}}
+function restoreSnapshot(json){
+  state=JSON.parse(json);
+  suspendHistory=true;
+  localStorage.setItem(LS,JSON.stringify(state));
+  suspendHistory=false;
+  render();
+  syncUndoRedoButtons();
+  if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);}
+}
+function undoLast(){if(!undoStack.length)return;redoStack.push(localStorage.getItem(LS));restoreSnapshot(undoStack.pop());toast("Cambio deshecho ↩️");}
+function redoLast(){if(!redoStack.length)return;undoStack.push(localStorage.getItem(LS));restoreSnapshot(redoStack.pop());toast("Cambio rehecho ↪️");}
+function syncUndoRedoButtons(){
+  const u=document.getElementById("btnUndo"),r=document.getElementById("btnRedo");
+  if(u)u.disabled=!undoStack.length;
+  if(r)r.disabled=!redoStack.length;
+}
+
+/* ---------------- SINCRONIZACIÓN EN LA NUBE ---------------- */
+function setSyncStatus(kind){
+  const el=document.getElementById("syncStatus");if(!el)return;
+  el.className="syncStatus "+kind;
+  el.title={connecting:"Conectando con la nube…",ok:"Sincronizado con la nube",saving:"Guardando en la nube…",
+    error:"Sin conexión con la nube — tus cambios se guardan en este dispositivo y se sincronizan apenas vuelva la conexión"}[kind]||"";
+  const banner=document.getElementById("syncBanner");
+  if(banner)banner.classList.toggle("show",kind==="error");
+}
+function showSyncError(detail){
+  setSyncStatus("error");
+  const msgEl=document.getElementById("syncBannerMsg");
+  if(msgEl&&detail&&detail.code)
+    msgEl.textContent=`⚠️ No se pudo conectar con la sincronización en la nube (${detail.code}). Tus cambios se guardan en este dispositivo, pero no van a verse en otros hasta que se resuelva esto.`;
+  console.error("cloudsync error:",detail);
+}
+let cloudFirstSyncDone=false;
+function applyRemoteState(remote){
+  const isFirst=!cloudFirstSyncDone; cloudFirstSyncDone=true;
+  if(remote==null){persist();setSyncStatus("ok");return;}
+  if(JSON.stringify(remote)===JSON.stringify(state)){setSyncStatus("ok");return;}
+  suspendHistory=true;
+  state=Object.assign(defaultState(),remote);
+  localStorage.setItem(LS,JSON.stringify(state));
+  suspendHistory=false;
+  render();
+  syncUndoRedoButtons();
+  setSyncStatus("ok");
+  if(!isFirst)toast("Vacaciones actualizadas desde otro dispositivo ☁️");
+}
+window.addEventListener("cloudsync-update",e=>applyRemoteState(e.detail));
+window.addEventListener("cloudsync-saving",()=>setSyncStatus("saving"));
+window.addEventListener("cloudsync-saved",()=>setSyncStatus("ok"));
+window.addEventListener("cloudsync-error",e=>showSyncError(e.detail));
+
+/* ---------------- AUTH (misma contraseña que Cronogramas) ---------------- */
+const AUTH_KEY="candela_vacaciones_auth";
+const AUTH_PASS="1412";
+function showApp(){document.getElementById("authGate").style.display="none";document.getElementById("appWrap").style.display="";}
+function attemptAuth(){
+  const input=document.getElementById("authPass");const err=document.getElementById("authErr");
+  if(input.value===AUTH_PASS){sessionStorage.setItem(AUTH_KEY,"ok");err.style.display="none";input.value="";showApp();}
+  else err.style.display="block";
+}
+
+/* ---------------- RENDER ---------------- */
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1900);}
+
+function fmtFecha(iso){const d=fecha(iso);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();}
+function antiguedadTexto(name){
+  const p=BY_NAME[name];if(!p)return"";
+  const anios=diffDias(fecha(p.ingreso),hoy())/365.2425;
+  return`ingresó ${fmtFecha(p.ingreso)}${p.aprox?" (aprox.)":""} · ${anios.toFixed(1)} años`;
+}
+
+function render(){
+  renderBalance();
+  renderVacList();
+  renderAlerts();
+  renderCalendar();
+  fillFormSelects();
+}
+
+function renderBalance(){
+  const anios=[];for(let y=PRIMER_PERIODO;y<=anioActual();y++)anios.push(y);
+  const tbl=document.getElementById("balTable");
+  let h="<thead><tr><th>Persona</th>";
+  anios.forEach(y=>h+=`<th>Corresponde ${y}</th><th>Tomado ${y}</th>`);
+  h+="<th>Pendiente total</th></tr></thead><tbody>";
+  PEOPLE.forEach(p=>{
+    h+=`<tr><td class="persona-cell">${p.n}<span class="ant">${antiguedadTexto(p.n)}</span></td>`;
+    anios.forEach(y=>{
+      const c=diasCorrespondenEfectivos(p.n,y);
+      const t=tomadosPorPeriodo(p.n,y);
+      h+=`<td>${c.dias}${c.proporcional?"*":""}<button class="editIcon" data-edit="${p.n}|${y}" title="Ajustar manualmente">✎</button></td><td>${t}</td>`;
+    });
+    const tot=saldoTotal(p.n);
+    const cls=tot>0?(tot>=10?"pos":"warn"):"zero";
+    h+=`<td class="saldo-cell ${cls}">${tot}</td></tr>`;
+  });
+  h+="</tbody>";
+  tbl.innerHTML=h;
+  tbl.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>{
+    const[n,y]=b.dataset.edit.split("|");
+    const cur=diasCorrespondenEfectivos(n,+y).dias;
+    const v=prompt(`Días que corresponden a ${n} en ${y} (dejar como está: ${cur}). Escribí "auto" para volver al cálculo automático.`,String(cur));
+    if(v==null)return;
+    if(!state.overrides[n])state.overrides[n]={};
+    if(v.trim().toLowerCase()==="auto")delete state.overrides[n][y];
+    else{const num=parseInt(v,10);if(!isNaN(num))state.overrides[n][y]=num;}
+    persist();render();
+  }));
+}
+
+function renderVacList(){
+  const el=document.getElementById("vacList");
+  const sorted=state.taken.slice().sort((a,b)=>a.desde<b.desde?-1:1);
+  el.innerHTML=sorted.length?sorted.map((t)=>{
+    const dias=rangoDias(t.desde,t.hasta);
+    return`<div class="mini-row"><span class="pill ${t.estado==="confirmada"?"conf":"pend"}">${t.estado==="confirmada"?"✓":"?"}</span> <b>${t.n}</b> · ${fmtFecha(t.desde)} al ${fmtFecha(t.hasta)} (${dias}d) · período ${t.periodo}${t.nota?` · <i>${t.nota}</i>`:""} <button class="x" data-id="${t.id}" title="Borrar">×</button></div>`;
+  }).join(""):`<p class="sub" style="padding:0">Todavía no cargaste ninguna vacación tomada.</p>`;
+  el.querySelectorAll(".x").forEach(b=>b.addEventListener("click",()=>{
+    const idx=state.taken.findIndex(t=>String(t.id)===b.dataset.id);
+    if(idx<0)return;
+    state.taken.splice(idx,1);
+    persist();render();
+    toast("Vacación borrada");
+  }));
+}
+
+function renderAlerts(){
+  const el=document.getElementById("alertList");
+  const anioAct=anioActual();
+  const alerts=[];
+  PEOPLE.forEach(p=>{
+    aniosDesdeIngreso(p.n).forEach(y=>{
+      const s=saldoPeriodo(p.n,y);
+      if(y<anioAct&&s>0)alerts.push({t:"warn",h:p.n,m:`tiene ${s} día${s===1?"":"s"} pendientes del período ${y} sin programar.`});
+    });
+  });
+  if(!alerts.length){el.innerHTML=`<div class="alert-empty">✓ Nadie tiene saldo vencido de períodos anteriores.</div>`;return;}
+  el.innerHTML=alerts.map(a=>`<div class="alert ${a.t}"><span class="dot"></span><div><b>${a.h}</b> ${a.m}</div></div>`).join("");
+}
+
+let calMonth=hoy().getMonth(),calYear=hoy().getFullYear();
+function vacacionesEnDia(iso){
+  return state.taken.filter(t=>t.desde<=iso&&iso<=t.hasta);
+}
+function renderCalendar(){
+  document.getElementById("calTitle").textContent=`${MESES[calMonth]} ${calYear}`;
+  const primerDia=new Date(calYear,calMonth,1);
+  const ultimoDia=new Date(calYear,calMonth+1,0);
+  let startOffset=primerDia.getDay()-1;if(startOffset<0)startOffset=6; // lunes=0
+  const totalCeldas=Math.ceil((startOffset+ultimoDia.getDate())/7)*7;
+  const grid=document.getElementById("calGrid");
+  let h=DAYS.map(d=>`<div class="dow">${d}</div>`).join("");
+  const todayISO=isoHoy();
+  for(let i=0;i<totalCeldas;i++){
+    const dayNum=i-startOffset+1;
+    const d=new Date(calYear,calMonth,dayNum);
+    const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    const otherMonth=d.getMonth()!==calMonth;
+    const vac=otherMonth?[]:vacacionesEnDia(iso);
+    h+=`<div class="day ${otherMonth?"otherMonth":""} ${iso===todayISO?"today":""}"><div class="daynum">${d.getDate()}</div>${vac.map(v=>`<span class="calChip ${v.estado==="confirmada"?"conf":"pend"}" title="${v.n} · ${fmtFecha(v.desde)} al ${fmtFecha(v.hasta)}">${v.n}</span>`).join("")}</div>`;
+  }
+  grid.innerHTML=h;
+}
+
+function fillFormSelects(){
+  const vp=document.getElementById("vPerson");
+  const cur=vp.value;
+  vp.innerHTML=PEOPLE.map(p=>`<option value="${p.n}">${p.n}</option>`).join("");
+  if(cur)vp.value=cur;
+  syncPeriodoOptions();
+}
+function syncPeriodoOptions(){
+  const n=document.getElementById("vPerson").value;
+  const sel=document.getElementById("vPeriodo");
+  const anios=aniosDesdeIngreso(n);
+  sel.innerHTML=anios.map(y=>`<option value="${y}">${y} (saldo: ${saldoPeriodo(n,y)})</option>`).join("");
+  sel.value=String(periodoSugerido(n));
+}
+
+/* ---------------- CONTROLES ---------------- */
+function initControls(){
+  document.getElementById("authBtn").addEventListener("click",attemptAuth);
+  document.getElementById("authPass").addEventListener("keydown",e=>{if(e.key==="Enter")attemptAuth();});
+  document.getElementById("btnLogout").addEventListener("click",()=>{
+    sessionStorage.removeItem(AUTH_KEY);
+    document.getElementById("appWrap").style.display="none";
+    document.getElementById("authGate").style.display="flex";
+    document.getElementById("authPass").focus();
+  });
+  document.getElementById("btnUndo").addEventListener("click",undoLast);
+  document.getElementById("btnRedo").addEventListener("click",redoLast);
+  document.addEventListener("keydown",e=>{
+    if(!(e.ctrlKey||e.metaKey))return;
+    const tag=(document.activeElement&&document.activeElement.tagName)||"";
+    if(["INPUT","TEXTAREA","SELECT"].includes(tag))return;
+    if(e.key==="z"&&!e.shiftKey){e.preventDefault();undoLast();}
+    else if(e.key==="y"||(e.key==="z"&&e.shiftKey)){e.preventDefault();redoLast();}
+  });
+  document.getElementById("btnTheme").addEventListener("click",()=>{
+    const cur=document.documentElement.getAttribute("data-theme");
+    const next=cur==="dark"?"light":cur==="light"?"dark":(matchMedia("(prefers-color-scheme:dark)").matches?"light":"dark");
+    document.documentElement.setAttribute("data-theme",next);
+    localStorage.setItem("candela_theme",next);
+  });
+  const savedTheme=localStorage.getItem("candela_theme");
+  if(savedTheme)document.documentElement.setAttribute("data-theme",savedTheme);
+
+  const railToggle=document.getElementById("railToggle"),railBody=document.getElementById("railBody");
+  railToggle.addEventListener("click",()=>{
+    const open=railBody.classList.toggle("open");
+    railToggle.setAttribute("aria-expanded",open?"true":"false");
+  });
+
+  document.getElementById("vPerson").addEventListener("change",syncPeriodoOptions);
+  document.getElementById("btnAddVac").addEventListener("click",()=>{
+    const n=document.getElementById("vPerson").value;if(!n)return toast("Elegí una persona");
+    const desde=document.getElementById("vDesde").value;
+    const hasta=document.getElementById("vHasta").value;
+    if(!desde||!hasta)return toast("Completá las dos fechas");
+    if(hasta<desde)return toast("La fecha 'hasta' no puede ser antes que 'desde'");
+    const periodo=+document.getElementById("vPeriodo").value;
+    const estado=document.getElementById("vEstado").value;
+    const nota=document.getElementById("vNota").value.trim();
+    state.taken.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),n,desde,hasta,periodo,estado,nota});
+    document.getElementById("vDesde").value="";document.getElementById("vHasta").value="";document.getElementById("vNota").value="";
+    persist();render();
+    toast(`Vacación de ${n} agregada`);
+  });
+
+  document.getElementById("calPrev").addEventListener("click",()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();});
+  document.getElementById("calNext").addEventListener("click",()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();});
+
+  document.getElementById("syncBannerClose").addEventListener("click",()=>document.getElementById("syncBanner").classList.remove("show"));
+}
+
+/* ---------------- SEMILLA: vacaciones ya tomadas (cargadas de los calendarios enviados) ----------------
+   Todas corresponden al período 2025, tomadas durante 2026 (confirmado explícitamente). */
+// ajuste manual: la fórmula de la ley le da a Érica 21 días para 2025 (antigüedad ~6,7 años),
+// pero se confirmó que tiene 28 días pendientes de ese período — puede deberse a un acuerdo
+// previo o arrastre de otro período. Queda como ajuste editable, no oculto.
+function seedOverrides(){
+  if(state.overrides["Érica"]&&state.overrides["Érica"][2025]!=null)return;
+  if(!state.overrides["Érica"])state.overrides["Érica"]={};
+  state.overrides["Érica"][2025]=28;
+  persist();
+}
+function seedTaken(){
+  const TAG="seed-2026-v1";
+  if(state.taken.some(t=>t.seedTag===TAG))return;
+  let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,periodo:2025,estado:"confirmada",nota:"",...extra});
+  state.taken.push(
+    mk({n:"Zoe",desde:"2026-06-01",hasta:"2026-06-11"}),
+    mk({n:"Javier",desde:"2026-07-13",hasta:"2026-07-26"}),
+    mk({n:"Luis",desde:"2026-07-28",hasta:"2026-07-29"}),
+    mk({n:"Mariano",desde:"2026-07-31",hasta:"2026-08-03"}),
+    mk({n:"Luciana",desde:"2026-09-03",hasta:"2026-09-08"}),
+    mk({n:"Rodrigo",desde:"2026-09-03",hasta:"2026-09-08"}),
+    mk({n:"Érica",desde:"2026-11-17",hasta:"2026-12-14"}),
+  );
+  persist();
+}
+
+/* ---------------- BOOT ---------------- */
+document.getElementById("appVersion").textContent="v"+APP_VERSION;
+loadLS();
+seedOverrides();
+seedTaken();
+initControls();
+render();
+undoStack.length=0;redoStack.length=0;syncUndoRedoButtons();
+if(sessionStorage.getItem(AUTH_KEY)==="ok")showApp();
+</script>
+
+</body>
+</html>

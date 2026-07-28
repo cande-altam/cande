@@ -60,6 +60,7 @@
   .syncBanner button:hover{opacity:1}
   .weekbox{display:flex;align-items:center;gap:8px}
   .weekbox input{background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 11px;width:190px}
+  .weekbox input#weekStart{width:150px}
   .btn{border:1px solid var(--line-strong);background:var(--panel-2);border-radius:9px;padding:8px 13px;cursor:pointer;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:.12s}
   .btn:hover{border-color:var(--ink-soft)}
   .btn:disabled{opacity:.35;cursor:default;pointer-events:none}
@@ -293,6 +294,7 @@
     </div>
     <div class="weekbox">
       <input id="weekLabel" type="text" placeholder="Semana (ej: 13–19/07)" aria-label="Etiqueta de la semana">
+      <input id="weekStart" type="date" title="Lunes de esta semana (para cruzar automáticamente con Vacaciones)" aria-label="Fecha del lunes de esta semana">
     </div>
     <span id="syncStatus" class="syncStatus" title="Conectando…">☁️</span>
     <button class="btn primary" id="btnAuto" title="Genera la semana respetando las reglas">✨ Autocompletar</button>
@@ -537,6 +539,16 @@ onValue(cloudRef, snap=>{
   console.error("cloudsync onValue:",err);
   window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
 });
+
+// Lectura (sin escritura) del módulo de Vacaciones, para marcar ausencias automáticas por
+// vacación en la semana cargada. Cronogramas nunca escribe acá — el módulo Vacaciones es el
+// único que edita sus propios datos.
+const vacacionesRef = ref(db, "vacaciones/state");
+onValue(vacacionesRef, snap=>{
+  window.dispatchEvent(new CustomEvent("vacsync-update",{detail:snap.val()}));
+}, err=>{
+  console.error("vacsync onValue:",err);
+});
 </script>
 
 <script>
@@ -623,7 +635,7 @@ function peopleFor(role,loc){
 }
 
 /* ---------------- STATE ---------------- */
-function defaultState(){return {label:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{}};}
+function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{}};}
 let state=defaultState();
 const LS="candela_scheduler_v1";
 // deshacer/rehacer: cada persist() guarda una foto de cómo estaba el estado ANTES de este cambio
@@ -647,6 +659,7 @@ function restoreSnapshot(json){
   suspendHistory=false;
   fillPersonSelects();
   document.getElementById("weekLabel").value=state.label||"";
+  document.getElementById("weekStart").value=state.weekStart||"";
   renderMini();render();
   syncUndoRedoButtons();
   if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);} // el deshacer/rehacer también se sincroniza a otros dispositivos
@@ -698,6 +711,33 @@ function dedupeEx(){
   const seen=new Set();const before=state.ex.length;
   state.ex=state.ex.filter(e=>{const kk=`${e.n}|${e.day}|${e.shift}|${e.loc}|${e.role}`;if(seen.has(kk))return false;seen.add(kk);return true;});
   return state.ex.length!==before;
+}
+
+/* ---------------- VACACIONES (lectura desde el módulo Vacaciones) ----------------
+   Cronogramas nunca escribe datos de vacaciones, solo los lee para marcar ausencia automática
+   en los días de la semana cargada que caigan dentro de un rango de vacaciones confirmado. */
+let vacacionesCache=null;
+function isoDe(d){ // fecha ISO del día d (0=lunes) de la semana cargada, o null si no hay weekStart
+  if(!state.weekStart)return null;
+  const base=new Date(state.weekStart+"T00:00:00");
+  base.setDate(base.getDate()+d);
+  return base.getFullYear()+"-"+String(base.getMonth()+1).padStart(2,"0")+"-"+String(base.getDate()).padStart(2,"0");
+}
+function aplicarAusenciasPorVacaciones(){
+  if(!vacacionesCache||!vacacionesCache.taken||!state.weekStart)return false;
+  let changed=false;
+  for(let d=0;d<7;d++){
+    const iso=isoDe(d);if(!iso)continue;
+    vacacionesCache.taken.forEach(t=>{
+      if(t.estado!=="confirmada")return; // "a confirmar" no bloquea el autocompletado todavía
+      if(!BY_NAME[t.n])return;
+      if(!(t.desde<=iso&&iso<=t.hasta))return;
+      let a=state.abs.find(x=>x.n===t.n);
+      if(!a){a={n:t.n,days:[]};state.abs.push(a);}
+      if(!a.days.includes(d)){a.days.push(d);a.days.sort((x,y)=>x-y);changed=true;}
+    });
+  }
+  return changed;
 }
 
 // availability helpers
@@ -1296,7 +1336,7 @@ function openPrintView(){
 // Por eso "sincronizar" acá significa: copiar este texto en un dispositivo y pegarlo en el otro.
 function exportPayload(){
   return JSON.stringify({
-    label:state.label, assign:state.assign, abs:state.abs,
+    label:state.label, weekStart:state.weekStart, assign:state.assign, abs:state.abs,
     ex:state.ex.filter(e=>!e.auto), // los refuerzos automáticos se regeneran solos, no hace falta llevarlos
     rules:state.rules, fixed:state.fixed, francoFixed:state.francoFixed,
   },null,0);
@@ -1353,12 +1393,13 @@ function openImportView(){
       </div>`;
     document.getElementById("pvConfirmNo").addEventListener("click",()=>{document.getElementById("pvImportConfirm").innerHTML="";});
     document.getElementById("pvConfirmYes").addEventListener("click",()=>{
-      state.label=data.label||""; state.assign=data.assign||{}; state.abs=data.abs||[];
+      state.label=data.label||""; state.weekStart=data.weekStart||""; state.assign=data.assign||{}; state.abs=data.abs||[];
       state.ex=(data.ex||[]).filter(e=>!e.auto);
       state.rules=data.rules||[]; state.fixed=data.fixed||[]; state.francoFixed=data.francoFixed||{};
       dedupeFixed(); regenerateFixedHalfExtras(); dedupeEx();
       persist();
       document.getElementById("weekLabel").value=state.label||"";
+      document.getElementById("weekStart").value=state.weekStart||"";
       renderMini(); render();
       ov.remove();
       toast("Datos importados ✅");
@@ -1468,6 +1509,12 @@ function renderMini(){
 }
 function initControls(){
   document.getElementById("btnAuto").addEventListener("click",autocomplete);
+  document.getElementById("weekStart").addEventListener("change",e=>{
+    state.weekStart=e.target.value;
+    const changed=aplicarAusenciasPorVacaciones();
+    renderMini();render();persist();
+    toast(changed?"Semana vinculada — se marcaron ausencias por vacaciones 🏖️":"Semana vinculada");
+  });
   document.getElementById("rolePerson").addEventListener("change",syncRoleControls);
   document.getElementById("btnSetRoleMain").addEventListener("click",()=>{
     const n=document.getElementById("rolePerson").value;if(!n)return toast("Elegí una persona");
@@ -1506,7 +1553,13 @@ function initControls(){
   });
   document.getElementById("btnNew").addEventListener("click",()=>{
     state.label="";state.abs=[];state.ex=[];state.rules=[];
+    if(state.weekStart){ // si había una fecha cargada, la semana nueva avanza 7 días sola
+      const d=new Date(state.weekStart+"T00:00:00");d.setDate(d.getDate()+7);
+      state.weekStart=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    }
     document.getElementById("weekLabel").value="";
+    document.getElementById("weekStart").value=state.weekStart||"";
+    aplicarAusenciasPorVacaciones();
     renderMini();render();persist();toast("Nueva semana lista (base copiada)");
   });
   document.getElementById("ruleType").addEventListener("change",e=>{
@@ -1698,6 +1751,7 @@ function applyRemoteState(remote){
   suspendHistory=false;
   fillPersonSelects();
   document.getElementById("weekLabel").value=state.label||"";
+  document.getElementById("weekStart").value=state.weekStart||"";
   renderMini();render();
   syncUndoRedoButtons();
   persist(); // si las migraciones cambiaron algo, se lo mandamos de vuelta a la nube
@@ -1708,6 +1762,10 @@ window.addEventListener("cloudsync-update",e=>applyRemoteState(e.detail));
 window.addEventListener("cloudsync-saving",()=>setSyncStatus("saving"));
 window.addEventListener("cloudsync-saved",()=>setSyncStatus("ok"));
 window.addEventListener("cloudsync-error",e=>showSyncError(e.detail));
+window.addEventListener("vacsync-update",e=>{
+  vacacionesCache=e.detail;
+  if(aplicarAusenciasPorVacaciones()){renderMini();render();persist();toast("Ausencias por vacaciones actualizadas 🏖️");}
+});
 document.getElementById("syncBannerClose").addEventListener("click",()=>document.getElementById("syncBanner").classList.remove("show"));
 
 /* ---------------- BOOT ---------------- */
@@ -1724,6 +1782,7 @@ document.getElementById("btnLogout").addEventListener("click",()=>{
   document.getElementById("authPass").focus();
 });
 document.getElementById("weekLabel").value=state.label||"";
+document.getElementById("weekStart").value=state.weekStart||"";
 renderMini();
 render();
 undoStack.length=0;redoStack.length=0;syncUndoRedoButtons(); // el armado inicial (reglas semilla, etc.) no cuenta como "cambio" deshacible
