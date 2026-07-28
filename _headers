@@ -1,0 +1,18 @@
+# El HTML de las apps NO se cachea: cada una es un archivo autocontenido que se actualiza en cada
+# deploy, y un navegador (sobre todo en el celular) que se quede con una copia guardada muestra una
+# versión vieja sin que haya forma de darse cuenta — pasó, y costó horas de diagnóstico.
+# must-revalidate obliga a preguntarle al servidor si cambió antes de reutilizar la copia.
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/costeo-proveedores/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/presupuestos/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/cronogramas/*
+  Cache-Control: public, max-age=0, must-revalidate
