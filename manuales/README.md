@@ -46,6 +46,7 @@ horario, un PIN o una URL, se actualiza acá primero.
 | [comunes/herramientas-digitales.md](comunes/herramientas-digitales.md) | FUDO, las dos webs, PINs por área, horarios límite |
 | [comunes/atencion-y-reclamos.md](comunes/atencion-y-reclamos.md) | Método LAST, 7 pasos de atención, upselling, tiempos |
 | [comunes/higiene-y-presentacion.md](comunes/higiene-y-presentacion.md) | Higiene personal, manipulación, cadena de frío, qué reportar |
+| [comunes/pedidos-y-pagos-a-proveedores.md](comunes/pedidos-y-pagos-a-proveedores.md) | Calendario de pedidos y pagos por proveedor, circuito de autorización |
 
 ### 🧩 Para escribir un manual nuevo
 

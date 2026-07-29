@@ -111,9 +111,21 @@ encargado para que no vuelva a pasar.
 
 - Un mismo insumo puede tener **varios proveedores**, y cada proveedor puede ofrecer
   **varias marcas**. No hay un proveedor único por producto.
-- **Hay días fijos de pedido por proveedor**, pero en la práctica no siempre se
-  respetan. *(Ver "Pendientes" al final — esto conviene ordenarlo.)*
 - El sistema guarda un **proveedor por producto**, que sirve para agrupar el recorrido.
+
+### Días de pedido y de pago
+
+> ### 🔑 Cada proveedor tiene día fijo de pedido y día fijo de pago.
+> El calendario completo está en
+> **[Pedidos y pagos a proveedores](../comunes/pedidos-y-pagos-a-proveedores.md)**.
+
+Lo esencial:
+
+- **Los pedidos solo se hacen en el día que le corresponde a cada proveedor.**
+- **Lunes y jueves** son los días pesados de pedido (8 y 9 proveedores).
+- **Al hacer un pedido hay que avisar a Administración** para que autorice la
+  transferencia o envíe el efectivo al local.
+- **Ningún pago sale de la caja del local.** Sin excepción.
 
 ### Compras grandes — Autorización
 
@@ -191,6 +203,19 @@ Casi todas las compras se pagan **en el momento**. Al cierre:
 > ⚠️ **Una compra sin factura no se puede rendir.** Pedí comprobante siempre, incluso
 > en compras chicas.
 
+> 🚧 **Atención — dos circuitos distintos que hay que separar.**
+> El pago **en el momento** descrito acá convive con el circuito del calendario de
+> proveedores, donde **Administración autoriza el pago con un día de anticipación** y
+> hace llegar el efectivo al local. Son dos cosas diferentes:
+>
+> | | Compra de mostrador | Proveedor con calendario |
+> |---|---|---|
+> | **Cuándo se paga** | En el momento | En el día de pago del proveedor |
+> | **De dónde sale la plata** | *(a definir)* | Administración la envía o transfiere |
+> | **Autorización previa** | *(a definir)* | Siempre |
+>
+> Falta definir por escrito **cuál aplica a qué compra**. Ver "Pendientes" al final.
+
 ---
 
 ## 8. Segundo reparto — Antes de las 13:00
@@ -257,14 +282,22 @@ Igual que en el primero: **cada local revisa lo que recibe, no se firma nada.**
 Puntos que salieron al escribir este manual y que **todavía no tienen una regla clara**.
 Conviene resolverlos y actualizar el documento:
 
-- [ ] **Días fijos de pedido por proveedor.** Existen, pero no se respetan. Definir si
-      se hacen cumplir o se elimina la regla — hoy genera compras de urgencia evitables.
+- [x] ~~**Días fijos de pedido por proveedor.**~~ **Documentados** en
+      [Pedidos y pagos a proveedores](../comunes/pedidos-y-pagos-a-proveedores.md).
+      Queda pendiente lo otro: el calendario existe pero **no se respeta en la
+      práctica**. Definir si se hace cumplir — hoy genera urgencias evitables.
 - [ ] **Qué se registra en FUDO.** Hoy algunos insumos sí y otros no, por costumbre.
       Falta el criterio escrito.
-- [ ] **Manejo del dinero.** El manual no dice de dónde sale la plata con la que Compras
-      paga: si hay un fondo fijo, si se retira cada mañana, si hay un tope de gasto
-      diario sin autorización. Definirlo — es el único punto del proceso donde una
-      persona sola maneja efectivo sin control en el momento.
+- [ ] **🔴 Manejo del dinero — dos circuitos sin frontera.** El calendario de
+      proveedores dice que **Administración autoriza y envía el dinero**, y que
+      **ningún pago sale de la caja del local**. Pero Compras además **paga en el
+      momento** las compras del recorrido. Falta definir:
+      - Qué compras van por cada circuito.
+      - De dónde sale la plata del pago en el momento: fondo fijo, retiro diario, otro.
+      - Si hay un **tope de gasto** sin autorización previa.
+
+      Es el punto más importante que quedó abierto: hoy una sola persona maneja
+      efectivo y el control recién llega al cierre del día.
 - [ ] **Hora límite de carga de insumos.** Compras revisa a las 9:00, así que las áreas
       tendrían que cargar antes. Confirmar cuál es el horario límite real y sumarlo a
       [Herramientas digitales](../comunes/herramientas-digitales.md).
