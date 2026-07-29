@@ -394,11 +394,19 @@ function diasCorrespondenEfectivos(name,anio){
   return diasCorresponden(p.ingreso,anio);
 }
 function rangoDias(desdeISO,hastaISO){return diffDias(fecha(desdeISO),fecha(hastaISO))+1;}
-function tomadosPorPeriodo(name,periodo){
+// suma de los rangos cargados (lo que da cargar cada vacación con sus fechas)
+function tomadosCalculado(name,periodo){
   return state.taken.filter(t=>t.n===name&&t.periodo===periodo).reduce((s,t)=>s+rangoDias(t.desde,t.hasta),0);
 }
+// lo que se usa de verdad: prioriza el ajuste manual (útil si no querés cargar cada rango de fechas,
+// o si el total real difiere de lo que dan los rangos cargados) por sobre la suma calculada.
+function tomadosEfectivos(name,periodo){
+  if(state.overridesTomado[name]&&state.overridesTomado[name][periodo]!=null)
+    return{dias:state.overridesTomado[name][periodo],manual:true};
+  return{dias:tomadosCalculado(name,periodo),manual:false};
+}
 function saldoPeriodo(name,periodo){
-  return diasCorrespondenEfectivos(name,periodo).dias-tomadosPorPeriodo(name,periodo);
+  return diasCorrespondenEfectivos(name,periodo).dias-tomadosEfectivos(name,periodo).dias;
 }
 const PRIMER_PERIODO=2025; // el balance solo trackea desde acá (saldo 2025/26 + lo que se va sumando); coincide con las columnas de la tabla
 function aniosDesdeIngreso(name){
@@ -419,7 +427,7 @@ function saldoTotal(name){
 }
 
 /* ---------------- ESTADO ---------------- */
-function defaultState(){return{taken:[],overrides:{}};}
+function defaultState(){return{taken:[],overrides:{},overridesTomado:{}};}
 let state=defaultState();
 const LS="candela_vacaciones_v1";
 const UNDO_LIMIT=60;
@@ -524,8 +532,9 @@ function renderBalance(){
     h+=`<tr><td class="persona-cell">${p.n}<span class="ant">${antiguedadTexto(p.n)}</span></td>`;
     anios.forEach(y=>{
       const c=diasCorrespondenEfectivos(p.n,y);
-      const t=tomadosPorPeriodo(p.n,y);
-      h+=`<td>${c.dias}${c.proporcional?"*":""}<button class="editIcon" data-edit="${p.n}|${y}" title="Ajustar manualmente">✎</button></td><td>${t}</td>`;
+      const t=tomadosEfectivos(p.n,y);
+      h+=`<td>${c.dias}${c.proporcional?"*":""}<button class="editIcon" data-edit="${p.n}|${y}" title="Ajustar manualmente">✎</button></td>`;
+      h+=`<td>${t.dias}${t.manual?"*":""}<button class="editIcon" data-edittom="${p.n}|${y}" title="${t.manual?"Ajustado a mano — click para editar o volver al cálculo automático":"Ajustar manualmente"}">✎</button></td>`;
     });
     const tot=saldoTotal(p.n);
     const cls=tot>0?(tot>=10?"pos":"warn"):"zero";
@@ -541,6 +550,17 @@ function renderBalance(){
     if(!state.overrides[n])state.overrides[n]={};
     if(v.trim().toLowerCase()==="auto")delete state.overrides[n][y];
     else{const num=parseInt(v,10);if(!isNaN(num))state.overrides[n][y]=num;}
+    persist();render();
+  }));
+  tbl.querySelectorAll("[data-edittom]").forEach(b=>b.addEventListener("click",()=>{
+    const[n,y]=b.dataset.edittom.split("|");
+    const calculado=tomadosCalculado(n,+y);
+    const cur=tomadosEfectivos(n,+y).dias;
+    const v=prompt(`Días que ${n} ya tomó en ${y} (calculado según las vacaciones cargadas: ${calculado}). Escribí "auto" para volver a usar ese cálculo en vez de un número fijo.`,String(cur));
+    if(v==null)return;
+    if(!state.overridesTomado[n])state.overridesTomado[n]={};
+    if(v.trim().toLowerCase()==="auto")delete state.overridesTomado[n][y];
+    else{const num=parseInt(v,10);if(!isNaN(num))state.overridesTomado[n][y]=num;}
     persist();render();
   }));
 }
