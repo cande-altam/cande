@@ -30,7 +30,7 @@ y **un local de producción**.
 | Facturería | — | ⬜ Pendiente |
 | Especialidades | — | ⬜ Pendiente |
 | Sandwiches | — | ⬜ Pendiente |
-| Compras / Despacho | — | ⬜ Pendiente |
+| Compras | [produccion/compras.md](produccion/compras.md) | 🟡 v1.0 — Julio 2026 · con puntos a definir |
 
 > **Cocina San Luis no lleva manual propio.** Forma parte del local San Luis y
 > funciona de forma independiente **solo para pedir insumos**, no como área de
@@ -101,9 +101,10 @@ Cosas que salieron al pasar los manuales a este formato y que conviene resolver:
 - [x] ~~**"Cocina San Luis" no existe como área en la app.**~~ **Resuelto:** sí existe,
       y está bien modelada (`cuadra:false`). No es un área de producción aparte —
       es parte del local San Luis y solo pide insumos por su cuenta.
-- [ ] **"Compras" no tiene manual.** Es un rol activo en la app (despacho de mercadería
-      e insumos) y todavía no está documentado. **Los procesos hay que armarlos desde
-      cero** — no existe documento previo.
+- [x] ~~**"Compras" no tiene manual."**~~ **Escrito** en
+      [produccion/compras.md](produccion/compras.md) v1.0. Queda en amarillo porque
+      tiene seis puntos de proceso sin definir, listados al final del propio manual —
+      entre ellos **el manejo del efectivo**, que es el más importante.
 - [ ] **Archivos obsoletos en el repo.** `index.html` es autocontenido y no carga nada
       de `js/`. La carpeta `js/` completa y el `README.md` de la raíz son scaffold de
       la primera versión y describen un sistema que ya no es el que corre: cortes
