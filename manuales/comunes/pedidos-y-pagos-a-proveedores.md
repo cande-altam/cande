@@ -5,6 +5,17 @@
 > **Documento común.** Aplica a **Compras**, **Administración** y a los **locales de
 > venta**. Es la fuente única de verdad del calendario de pedidos y pagos.
 
+> ### 📌 A qué proveedores aplica este calendario
+> A los que **entregan la mercadería directamente en los locales**. Para ellos,
+> Administración hace llegar el dinero al local, de modo que **ningún local tenga que
+> tocar el efectivo de su caja para pagar**.
+>
+> Las compras que **Compras hace en su recorrido** van por otro circuito: estimado de
+> gasto → efectivo de Administración → pago en el momento. Ver
+> **[Manual de Compras, Sección 3](../produccion/compras.md#3-el-dinero-del-día)**.
+>
+> ✅ **Este circuito está vigente y en uso.**
+
 ---
 
 ## Las tres reglas
@@ -158,7 +169,7 @@ cualquier reparación, sin importar el monto.
       guarda un proveedor por producto y permite ordenar el recorrido por proveedor.
       Habría que verificar que esos nombres coincidan con los de esta lista.
 - [ ] **Qué pasa si se necesita algo fuera del día de pedido.** Ver el circuito de
-      urgencias en el [Manual de Compras](../produccion/compras.md#6-faltantes-y-urgencias).
+      urgencias en el [Manual de Compras](../produccion/compras.md#7-faltantes-y-urgencias).
 - [ ] **Autoría del documento original.** El PDF de origen figura firmado por
       *"Olivia Wilson"* — es el texto de ejemplo de la plantilla de Canva, no una
       persona real. Corregirlo antes de repartir el documento.

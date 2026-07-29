@@ -18,8 +18,9 @@ El puesto lo ocupa **una sola persona**, y su trabajo tiene **dos aristas**:
 | 🚚 **Reparto** | Llevar la mercadería del día a cada local de venta |
 | 🛒 **Compra** | Comprar todos los insumos y materias primas que pide cada área |
 
-> ⚠️ **Este puesto maneja dinero.** Casi todas las compras se pagan en el momento.
-> Todo lo que se gasta se rinde con factura (ver Sección 7).
+> ⚠️ **Este puesto maneja dinero.** Casi todas las compras se pagan en el momento, con
+> efectivo que entrega Administración (ver Sección 3). Todo lo que se gasta se rinde
+> con factura (ver Sección 8).
 
 ---
 
@@ -31,6 +32,7 @@ El puesto lo ocupa **una sola persona**, y su trabajo tiene **dos aristas**:
 |---|---|
 | **6:45** | Inicio del turno — **primer reparto** de mercadería a los locales |
 | **9:00** | **Revisión del pedido completo** del día y armado del recorrido |
+| **9:00** | **Estimado de gasto** calculado y pasado a Administración → retiro del efectivo |
 | **9:00 – 13:00** | Recorrido de compras |
 | **Antes de las 13:00** | **Segundo reparto** a los locales |
 | **Cierre** | Marcar en el sistema lo comprado y dejar los pendientes |
@@ -75,7 +77,7 @@ Cada área marca sus insumos con un color. **El color define qué tan urgente es
 | 🟢 **Stock OK** | Reposición normal | Puede esperar al próximo recorrido |
 
 > ⚠️ **Un insumo en rojo no puede quedar pendiente al final del día.** Si no lo
-> conseguís en el recorrido normal, hay que salir a buscarlo (ver Sección 6).
+> conseguís en el recorrido normal, hay que salir a buscarlo (ver Sección 7).
 
 ### Los comentarios
 
@@ -96,7 +98,40 @@ momento:
 
 ---
 
-## 3. La regla del pedido
+## 3. El dinero del día
+
+Una vez armado el recorrido, y **antes de salir**, resolvés la plata.
+
+### Paso a paso
+
+1. **Calculá un estimado de gasto del día** en base al pedido que acabás de revisar.
+2. **Comunicaselo a Administración.**
+3. **Administración te entrega el efectivo.**
+4. Salís al recorrido y **pagás en el momento** cada compra.
+5. **Si el efectivo no alcanza** → se resuelve con una **transferencia**.
+
+> ### 🔑 El efectivo nunca sale de la caja de un local.
+> Toda la plata con la que Compras trabaja viene de Administración.
+
+### Los dos circuitos de pago
+
+Hay **dos formas** en que se le paga a un proveedor. Las dos pasan por Administración:
+
+| | **A — Compras sale a comprar** | **B — El proveedor entrega en el local** |
+|---|---|---|
+| **Quién paga** | Compras, en el recorrido | Quien recibe en el local |
+| **Cuándo** | En el momento de la compra | En el día de pago del proveedor |
+| **De dónde sale la plata** | Efectivo que Administración entregó contra el estimado | Efectivo que Administración envía al local |
+| **Si no alcanza** | Transferencia | Transferencia |
+| **Caja del local** | ⛔ Nunca se toca | ⛔ Nunca se toca |
+
+> 📖 El circuito **B** y el calendario de qué proveedor se pide y se paga cada día
+> están en
+> **[Pedidos y pagos a proveedores](../comunes/pedidos-y-pagos-a-proveedores.md)**.
+
+---
+
+## 4. La regla del pedido
 
 > ### 🔑 Cada área es responsable de su propio pedido de insumos.
 > **Si un área no carga lo que necesita, nadie lo va a comprar.**
@@ -107,7 +142,7 @@ encargado para que no vuelva a pasar.
 
 ---
 
-## 4. Proveedores
+## 5. Proveedores
 
 - Un mismo insumo puede tener **varios proveedores**, y cada proveedor puede ofrecer
   **varias marcas**. No hay un proveedor único por producto.
@@ -134,7 +169,7 @@ Lo esencial:
 
 ---
 
-## 5. Recepción de mercadería
+## 6. Recepción de mercadería
 
 Hay **dos caminos** según cómo entregue el proveedor:
 
@@ -162,7 +197,7 @@ Algunos insumos se registran en FUDO y otros no.
 
 ---
 
-## 6. Faltantes y urgencias
+## 7. Faltantes y urgencias
 
 Si un área se queda sin un insumo **en pleno turno**:
 
@@ -177,7 +212,7 @@ Si un área se queda sin un insumo **en pleno turno**:
 
 ---
 
-## 7. Cierre — Marcado y rendición
+## 8. Cierre — Marcado y rendición
 
 ### Marcar lo comprado
 
@@ -193,7 +228,8 @@ que ya compraste.** No lo dejes todo para el final.
 
 ### Rendición de dinero
 
-Casi todas las compras se pagan **en el momento**. Al cierre:
+Las compras del recorrido se pagan **en el momento**, con el efectivo que
+Administración te entregó contra el estimado de la mañana (Sección 3). Al cierre:
 
 1. Juntá **todas las facturas** del día.
 2. Presentalas a **Administración**.
@@ -203,22 +239,20 @@ Casi todas las compras se pagan **en el momento**. Al cierre:
 > ⚠️ **Una compra sin factura no se puede rendir.** Pedí comprobante siempre, incluso
 > en compras chicas.
 
-> 🚧 **Atención — dos circuitos distintos que hay que separar.**
-> El pago **en el momento** descrito acá convive con el circuito del calendario de
-> proveedores, donde **Administración autoriza el pago con un día de anticipación** y
-> hace llegar el efectivo al local. Son dos cosas diferentes:
->
-> | | Compra de mostrador | Proveedor con calendario |
-> |---|---|---|
-> | **Cuándo se paga** | En el momento | En el día de pago del proveedor |
-> | **De dónde sale la plata** | *(a definir)* | Administración la envía o transfiere |
-> | **Autorización previa** | *(a definir)* | Siempre |
->
-> Falta definir por escrito **cuál aplica a qué compra**. Ver "Pendientes" al final.
+El circuito del dinero se cierra así:
+
+```
+Estimado de gasto  ──►  Efectivo de Administración  ──►  Compras del día
+                                                              │
+                                                              ▼
+                          Administración verifica    ◄──  Facturas rendidas
+```
+
+Lo que se estimó, lo que se entregó y lo que se facturó tienen que cerrar entre sí.
 
 ---
 
-## 8. Segundo reparto — Antes de las 13:00
+## 9. Segundo reparto — Antes de las 13:00
 
 Antes de terminar el turno, hacé el **segundo reparto** a los locales con lo que
 compraste durante la mañana.
@@ -227,7 +261,7 @@ Igual que en el primero: **cada local revisa lo que recibe, no se firma nada.**
 
 ---
 
-## 9. Indicadores de desempeño (KPIs)
+## 10. Indicadores de desempeño (KPIs)
 
 | Indicador | Meta |
 |---|---|
@@ -257,12 +291,16 @@ Igual que en el primero: **cada local revisa lo que recibe, no se firma nada.**
 - ☐ Insumos 🔴 **Urgente** identificados
 - ☐ Comentarios de cada área leídos
 - ☐ Recorrido armado (vista ordenada **por proveedor**)
+- ☐ **Estimado de gasto del día** calculado
+- ☐ Estimado comunicado a Administración
+- ☐ **Efectivo recibido** antes de salir
 - ☐ Si el pedido supera los **50 ítems** → autorización de Administración pedida
 
 ### Durante el recorrido (9:00 – 13:00)
 
 - ☐ Cada producto comprado, **marcado en el sistema en el momento**
 - ☐ Factura pedida y guardada en cada compra
+- ☐ Si el efectivo no alcanzó → transferencia pedida a Administración
 - ☐ Urgentes conseguidos — o alternativa buscada
 - ☐ Áreas avisadas si algo no se consiguió
 
@@ -288,16 +326,14 @@ Conviene resolverlos y actualizar el documento:
       práctica**. Definir si se hace cumplir — hoy genera urgencias evitables.
 - [ ] **Qué se registra en FUDO.** Hoy algunos insumos sí y otros no, por costumbre.
       Falta el criterio escrito.
-- [ ] **🔴 Manejo del dinero — dos circuitos sin frontera.** El calendario de
-      proveedores dice que **Administración autoriza y envía el dinero**, y que
-      **ningún pago sale de la caja del local**. Pero Compras además **paga en el
-      momento** las compras del recorrido. Falta definir:
-      - Qué compras van por cada circuito.
-      - De dónde sale la plata del pago en el momento: fondo fijo, retiro diario, otro.
-      - Si hay un **tope de gasto** sin autorización previa.
-
-      Es el punto más importante que quedó abierto: hoy una sola persona maneja
-      efectivo y el control recién llega al cierre del día.
+- [x] ~~**Manejo del dinero.**~~ **Resuelto** y documentado en la Sección 3: Compras
+      estima el gasto del día, Administración entrega el efectivo, y si no alcanza se
+      cubre con transferencia. Ningún pago sale de la caja del local.
+- [ ] **Sobrante de efectivo.** Si el estimado fue mayor al gasto real, no está escrito
+      qué se hace con la diferencia: se devuelve el mismo día, queda como fondo para
+      mañana, o se descuenta del retiro siguiente. Definirlo cierra el circuito.
+- [ ] **Cómo se comunica el estimado.** ¿Verbal, WhatsApp, planilla? Y si queda
+      registro de cuánto se pidió contra cuánto se entregó.
 - [ ] **Hora límite de carga de insumos.** Compras revisa a las 9:00, así que las áreas
       tendrían que cargar antes. Confirmar cuál es el horario límite real y sumarlo a
       [Herramientas digitales](../comunes/herramientas-digitales.md).
