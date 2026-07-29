@@ -635,7 +635,13 @@ function peopleFor(role,loc){
 }
 
 /* ---------------- STATE ---------------- */
-function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{}};}
+function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[]};}
+// las reglas "semilla" (seedFixedRules, seedCocinaComprasCajero) se cargan una sola vez por tag.
+// Antes se detectaba "ya cargada" mirando si quedaba algún turno fijo con ese tag — pero si borrabas
+// el grupo ENTERO, no quedaba ninguno, y el sistema lo tomaba como "todavía no cargada" y lo volvía a
+// crear solo: no había forma de borrarlo para siempre. Ahora se guarda aparte qué tags ya se aplicaron.
+function migrationDone(tag){return state.migrationsApplied&&state.migrationsApplied.includes(tag);}
+function marcarMigracion(tag){if(!state.migrationsApplied)state.migrationsApplied=[];if(!state.migrationsApplied.includes(tag))state.migrationsApplied.push(tag);}
 let state=defaultState();
 const LS="candela_scheduler_v1";
 // deshacer/rehacer: cada persist() guarda una foto de cómo estaba el estado ANTES de este cambio
@@ -1639,7 +1645,8 @@ function seedFixedRules(){
   // v2: reemplaza cualquier resto parcial de v1 (algunas reglas se habían perdido) por el set completo de 8.
   const OLD_TAG="finde-cortado-matias-gonzalo-v1";
   const TAG="finde-cortado-matias-gonzalo-v2";
-  if(state.fixed.some(f=>f.seedTag===TAG))return; // ya migrado, no tocar (respeta borrados intencionales del usuario a partir de acá)
+  if(migrationDone(TAG))return; // ya se aplicó (se haya borrado después o no) — no tocar
+  if(state.fixed.some(f=>f.seedTag===TAG)){marcarMigracion(TAG);return;} // venía de una versión vieja que ya la había cargado
   state.fixed=state.fixed.filter(f=>f.seedTag!==OLD_TAG);
   let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,role:"cocina",half:true,...extra});
   state.fixed.push(
@@ -1654,6 +1661,7 @@ function seedFixedRules(){
     mk({n:"Matías", days:[6],shift:"M",loc:"SL"}),
     mk({n:"Matías", days:[6],shift:"T",loc:"SL"}),
   );
+  marcarMigracion(TAG);
   persist();
 }
 
@@ -1661,7 +1669,8 @@ function seedFixedRules(){
 // el cruce Gonzalo/Matías de arriba + el autocompletado, para no pisar ese armado especial)
 function seedCocinaComprasCajero(){
   const TAG="cocina-compras-cajero-v1";
-  if(state.fixed.some(f=>f.seedTag===TAG))return;
+  if(migrationDone(TAG))return;
+  if(state.fixed.some(f=>f.seedTag===TAG)){marcarMigracion(TAG);return;}
   let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,...extra});
   state.fixed.push(
     // Cocina San Luis
@@ -1681,6 +1690,7 @@ function seedCocinaComprasCajero(){
     mk({n:"Natalia",role:"cajero",days:[0,1,2,3,4,5,6],shift:"M",loc:"SL"}),
     mk({n:"Javier", role:"cajero",days:[0,1,2,3,4,5,6],shift:"T",loc:"SL"}),
   );
+  marcarMigracion(TAG);
   persist();
 }
 
