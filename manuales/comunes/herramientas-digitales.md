@@ -32,6 +32,11 @@ Se carga **una vez por turno**, antes del horario límite de cada área.
 | Sandwiches | **21:00 hs** |
 | Cocina San Luis | **21:00 hs** |
 
+> ℹ️ **Sobre Cocina San Luis:** forma parte del local San Luis, no es un área de
+> producción aparte. Funciona de forma independiente **solo para pedir insumos** —
+> por eso aparece en esta lista con su propio horario. No tiene cuadra de producción
+> ni personal propio: la operación es del local San Luis.
+
 > ⚠️ **Si no cargás a tiempo, producción no puede cumplir.**
 > El pedido es para el **día siguiente**, salvo que el encargado indique otra cosa.
 > Si te olvidaste, avisá al encargado **inmediatamente** — no lo dejes pasar.

@@ -30,8 +30,11 @@ y **un local de producción**.
 | Facturería | — | ⬜ Pendiente |
 | Especialidades | — | ⬜ Pendiente |
 | Sandwiches | — | ⬜ Pendiente |
-| Cocina San Luis | — | ⬜ Pendiente |
 | Compras / Despacho | — | ⬜ Pendiente |
+
+> **Cocina San Luis no lleva manual propio.** Forma parte del local San Luis y
+> funciona de forma independiente **solo para pedir insumos**, no como área de
+> producción aparte. Su operación queda cubierta por los manuales de venta.
 
 ### 📋 Documentos comunes
 
@@ -91,14 +94,22 @@ escritos. Copiala, renombrala y completala.
 
 Cosas que salieron al pasar los manuales a este formato y que conviene resolver:
 
-- [ ] **Horarios de corte inconsistentes.** El `README.md` de la app de Pedidos de
-      Producción dice que Facturería, Especialidades y Sandwiches son *"sin corte"*.
-      Los manuales v2.0 dicen **21:00 hs**. Acá se tomó el valor de los manuales por
-      ser más recientes — falta alinear la app.
-- [ ] **"Cocina San Luis" no existe como área en la app.** Aparece en los manuales con
-      corte a las 21:00 hs, pero no está en la lista de áreas del sistema.
+- [x] ~~**Horarios de corte inconsistentes.**~~ **Resuelto:** el corte de Facturería,
+      Especialidades y Sandwiches es **21:00 hs**, y la app en vivo (`index.html`) ya
+      lo tiene bien. El *"sin corte"* aparecía solo en `js/config.js` y en el
+      `README.md` de la raíz — ver "Archivos obsoletos" más abajo.
+- [x] ~~**"Cocina San Luis" no existe como área en la app.**~~ **Resuelto:** sí existe,
+      y está bien modelada (`cuadra:false`). No es un área de producción aparte —
+      es parte del local San Luis y solo pide insumos por su cuenta.
 - [ ] **"Compras" no tiene manual.** Es un rol activo en la app (despacho de mercadería
-      e insumos) y todavía no está documentado.
+      e insumos) y todavía no está documentado. **Los procesos hay que armarlos desde
+      cero** — no existe documento previo.
+- [ ] **Archivos obsoletos en el repo.** `index.html` es autocontenido y no carga nada
+      de `js/`. La carpeta `js/` completa y el `README.md` de la raíz son scaffold de
+      la primera versión y describen un sistema que ya no es el que corre: cortes
+      distintos, sin Cocina San Luis, contraseñas que no coinciden
+      (`admin2024` vs. `candela2025`). Conviene borrarlos o marcarlos como obsoletos
+      para que nadie los tome como referencia.
 - [ ] **PINs en texto plano.** Los PINs por área están escritos en los manuales. Si
       alguna vez se rotan, hay que actualizarlos en los tres archivos.
 - [ ] **Nombre de marca en los documentos originales.** Los Google Docs siguen diciendo
