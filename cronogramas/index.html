@@ -771,9 +771,23 @@ function regenerateFixedHalfExtras(){
     const p=BY_NAME[f.n];if(!p)return;const loc=fxLocFor(f),role=f.role||roleFor(f.n);
     f.days.forEach(d=>{
       if(isOut(f.n,d)||isClosed(d,loc,f.shift))return;
-      state.ex.push({id:`auto-${f.id}-${d}`,auto:true,n:f.n,day:d,shift:f.shift,loc,role,half:true});
+      state.ex.push({id:`auto-${f.id}-${d}`,auto:true,fixedId:f.id,n:f.n,day:d,shift:f.shift,loc,role,half:true});
     });
   });
+}
+// borrar (desde la grilla o desde "Personas extra") un refuerzo AUTOMÁTICO de un turno fijo de medio
+// turno (ej: Gonzalo/Matías el finde) solo lo ocultaba ese momento: como la regla permanente seguía
+// en state.fixed, regenerateFixedHalfExtras() la volvía a crear en la próxima sincronización o recarga.
+// Esto borra el día de la regla permanente (y la regla entera si ya no le quedan días), así queda
+// borrado de verdad. Para borrar un turno fijo entero de una, seguís usando la lista "Turno fijo".
+function quitarRefuerzoAuto(exEntry){
+  if(!exEntry||!exEntry.auto||!exEntry.fixedId)return false;
+  const f=state.fixed.find(x=>x.id===exEntry.fixedId);
+  if(!f)return false;
+  f.days=f.days.filter(d=>d!==exEntry.day);
+  if(!f.days.length)state.fixed=state.fixed.filter(x=>x.id!==f.id);
+  regenerateFixedHalfExtras();
+  return true;
 }
 
 /* ---------------- AUTOCOMPLETE ---------------- */
@@ -1114,7 +1128,11 @@ function renderSched(worked,empty){
     sel.addEventListener("change",e=>{
       const id=e.target.dataset.ex,idx=state.ex.findIndex(x=>String(x.id)===id);
       if(idx<0)return;
-      if(e.target.value)state.ex[idx].n=e.target.value;else{state.ex.splice(idx,1);delete state.comments["ex:"+id];}
+      if(e.target.value)state.ex[idx].n=e.target.value;
+      else{
+        delete state.comments["ex:"+id];
+        if(!quitarRefuerzoAuto(state.ex[idx]))state.ex.splice(idx,1);
+      }
       renderMini();render();persist();
     });
   });
@@ -1508,7 +1526,13 @@ function renderMini(){
     if(t==="role"){delete state.roleOverride[b.dataset.i];fillPersonSelects();renderMini();render();persist();return;}
     if(t==="rolebackup"){delete state.backupOverride[b.dataset.i];fillPersonSelects();renderMini();render();persist();return;}
     const i=+b.dataset.i;
-    if(t==="abs")state.abs.splice(i,1);else if(t==="ex"){delete state.comments["ex:"+state.ex[i].id];state.ex.splice(i,1);}else if(t==="rule")state.rules.splice(i,1);else state.fixed.splice(i,1);
+    if(t==="abs")state.abs.splice(i,1);
+    else if(t==="ex"){
+      delete state.comments["ex:"+state.ex[i].id];
+      if(!quitarRefuerzoAuto(state.ex[i]))state.ex.splice(i,1);
+    }
+    else if(t==="rule")state.rules.splice(i,1);
+    else state.fixed.splice(i,1);
     if(t==="fixed")regenerateFixedHalfExtras(); // si borraste una regla fija de medio turno, su refuerzo desaparece del calendario ya mismo
     renderMini();render();persist();
   }));
