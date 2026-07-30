@@ -288,7 +288,9 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const cloudRef = ref(db, "vacaciones/state");
 
-let lastSeenJSON = null;
+// ver el comentario equivalente en cronogramas/index.html: guardamos CADA guardado pendiente
+// (no solo el último), para que dos guardados en el aire al mismo tiempo no se confundan entre sí.
+let pendingEchoes = [];
 let pushTimer = null;
 
 window.CloudSync = {
@@ -296,12 +298,15 @@ window.CloudSync = {
     clearTimeout(pushTimer);
     pushTimer = setTimeout(()=>{
       const json = JSON.stringify(stateObj);
-      if(json===lastSeenJSON)return;
-      lastSeenJSON = json;
+      pendingEchoes.push(json);
+      if(pendingEchoes.length>25)pendingEchoes.shift();
       window.dispatchEvent(new CustomEvent("cloudsync-saving"));
       set(cloudRef, stateObj)
         .then(()=>window.dispatchEvent(new CustomEvent("cloudsync-saved")))
-        .catch(err=>{console.error("cloudsync:",err);window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));});
+        .catch(err=>{
+          pendingEchoes=pendingEchoes.filter(j=>j!==json);
+          console.error("cloudsync:",err);window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
+        });
     }, 400);
   }
 };
@@ -309,8 +314,10 @@ window.CloudSync = {
 onValue(cloudRef, snap=>{
   const remote = snap.val();
   const remoteJSON = remote==null ? null : JSON.stringify(remote);
-  if(remoteJSON!==null && remoteJSON===lastSeenJSON)return;
-  if(remoteJSON!==null)lastSeenJSON = remoteJSON;
+  if(remoteJSON!==null){
+    const idx=pendingEchoes.indexOf(remoteJSON);
+    if(idx>=0){pendingEchoes.splice(idx,1);return;}
+  }
   window.dispatchEvent(new CustomEvent("cloudsync-update",{detail:remote}));
 }, err=>{
   console.error("cloudsync onValue:",err);
