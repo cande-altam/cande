@@ -598,7 +598,6 @@ const PEOPLE=[
   {n:"Milagros",role:"atencion",loc:"both",franco:"mie",must:{day:"lun",loc:"SLA",shift:"M",role:"atencion"}},
   {n:"Zoe",role:"atencion",loc:"both",franco:"vie",must:{day:"jue",loc:"SLA",shift:"M",role:"atencion"}},
   {n:"Rebeca",role:"atencion",loc:"SLA",franco:"mie"},
-  {n:"Cintia",role:"atencion",loc:"SL",franco:"jue"},
 ];
 const BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
 const EVENT_HE=["Dana","Brenda","Guadalupe","Aaron","Lucía","Luciana","Gabriel","Valentina"];
@@ -1753,10 +1752,23 @@ document.getElementById("authPass").focus();
 /* ---------------- SINCRONIZACIÓN ENTRE DISPOSITIVOS ---------------- */
 // reglas semilla + limpieza que hay que correr sí o sí, venga el estado de localStorage
 // (arranque normal) o recién llegado de la nube (por si viene de una versión vieja del código).
+// saca del estado cualquier referencia a alguien que ya no está en el equipo (PEOPLE) — franco fijo,
+// turno fijo, puesto cambiado, ausencias, refuerzos manuales — para que no queden datos fantasma
+// colgados cuando alguien deja de trabajar acá.
+function limpiarPersonasDadasDeBaja(){
+  state.fixed=state.fixed.filter(f=>BY_NAME[f.n]);
+  state.abs=state.abs.filter(a=>BY_NAME[a.n]);
+  state.ex=state.ex.filter(e=>BY_NAME[e.n]);
+  Object.keys(state.francoFixed).forEach(n=>{if(!BY_NAME[n])delete state.francoFixed[n];});
+  Object.keys(state.roleOverride).forEach(n=>{if(!BY_NAME[n])delete state.roleOverride[n];});
+  Object.keys(state.backupOverride).forEach(n=>{if(!BY_NAME[n])delete state.backupOverride[n];});
+  Object.keys(state.assign).forEach(k=>{if(!BY_NAME[state.assign[k]])delete state.assign[k];});
+}
 function runMigrations(){
   state.ex.forEach(e=>{if(e.id==null)e.id=Date.now()+"-"+Math.round(Math.random()*1e6);});
   seedFixedRules();
   seedCocinaComprasCajero();
+  limpiarPersonasDadasDeBaja();
   dedupeFixed();
   regenerateFixedHalfExtras();
   dedupeEx();

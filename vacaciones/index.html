@@ -359,7 +359,6 @@ const PEOPLE=[
   {n:"Milagros",ingreso:"2023-12-01"},
   {n:"Zoe",ingreso:"2024-08-01"},
   {n:"Rebeca",ingreso:"2024-06-01"},
-  {n:"Cintia",ingreso:"2023-10-11"},
 ];
 const BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
 
@@ -489,10 +488,12 @@ function applyRemoteState(remote){
   if(JSON.stringify(remote)===JSON.stringify(state)){setSyncStatus("ok");return;}
   suspendHistory=true;
   state=Object.assign(defaultState(),remote);
+  limpiarPersonasDadasDeBaja();
   localStorage.setItem(LS,JSON.stringify(state));
   suspendHistory=false;
   render();
   syncUndoRedoButtons();
+  persist(); // por si la limpieza sacó algo, se lo mandamos de vuelta a la nube
   setSyncStatus("ok");
   if(!isFirst)toast("Vacaciones actualizadas desde otro dispositivo ☁️");
 }
@@ -724,11 +725,20 @@ function seedTaken(){
   persist();
 }
 
+// saca del estado cualquier referencia a alguien que ya no está en el equipo (PEOPLE), para que no
+// queden vacaciones o ajustes colgados de gente que dejó de trabajar acá.
+function limpiarPersonasDadasDeBaja(){
+  state.taken=state.taken.filter(t=>BY_NAME[t.n]);
+  Object.keys(state.overrides).forEach(n=>{if(!BY_NAME[n])delete state.overrides[n];});
+  Object.keys(state.overridesTomado).forEach(n=>{if(!BY_NAME[n])delete state.overridesTomado[n];});
+}
+
 /* ---------------- BOOT ---------------- */
 document.getElementById("appVersion").textContent="v"+APP_VERSION;
 loadLS();
 seedOverrides();
 seedTaken();
+limpiarPersonasDadasDeBaja();
 initControls();
 render();
 undoStack.length=0;redoStack.length=0;syncUndoRedoButtons();
