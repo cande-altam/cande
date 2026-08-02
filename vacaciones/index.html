@@ -61,6 +61,11 @@
   .btn.ghost{background:transparent}
   .btn.sm{padding:5px 9px;font-size:11.5px}
   .icon-btn{width:38px;height:38px;padding:0;justify-content:center;border-radius:10px}
+  .noteOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:550;display:flex;align-items:center;justify-content:center;padding:20px}
+  .noteCard{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+  .noteCard .noteHead{padding:15px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .noteCard .noteHead button{border:none;background:transparent;color:var(--ink-soft);font-size:19px;cursor:pointer;line-height:1;padding:2px}
+  .noteCard .noteBody{padding:16px 18px}
   .syncStatus{font-size:16px;opacity:.45;cursor:default;user-select:none;line-height:1}
   .syncStatus.saving{opacity:1;animation:syncPulse 1s ease-in-out infinite}
   .syncStatus.ok{opacity:.75}
@@ -190,6 +195,7 @@
     <span id="syncStatus" class="syncStatus" title="Conectando…">☁️</span>
     <button class="btn ghost icon-btn" id="btnUndo" title="Deshacer el último cambio" disabled>↩️</button>
     <button class="btn ghost icon-btn" id="btnRedo" title="Rehacer" disabled>↪️</button>
+    <button class="btn ghost icon-btn" id="btnHistory" title="Ver versiones anteriores guardadas en la nube">🕐</button>
     <button class="btn ghost icon-btn" id="btnTheme" title="Cambiar tema">◐</button>
     <button class="btn ghost icon-btn" id="btnLogout" title="Cerrar sesión">🚪</button>
   </header>
@@ -273,7 +279,7 @@
 // Sincronización entre dispositivos (Firebase Realtime Database) — mismo proyecto y patrón que
 // usan Cronogramas y Presupuestos en este sitio. Ver comentarios equivalentes en cronogramas/index.html.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
@@ -323,11 +329,35 @@ onValue(cloudRef, snap=>{
   console.error("cloudsync onValue:",err);
   window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
 });
+
+// Historial de versiones aparte del estado "vivo" — ver el comentario equivalente en
+// cronogramas/index.html. Misma protección para los datos de vacaciones.
+const historyRef = ref(db, "vacaciones/history");
+const HISTORY_MAX = 40;
+window.CloudHistory = {
+  save(stateObj){
+    const key = new Date().toISOString().replace(/[:.]/g,"-");
+    const snap = Object.assign({}, stateObj, {_snapshotAt:new Date().toISOString()});
+    set(ref(db, "vacaciones/history/"+key), snap).catch(err=>console.error("history save:",err));
+    get(historyRef).then(s=>{
+      const val=s.val(); if(!val)return;
+      const keys=Object.keys(val).sort();
+      const exceso=keys.length-HISTORY_MAX;
+      if(exceso>0)keys.slice(0,exceso).forEach(k=>remove(ref(db,"vacaciones/history/"+k)).catch(()=>{}));
+    }).catch(()=>{});
+  },
+  list(cb){
+    get(historyRef).then(s=>{
+      const val=s.val()||{};
+      cb(Object.keys(val).sort().reverse().map(k=>({key:k,state:val[k]})));
+    }).catch(err=>{console.error("history list:",err);cb(null);});
+  }
+};
 </script>
 
 <script>
 "use strict";
-const APP_VERSION="2026-07-28 18:00";
+const APP_VERSION="2026-08-05 historial-v1";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -438,6 +468,17 @@ let state=defaultState();
 const LS="candela_vacaciones_v1";
 const UNDO_LIMIT=60;
 let undoStack=[],redoStack=[],suspendHistory=false;
+// foto aparte en la nube cada tanto (ver comentario equivalente en cronogramas/index.html):
+// sobrevive aunque cierres la pestaña, a diferencia del deshacer local.
+let lastSnapshotAt=0;
+const SNAPSHOT_MIN_INTERVAL=10*60*1000;
+function maybeSnapshot(){
+  if(!window.CloudHistory)return;
+  const now=Date.now();
+  if(now-lastSnapshotAt<SNAPSHOT_MIN_INTERVAL)return;
+  lastSnapshotAt=now;
+  window.CloudHistory.save(state);
+}
 function persist(){
   if(!suspendHistory){
     const prev=localStorage.getItem(LS);
@@ -445,12 +486,13 @@ function persist(){
   }
   localStorage.setItem(LS,JSON.stringify(state));
   syncUndoRedoButtons();
-  if(!suspendHistory&&window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);}
+  if(!suspendHistory&&window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);maybeSnapshot();}
 }
 function loadLS(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.taken){state=Object.assign(defaultState(),s);}}catch(e){}}
 function restoreSnapshot(json){
-  state=JSON.parse(json);
+  state=Object.assign(defaultState(),JSON.parse(json));
   suspendHistory=true;
+  limpiarPersonasDadasDeBaja(); // por si el snapshot es viejo y tiene a alguien que ya no está
   localStorage.setItem(LS,JSON.stringify(state));
   suspendHistory=false;
   render();
@@ -514,6 +556,51 @@ function attemptAuth(){
 
 /* ---------------- RENDER ---------------- */
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1900);}
+
+function fmtSnapshotDate(iso){
+  const d=new Date(iso);
+  const dias=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+  return `${dias[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")} · ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}hs`;
+}
+// panel de versiones guardadas en la nube — ver el comentario equivalente en cronogramas/index.html.
+function openHistoryPanel(){
+  document.getElementById("historyOverlay")?.remove();
+  const ov=document.createElement("div");
+  ov.className="noteOverlay";
+  ov.id="historyOverlay";
+  ov.innerHTML=`<div class="noteCard" style="max-width:460px">
+    <div class="noteHead"><span>🕐 Historial de versiones</span><button type="button" id="historyClose">✕</button></div>
+    <div class="noteBody" id="historyBody" style="max-height:60vh;overflow:auto"><p class="sub">Cargando…</p></div>
+  </div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  ov.addEventListener("click",e=>{if(e.target===ov)close();});
+  document.getElementById("historyClose").addEventListener("click",close);
+  const body=document.getElementById("historyBody");
+  if(!window.CloudHistory){
+    body.innerHTML=`<p class="sub" style="padding:0">No se pudo conectar con el historial en la nube ahora mismo (revisá tu conexión) — probá de nuevo en un momento.</p>`;
+    return;
+  }
+  window.CloudHistory.list(items=>{
+    if(items==null){body.innerHTML=`<p class="sub" style="padding:0">No se pudo leer el historial (revisá tu conexión).</p>`;return;}
+    if(!items.length){body.innerHTML=`<p class="sub" style="padding:0">Todavía no hay versiones guardadas — se van creando solas a medida que usás el sistema.</p>`;return;}
+    body.innerHTML=items.map(it=>{
+      const fecha=fmtSnapshotDate(it.state._snapshotAt||it.key);
+      return `<div class="mini-row"><span>🕐</span> <b>${fecha}</b> <button class="btn sm" data-restore="${it.key}" style="margin-left:auto">Restaurar</button></div>`;
+    }).join("");
+    body.querySelectorAll("[data-restore]").forEach(b=>b.addEventListener("click",()=>{
+      const item=items.find(i=>i.key===b.dataset.restore);
+      if(!item)return;
+      if(!confirm(`¿Reemplazar todo lo cargado ahora por la versión del ${fmtSnapshotDate(item.state._snapshotAt||item.key)}? Lo que hay ahora mismo no se pierde: queda guardado como una versión más en este mismo historial antes de reemplazarlo.`))return;
+      window.CloudHistory.save(state);
+      const restored=Object.assign({},item.state);
+      delete restored._snapshotAt;
+      restoreSnapshot(JSON.stringify(restored));
+      close();
+      toast("Versión restaurada 🕐");
+    }));
+  });
+}
 
 function fmtFecha(iso){const d=fecha(iso);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();}
 function antiguedadTexto(name){
@@ -654,6 +741,7 @@ function initControls(){
   });
   document.getElementById("btnUndo").addEventListener("click",undoLast);
   document.getElementById("btnRedo").addEventListener("click",redoLast);
+  document.getElementById("btnHistory").addEventListener("click",openHistoryPanel);
   document.addEventListener("keydown",e=>{
     if(!(e.ctrlKey||e.metaKey))return;
     const tag=(document.activeElement&&document.activeElement.tagName)||"";

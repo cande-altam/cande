@@ -69,6 +69,7 @@
   .btn.primary:hover{filter:brightness(1.05)}
   .btn.ghost{background:transparent}
   .icon-btn{width:38px;height:38px;padding:0;justify-content:center;border-radius:10px}
+  .btn.sm{padding:5px 9px;font-size:11.5px}
   .syncStatus{font-size:16px;opacity:.45;cursor:default;user-select:none;line-height:1}
   .syncStatus.saving{opacity:1;animation:syncPulse 1s ease-in-out infinite}
   .syncStatus.ok{opacity:.75}
@@ -301,6 +302,7 @@
     <button class="btn" id="btnSave">💾 Guardar</button>
     <button class="btn ghost icon-btn" id="btnUndo" title="Deshacer el último cambio" disabled>↩️</button>
     <button class="btn ghost icon-btn" id="btnRedo" title="Rehacer" disabled>↪️</button>
+    <button class="btn ghost icon-btn" id="btnHistory" title="Ver versiones anteriores guardadas en la nube">🕐</button>
     <button class="btn ghost" id="btnNew" title="Arranca una semana nueva copiando ésta como base">↻ Nueva semana</button>
     <button class="btn ghost icon-btn" id="btnPrint" title="Ver imagen del cronograma para guardar">⬇️</button>
     <button class="btn ghost icon-btn" id="btnExport" title="Exportar datos para pasar a otro dispositivo">📤</button>
@@ -496,7 +498,7 @@
 // si Firebase no carga (sin internet, red corporativa, etc.) el resto de la app sigue
 // funcionando igual que antes, solo con localStorage.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
@@ -549,6 +551,32 @@ onValue(cloudRef, snap=>{
   window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
 });
 
+// Historial de versiones: además del estado "vivo" (que siempre se pisa con el último guardado),
+// se guarda una foto aparte cada tanto en cronogramas/history/<fecha>. Nació porque un guardado se
+// perdió sin dejar rastro y no había forma de recuperarlo — esto es la red de seguridad para que
+// no vuelva a pasar. Se poda para no acumular para siempre.
+const historyRef = ref(db, "cronogramas/history");
+const HISTORY_MAX = 40;
+window.CloudHistory = {
+  save(stateObj){
+    const key = new Date().toISOString().replace(/[:.]/g,"-");
+    const snap = Object.assign({}, stateObj, {_snapshotAt:new Date().toISOString()});
+    set(ref(db, "cronogramas/history/"+key), snap).catch(err=>console.error("history save:",err));
+    get(historyRef).then(s=>{
+      const val=s.val(); if(!val)return;
+      const keys=Object.keys(val).sort();
+      const exceso=keys.length-HISTORY_MAX;
+      if(exceso>0)keys.slice(0,exceso).forEach(k=>remove(ref(db,"cronogramas/history/"+k)).catch(()=>{}));
+    }).catch(()=>{});
+  },
+  list(cb){
+    get(historyRef).then(s=>{
+      const val=s.val()||{};
+      cb(Object.keys(val).sort().reverse().map(k=>({key:k,state:val[k]})));
+    }).catch(err=>{console.error("history list:",err);cb(null);});
+  }
+};
+
 // Lectura (sin escritura) del módulo de Vacaciones, para marcar ausencias automáticas por
 // vacación en la semana cargada. Cronogramas nunca escribe acá — el módulo Vacaciones es el
 // único que edita sus propios datos.
@@ -566,7 +594,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-07-28 16:40";
+const APP_VERSION="2026-08-05 historial-v1";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -656,6 +684,18 @@ const LS="candela_scheduler_v1";
 // (lo que ya había en localStorage), así que no hay que tocar cada botón de la app para que funcione.
 const UNDO_LIMIT=60;
 let undoStack=[],redoStack=[],suspendHistory=false;
+// además del deshacer local (que se pierde al cerrar la pestaña), cada tanto se manda una foto
+// aparte a la nube que sobrevive aunque cierres todo — la red de seguridad real ante un guardado
+// que se pisa mal. No en cada tecla: como mucho cada 10 minutos de uso real.
+let lastSnapshotAt=0;
+const SNAPSHOT_MIN_INTERVAL=10*60*1000;
+function maybeSnapshot(){
+  if(!window.CloudHistory)return;
+  const now=Date.now();
+  if(now-lastSnapshotAt<SNAPSHOT_MIN_INTERVAL)return;
+  lastSnapshotAt=now;
+  window.CloudHistory.save(state);
+}
 function persist(){
   if(!suspendHistory){
     const prev=localStorage.getItem(LS);
@@ -663,12 +703,16 @@ function persist(){
   }
   localStorage.setItem(LS,JSON.stringify(state));
   syncUndoRedoButtons();
-  if(!suspendHistory&&window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);}
+  if(!suspendHistory&&window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);maybeSnapshot();}
 }
 function loadLS(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.assign){state=Object.assign(defaultState(),s);}}catch(e){}}
 function restoreSnapshot(json){
-  state=JSON.parse(json);
+  // Object.assign(defaultState(),...) + runMigrations() por si el snapshot es de una versión vieja
+  // del código (le pueden faltar campos que se agregaron después) — pasa sobre todo al restaurar
+  // desde el historial de la nube, que puede tener semanas de antigüedad.
+  state=Object.assign(defaultState(),JSON.parse(json));
   suspendHistory=true; // esta escritura es parte del deshacer/rehacer, no un cambio nuevo del usuario
+  runMigrations();
   localStorage.setItem(LS,JSON.stringify(state));
   suspendHistory=false;
   fillPersonSelects();
@@ -1196,6 +1240,53 @@ function openNoteEditor(ck,label){
   });
   document.getElementById("noteText").focus();
 }
+
+function fmtSnapshotDate(iso){
+  const d=new Date(iso);
+  const dias=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+  return `${dias[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")} · ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}hs`;
+}
+// panel de versiones guardadas en la nube (independiente del deshacer local, que se pierde al
+// cerrar la pestaña) — la red de seguridad para cuando algo se pisa mal y hay que volver atrás.
+function openHistoryPanel(){
+  document.getElementById("historyOverlay")?.remove();
+  const ov=document.createElement("div");
+  ov.className="noteOverlay";
+  ov.id="historyOverlay";
+  ov.innerHTML=`<div class="noteCard" style="max-width:460px">
+    <div class="noteHead"><span>🕐 Historial de versiones</span><button type="button" id="historyClose">✕</button></div>
+    <div class="noteBody" id="historyBody" style="max-height:60vh;overflow:auto"><p class="sub">Cargando…</p></div>
+  </div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  ov.addEventListener("click",e=>{if(e.target===ov)close();});
+  document.getElementById("historyClose").addEventListener("click",close);
+  const body=document.getElementById("historyBody");
+  if(!window.CloudHistory){
+    body.innerHTML=`<p class="sub" style="padding:0">No se pudo conectar con el historial en la nube ahora mismo (revisá tu conexión) — probá de nuevo en un momento.</p>`;
+    return;
+  }
+  window.CloudHistory.list(items=>{
+    if(items==null){body.innerHTML=`<p class="sub" style="padding:0">No se pudo leer el historial (revisá tu conexión).</p>`;return;}
+    if(!items.length){body.innerHTML=`<p class="sub" style="padding:0">Todavía no hay versiones guardadas — se van creando solas a medida que usás el sistema.</p>`;return;}
+    body.innerHTML=items.map(it=>{
+      const fecha=fmtSnapshotDate(it.state._snapshotAt||it.key);
+      const etiqueta=it.state.label?` · "${it.state.label}"`:"";
+      return `<div class="mini-row"><span>🕐</span> <b>${fecha}</b>${etiqueta} <button class="btn sm" data-restore="${it.key}" style="margin-left:auto">Restaurar</button></div>`;
+    }).join("");
+    body.querySelectorAll("[data-restore]").forEach(b=>b.addEventListener("click",()=>{
+      const item=items.find(i=>i.key===b.dataset.restore);
+      if(!item)return;
+      if(!confirm(`¿Reemplazar todo lo cargado ahora por la versión del ${fmtSnapshotDate(item.state._snapshotAt||item.key)}? Lo que hay ahora mismo no se pierde: queda guardado como una versión más en este mismo historial antes de reemplazarlo.`))return;
+      window.CloudHistory.save(state); // guarda lo actual antes de pisarlo, por si hay que volver
+      const restored=Object.assign({},item.state);
+      delete restored._snapshotAt;
+      restoreSnapshot(JSON.stringify(restored));
+      close();
+      toast("Versión restaurada 🕐");
+    }));
+  });
+}
 function renderTeam(v){
   const el=document.getElementById("team");
   el.innerHTML=PEOPLE.map(p=>{
@@ -1582,6 +1673,7 @@ function initControls(){
   document.getElementById("btnSave").addEventListener("click",()=>{state.label=document.getElementById("weekLabel").value;persist();toast("Semana guardada 💾");});
   document.getElementById("btnUndo").addEventListener("click",undoLast);
   document.getElementById("btnRedo").addEventListener("click",redoLast);
+  document.getElementById("btnHistory").addEventListener("click",openHistoryPanel);
   document.addEventListener("keydown",e=>{
     if(!(e.ctrlKey||e.metaKey))return;
     const tag=(document.activeElement&&document.activeElement.tagName)||"";
