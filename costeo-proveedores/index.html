@@ -38,6 +38,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:va
 /* Card de receta cerrada: solo el encabezado, sin el formulario adentro. */
 .card-colapsada{padding-top:12px;padding-bottom:12px;}
 .card-colapsada:hover{border-color:var(--turq);}
+/* El precio se edita en la propia fila: se ve como texto hasta que se lo toca, para que la tabla
+   siga leyéndose como una tabla y no como un formulario. */
+.precio-inline{border-color:transparent;background:transparent;font-weight:600;padding-left:4px;}
+.precio-inline:hover{border-color:var(--cream-dark);background:var(--white);}
+.precio-inline:focus{border-color:var(--turq);background:var(--white);}
 /* Segundo nivel de navegación: las pestañas del grupo activo. Se separa visualmente del primer
    nivel (más chico, fondo distinto) para que se lea como "dónde estoy dentro de esta sección". */
 .subnav{display:flex;gap:4px;flex-wrap:wrap;padding:8px 24px;background:var(--cream);border-bottom:1px solid var(--cream-dark);}
@@ -243,7 +248,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-03 12:52";
+const APP_VERSION = "2026-08-03 13:16";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -2249,6 +2254,29 @@ window.moverProductoAInsumo = async function(id) {
 // Agrega una línea de precio (proveedor+marca) más a un insumo YA EXISTENTE, sin crear otro
 // insumo ni pasar por "fusionar" — es la forma directa de armar, por ejemplo, las 4 combinaciones
 // de "Levadura" (Leudex/Duquesa × Calsa/Casa Naoum) bajo un único insumo, una por una.
+// Edición del precio DIRECTO en la fila, sin abrir ningún panel. Es el camino más corto posible
+// para lo que más se hace: "subió la leche, quiero poner el precio nuevo". Antes había que abrir
+// el detalle, encontrar el formulario y completar tres campos — y si el panel ya estaba abierto,
+// el botón lo cerraba. Demasiadas formas de quedarse sin poder cambiar un precio.
+window.guardarPrecioInsumoInline = async function(id, valor) {
+  const ins = state.insumos[id];
+  if (!ins) return;
+  const precio = parseFloat(valor);
+  if (!(precio > 0)) { showToast("⚠️ Ingresá un precio mayor a cero.", "warn"); render(); return; }
+  if (Math.abs(precio - precioEfectivoInsumo(id)) < 0.005) return; // no cambió: no se registra nada
+  // Se guarda sobre la línea que hoy define el costo, para no crear una línea nueva por cada
+  // corrección a mano. Si no hay ninguna, queda como carga manual.
+  const lineaActual = ins.precios?.[ins.proveedorPreferido];
+  await actualizarPrecioInsumo(id, {
+    proveedorId: lineaActual?.proveedorId || "",
+    proveedorNombre: lineaActual?.proveedorNombre || "Carga manual",
+    precio,
+    marca: lineaActual?.marca || ""
+  });
+  showToast(`✅ ${ins.nombre}: precio actualizado a ${fmtMoney(precio)}.`, "success");
+  render();
+};
+
 window.agregarPrecioInsumo = async function(id) {
   if (!state.insumos[id]) return;
   const proveedorId = document.getElementById(`add-precio-proveedor-${id}`).value;
@@ -2692,7 +2720,10 @@ function renderInsumosView(container) {
         <td>${escapeHtml(ins.nombre)}${esElaborado ? ` <span class="badge badge-ok" title="Base/preparación con receta propia">🧪 Base</span>` : ""}</td>
         <td>${escapeHtml(ins.unidad) || "—"}</td>
         <td>${proveedoresCell}</td>
-        <td><span class="${precioCellClass}">${fmtMoney(costoVivo)}</span>${esElaborado ? `<div class="text-muted" style="font-size:11px">receta propia</div>` : (preferidoNombre ? `<div class="text-muted" style="font-size:11px">${escapeHtml(preferidoNombre)}</div>` : "")}${alertaBadge}${bajaBadge}</td>
+        <td>${esElaborado
+          ? `<span class="${precioCellClass}">${fmtMoney(costoVivo)}</span><div class="text-muted" style="font-size:11px">receta propia</div>`
+          : `<input type="number" step="0.01" min="0" class="form-input precio-inline ${precioCellClass}" style="max-width:120px" value="${Math.round(costoVivo * 100) / 100}" title="Escribí el precio nuevo y salí del campo (o apretá Enter) para guardarlo" onchange="guardarPrecioInsumoInline('${id}', this.value)" onkeydown="if(event.key==='Enter'){this.blur();}">${preferidoNombre ? `<div class="text-muted" style="font-size:11px">${escapeHtml(preferidoNombre)}</div>` : ""}`
+        }${alertaBadge}${bajaBadge}</td>
         <td>${hist.length}</td>
         <td style="white-space:nowrap">
           <div class="row-actions">
@@ -2802,7 +2833,7 @@ function renderInsumosView(container) {
       </div>` : ""}
     ${mergeBarHtml}
     <div class="section-block">
-      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr>${state.insumosMergeMode ? "<th></th>" : ""}<th>Nombre</th><th>Unidad</th><th>Proveedores</th><th>Precio actual</th><th>Registros</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">${busquedaInsumos ? "Ningún insumo coincide con la búsqueda." : "Todavía no hay insumos cargados. Se crean automáticamente al registrar una factura, o podés agregarlos a mano."}</div>`}
+      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr>${state.insumosMergeMode ? "<th></th>" : ""}<th>Nombre</th><th>Unidad</th><th>Proveedores</th><th>Precio de costeo ✏️</th><th>Registros</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">${busquedaInsumos ? "Ningún insumo coincide con la búsqueda." : "Todavía no hay insumos cargados. Se crean automáticamente al registrar una factura, o podés agregarlos a mano."}</div>`}
     </div>`;
 }
 
@@ -3972,7 +4003,7 @@ function renderAnalisisView(container) {
       ${filasModelo.length === 0 ? `<div class="empty-state">Todavía no hay productos con costo cargado.</div>` : `
         <div class="data-table-wrap">
           <table class="data-table">
-            <thead><tr><th>Producto</th><th>Costo (28%)</th><th>Fijo sugerido (37%)</th><th>Renta esperada (20%)</th><th>Merma (15%)</th><th>Precio sugerido</th><th>Precio actual</th><th>Diferencia</th></tr></thead>
+            <thead><tr><th>Producto</th><th>Costo (28%)</th><th>Fijo sugerido (37%)</th><th>Renta esperada (20%)</th><th>Merma (15%)</th><th>Precio sugerido</th><th>Precio de costeo ✏️</th><th>Diferencia</th></tr></thead>
             <tbody>${rowsModelo}</tbody>
           </table>
         </div>`}
