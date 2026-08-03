@@ -127,10 +127,12 @@ exports.handler = async (event) => {
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        // Una lista de precios puede tener cientos de líneas: necesita bastante más techo de
-        // salida que una factura, donde el detalle rara vez pasa de 20 ítems.
+        // El techo de salida está atado al tiempo: generar 16.000 tokens tarda más de lo que la
+        // función serverless puede esperar antes de cortar, así que una lista larga SIEMPRE daba
+        // "tiempo de espera agotado". El cliente ahora manda la lista por partes (ver
+        // leerListaPrecios), y cada parte entra cómoda en este techo más chico.
         model: "claude-sonnet-5",
-        max_tokens: 16000,
+        max_tokens: 4000,
         messages: [{ role: "user", content }]
       })
     });

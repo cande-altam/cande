@@ -44,6 +44,16 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:va
 .subnav-btn{background:none;border:none;font-family:inherit;font-size:13px;color:var(--gray);padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap;}
 .subnav-btn:hover{background:var(--white);color:var(--ink);}
 .subnav-btn.active{background:var(--white);color:var(--turq-dark);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+/* Guía de pasos: hace visible el proceso completo y en qué punto se está. */
+.pasos{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+.paso{display:flex;gap:8px;align-items:flex-start;flex:1 1 190px;background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--r-sm);padding:10px 12px;opacity:.6;}
+.paso.activo{opacity:1;border-color:var(--turq);}
+.paso.hecho{opacity:1;}
+.paso-n{flex:0 0 22px;height:22px;border-radius:50%;background:var(--cream-dark);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+.paso.activo .paso-n{background:var(--turq);color:var(--white);}
+.paso.hecho .paso-n{background:var(--turq-dark);color:var(--white);}
+.paso-t{font-size:13px;font-weight:600;}
+.paso-d{font-size:11px;color:var(--gray);line-height:1.4;}
 .nav-mobile-grupo{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray);padding:12px 20px 4px;font-weight:600;}
 @media(max-width:900px){.subnav{padding:8px 14px;overflow-x:auto;flex-wrap:nowrap;}}
 .nav-desktop{display:flex;gap:2px;align-items:center;flex-wrap:wrap;}
@@ -233,7 +243,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-03 12:19";
+const APP_VERSION = "2026-08-03 12:39";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -318,6 +328,8 @@ const state = {
   listaFecha: "",
   listaTexto: "",
   listaCargando: false,
+  listaProgreso: "",
+  _listaFotoFile: null,
   viewingListaId: null,
   listaLineas: null,     // null = todavía no se leyó ninguna lista; [] = se leyó y no trajo líneas
   listaMeta: null,       // datos que devolvió la IA sobre la lista (calidad, notas, campos ilegibles)
@@ -2168,6 +2180,34 @@ window.eliminarInsumo = async function(id) {
 // Reclasifica un insumo como producto (ej. algo que en realidad es de reventa y quedó cargado
 // como insumo) o un producto como insumo (ej. una materia prima que quedó cargada como producto),
 // sin perder el costo que ya tenía cargado. No se permite si eso rompería una receta existente.
+// Caso "leche": el mismo producto se compra como insumo para producción Y se revende al público.
+// No hay que duplicarlo ni moverlo: se crea un producto que TOMA su costo de este insumo, así el
+// precio se mantiene en un solo lugar y cualquier cambio de costo se propaga a los dos usos.
+// Mover a Productos, en cambio, lo saca de Insumos — que no es lo que se quiere acá.
+window.venderInsumoAlPublico = async function(id) {
+  const ins = state.insumos[id];
+  if (!ins) return;
+  const yaVinculado = Object.entries(state.productos).find(([, p]) => p.insumoVinculadoId === id);
+  if (yaVinculado) {
+    showToast(`ℹ️ "${ins.nombre}" ya se vende como el producto "${yaVinculado[1].nombre}".`, "warn");
+    navigate("productos");
+    return;
+  }
+  const costo = precioEfectivoInsumo(id);
+  const cantidadRaw = prompt(`"${ins.nombre}" se va a poder vender al público además de usarse en producción.\n\n¿Cuánto ${ins.unidad || "de este insumo"} lleva cada unidad que vendés?\n(Ej.: si comprás la leche por litro y vendés el sachet de 1 litro, poné 1. Si vendés un vaso de 250 ml, poné 0.25.)`, "1");
+  if (cantidadRaw === null) return;
+  const cantidad = parseFloat(cantidadRaw) || 1;
+  const nuevoRef = push(ref(db, "costeo/productos"));
+  await set(nuevoRef, {
+    nombre: ins.nombre, categoria: "Reventa", precioVenta: null, receta: {},
+    insumoVinculadoId: id, insumoVinculadoCantidad: cantidad,
+    ivaPct: RETAIL_IVA_PCT, gananciaPct: RETAIL_GANANCIA_PCT,
+    creadoTs: Date.now()
+  });
+  showToast(`✅ "${ins.nombre}" ahora también se vende. Su costo (${fmtMoney(costo * cantidad)}) sale del insumo — poné el precio de venta en Productos.`, "success");
+  navigate("productos");
+};
+
 window.moverInsumoAProducto = async function(id) {
   const ins = state.insumos[id];
   if (!ins) return;
@@ -2682,7 +2722,8 @@ function renderInsumosView(container) {
         <div class="text-muted" style="margin:14px 0 6px;font-weight:600">Historial</div>
         ${hist.length ? `<table class="data-table"><thead><tr><th>Fecha</th><th>Precio</th><th>Proveedor</th><th>Marca</th></tr></thead><tbody>${histRows}</tbody></table>` : `<div class="text-muted">Sin historial de precios todavía.</div>`}
         <div class="panel-footer-actions">
-          <button class="btn btn-ghost btn-sm" onclick="moverInsumoAProducto('${id}')" title="Convertir en producto (ej. si en realidad es de reventa, no un insumo)">➡️ Mover a Productos</button>
+          <button class="btn btn-turq btn-sm" onclick="venderInsumoAlPublico('${id}')" title="Para lo que se usa en producción Y además se vende (ej. la leche): crea el producto tomando el costo de este insumo, sin duplicarlo">🛒 También se vende al público</button>
+          <button class="btn btn-ghost btn-sm" onclick="moverInsumoAProducto('${id}')" title="Convertir en producto y SACARLO de Insumos (solo si en realidad no se usa en producción)">➡️ Mover a Productos</button>
           <button class="btn btn-danger btn-sm" onclick="eliminarInsumo('${id}')">🗑️ Eliminar insumo</button>
         </div>
       </td></tr>` : ""}`;
@@ -3859,7 +3900,8 @@ window.handleListaFotoChange = async function(e) {
   try {
     // Mismo criterio que las facturas: alta resolución para la IA, comprimida para archivar.
     state._listaFotoDataUrl = await compressImageToDataUrl(file, 1000, 0.6);
-    state._listaFotoScanDataUrl = await compressImageToDataUrl(file, 2000, 0.9);
+    state._listaFotoFile = file;
+    state._listaFotoScanDataUrl = await compressImageToDataUrl(file, ESCANEO_DIM, ESCANEO_CALIDAD);
     const prev = document.getElementById("lista-foto-preview");
     if (prev) prev.innerHTML = `<img src="${state._listaFotoDataUrl}" class="photo-thumb">`;
     await window.leerListaPrecios();
@@ -3914,6 +3956,47 @@ function normalizarLineasLista(items) {
   });
 }
 
+// Una lista larga necesita una respuesta larga, y generar esa respuesta tarda más de lo que la
+// función serverless puede esperar antes de cortar: por eso una lista completa SIEMPRE terminaba
+// en "tiempo de espera agotado". La solución no es pedir más tiempo (en el plan gratuito el techo
+// es fijo) sino mandar la lista POR PARTES: cada parte es un pedido chico que entra cómodo, y los
+// resultados se van acumulando. El usuario ve el progreso y no tiene que partir nada a mano.
+const LISTA_LINEAS_POR_PARTE = 40;
+
+function partirTextoLista(texto) {
+  const lineas = String(texto || "").split("\n").map(l => l.trim()).filter(Boolean);
+  const partes = [];
+  for (let i = 0; i < lineas.length; i += LISTA_LINEAS_POR_PARTE) {
+    partes.push(lineas.slice(i, i + LISTA_LINEAS_POR_PARTE).join("\n"));
+  }
+  return partes.length ? partes : [String(texto || "")];
+}
+
+function progresoLista(msg) {
+  state.listaProgreso = msg || "";
+  const el = document.getElementById("lista-progreso");
+  if (el) el.textContent = state.listaProgreso;
+}
+
+async function pedirParteLista(body) {
+  const resp = await fetch("/.netlify/functions/extraer-lista-precios", {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body)
+  });
+  const rawText = await resp.text();
+  let data;
+  try {
+    data = JSON.parse(rawText);
+  } catch {
+    const err = new Error(resp.status === 504 || resp.status === 502
+      ? "La lectura tardó demasiado y se agotó el tiempo de espera."
+      : `Respuesta inesperada del servidor (HTTP ${resp.status}).`);
+    err.porTiempo = resp.status === 504 || resp.status === 502;
+    throw err;
+  }
+  if (!resp.ok) throw new Error(data.error || `Error al leer la lista (HTTP ${resp.status}).`);
+  return data;
+}
+
 window.leerListaPrecios = async function() {
   const texto = (state.listaTexto || "").trim();
   if (!state._listaFotoScanDataUrl && !texto) {
@@ -3929,45 +4012,66 @@ window.leerListaPrecios = async function() {
       ultimoPrecio: Math.round(precioEfectivoInsumo(id) * 100) / 100 || null
     }));
     const productosConocidos = Object.entries(state.productos)
-      .filter(([, p]) => !(p.receta && Object.keys(p.receta).length))
+      .filter(([, p]) => usaPrecioRetail(p))
       .map(([id, p]) => ({ id, nombre: p.nombre, costo: Math.round(calcCostoProducto(p) * 100) / 100 || null }));
     const prov = state.proveedores[state.listaProveedorId];
-    const body = {
-      insumosConocidos, productosConocidos,
-      proveedorNombre: prov ? prov.nombre : ""
-    };
+    const base = { insumosConocidos, productosConocidos, proveedorNombre: prov ? prov.nombre : "" };
+
+    const items = [];
+    let meta = null;
+    const errores = [];
+
+    if (texto) {
+      const partes = partirTextoLista(texto);
+      for (let i = 0; i < partes.length; i++) {
+        progresoLista(`Leyendo parte ${i + 1} de ${partes.length}...`);
+        try {
+          const data = await pedirParteLista({ ...base, texto: partes[i] });
+          if (Array.isArray(data.items)) items.push(...data.items);
+          if (!meta) meta = data;
+        } catch (err) {
+          // Una parte que falla no tira abajo toda la carga: se sigue con el resto y al final se
+          // avisa cuáles no se pudieron leer, para poder reintentar solo esas.
+          console.error(`Parte ${i + 1} falló:`, err);
+          errores.push(i + 1);
+        }
+      }
+    }
+
     if (state._listaFotoScanDataUrl) {
-      body.imageBase64 = state._listaFotoScanDataUrl.split(",")[1];
-      body.mediaType = "image/jpeg";
+      progresoLista("Leyendo la foto de la lista...");
+      const bodyFoto = { ...base, imageBase64: state._listaFotoScanDataUrl.split(",")[1], mediaType: "image/jpeg" };
+      try {
+        const data = await pedirParteLista(bodyFoto);
+        if (Array.isArray(data.items)) items.push(...data.items);
+        if (!meta) meta = data;
+      } catch (err) {
+        // Con una foto no se puede partir el pedido, así que si se pasa de tiempo se reintenta una
+        // vez con una versión más liviana — mismo criterio que el escaneo de facturas.
+        if (err.porTiempo && state._listaFotoFile) {
+          progresoLista("Tardó demasiado — reintentando con una foto más liviana...");
+          state._listaFotoScanDataUrl = await compressImageToDataUrl(state._listaFotoFile, ESCANEO_DIM_REINTENTO, ESCANEO_CALIDAD_REINTENTO);
+          const data = await pedirParteLista({ ...bodyFoto, imageBase64: state._listaFotoScanDataUrl.split(",")[1] });
+          if (Array.isArray(data.items)) items.push(...data.items);
+          if (!meta) meta = data;
+        } else {
+          throw err;
+        }
+      }
     }
-    if (texto) body.texto = texto;
 
-    const resp = await fetch("/.netlify/functions/extraer-lista-precios", {
-      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body)
-    });
-    const rawText = await resp.text();
-    let data;
-    try {
-      data = JSON.parse(rawText);
-    } catch {
-      throw new Error(resp.status === 504
-        ? "La lectura tardó demasiado y se agotó el tiempo de espera. Probá cargar la lista por partes."
-        : `Respuesta inesperada del servidor (HTTP ${resp.status}).`);
-    }
-    if (!resp.ok) throw new Error(data.error || `Error al leer la lista (HTTP ${resp.status}).`);
-
-    state.listaLineas = normalizarLineasLista(data.items);
+    progresoLista("");
+    state.listaLineas = normalizarLineasLista(items);
     state.listaMeta = {
-      proveedorLeido: data.proveedor || "",
-      cuit: data.cuit || "",
-      calidadImagen: data.calidadImagen || "",
-      camposIlegibles: Array.isArray(data.camposIlegibles) ? data.camposIlegibles.filter(Boolean) : [],
-      notas: data.notas || ""
+      proveedorLeido: meta?.proveedor || "",
+      cuit: meta?.cuit || "",
+      calidadImagen: meta?.calidadImagen || "",
+      camposIlegibles: Array.isArray(meta?.camposIlegibles) ? meta.camposIlegibles.filter(Boolean) : [],
+      notas: [meta?.notas || "", errores.length ? `No se pudieron leer las partes ${errores.join(", ")} — volvé a pegar solo esas líneas y leelas aparte.` : ""].filter(Boolean).join(" · ")
     };
-    if (!state.listaFecha && data.fecha && /^\d{4}-\d{2}-\d{2}$/.test(data.fecha)) state.listaFecha = data.fecha;
-    // Si el usuario no eligió proveedor, se intenta reconocerlo por lo que diga la lista.
-    if (!state.listaProveedorId) {
-      const match = matchProveedor({ proveedor: data.proveedor, cuit: data.cuit });
+    if (!state.listaFecha && meta?.fecha && /^\d{4}-\d{2}-\d{2}$/.test(meta.fecha)) state.listaFecha = meta.fecha;
+    if (!state.listaProveedorId && meta) {
+      const match = matchProveedor({ proveedor: meta.proveedor, cuit: meta.cuit });
       if (match) state.listaProveedorId = match[0];
     }
     showToast(state.listaLineas.length
@@ -3975,6 +4079,7 @@ window.leerListaPrecios = async function() {
       : "⚠️ No se reconoció ninguna línea de precios en la lista.", state.listaLineas.length ? "success" : "warn");
   } catch (err) {
     console.error("Error al leer lista de precios:", err);
+    progresoLista("");
     showToast(`⚠️ No se pudo leer la lista: ${err && err.message ? err.message : "Error desconocido."}`, "warn");
   } finally {
     state.listaCargando = false;
@@ -4240,10 +4345,22 @@ function renderListasView(container) {
 
   container.innerHTML = `
     <div class="page-title">Listas de precios</div>
-    <div class="page-sub">Cargá de una sola vez la lista de precios que te manda un proveedor —sacale una foto o pegá el texto del WhatsApp/mail— en vez de ir insumo por insumo. Se lee con IA, la revisás línea por línea y aplicás solo lo que quieras.</div>
+    <div class="page-sub">Cargá de una sola vez la lista que te manda un proveedor, en vez de ir insumo por insumo.</div>
+    <div class="pasos">
+      ${[
+        ["1", "Elegí el proveedor", "De quién es la lista"],
+        ["2", "Pegá o subí la lista", "Texto del WhatsApp/mail, o una foto"],
+        ["3", "Revisá lo que reconoció", "Qué insumo o producto es cada línea, y a qué precio va a quedar la venta"],
+        ["4", "Aplicá solo lo que quieras", "Se actualizan los costos de las líneas tildadas"]
+      ].map(([n, titulo, det], i) => {
+        const activo = lineas ? (i === 2 ? "activo" : (i < 2 ? "hecho" : "")) : (i <= 1 ? "activo" : "");
+        return `<div class="paso ${activo}"><div class="paso-n">${n}</div><div><div class="paso-t">${titulo}</div><div class="paso-d">${det}</div></div></div>`;
+      }).join("")}
+    </div>
     ${!lineas ? `
     <div class="section-block">
-      <div class="section-title" style="margin-bottom:14px">🏷️ Cargar una lista de precios</div>
+      <div class="section-title" style="margin-bottom:6px">🏷️ Cargar una lista de precios</div>
+      <div class="text-muted" style="margin-bottom:14px">El sistema reconoce solo los productos con los que ya trabajás y actualiza su costo; con ese costo recalcula el precio de venta sugerido (costo + impuestos + % de ganancia). Lo que no reconozca queda marcado como "sin identificar" y no toca nada hasta que vos le digas a qué corresponde. Nada se aplica sin que lo revises.</div>
       <div class="form-row">
         <div class="form-group" style="max-width:260px">
           <label class="form-label">Proveedor</label>
@@ -4271,6 +4388,7 @@ function renderListasView(container) {
         <div class="text-muted" style="font-size:11px">Si la lista es muy larga (varias páginas), cargala por partes: una foto o un bloque de texto por vez.</div>
       </div>
       <button class="btn btn-primary" onclick="leerListaPrecios()" ${state.listaCargando ? "disabled" : ""}>${state.listaCargando ? "🤖 Leyendo lista..." : "🤖 Leer lista"}</button>
+      <div id="lista-progreso" class="text-muted" style="margin-top:8px">${escapeHtml(state.listaProgreso || "")}</div>
     </div>` : ""}
     ${revisionHtml}
     <div class="section-block">

@@ -19,3 +19,8 @@
   # Vision extraction can take longer than the 10s default. Only takes effect on plans
   # that support extended sync timeouts; harmless declaration otherwise.
   timeout = 26
+
+[functions."extraer-lista-precios"]
+  # Igual que el escaneo de facturas. Aun así el cliente manda las listas largas por partes:
+  # no hay que depender de un timeout alto, porque en el plan gratuito sigue siendo 10s.
+  timeout = 26
