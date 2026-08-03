@@ -19,7 +19,7 @@ y **un local de producción**.
 | Cajeros | [venta/cajeros.md](venta/cajeros.md) | ✅ v2.0 — Junio 2026 |
 | Vendedores y Mozos | [venta/vendedores-y-mozos.md](venta/vendedores-y-mozos.md) | ✅ v2.0 — Junio 2026 |
 | Baristas | [venta/baristas.md](venta/baristas.md) | ✅ v2.0 — Junio 2026 |
-| Encargado de local | — | ⬜ Pendiente |
+| Encargado de local | [venta/encargado-de-local.md](venta/encargado-de-local.md) | 🟠 v0.9 — **Borrador, falta confirmar** |
 
 ### 🥖 Local de producción
 
@@ -50,8 +50,10 @@ horario, un PIN o una URL, se actualiza acá primero.
 
 ### 🧩 Para escribir un manual nuevo
 
-[`_plantilla.md`](_plantilla.md) — estructura vacía con la misma forma que los tres ya
-escritos. Copiala, renombrala y completala.
+| Documento | Para qué |
+|---|---|
+| [`_plantilla.md`](_plantilla.md) | Estructura vacía con la misma forma que los manuales ya escritos |
+| [`produccion/_cuestionario-areas-produccion.md`](produccion/_cuestionario-areas-produccion.md) | Guía de preguntas para relevar un área de producción. **Se puede reenviar tal cual** a quien está en el puesto |
 
 ---
 
