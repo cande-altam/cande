@@ -35,6 +35,17 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:va
    Configuración, un navegador con una copia vieja guardada tampoco la mostraría — que es
    justamente el caso que hay que poder diagnosticar. */
 .logo-version{letter-spacing:0;text-transform:none;opacity:.75;}
+/* Card de receta cerrada: solo el encabezado, sin el formulario adentro. */
+.card-colapsada{padding-top:12px;padding-bottom:12px;}
+.card-colapsada:hover{border-color:var(--turq);}
+/* Segundo nivel de navegación: las pestañas del grupo activo. Se separa visualmente del primer
+   nivel (más chico, fondo distinto) para que se lea como "dónde estoy dentro de esta sección". */
+.subnav{display:flex;gap:4px;flex-wrap:wrap;padding:8px 24px;background:var(--cream);border-bottom:1px solid var(--cream-dark);}
+.subnav-btn{background:none;border:none;font-family:inherit;font-size:13px;color:var(--gray);padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap;}
+.subnav-btn:hover{background:var(--white);color:var(--ink);}
+.subnav-btn.active{background:var(--white);color:var(--turq-dark);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.nav-mobile-grupo{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray);padding:12px 20px 4px;font-weight:600;}
+@media(max-width:900px){.subnav{padding:8px 14px;overflow-x:auto;flex-wrap:nowrap;}}
 .nav-desktop{display:flex;gap:2px;align-items:center;flex-wrap:wrap;}
 .nav-btn{padding:8px 14px;border:none;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;font-size:12.5px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;border-radius:8px;transition:all .2s cubic-bezier(.25,.8,.25,1);letter-spacing:.2px;white-space:nowrap;}
 .nav-btn:hover{color:var(--cream);background:rgba(255,255,255,.08);}
@@ -222,22 +233,38 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-07-28 10:24";
+const APP_VERSION = "2026-08-03 11:56";
+
+// Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
+// escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
+// apiladas en un menú larguísimo. Se agrupan por la tarea que se está haciendo —cargar compras,
+// mantener el catálogo, mirar números— que es como el negocio las usa; el segundo nivel muestra
+// solo las pestañas del grupo activo, así nunca hay más de seis opciones a la vez.
+const GRUPOS = [
+  { key: "compras",  label: "🛒 Compras",  vistas: ["nueva-factura", "facturas", "pagos", "listas", "proveedores", "iva"] },
+  { key: "catalogo", label: "📦 Catálogo", vistas: ["insumos", "productos", "recetas-bases"] },
+  { key: "analisis", label: "📈 Análisis", vistas: ["analisis", "consultas"] },
+  { key: "ajustes",  label: "⚙️ Ajustes",  vistas: ["config"] },
+];
 
 const TABS = [
   { key: "nueva-factura", label: "📷 Nueva factura" },
   { key: "facturas",      label: "🧾 Facturas" },
   { key: "pagos",         label: "💳 Órdenes de pago" },
-  { key: "iva",           label: "💰 IVA" },
-  { key: "proveedores",   label: "🏭 Proveedores" },
-  { key: "insumos",       label: "📦 Insumos" },
   { key: "listas",        label: "🏷️ Listas de precios" },
+  { key: "proveedores",   label: "🏭 Proveedores" },
+  { key: "iva",           label: "💰 IVA" },
+  { key: "insumos",       label: "📦 Insumos" },
   { key: "productos",     label: "🍰 Productos" },
   { key: "recetas-bases", label: "📋 Recetas y Bases" },
   { key: "analisis",      label: "📈 Análisis" },
   { key: "consultas",     label: "💬 Consultas" },
   { key: "config",        label: "⚙️ Configuración" },
 ];
+const TAB_LABEL = Object.fromEntries(TABS.map(t => [t.key, t.label]));
+function grupoDeVista(view) {
+  return (GRUPOS.find(g => g.vistas.includes(view)) || GRUPOS[0]).key;
+}
 
 const state = {
   loggedIn: false,
@@ -268,6 +295,7 @@ const state = {
   insumosBusqueda: "",
   recetasBasesBusqueda: "",
   recetasBasesTab: "recetas",
+  recetasBasesAbiertaId: null,
   analisisPeriodo: 6,
   editingProveedorId: null,
   editingInsumoId: null,
@@ -430,6 +458,13 @@ function enfocarFormularioAbierto(inputId) {
   }, 0);
 }
 
+// Elegir un grupo lleva a su primera pestaña — la más usada de cada uno — en vez de dejar al
+// usuario en una pantalla intermedia vacía.
+window.navigateGrupo = function(grupoKey) {
+  const g = GRUPOS.find(x => x.key === grupoKey);
+  if (g && g.vistas.length) window.navigate(g.vistas[0]);
+};
+
 window.toggleMobileNav = function() {
   state.mobileNavOpen = !state.mobileNavOpen;
   render();
@@ -451,6 +486,8 @@ function render() {
   // Mismo problema que el scroll: al reconstruir el DOM se pierde el foco. En un campo que
   // re-renderiza mientras se escribe (los buscadores) eso significa poder tipear una sola letra
   // por click. Se guarda qué campo estaba enfocado y dónde tenía el cursor, y se restaura al final.
+  const grupoActivo = grupoDeVista(state.view);
+  const vistasDelGrupo = (GRUPOS.find(g => g.key === grupoActivo) || GRUPOS[0]).vistas;
   const _activo = document.activeElement;
   const focoId = _activo && _activo.id ? _activo.id : null;
   const focoSel = focoId && typeof _activo.selectionStart === "number"
@@ -466,13 +503,17 @@ function render() {
         </div>
       </div>
       <div class="nav-desktop">
-        ${TABS.map(t => `<button class="nav-btn ${state.view === t.key ? "active" : ""}" onclick="navigate('${t.key}')">${t.label}</button>`).join("")}
+        ${GRUPOS.map(g => `<button class="nav-btn ${grupoActivo === g.key ? "active" : ""}" onclick="navigateGrupo('${g.key}')">${g.label}</button>`).join("")}
         <button class="nav-logout" onclick="handleLogout()">Salir</button>
       </div>
       <button class="nav-hamburger" onclick="toggleMobileNav()"><span></span><span></span><span></span></button>
     </div>
+    ${vistasDelGrupo.length > 1 ? `<div class="subnav">
+      ${vistasDelGrupo.map(v => `<button class="subnav-btn ${state.view === v ? "active" : ""}" onclick="navigate('${v}')">${TAB_LABEL[v]}</button>`).join("")}
+    </div>` : ""}
     <div class="nav-mobile-menu ${state.mobileNavOpen ? "open" : ""}">
-      ${TABS.map(t => `<button class="nav-mobile-btn ${state.view === t.key ? "active" : ""}" onclick="navigate('${t.key}')">${t.label}</button>`).join("")}
+      ${GRUPOS.map(g => `<div class="nav-mobile-grupo">${g.label}</div>` +
+        g.vistas.map(v => `<button class="nav-mobile-btn ${state.view === v ? "active" : ""}" onclick="navigate('${v}')">${TAB_LABEL[v]}</button>`).join("")).join("")}
       <button class="nav-mobile-btn" onclick="handleLogout()">🚪 Salir</button>
     </div>
     <div class="main" id="main-content"></div>`;
@@ -507,6 +548,26 @@ function render() {
   }
 }
 
+// ── Control de re-renders ────────────────────────────────
+// Las tareas de mantenimiento (recalcular bases, guardar el histórico de costos) escriben en la
+// base, y cada escritura despierta a los listeners de onValue, que vuelven a renderizar. Con un
+// catálogo real eso se convertía en una cascada: entrar a Productos disparaba cientos de
+// escrituras y re-renders encadenados, y la pestaña quedaba trabada.
+// suspenderRender() agrupa todo eso en UN solo render al final.
+let _renderSuspendido = 0, _renderPendiente = false;
+function solicitarRender() {
+  if (_renderSuspendido > 0) { _renderPendiente = true; return; }
+  render();
+}
+async function suspenderRender(fn) {
+  _renderSuspendido++;
+  try { return await fn(); }
+  finally {
+    _renderSuspendido--;
+    if (_renderSuspendido === 0 && _renderPendiente) { _renderPendiente = false; render(); }
+  }
+}
+
 function renderLogin() {
   return `
     <div class="login-wrap">
@@ -527,13 +588,13 @@ function renderLogin() {
 
 // ── Firebase listeners ───────────────────────────────────
 function attachListeners() {
-  onValue(ref(db, "costeo/proveedores"), snap => { state.proveedores = snap.val() || {}; if (!state.formOpen) render(); });
-  onValue(ref(db, "costeo/insumos"), snap => { state.insumos = snap.val() || {}; if (!state.formOpen) render(); });
-  onValue(ref(db, "costeo/productos"), snap => { state.productos = snap.val() || {}; if (!state.formOpen) render(); });
-  onValue(ref(db, "costeo/facturas"), snap => { state.facturas = snap.val() || {}; if (!state.formOpen) render(); });
-  onValue(ref(db, "costeo/inflacion"), snap => { state.inflacion = snap.val() || {}; if (!state.formOpen) render(); });
-  onValue(ref(db, "costeo/ivaDebito"), snap => { state.ivaDebito = snap.val() || {}; if (!state.formOpen) render(); });
-  onValue(ref(db, "costeo/listasPrecios"), snap => { state.listasPrecios = snap.val() || {}; if (!state.formOpen) render(); });
+  onValue(ref(db, "costeo/proveedores"), snap => { state.proveedores = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
+  onValue(ref(db, "costeo/insumos"), snap => { state.insumos = snap.val() || {}; invalidarCacheCosteo(); if (!state.formOpen) solicitarRender(); });
+  onValue(ref(db, "costeo/productos"), snap => { state.productos = snap.val() || {}; invalidarCacheCosteo(); if (!state.formOpen) solicitarRender(); });
+  onValue(ref(db, "costeo/facturas"), snap => { state.facturas = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
+  onValue(ref(db, "costeo/inflacion"), snap => { state.inflacion = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
+  onValue(ref(db, "costeo/ivaDebito"), snap => { state.ivaDebito = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
+  onValue(ref(db, "costeo/listasPrecios"), snap => { state.listasPrecios = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
   onValue(ref(db, "costeo/config"), snap => { state.config = snap.val() || {}; });
 }
 
@@ -1620,11 +1681,17 @@ window.guardarFactura = async function() {
       items.push({ insumoId, nombre, precioUnitario, marca, cantidad: cantidadCompra, contenidoPorUnidad, precioLinea });
     }
 
+    // La foto va a una rama APARTE, no dentro de la factura: el listado de facturas se descarga
+    // entero al abrir la app, y con las fotos embebidas eran decenas de MB en cada carga. Acá solo
+    // queda la marca de que existe; la imagen se busca cuando alguien la pide.
+    if (state._facturaFotoDataUrl) {
+      await set(ref(db, `costeo/facturasFotos/${facturaId}`), state._facturaFotoDataUrl);
+    }
     await set(facturaRef, {
       proveedorId, proveedorNombre, cuit, fecha, numeroFactura: numero,
       montoTotal: monto, iva, cargosAdicionales, preciosConIva,
       estado: pagado ? "pagado" : "no_pagado",
-      foto: state._facturaFotoDataUrl || "", items, creadoTs: Date.now()
+      tieneFoto: !!state._facturaFotoDataUrl, items, creadoTs: Date.now()
     });
 
     if (sinActualizarReferencia.length) {
@@ -1656,6 +1723,28 @@ window.setFacturasBusqueda = function(val) {
   render();
 };
 
+// Las fotos de las facturas son data URLs de base64 de ~100-200 KB cada una. Meterlas en el HTML
+// de la lista (una por fila) hacía que la vista de Facturas generara decenas de MB de HTML y
+// tardara segundos en dibujarse. Ahora la lista solo muestra un botón y la foto se busca recién
+// cuando se la pide, desde la rama aparte donde se guardan (o de la propia factura, si es de antes
+// de esa separación).
+window.verFotoFactura = async function(id) {
+  const f = state.facturas[id];
+  if (!f) return;
+  let foto = f.foto || "";
+  if (!foto) {
+    try {
+      const snap = await get(ref(db, `costeo/facturasFotos/${id}`));
+      foto = snap.val() || "";
+    } catch (err) { console.error("No se pudo cargar la foto:", err); }
+  }
+  if (!foto) { showToast("⚠️ Esta factura no tiene foto guardada.", "warn"); return; }
+  const w = window.open();
+  if (!w) { showToast("⚠️ El navegador bloqueó la ventana emergente.", "warn"); return; }
+  w.document.write(`<title>Factura ${escapeHtml(f.numeroFactura || "")}</title><img src="${foto}" style="max-width:100%">`);
+  w.document.close();
+};
+
 window.toggleFacturaEstado = async function(id) {
   const f = state.facturas[id];
   if (!f) return;
@@ -1679,7 +1768,7 @@ function renderFacturasView(container) {
       <td>${fmtMoney(f.montoTotal)}</td>
       <td>${f.iva > 0 ? fmtMoney(f.iva) : "—"}</td>
       <td>${(f.items || []).length} ítem(s)</td>
-      <td>${f.foto ? `<a href="${f.foto}" target="_blank" rel="noopener">Ver foto</a>` : "—"}</td>
+      <td>${(f.foto || f.tieneFoto) ? `<button class="btn btn-ghost btn-sm btn-icon" onclick="verFotoFactura('${id}')" title="Ver la foto de esta factura">🖼️</button>` : "—"}</td>
       <td><span class="badge ${f.estado === "pagado" ? "badge-pagado" : "badge-no-pagado"}">${f.estado === "pagado" ? "Pagado" : "No pagado"}</span></td>
       <td><button class="btn btn-ghost btn-sm" onclick="toggleFacturaEstado('${id}')">${f.estado === "pagado" ? "Marcar no pagada" : "Marcar pagada"}</button></td>
     </tr>`).join("");
@@ -2414,13 +2503,38 @@ function actualizarPreciosBasesElaboradas() {
   });
 }
 
+// ── Mantenimiento diferido ───────────────────────────────
+// Recalcular las bases y guardar el histórico de costos escribe en la base. Hacerlo DENTRO de un
+// render era el problema: cada escritura despertaba a los listeners, que volvían a renderizar, que
+// volvían a escribir. Ahora se ejecuta una sola vez por sesión, fuera del render, y con los
+// re-renders agrupados en uno solo al final.
+const _mantenimientoHecho = {};
+function programarMantenimiento(clave, fn) {
+  if (_mantenimientoHecho[clave]) return;
+  _mantenimientoHecho[clave] = true;
+  // Fuera del ciclo de render actual: primero se le muestra la vista al usuario, y recién después
+  // se hace el trabajo de fondo. La pantalla nunca espera por esto.
+  setTimeout(() => { suspenderRender(fn).catch(err => console.error("Mantenimiento falló:", err)); }, 0);
+}
+
+function mantenimientoBases() {
+  programarMantenimiento("bases", async () => { actualizarPreciosBasesElaboradas(); });
+}
+function mantenimientoCostosProductos() {
+  programarMantenimiento("costosProductos", async () => {
+    for (const [id, p] of Object.entries(state.productos)) {
+      if (calcCostoProducto(p) > 0) await actualizarCostoHistorialProducto(id, p);
+    }
+  });
+}
+
 function renderInsumosView(container) {
   const editing = state.editingInsumoId;
   const editingData = editing && editing !== "new" ? (state.insumos[editing] || {}) : {};
   if (state.insumosMergeMode || state.mostrarDuplicados || state.mostrarVariantesMarca || state.viewingInsumoHistId) state.formOpen = true;
   const duplicados = state.mostrarDuplicados ? buscarInsumosDuplicados() : [];
   const variantesMarca = state.mostrarVariantesMarca ? buscarVariantesMarca() : [];
-  actualizarPreciosBasesElaboradas();
+  mantenimientoBases();
   // Para el formulario de "agregar otro proveedor/marca" que se abre dentro de cada insumo — no
   // hace falta fusionar nada para que un insumo tenga varias líneas proveedor+marca, se cargan
   // directo acá una por una (ver agregarPrecioInsumo).
@@ -2457,13 +2571,15 @@ function renderInsumosView(container) {
     .map(([id, ins]) => {
     const hist = objToSortedEntries(ins.historial, (a, b) => a[1].fecha.localeCompare(b[1].fecha));
     const isOpen = state.viewingInsumoHistId === id;
-    const histRows = hist.slice().reverse().map(([, h]) => `
+    // El historial y el detalle de precios solo se arman si la fila está abierta: construirlos para
+    // los 200+ insumos y descartarlos era la mayor parte del tiempo de esta pantalla.
+    const histRows = !isOpen ? "" : hist.slice().reverse().map(([, h]) => `
       <tr><td>${fmtDate(h.fecha)}</td><td>${fmtMoney(h.precio)}</td><td>${escapeHtml(h.proveedorNombre) || "—"}</td><td>${escapeHtml(h.marca) || "—"}</td></tr>`).join("");
     const precios = ins.precios || {};
     const precioEntries = Object.entries(precios).sort((a, b) => (a[1].precio || 0) - (b[1].precio || 0));
     const esElaborado = ins.receta && Object.keys(ins.receta).length > 0;
     const costoVivo = precioEfectivoInsumo(id);
-    const precioRows = precioEntries.map(([provId, p]) => `
+    const precioRows = !isOpen ? "" : precioEntries.map(([provId, p]) => `
       <tr>
         <td>${escapeHtml(p.proveedorNombre) || "—"}</td>
         <td>${escapeHtml(p.marca) || "—"}</td>
@@ -2624,11 +2740,25 @@ function renderInsumosView(container) {
 // =============================================================
 // PRODUCTOS Y RECETAS (costeo automático)
 // =============================================================
+// La lista de insumos del desplegable es idéntica en todas las filas de receta, pero se rearmaba
+// entera en cada una: ordenar 230 insumos, calcular su costo y escapar su nombre, por fila. Se
+// arma una sola vez y después solo se marca cuál está seleccionado, que es lo único que cambia.
+let _cacheOpcionesReceta = new Map();
+function opcionesInsumosReceta(excludeId) {
+  const clave = excludeId || "";
+  if (_cacheOpcionesReceta.has(clave)) return _cacheOpcionesReceta.get(clave);
+  const html = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .filter(([id]) => id !== excludeId)
+    .map(([id, ins]) => `<option value="${id}">${escapeHtml(ins.nombre)}${ins.unidad ? " (" + escapeHtml(ins.unidad) + ")" : ""} — ${fmtMoney(precioEfectivoInsumo(id))}</option>`).join("");
+  _cacheOpcionesReceta.set(clave, html);
+  return html;
+}
+
 function recipeRowHtml({ insumoId = "", cantidad = "" } = {}, opts = {}) {
   const { containerClass = "recipe-row", selectClass = "recipe-insumo", cantidadClass = "recipe-cantidad", onchange = "recalcCostoProducto()", excludeId = null } = opts;
-  const options = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
-    .filter(([id]) => id !== excludeId)
-    .map(([id, ins]) => `<option value="${id}" ${id === insumoId ? "selected" : ""}>${escapeHtml(ins.nombre)}${ins.unidad ? " (" + escapeHtml(ins.unidad) + ")" : ""} — ${fmtMoney(precioEfectivoInsumo(id))}</option>`).join("");
+  const options = insumoId
+    ? opcionesInsumosReceta(excludeId).replace(`<option value="${insumoId}">`, `<option value="${insumoId}" selected>`)
+    : opcionesInsumosReceta(excludeId);
   return `
     <div class="${containerClass}">
       <select class="form-select ${selectClass}" onchange="${onchange}">
@@ -2743,17 +2873,30 @@ function precioCosteoInsumo(ins) {
   return Math.max(precioComprasInsumo(ins), precioListaVigenteInsumo(ins));
 }
 
+// El costo de un insumo se recalcula muchísimas veces por render: cada producto lo pide por cada
+// ingrediente de su receta, y cada base vuelve a recorrer la suya. Sin cache eso significaba
+// recorrer el historial completo de precios miles de veces por pantalla — era el grueso de la
+// lentitud en Productos y Recetas. El cache se limpia solo cuando cambian insumos o productos,
+// así que nunca puede quedar mostrando un costo viejo.
+let _cacheCosteo = new Map();
+function invalidarCacheCosteo() { _cacheCosteo = new Map(); _cacheOpcionesReceta = new Map(); }
+
 function precioEfectivoInsumo(insumoId, visiting) {
   const ins = state.insumos[insumoId];
   if (!ins) return 0;
+  if (_cacheCosteo.has(insumoId)) return _cacheCosteo.get(insumoId);
   const receta = ins.receta || {};
+  let valor;
   if (Object.keys(receta).length) {
     const seen = visiting || new Set();
-    if (seen.has(insumoId)) return ins.precioActual || 0;
+    if (seen.has(insumoId)) return ins.precioActual || 0;  // ciclo: no se cachea
     seen.add(insumoId);
-    return Object.entries(receta).reduce((sum, [subId, cantidad]) => sum + precioEfectivoInsumo(subId, seen) * (Number(cantidad) || 0), 0);
+    valor = Object.entries(receta).reduce((sum, [subId, cantidad]) => sum + precioEfectivoInsumo(subId, seen) * (Number(cantidad) || 0), 0);
+  } else {
+    valor = precioCosteoInsumo(ins);
   }
-  return precioCosteoInsumo(ins);
+  _cacheCosteo.set(insumoId, valor);
+  return valor;
 }
 
 function calcCostoProducto(producto) {
@@ -2932,8 +3075,8 @@ function renderProductosView(container) {
   // Mantiene al día el costo calculado de las bases y el historial de costo de cada producto
   // (mismo mecanismo que usa Análisis) con solo entrar a esta pestaña, no hace falta esperar
   // a mirar Análisis para que la comparación de costo vs. precio de venta esté actualizada.
-  actualizarPreciosBasesElaboradas();
-  todosProductos.forEach(([id, p]) => { if (calcCostoProducto(p) > 0) actualizarCostoHistorialProducto(id, p); });
+  mantenimientoBases();
+  mantenimientoCostosProductos();
 
   container.innerHTML = `
     <div class="section-header">
@@ -3212,7 +3355,7 @@ window.vaciarBaseCard = async function(id) {
 // =============================================================
 function renderRecetasBasesView(container) {
   state.formOpen = true;
-  actualizarPreciosBasesElaboradas();
+  mantenimientoBases();
   const tab = state.recetasBasesTab || "recetas";
   const busquedaRB = state.recetasBasesBusqueda.trim().toLowerCase();
 
@@ -3223,17 +3366,39 @@ function renderRecetasBasesView(container) {
     .filter(([, ins]) => ins.receta && Object.keys(ins.receta).length > 0)
     .filter(([, ins]) => !busquedaRB || ins.nombre.toLowerCase().includes(busquedaRB));
 
-  const recetasCards = productosElaborados.map(([id, p]) => `
-    <div class="section-block">
-      <div class="section-title" style="margin-bottom:10px">🧾 ${escapeHtml(p.nombre)} <span class="text-muted" style="font-size:11px;font-weight:400">${CLASIFICACION_LABEL[clasificarProducto(p)]}</span></div>
-      ${recetaPanelContenido(id, p)}
-    </div>`).join("");
+  // Las cards vienen colapsadas y se abre una por vez. Antes se renderizaba el formulario editable
+  // completo de TODAS las recetas a la vez: con el catálogo real eran cientos de miles de <option>
+  // (cada fila de ingrediente lleva un desplegable con todos los insumos), decenas de MB de HTML y
+  // casi un minuto de espera. Además, como pantalla, un muro de 260 formularios abiertos no se
+  // puede usar: no se encuentra nada y cualquier click corre el riesgo de editar la receta de al lado.
+  const abierta = state.recetasBasesAbiertaId;
+  const resumenReceta = (receta) => {
+    const n = Object.keys(receta || {}).length;
+    return n ? `${n} ingrediente${n === 1 ? "" : "s"}` : "sin receta armada";
+  };
+  const recetasCards = productosElaborados.map(([id, p]) => {
+    const esta = abierta === `p:${id}`;
+    return `
+    <div class="section-block ${esta ? "" : "card-colapsada"}">
+      <div class="section-header" style="cursor:pointer" onclick="toggleRecetaBase('p:${id}')">
+        <div class="section-title" style="margin-bottom:0">🧾 ${escapeHtml(p.nombre)} <span class="text-muted" style="font-size:11px;font-weight:400">${CLASIFICACION_LABEL[clasificarProducto(p)]}</span></div>
+        <div class="text-muted" style="font-size:12px;white-space:nowrap">${resumenReceta(p.receta)} · ${fmtMoney(calcCostoProducto(p))} ${esta ? "▴" : "▾"}</div>
+      </div>
+      ${esta ? recetaPanelContenido(id, p) : ""}
+    </div>`;
+  }).join("");
 
-  const basesCards = basesInsumos.map(([id, ins]) => `
-    <div class="section-block">
-      <div class="section-title" style="margin-bottom:10px">🧪 ${escapeHtml(ins.nombre)}</div>
-      ${baseCardContenido(id, ins)}
-    </div>`).join("");
+  const basesCards = basesInsumos.map(([id, ins]) => {
+    const esta = abierta === `b:${id}`;
+    return `
+    <div class="section-block ${esta ? "" : "card-colapsada"}">
+      <div class="section-header" style="cursor:pointer" onclick="toggleRecetaBase('b:${id}')">
+        <div class="section-title" style="margin-bottom:0">🧪 ${escapeHtml(ins.nombre)}</div>
+        <div class="text-muted" style="font-size:12px;white-space:nowrap">${resumenReceta(ins.receta)} · ${fmtMoney(precioEfectivoInsumo(id))} ${esta ? "▴" : "▾"}</div>
+      </div>
+      ${esta ? baseCardContenido(id, ins) : ""}
+    </div>`;
+  }).join("");
 
   container.innerHTML = `
     <div class="section-header">
@@ -3255,6 +3420,11 @@ function renderRecetasBasesView(container) {
       ${basesInsumos.length ? `<div class="receta-card-grid">${basesCards}</div>` : `<div class="empty-state">${busquedaRB ? "Ninguna base coincide con la búsqueda." : "Todavía no hay bases con receta cargada."}</div>`}
     `}`;
 }
+window.toggleRecetaBase = function(clave) {
+  state.recetasBasesAbiertaId = state.recetasBasesAbiertaId === clave ? null : clave;
+  state.formOpen = !!state.recetasBasesAbiertaId;
+  render();
+};
 window.setRecetasBasesTab = function(val) {
   state.recetasBasesTab = val;
   render();
@@ -3316,7 +3486,7 @@ function accumulatedInflation(months) {
 
 function renderAnalisisView(container) {
   state.formOpen = true;
-  actualizarPreciosBasesElaboradas();
+  mantenimientoBases();
   const periodo = state.analisisPeriodo;
   const cutoff = monthsAgoISO(periodo);
   const { pct: inflacionAcum, missing } = accumulatedInflation(periodo);
@@ -3343,7 +3513,7 @@ function renderAnalisisView(container) {
   // 1 vez/día si cambió) y compará costo vs. precio de venta — igual idea que arriba, a nivel producto.
   const productosCosteables = objToSortedEntries(state.productos, () => 0)
     .filter(([, p]) => costoProductoFuente(p) !== "sin_datos");
-  productosCosteables.forEach(([id, p]) => actualizarCostoHistorialProducto(id, p));
+  mantenimientoCostosProductos();
 
   const filasProd = productosCosteables.map(([id, p]) => {
     const costoActual = calcCostoProducto(p);
@@ -4118,10 +4288,39 @@ function renderConfigView(container) {
       </div>
     </div>
     <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">⚡ Rendimiento</div>
+      <div class="text-muted">Las fotos de las facturas cargadas antes de esta versión se guardaban dentro de la propia factura, así que se descargaban todas juntas cada vez que abrías la app — con muchas facturas eso son decenas de MB y hace que todo vaya lento. Este botón las mueve a una rama aparte: se siguen viendo igual, pero solo se descarga la que pedís.</div>
+      <div style="margin-top:10px">
+        <button class="btn btn-primary btn-sm" onclick="migrarFotosFacturas()">📦 Mover las fotos y aligerar la app</button>
+        <div id="cfg-migracion" class="text-muted" style="margin-top:8px"></div>
+      </div>
+    </div>
+    <div class="section-block">
       <div class="section-title" style="margin-bottom:10px">ℹ️ Versión</div>
       <div class="text-muted">Estás usando la versión <strong>${escapeHtml(APP_VERSION)}</strong>. Si este número no coincide con el de la última actualización, el navegador te está mostrando una copia guardada: recargá con la página forzando la actualización (en el celular, cerrá y volvé a abrir la pestaña; en la compu, Ctrl+Shift+R o Cmd+Shift+R).</div>
     </div>`;
 }
+
+// Mueve las fotos de las facturas ya cargadas a la rama aparte. Hasta que se corra, esas facturas
+// siguen trayendo su foto embebida y el listado completo sigue pesando de más en cada carga.
+window.migrarFotosFacturas = async function() {
+  const conFoto = Object.entries(state.facturas).filter(([, f]) => f.foto);
+  const out = document.getElementById("cfg-migracion");
+  if (!conFoto.length) { out.textContent = "✅ No hay fotos para migrar: ya están todas separadas."; return; }
+  const pesoMb = (conFoto.reduce((s, [, f]) => s + f.foto.length, 0) / 1048576).toFixed(1);
+  if (!confirm(`Se van a mover las fotos de ${conFoto.length} facturas (${pesoMb} MB) a una rama aparte de la base.\n\nLas fotos NO se borran: se siguen viendo igual, pero dejan de descargarse cada vez que abrís la app. Es lo que hace que el listado de facturas cargue rápido.\n\n¿Continuar?`)) return;
+  out.textContent = `Migrando 0 de ${conFoto.length}...`;
+  await suspenderRender(async () => {
+    let hechas = 0;
+    for (const [id, f] of conFoto) {
+      await set(ref(db, `costeo/facturasFotos/${id}`), f.foto);
+      await update(ref(db, `costeo/facturas/${id}`), { foto: null, tieneFoto: true });
+      hechas++;
+      if (hechas % 5 === 0 || hechas === conFoto.length) out.textContent = `Migrando ${hechas} de ${conFoto.length}...`;
+    }
+    out.textContent = `✅ Listo: ${hechas} fotos movidas (${pesoMb} MB menos en cada carga de la app).`;
+  });
+};
 
 // Diagnóstico de un solo click: dice si la función de escaneo está publicada y respondiendo, que
 // es lo primero a descartar cuando "no reconoce ninguna factura". Manda una imagen mínima de 1x1
