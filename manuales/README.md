@@ -81,6 +81,44 @@ horario, un PIN o una URL, se actualiza acá primero.
 
 ---
 
+## 📖 La app de Manuales
+
+Los manuales se leen y se editan desde **`/manuales/`** en el mismo sitio de Netlify
+que Pedidos de Producción. Hay un botón **📖 Manuales** en la barra de navegación.
+
+| | |
+|---|---|
+| **Leer** | Sin clave. Cualquiera del equipo entra y consulta |
+| **Editar** | Con clave, en la pantalla de entrada. Inicial: `manuales2026` |
+| **Imprimir** | Botón 🖨️ en cada manual — sale limpio, sin menús |
+| **Buscar** | Busca dentro del texto de todos los manuales a la vez |
+
+Se guarda en el mismo Firebase que el resto (`pedidos-de-produccion-ee3cb`), bajo la
+rama `manuales/`. Cada vez que se guarda un cambio, la versión anterior queda en
+`manuales/historial/`.
+
+### ⚠️ A partir de ahora hay dos copias
+
+Esto importa y conviene tenerlo claro:
+
+| | Los archivos `.md` de esta carpeta | La app |
+|---|---|---|
+| **Qué es** | El original con el que se armó todo | **Lo que el equipo lee de verdad** |
+| **Se actualiza** | Editando el repositorio | Editando desde la app |
+
+**Una vez que empezás a editar desde la app, la app manda.** Los `.md` de acá quedan
+como la versión con la que se sembró — no se actualizan solos.
+
+Para volver a sincronizarlos: entrá en modo edición, andá a **Inicio** y usá
+**⬇️ Descargar todos en Markdown**. Eso baja los archivos actualizados para reemplazar
+los de esta carpeta.
+
+> La app **solo siembra la primera vez**: si `manuales/docs` ya existe en Firebase, no
+> lo pisa. Editar el `.md` de esta carpeta después de la siembra **no cambia lo que ve
+> el equipo**.
+
+---
+
 ## Cómo mantener estos manuales
 
 1. **Un cambio, un lugar.** Si el dato está en `comunes/`, se edita ahí. Los manuales

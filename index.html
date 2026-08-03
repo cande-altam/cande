@@ -482,6 +482,10 @@
     }
     .nav-mobile-btn:hover{color:var(--cream);background:rgba(255,255,255,.08);}
     .nav-mobile-btn.active{color:#fff;background:var(--terra);font-weight:600;}
+    /* Enlace externo dentro de la nav (Manuales) — se ve igual que un botón */
+    a.nav-link-ext{text-decoration:none;display:inline-flex;align-items:center;gap:5px;}
+    a.nav-link-ext:hover{color:var(--cream);background:rgba(255,255,255,.08);}
+    .nav-mobile-menu a.nav-link-ext{display:flex;}
 
     /* ── RESPONSIVE ── */
     @media(min-width:701px){.nav-hamburger{display:none;}.nav-desktop{display:flex;}.nav-mobile-menu{display:none!important;}}
@@ -1436,6 +1440,7 @@ function renderHeader() {
     </div>
     <nav class="nav nav-desktop">
       ${views.map(v => `<button class="nav-btn ${state.view===v.key?'active':''}" onclick="setView('${v.key}')">${v.label}${v.alert ? '<span class="nav-alert"></span>' : ''}</button>`).join('')}
+      <a class="nav-btn nav-link-ext" href="manuales/">📖 Manuales</a>
     </nav>
     <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menú">
       <span></span><span></span><span></span>
@@ -1443,6 +1448,7 @@ function renderHeader() {
   </div>
   <div class="nav-mobile-menu ${state.mobileNavOpen?'open':''}" id="mobile-nav">
     ${views.map(v => `<button class="nav-mobile-btn ${state.view===v.key?'active':''}" onclick="setView('${v.key}');closeMobileNav()">${v.label}${v.alert ? ' •' : ''}</button>`).join('')}
+    <a class="nav-mobile-btn nav-link-ext" href="manuales/">📖 Manuales</a>
   </div>`;
 }
 
