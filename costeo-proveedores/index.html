@@ -233,7 +233,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-03 11:56";
+const APP_VERSION = "2026-08-03 12:19";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -1405,6 +1405,7 @@ async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, 
     ...(conIva === undefined ? {} : { conIva })
   };
   const histRef = await push(ref(db, `costeo/insumos/${insumoId}/historial`), histEntry);
+  invalidarCacheCosteo();
   state.insumos[insumoId] = {
     ...insumo, ...updates,
     historial: { ...(insumo.historial || {}), [histRef.key]: histEntry }
@@ -1473,6 +1474,7 @@ async function aplicarPrecioListaInsumo(insumoId, { proveedorId, proveedorNombre
     };
   }
   await update(ref(db, `costeo/insumos/${insumoId}`), updates);
+  invalidarCacheCosteo();
   state.insumos[insumoId] = { ...insumo, ...updates };
   return { precioAnterior: precioActualAnterior, precioNuevo: precioActual, subio: precioActual > precioActualAnterior + 0.005 };
 }
@@ -1487,33 +1489,50 @@ async function aplicarPrecioListaProducto(productoId, { proveedorId, proveedorNo
     const r = await aplicarPrecioListaInsumo(producto.insumoVinculadoId, { proveedorId, proveedorNombre, precio, marca, fechaLista, listaId });
     return { ...r, viaInsumoId: producto.insumoVinculadoId };
   }
+  // Se compara siempre SIN IVA contra SIN IVA: el precio de la lista es lo que factura el
+  // proveedor (neto), mientras que costoManual guarda el costo total. Compararlos directo haría
+  // que una lista pareciera más barata solo por no tener el IVA sumado.
+  const costoAnteriorSinIva = producto.costoSinIva !== undefined && producto.costoSinIva !== null
+    ? Number(producto.costoSinIva) || 0
+    : (Number(producto.costoManual) || 0) / (1 + ((producto.ivaPct ?? RETAIL_IVA_PCT) / 100));
   const costoAnterior = Number(producto.costoManual) || 0;
   const listaPrecio = {
     precio, fecha: fechaLista || todayISO(),
     proveedorId: proveedorId || "", proveedorNombre: proveedorNombre || "",
     marca: normMarca(marca), listaId: listaId || ""
   };
-  const subio = precio > costoAnterior + 0.005;
+  const subio = precio > costoAnteriorSinIva + 0.005;
   const updates = { listaPrecio, actualizadoTs: Date.now() };
   if (subio) {
-    updates.costoManual = precio;
-    const pct = costoAnterior > 0 ? ((precio - costoAnterior) / costoAnterior) * 100 : null;
+    // El precio de la lista es el costo SIN IVA (es lo que factura el proveedor). A partir de ahí
+    // se recalcula toda la cadena de la hoja PLU: + impuestos, + % de ganancia = precio sugerido.
+    // costoManual queda con el costo TOTAL (con IVA), que es lo que efectivamente se paga y con lo
+    // que se miden los márgenes en el resto de la app.
+    const retail = calcPrecioRetail(producto, precio);
+    updates.costoSinIva = precio;
+    updates.costoManual = retail.costoTotal;
+    const pct = costoAnteriorSinIva > 0 ? ((precio - costoAnteriorSinIva) / costoAnteriorSinIva) * 100 : null;
     updates.alertaPrecio = {
-      precioAnterior: costoAnterior, precioNuevo: precio, pct,
+      precioAnterior: costoAnteriorSinIva, precioNuevo: precio, pct,
       proveedorNombre: proveedorNombre || "", marca: normMarca(marca),
       fecha: todayISO(), abrupta: pct !== null && pct >= ALERTA_SUBA_ABRUPTA_UMBRAL, fuente: "lista"
     };
-  } else if (precio < costoAnterior - 0.005) {
-    const pctBaja = costoAnterior > 0 ? ((costoAnterior - precio) / costoAnterior) * 100 : null;
+  } else if (precio < costoAnteriorSinIva - 0.005) {
+    const pctBaja = costoAnteriorSinIva > 0 ? ((costoAnteriorSinIva - precio) / costoAnteriorSinIva) * 100 : null;
     updates.alertaBaja = {
-      precioReferencia: costoAnterior, precioNuevo: precio, pct: pctBaja,
+      precioReferencia: costoAnteriorSinIva, precioNuevo: precio, pct: pctBaja,
       proveedorNombre: proveedorNombre || "", marca: normMarca(marca),
       fecha: todayISO(), fuente: "lista"
     };
   }
   await update(ref(db, `costeo/productos/${productoId}`), updates);
+  invalidarCacheCosteo();
   state.productos[productoId] = { ...producto, ...updates };
-  return { precioAnterior: costoAnterior, precioNuevo: subio ? precio : costoAnterior, subio };
+  return {
+    precioAnterior: costoAnteriorSinIva, precioNuevo: subio ? precio : costoAnteriorSinIva, subio,
+    // El precio de venta que resulta de este costo — es el dato que se quiere ver al cargar una lista.
+    retail: calcPrecioRetail({ ...producto, ...updates }, subio ? precio : costoAnteriorSinIva)
+  };
 }
 
 // Como el costeo toma SIEMPRE el precio más alto, no hay forma (ni sentido) de elegir a mano una
@@ -2931,6 +2950,41 @@ function costoProductoFuente(producto) {
 // Con el costo real conocido, se despeja el precio sugerido con una regla de tres simple:
 // costo / 0.28 = precioSugerido, y de ahí el resto de las porciones.
 const COSTEO_MODELO = { variable: 0.28, fijo: 0.37, renta: 0.20, merma: 0.15 };
+// ─────────────────────────────────────────────────────────────────────────────
+// PRECIO DE REVENTA (modelo de la hoja PLU del archivo Costos)
+// Para los productos que se compran ya hechos y se revenden (almacén, bebidas, lácteos,
+// fiambres) el precio NO sale del modelo de costeo de producción, sino de la cadena:
+//     costo sin IVA  →  + impuestos (IVA)  →  = costo total  →  × (1 + % de ganancia)
+// Es exactamente lo que hace la hoja PLU: Recom = Costo Total × (1 + %).
+// Los defaults salen de lo que más se repite ahí (IVA 21%, ganancia 30%), pero ambos son por
+// producto porque en los datos reales conviven 10,5% y 24% de IVA, y 30/34/35/40% de ganancia.
+// ─────────────────────────────────────────────────────────────────────────────
+const RETAIL_IVA_PCT = 21;
+const RETAIL_GANANCIA_PCT = 30;
+const RETAIL_IVA_OPCIONES = [10.5, 21, 24];
+
+function calcPrecioRetail(producto, costoSinIvaOverride) {
+  const p = producto || {};
+  const costoSinIva = costoSinIvaOverride !== undefined && costoSinIvaOverride !== null
+    ? Number(costoSinIvaOverride) || 0
+    : Number(p.costoSinIva) || 0;
+  const ivaPct = p.ivaPct === undefined || p.ivaPct === null ? RETAIL_IVA_PCT : Number(p.ivaPct) || 0;
+  const gananciaPct = p.gananciaPct === undefined || p.gananciaPct === null ? RETAIL_GANANCIA_PCT : Number(p.gananciaPct) || 0;
+  const impuestos = costoSinIva * (ivaPct / 100);
+  const costoTotal = costoSinIva + impuestos;
+  const ganancia = costoTotal * (gananciaPct / 100);
+  return {
+    costoSinIva, ivaPct, impuestos, costoTotal, gananciaPct, ganancia,
+    precioSugerido: costoTotal + ganancia
+  };
+}
+
+// Un producto se costea con el modelo de reventa cuando no tiene receta propia: no se produce,
+// se compra y se revende, así que su precio sale del costo de compra y no de una receta.
+function usaPrecioRetail(producto) {
+  return !(producto && producto.receta && Object.keys(producto.receta).length);
+}
+
 function calcModeloCosteo(producto) {
   const costo = calcCostoProducto(producto);
   if (!costo) return null;
@@ -2990,6 +3044,9 @@ window.guardarProducto = async function() {
   const precioVentaRaw = document.getElementById("prod-precio-venta").value;
   const precioVenta = precioVentaRaw ? parseFloat(precioVentaRaw) : null;
   const costoManualRaw = document.getElementById("prod-costo-manual").value;
+  const costoSinIvaRaw = document.getElementById("prod-costo-sin-iva").value;
+  const ivaPct = Number(document.getElementById("prod-iva-pct").value) || RETAIL_IVA_PCT;
+  const gananciaPct = Number(document.getElementById("prod-ganancia-pct").value);
   const costoManual = costoManualRaw ? parseFloat(costoManualRaw) : null;
   const categoria = document.getElementById("prod-categoria").value.trim();
   const insumoVinculadoId = document.getElementById("prod-insumo-vinculado").value;
@@ -3006,7 +3063,16 @@ window.guardarProducto = async function() {
   }
 
   const id = state.editingProductoId;
-  const data = { nombre, precioVenta, receta, costoManual, categoria, insumoVinculadoId, insumoVinculadoCantidad };
+  // Si se carga el costo sin IVA (reventa), el costo total se deriva de la cadena de la hoja PLU
+  // en vez de pedirlo aparte: costo s/IVA + impuestos. Así los dos campos no pueden contradecirse.
+  const costoSinIva = costoSinIvaRaw ? parseFloat(costoSinIvaRaw) : null;
+  const retailCalc = costoSinIva ? calcPrecioRetail({ ivaPct, gananciaPct }, costoSinIva) : null;
+  const data = {
+    nombre, precioVenta, receta,
+    costoManual: retailCalc ? retailCalc.costoTotal : costoManual,
+    costoSinIva, ivaPct, gananciaPct,
+    categoria, insumoVinculadoId, insumoVinculadoCantidad
+  };
   try {
     if (id === "new") {
       await set(push(ref(db, "costeo/productos")), { ...data, creadoTs: Date.now() });
@@ -3051,6 +3117,22 @@ function renderProductosView(container) {
         <div class="form-group" style="max-width:260px">
           <label class="form-label">Costo manual (opcional, si no armaste la receta)</label>
           <input type="number" step="0.01" min="0" class="form-input" id="prod-costo-manual" value="${editingData.costoManual ?? ""}" placeholder="0.00">
+        </div>
+        <div class="form-group" style="max-width:150px">
+          <label class="form-label">Costo sin IVA (reventa)</label>
+          <input type="number" step="0.01" min="0" class="form-input" id="prod-costo-sin-iva" value="${editingData.costoSinIva ?? ""}" placeholder="0.00">
+          <div class="text-muted" style="font-size:11px">Lo que factura el proveedor. Lo completa sola la lista de precios.</div>
+        </div>
+        <div class="form-group" style="max-width:120px">
+          <label class="form-label">IVA %</label>
+          <select class="form-select" id="prod-iva-pct">
+            ${RETAIL_IVA_OPCIONES.map(v => `<option value="${v}" ${Number(editingData.ivaPct ?? RETAIL_IVA_PCT) === v ? "selected" : ""}>${v}%</option>`).join("")}
+          </select>
+        </div>
+        <div class="form-group" style="max-width:120px">
+          <label class="form-label">% de ganancia</label>
+          <input type="number" step="1" min="0" class="form-input" id="prod-ganancia-pct" value="${editingData.gananciaPct ?? RETAIL_GANANCIA_PCT}">
+          <div class="text-muted" style="font-size:11px">Sobre el costo total.</div>
         </div>
         <div class="form-group" style="max-width:300px">
           <label class="form-label">O tomar el costo de un insumo (reventa)</label>
@@ -3177,11 +3259,21 @@ function renderProductosTable() {
     const recetaAbierta = state.viewingProductoRecetaId === id;
     const esVersionMesa = p.nombre.toLowerCase().includes("(mesas)");
     const clasificacion = clasificarProducto(p);
-    const modelo = calcModeloCosteo(p);
-    const precioSugeridoRedondeado = modelo ? Math.round(modelo.precioSugerido / 100) * 100 : null;
+    // Dos modelos de precio, según cómo se obtiene el producto:
+    //  · Elaborado (tiene receta): modelo de producción 28/37/20/15.
+    //  · Reventa (se compra hecho): cadena de la hoja PLU — costo s/IVA + impuestos + % ganancia.
+    const esRetail = usaPrecioRetail(p);
+    const retail = esRetail ? calcPrecioRetail(p) : null;
+    const modelo = esRetail ? null : calcModeloCosteo(p);
+    const sugeridoCrudo = retail && retail.costoSinIva > 0 ? retail.precioSugerido : (modelo ? modelo.precioSugerido : null);
+    const precioSugeridoRedondeado = sugeridoCrudo !== null ? Math.round(sugeridoCrudo / 100) * 100 : null;
+    const desgloseRetail = retail && retail.costoSinIva > 0
+      ? `<div class="text-muted" style="font-size:11px">${fmtMoney(retail.costoSinIva)} + ${fmtMoney(retail.impuestos)} IVA ${retail.ivaPct}% + ${retail.gananciaPct}% gan.</div>`
+      : "";
     const precioVentaCell = `
       <input type="number" step="1" min="0" class="form-input" style="max-width:120px" value="${p.precioVenta ?? ""}" placeholder="Precio venta" onchange="guardarPrecioVentaRapido('${id}', this.value)">
       ${precioSugeridoRedondeado !== null ? `<div class="text-muted" style="font-size:11px">Sugerido: ${fmtMoney(precioSugeridoRedondeado)}</div>` : ""}
+      ${desgloseRetail}
       ${p.precioVenta ? `<div class="text-muted" style="font-size:11px">Mesa (+10%): ${fmtMoney(p.precioVenta * 1.1)}</div>` : ""}`;
     return `
       <tr class="${recetaAbierta ? "fila-abierta" : ""}">
@@ -3793,7 +3885,15 @@ function normalizarLineasLista(items) {
     const cont = Number(it.contenidoPorUnidad);
     // Si la línea está cotizada por bulto, lo que se guarda es el precio por unidad de medida —
     // exactamente el mismo criterio que en las facturas, para que ambos caminos sean comparables.
-    const precioUnitario = Number.isFinite(precio) && Number.isFinite(cont) && cont > 0 ? precio / cont : precio;
+    let precioUnitario = Number.isFinite(precio) && Number.isFinite(cont) && cont > 0 ? precio / cont : precio;
+    // Toda la cadena de precios arranca del costo SIN IVA (es lo que factura el proveedor). Si la
+    // lista aclara que sus precios son finales, se le descuenta el IVA acá para no inflar el costo
+    // —y con él el precio de venta— con un impuesto que después se vuelve a sumar.
+    if (it.precioIncluyeIva === true && Number.isFinite(precioUnitario)) {
+      const prodDest = destino.startsWith("p:") ? state.productos[destino.slice(2)] : null;
+      const ivaDest = prodDest && prodDest.ivaPct != null ? Number(prodDest.ivaPct) : RETAIL_IVA_PCT;
+      precioUnitario = precioUnitario / (1 + ivaDest / 100);
+    }
     return {
       nombre: String(it.nombre || "").trim(),
       destino,
@@ -3803,6 +3903,11 @@ function normalizarLineasLista(items) {
       contenidoPorUnidad: Number.isFinite(cont) && cont > 0 ? cont : "",
       precioLista: Number.isFinite(precio) ? precio : "",
       precio: Number.isFinite(precioUnitario) ? Math.round(precioUnitario * 10000) / 10000 : "",
+      // Si la lista aclara que los precios son finales, se descuenta el IVA para quedarse con el
+      // costo neto: toda la cadena de precios de la hoja PLU arranca del costo SIN IVA.
+      ivaPct: null,
+      gananciaPct: null,
+      precioIncluyeIva: it.precioIncluyeIva === true,
       // Una línea sin precio legible no se puede aplicar: arranca destildada para que no pase de largo.
       aplicar: Number.isFinite(precioUnitario) && precioUnitario > 0 && destino !== "__nuevo__"
     };
@@ -3889,6 +3994,13 @@ window.setListaLineaPrecio = function(idx, val) {
   if (!linea) return;
   const n = Number(val);
   linea.precio = Number.isFinite(n) && n > 0 ? n : "";
+  render();
+};
+window.setListaLineaGanancia = function(idx, val) {
+  const linea = (state.listaLineas || [])[idx];
+  if (!linea) return;
+  const n = Number(val);
+  linea.gananciaPct = Number.isFinite(n) && n >= 0 ? n : null;
   render();
 };
 window.setListaLineaMarca = function(idx, val) {
@@ -4054,10 +4166,22 @@ function renderListasView(container) {
       <div class="text-muted" style="margin-bottom:10px">Solo se aplican las líneas tildadas. Un precio de lista <strong>más alto</strong> que el costo actual lo actualiza enseguida; uno <strong>más bajo</strong> se guarda y se destaca como oportunidad de compra, pero no baja el costeo hasta que la compres de verdad.</div>
       <div class="data-table-wrap">
         <table class="data-table">
-          <thead><tr><th style="width:34px"></th><th>Línea de la lista</th><th>Se aplica a</th><th>Marca</th><th>Precio de lista</th><th>Costo actual</th><th></th></tr></thead>
+          <thead><tr><th style="width:34px"></th><th>Línea de la lista</th><th>Se aplica a</th><th>Marca</th><th>Costo s/IVA</th><th>Impuestos</th><th>Costo total</th><th>% Gan.</th><th>Precio sugerido</th><th>Costo actual</th><th></th></tr></thead>
           <tbody>
             ${lineas.map((l, idx) => {
               const cmp = comparacionLineaLista(l);
+              // Cadena de la hoja PLU para la línea: costo s/IVA -> impuestos -> costo total ->
+              // % de ganancia -> precio sugerido de venta. Se muestra ANTES de aplicar, que es el
+              // punto de cargar una lista: ver qué precio de venta va a quedar.
+              const [tipoDest, idDest] = String(l.destino || "").split(":");
+              const prodDest = tipoDest === "p" ? state.productos[idDest] : null;
+              const insDest = tipoDest === "i" ? state.insumos[idDest] : null;
+              const baseRetail = prodDest || (insDest ? { ivaPct: l.ivaPct, gananciaPct: l.gananciaPct } : null);
+              const aplicaRetail = Number(l.precio) > 0 && (prodDest ? usaPrecioRetail(prodDest) : !!insDest);
+              const retail = aplicaRetail
+                ? calcPrecioRetail({ ...(baseRetail || {}), ...(l.ivaPct != null ? { ivaPct: l.ivaPct } : {}), ...(l.gananciaPct != null ? { gananciaPct: l.gananciaPct } : {}) }, Number(l.precio))
+                : null;
+              const precioVentaActual = prodDest ? Number(prodDest.precioVenta) || 0 : 0;
               const badge = cmp.estado === "sube" ? `<span class="badge badge-suba">🔺 Sube ${fmtPct(cmp.pct)}</span>`
                 : cmp.estado === "baja" ? `<span class="badge badge-baja" title="No baja el costeo: queda como oportunidad de compra">💡 ${fmtPct(cmp.pct)} más barato</span>`
                 : cmp.estado === "igual" ? `<span class="badge badge-neutro">= Sin cambio</span>`
@@ -4071,6 +4195,10 @@ function renderListasView(container) {
                 <td><select class="form-select" style="min-width:190px" onchange="setListaLineaDestino(${idx}, this.value)">${opcionesDestinoLista(l.destino)}</select></td>
                 <td><input class="form-input" style="min-width:110px" value="${escapeHtml(l.marca)}" placeholder="Marca" onchange="setListaLineaMarca(${idx}, this.value)"></td>
                 <td><input type="number" step="0.01" min="0" class="form-input" style="min-width:110px" value="${l.precio === "" ? "" : l.precio}" onchange="setListaLineaPrecio(${idx}, this.value)"></td>
+                <td class="text-muted">${retail ? fmtMoney(retail.impuestos) : "—"}${retail ? `<div style="font-size:11px">IVA ${retail.ivaPct}%</div>` : ""}</td>
+                <td>${retail ? fmtMoney(retail.costoTotal) : "—"}</td>
+                <td>${retail ? `<input type="number" step="1" min="0" class="form-input" style="max-width:70px" value="${retail.gananciaPct}" title="% de ganancia sobre el costo total" onchange="setListaLineaGanancia(${idx}, this.value)">` : "—"}</td>
+                <td>${retail ? `<strong>${fmtMoney(retail.precioSugerido)}</strong>${precioVentaActual ? `<div class="text-muted" style="font-size:11px">hoy: ${fmtMoney(precioVentaActual)}</div>` : ""}` : `<span class="text-muted">receta</span>`}</td>
                 <td>${cmp.actual === null ? "—" : fmtMoney(cmp.actual)}</td>
                 <td>${badge}</td>
               </tr>`;
