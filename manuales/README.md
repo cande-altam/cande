@@ -25,12 +25,13 @@ y **un local de producción**.
 
 | Área | Manual | Estado |
 |---|---|---|
-| Panadería | — | ⬜ Pendiente |
-| Pastelería | — | ⬜ Pendiente |
-| Facturería | — | ⬜ Pendiente |
-| Especialidades | — | ⬜ Pendiente |
-| Sandwiches | — | ⬜ Pendiente |
+| Panadería | [produccion/panaderia.md](produccion/panaderia.md) | 🟠 v0.5 — **Solo fórmulas**, falta el proceso |
+| Pastelería | [produccion/pasteleria.md](produccion/pasteleria.md) | 🟠 v0.5 — **Solo fórmulas**, falta el proceso |
+| Facturería | [produccion/factureria.md](produccion/factureria.md) | 🟠 v0.5 — **Solo fórmulas**, falta el proceso |
+| Especialidades | [produccion/especialidades.md](produccion/especialidades.md) | 🟠 v0.5 — **Solo fórmulas**, falta el proceso |
+| Sandwiches | [produccion/sandwiches.md](produccion/sandwiches.md) | 🔴 v0.5 — **Casi vacío**, sin fichas de sandwich |
 | Compras | [produccion/compras.md](produccion/compras.md) | 🟡 v1.0 — Julio 2026 · con puntos a definir |
+| *Bases y preparaciones* | [produccion/bases.md](produccion/bases.md) | 🟠 v0.5 — 6 bases, falta el proceso |
 
 > **Cocina San Luis no lleva manual propio.** Forma parte del local San Luis y
 > funciona de forma independiente **solo para pedir insumos**, no como área de

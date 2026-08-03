@@ -148,11 +148,15 @@ completa:
 
 ## Áreas a relevar
 
-| Área | Estado | Fuente |
-|---|---|---|
-| Panadería | ⬜ Pendiente | *(a definir)* |
-| Pastelería | ⬜ Pendiente | *(a definir)* |
-| Facturería | ⬜ Pendiente | *(a definir)* |
-| Especialidades | ⬜ Pendiente | *(a definir)* |
-| Sandwiches | ⬜ Pendiente | *(a definir)* |
-| Compras | ✅ Relevada | Julio 2026 |
+| Área | Fórmulas | Proceso | Fuente |
+|---|---|---|---|
+| Panadería | ✅ Cargadas | ⬜ Pendiente | *(a definir)* |
+| Pastelería | ✅ Cargadas | ⬜ Pendiente | *(a definir)* |
+| Facturería | ✅ Cargadas | ⬜ Pendiente | *(a definir)* |
+| Especialidades | ✅ Cargadas | ⬜ Pendiente | *(a definir)* |
+| Sandwiches | 🔴 Faltan casi todas | ⬜ Pendiente | *(a definir)* |
+| Compras | — | ✅ Relevado | Julio 2026 |
+
+> **Las fórmulas ya están** en cada manual de área, sacadas del módulo de Costeo.
+> Lo que falta es el **proceso** — que es lo que responde este cuestionario.
+> El bloque 4 es el que más importa.
