@@ -243,7 +243,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-03 12:39";
+const APP_VERSION = "2026-08-03 12:52";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -301,6 +301,7 @@ const state = {
   productosFiltro: "",
   productosSoloAlertas: false,
   productosClasificacionFiltro: "todos",
+  mostrarCambiosPrecio: false,
   proveedoresBusqueda: "",
   insumosBusqueda: "",
   recetasBasesBusqueda: "",
@@ -2263,6 +2264,14 @@ window.toggleHistorialInsumo = function(id) {
   state.viewingInsumoHistId = state.viewingInsumoHistId === id ? null : id;
   render();
 };
+// "➕ Precio" comparte panel con "ver detalle", pero NO debe alternar: si la fila ya estaba
+// abierta, alternar la cerraba y daba la sensación de que el botón no hacía nada (era, de hecho,
+// por qué no se podía cargar un precio a mano). Siempre abre y lleva el foco al campo del precio.
+window.abrirCargaPrecioInsumo = function(id) {
+  state.viewingInsumoHistId = id;
+  render();
+  enfocarFormularioAbierto(`add-precio-monto-${id}`);
+};
 
 function stripAccentsCosteo(s) {
   return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -2687,7 +2696,7 @@ function renderInsumosView(container) {
         <td>${hist.length}</td>
         <td style="white-space:nowrap">
           <div class="row-actions">
-            ${!esElaborado ? `<button class="btn btn-turq btn-sm" onclick="toggleHistorialInsumo('${id}')" title="Agregar otro proveedor o marca de este mismo insumo">➕ Precio</button>` : ""}
+            ${!esElaborado ? `<button class="btn btn-turq btn-sm" onclick="abrirCargaPrecioInsumo('${id}')" title="Cargar un precio nuevo de este insumo (otro proveedor, otra marca, o actualizar el actual)">➕ Precio</button>` : ""}
             <button class="btn btn-ghost btn-sm btn-icon" onclick="abrirFormInsumo('${id}')" title="Editar nombre y unidad">✏️</button>
             <button class="btn btn-ghost btn-sm btn-icon" onclick="toggleHistorialInsumo('${id}')" title="${isOpen ? "Ocultar detalle" : "Ver precios, historial y más acciones"}">${isOpen ? "▴" : "▾"}</button>
           </div>
@@ -2712,7 +2721,7 @@ function renderInsumosView(container) {
           </div>
           <div class="form-group" style="max-width:130px">
             <label class="form-label">Precio</label>
-            <input type="number" step="0.01" min="0" class="form-input" id="add-precio-monto-${id}">
+            <input type="number" step="0.01" min="0" class="form-input" id="add-precio-monto-${id}" onkeydown="if(event.key==='Enter'){event.preventDefault();agregarPrecioInsumo('${id}');}">
           </div>
           <button class="btn btn-primary btn-sm" onclick="agregarPrecioInsumo('${id}')">+ Agregar precio</button>
         </div>
@@ -3006,10 +3015,17 @@ const RETAIL_IVA_OPCIONES = [10.5, 21, 24];
 
 function calcPrecioRetail(producto, costoSinIvaOverride) {
   const p = producto || {};
+  const ivaPctBase = p.ivaPct === undefined || p.ivaPct === null ? RETAIL_IVA_PCT : Number(p.ivaPct) || 0;
+  // Hay dos campos de costo por razones históricas: costoManual (el de siempre, con IVA incluido)
+  // y costoSinIva (el neto, que llena la lista de precios). Si solo está el viejo, se deriva el
+  // neto de ahí en vez de quedarse sin precio sugerido — que era el motivo por el que editar un
+  // producto de retail a mano no devolvía ninguna sugerencia.
   const costoSinIva = costoSinIvaOverride !== undefined && costoSinIvaOverride !== null
     ? Number(costoSinIvaOverride) || 0
-    : Number(p.costoSinIva) || 0;
-  const ivaPct = p.ivaPct === undefined || p.ivaPct === null ? RETAIL_IVA_PCT : Number(p.ivaPct) || 0;
+    : (p.costoSinIva !== undefined && p.costoSinIva !== null && Number(p.costoSinIva) > 0
+        ? Number(p.costoSinIva)
+        : (Number(p.costoManual) || 0) / (1 + ivaPctBase / 100));
+  const ivaPct = ivaPctBase;
   const gananciaPct = p.gananciaPct === undefined || p.gananciaPct === null ? RETAIL_GANANCIA_PCT : Number(p.gananciaPct) || 0;
   const impuestos = costoSinIva * (ivaPct / 100);
   const costoTotal = costoSinIva + impuestos;
@@ -3200,6 +3216,7 @@ function renderProductosView(container) {
   // a mirar Análisis para que la comparación de costo vs. precio de venta esté actualizada.
   mantenimientoBases();
   mantenimientoCostosProductos();
+  const cambiosPrecio = productosConCambioDePrecio();
 
   container.innerHTML = `
     <div class="section-header">
@@ -3207,8 +3224,31 @@ function renderProductosView(container) {
         <div class="page-title">Productos y recetas</div>
         <div class="page-sub" style="margin-bottom:0">El costo se calcula automáticamente a partir de la receta. Si un producto no tiene receta armada, podés cargarle un costo manual (acá mismo, en la columna "Costo actual") para que igual entre en la comparación de costo vs. precio de venta.</div>
       </div>
-      ${!editing ? `<button class="btn btn-primary" onclick="abrirFormProducto()">+ Nuevo producto</button>` : ""}
+      ${!editing ? `<div class="row-actions">
+        <button class="btn btn-turq" onclick="toggleCambiosPrecio()" title="Los productos cuyo precio de venta quedó distinto del sugerido, para ir a actualizarlos en la caja">🔄 Precios a actualizar${cambiosPrecio.length ? ` (${cambiosPrecio.length})` : ""}</button>
+        <button class="btn btn-primary" onclick="abrirFormProducto()">+ Nuevo producto</button>
+      </div>` : ""}
     </div>
+    ${!editing && state.mostrarCambiosPrecio ? `
+    <div class="section-block" style="border-color:var(--turq)">
+      <div class="section-header">
+        <div>
+          <div class="section-title">🔄 Precios pendientes de actualizar en la caja</div>
+          <div class="text-muted" style="font-size:12px">Cambió el costo, así que el precio sugerido se movió — pero el precio de venta sigue como estaba hasta que lo cambies en FUDO. Esta es la lista de lo que hay que tocar.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="descargarCambiosPrecio()" title="Descarga un CSV que se abre en Excel">📤 Descargar CSV</button>
+      </div>
+      ${cambiosPrecio.length ? `<div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th>Producto</th><th>Costo</th><th>Precio actual</th><th>Precio nuevo</th><th>Diferencia</th></tr></thead>
+        <tbody>${cambiosPrecio.map(f => `<tr>
+          <td>${escapeHtml(f.nombre)}<div class="text-muted" style="font-size:11px">${escapeHtml(f.tipo)}${f.costoSinIva !== null ? ` · ${fmtMoney(f.costoSinIva)} + IVA + ${f.gananciaPct}%` : ""}</div></td>
+          <td>${fmtMoney(f.costo)}</td>
+          <td>${fmtMoney(f.precioActual)}</td>
+          <td><strong>${fmtMoney(f.precioSugerido)}</strong></td>
+          <td><span class="badge ${f.diferencia > 0 ? "badge-suba" : "badge-baja"}">${f.diferencia > 0 ? "🔺" : "🔻"} ${fmtMoney(Math.abs(f.diferencia))} (${fmtPct(f.pct)})</span></td>
+        </tr>`).join("")}</tbody>
+      </table></div>` : `<div class="empty-state">✅ No hay precios pendientes: todos los precios de venta coinciden con el sugerido.</div>`}
+    </div>` : ""}
     ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
       <button class="btn ${state.productosClasificacionFiltro === "todos" ? "btn-turq" : "btn-ghost"} btn-sm" onclick="setProductosClasificacionFiltro('todos')">Todos</button>
       <button class="btn ${state.productosClasificacionFiltro === "elaborado" ? "btn-turq" : "btn-ghost"} btn-sm" onclick="setProductosClasificacionFiltro('elaborado')">🥐 Elaborados</button>
@@ -3254,6 +3294,68 @@ function evaluarAlertaProducto(p) {
 const CATEGORIAS_RETAIL_PROD = new Set(["fiambres", "lacteos", "bebidas", "almacen", "te en hebras", "reventa"]);
 const CATEGORIAS_PREPARACION_PROD = new Set(["bebidas cafeteria", "cafe frio", "cafeteria tradicional", "cafeteria de especialidad", "desayunos / meriendas", "extras"]);
 const PALABRAS_PREPARACION = ["relleno", "rellena", "rellenos", "rellenas", "revuelto", "revuelta", "preparado", "preparada"];
+// ── Cambios de precio pendientes de llevar a la caja (FUDO) ──────────────────
+// Cuando cambia un costo, el precio sugerido se mueve pero el precio de venta cargado sigue igual
+// hasta que alguien lo cambie en el sistema de caja. Esto arma justamente esa lista de pendientes:
+// qué productos hay que tocar, de cuánto a cuánto, y por qué.
+const AJUSTE_MINIMO_FUDO = 1; // diferencias de menos de $1 no ameritan tocar nada
+
+function productosConCambioDePrecio() {
+  return objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .map(([id, p]) => {
+      const esRetail = usaPrecioRetail(p);
+      const retail = esRetail ? calcPrecioRetail(p) : null;
+      const modelo = esRetail ? null : calcModeloCosteo(p);
+      const crudo = retail && retail.costoSinIva > 0 ? retail.precioSugerido : (modelo ? modelo.precioSugerido : null);
+      if (crudo === null) return null;
+      const sugerido = Math.round(crudo / 100) * 100;
+      const actual = Number(p.precioVenta) || 0;
+      const dif = sugerido - actual;
+      if (!actual || Math.abs(dif) < AJUSTE_MINIMO_FUDO) return null;
+      return {
+        id, nombre: p.nombre, categoria: p.categoria || "",
+        tipo: CLASIFICACION_LABEL[clasificarProducto(p)],
+        costo: retail ? retail.costoTotal : (modelo ? modelo.costo : 0),
+        costoSinIva: retail ? retail.costoSinIva : null,
+        impuestos: retail ? retail.impuestos : null,
+        gananciaPct: retail ? retail.gananciaPct : null,
+        precioActual: actual, precioSugerido: sugerido, diferencia: dif,
+        pct: actual > 0 ? (dif / actual) * 100 : null
+      };
+    })
+    .filter(Boolean);
+}
+
+window.toggleCambiosPrecio = function() {
+  state.mostrarCambiosPrecio = !state.mostrarCambiosPrecio;
+  render();
+};
+
+// CSV con punto y coma y BOM: es lo que abre bien Excel en configuración regional argentina
+// (donde la coma es el separador decimal).
+window.descargarCambiosPrecio = function() {
+  const filas = productosConCambioDePrecio();
+  if (!filas.length) { showToast("✅ No hay precios pendientes de actualizar.", "success"); return; }
+  const encabezado = ["Producto", "Categoria", "Tipo", "Costo s/IVA", "Impuestos", "Costo total", "% Ganancia", "Precio actual", "Precio nuevo", "Diferencia", "% Variacion"];
+  const num = n => (n === null || n === undefined) ? "" : String(Math.round(n * 100) / 100).replace(".", ",");
+  const txt = t => `"${String(t ?? "").replace(/"/g, '""')}"`;
+  const lineas = [encabezado.join(";")].concat(filas.map(f => [
+    txt(f.nombre), txt(f.categoria), txt(f.tipo),
+    num(f.costoSinIva), num(f.impuestos), num(f.costo), num(f.gananciaPct),
+    num(f.precioActual), num(f.precioSugerido), num(f.diferencia), num(f.pct)
+  ].join(";")));
+  const blob = new Blob(["\ufeff" + lineas.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `precios-a-actualizar-${todayISO()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(`📤 Se descargaron ${filas.length} precios para actualizar.`, "success");
+};
+
 function clasificarProducto(p) {
   const cat = stripAccentsCosteo(p.categoria || "").toLowerCase().trim();
   if (CATEGORIAS_RETAIL_PROD.has(cat)) return "retail";
@@ -3311,10 +3413,17 @@ function renderProductosTable() {
     const desgloseRetail = retail && retail.costoSinIva > 0
       ? `<div class="text-muted" style="font-size:11px">${fmtMoney(retail.costoSinIva)} + ${fmtMoney(retail.impuestos)} IVA ${retail.ivaPct}% + ${retail.gananciaPct}% gan.</div>`
       : "";
+    // Si el precio de venta cargado quedó distinto del sugerido, hay que actualizarlo (en el
+    // sistema de caja). Se marca con la diferencia, que es lo que se va a ir a cambiar.
+    const difVsSugerido = precioSugeridoRedondeado !== null && Number(p.precioVenta) > 0
+      ? precioSugeridoRedondeado - Number(p.precioVenta) : null;
+    const badgeAjuste = difVsSugerido !== null && Math.abs(difVsSugerido) >= 1
+      ? `<div><span class="badge ${difVsSugerido > 0 ? "badge-suba" : "badge-baja"}" title="El precio sugerido cambió respecto del precio que tenés cargado">${difVsSugerido > 0 ? "🔺 Subir" : "🔻 Bajar"} ${fmtMoney(Math.abs(difVsSugerido))}</span></div>`
+      : "";
     const precioVentaCell = `
       <input type="number" step="1" min="0" class="form-input" style="max-width:120px" value="${p.precioVenta ?? ""}" placeholder="Precio venta" onchange="guardarPrecioVentaRapido('${id}', this.value)">
       ${precioSugeridoRedondeado !== null ? `<div class="text-muted" style="font-size:11px">Sugerido: ${fmtMoney(precioSugeridoRedondeado)}</div>` : ""}
-      ${desgloseRetail}
+      ${desgloseRetail}${badgeAjuste}
       ${p.precioVenta ? `<div class="text-muted" style="font-size:11px">Mesa (+10%): ${fmtMoney(p.precioVenta * 1.1)}</div>` : ""}`;
     return `
       <tr class="${recetaAbierta ? "fila-abierta" : ""}">
@@ -3997,6 +4106,63 @@ async function pedirParteLista(body) {
   return data;
 }
 
+// Lectura SIN IA, en el navegador. La mayoría de las listas que llegan por WhatsApp o mail son
+// dos columnas —nombre y precio— y para eso no hace falta ningún servicio: se parsea acá. Es
+// además la red de seguridad cuando la función serverless no responde: nunca se puede quedar sin
+// poder cargar una lista por un problema de infraestructura.
+function parsearLineaListaSimple(linea) {
+  const txt = String(linea || "").trim();
+  if (!txt) return null;
+  // El precio es el último número de la línea. Se aceptan 1.234,56 / 1234.56 / $1200 / 1200.
+  const m = txt.match(/(?:\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:[.,]\d+)?)\s*$/);
+  if (!m) return null;
+  let bruto = m[1];
+  if (bruto.includes(".") && bruto.includes(",")) bruto = bruto.replace(/\./g, "").replace(",", ".");
+  else if (/,\d{1,2}$/.test(bruto)) bruto = bruto.replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(bruto)) bruto = bruto.replace(/\./g, "");
+  const precio = parseFloat(bruto);
+  if (!(precio > 0)) return null;
+  // Todo lo anterior al precio es el nombre, sin separadores sueltos al final.
+  const nombre = txt.slice(0, m.index).replace(/[\s;:,.\-–—|\t]+$/, "").trim();
+  if (!nombre) return null;
+  return { nombre, precio };
+}
+
+function leerListaSinIA(texto) {
+  const items = [];
+  for (const linea of String(texto || "").split("\n")) {
+    const parsed = parsearLineaListaSimple(linea);
+    if (!parsed) continue;
+    const productoId = Object.entries(state.productos)
+      .filter(([, p]) => usaPrecioRetail(p))
+      .find(([, p]) => (p.nombre || "").trim().toLowerCase() === parsed.nombre.toLowerCase())?.[0] || null;
+    items.push({
+      nombre: parsed.nombre, precio: parsed.precio,
+      insumoId: productoId ? null : (matchInsumoId(parsed.nombre) || null),
+      productoId
+    });
+  }
+  return items;
+}
+
+window.leerListaPreciosSinIA = function() {
+  const texto = (state.listaTexto || "").trim();
+  if (!texto) { showToast("⚠️ Pegá el texto de la lista para poder leerla.", "warn"); return; }
+  const items = leerListaSinIA(texto);
+  if (!items.length) {
+    showToast("⚠️ No se reconoció ninguna línea con formato \"nombre precio\". Revisá que cada renglón termine con el precio.", "warn");
+    return;
+  }
+  state.listaLineas = normalizarLineasLista(items);
+  const sinIdentificar = state.listaLineas.filter(l => l.destino === "__nuevo__").length;
+  state.listaMeta = {
+    proveedorLeido: "", cuit: "", calidadImagen: "", camposIlegibles: [],
+    notas: `Leída sin IA, directamente del texto. Se reconocieron ${items.length} líneas${sinIdentificar ? ` (${sinIdentificar} sin identificar: elegí a mano a qué corresponden)` : ""}.`
+  };
+  showToast(`📋 Se leyeron ${items.length} líneas sin usar IA. Revisalas antes de aplicar.`, "success");
+  render();
+};
+
 window.leerListaPrecios = async function() {
   const texto = (state.listaTexto || "").trim();
   if (!state._listaFotoScanDataUrl && !texto) {
@@ -4387,7 +4553,8 @@ function renderListasView(container) {
         <textarea class="form-input" id="lista-texto" rows="6" placeholder="Pegá acá el mensaje de WhatsApp, el mail o el texto copiado del PDF con la lista de precios." oninput="setListaTexto(this.value)">${escapeHtml(state.listaTexto)}</textarea>
         <div class="text-muted" style="font-size:11px">Si la lista es muy larga (varias páginas), cargala por partes: una foto o un bloque de texto por vez.</div>
       </div>
-      <button class="btn btn-primary" onclick="leerListaPrecios()" ${state.listaCargando ? "disabled" : ""}>${state.listaCargando ? "🤖 Leyendo lista..." : "🤖 Leer lista"}</button>
+      <button class="btn btn-primary" onclick="leerListaPrecios()" ${state.listaCargando ? "disabled" : ""}>${state.listaCargando ? "🤖 Leyendo lista..." : "🤖 Leer lista con IA"}</button>
+      <button class="btn btn-ghost" onclick="leerListaPreciosSinIA()" ${state.listaCargando ? "disabled" : ""} title="Lee el texto acá mismo, sin usar IA ni el servidor. Sirve si cada renglón es 'nombre precio'.">⚡ Leer sin IA (nombre y precio)</button>
       <div id="lista-progreso" class="text-muted" style="margin-top:8px">${escapeHtml(state.listaProgreso || "")}</div>
     </div>` : ""}
     ${revisionHtml}
