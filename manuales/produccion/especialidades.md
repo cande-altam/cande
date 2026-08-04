@@ -31,6 +31,31 @@ que contemplar cómo cambia el ritmo en temporada.
 
 ---
 
+## 📋 Tu pedido de insumos diario
+
+> ### 🔑 Esta área carga su propio pedido de insumos, todos los días.
+> **Lo que no cargues, nadie lo compra.** Compras no adivina ni repone por su cuenta.
+
+1. Entrá a **`pedidos-produccion.netlify.app`** → **Pedido de insumos**
+2. Seleccioná **el área**
+3. Cargá **todo lo que falte**: insumos, materias primas, elementos
+4. Por cada uno, poné **cantidad** y **prioridad**:
+
+| Color | Prioridad | Cuándo usarlo |
+|---|---|---|
+| 🔴 **Rojo** | Urgente | Lo necesitás **hoy** |
+| 🟡 **Amarillo** | Media | Se está por acabar |
+| 🟢 **Verde** | Baja | Reposición normal |
+
+Usá los **comentarios** para aclarar marca, tamaño o proveedor preferido.
+
+> ⚠️ **Cargalo antes de las 9:00 hs.** A esa hora Compras revisa el pedido completo y
+> arma el recorrido del día. Lo que entre después queda para mañana.
+
+> 📖 Detalle completo en
+> **[Herramientas digitales](../comunes/herramientas-digitales.md)**.
+
+
 ## Fórmulas
 
 > **Las cantidades están en kilogramos**, salvo las que son por unidad

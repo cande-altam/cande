@@ -70,11 +70,14 @@ Este es el momento en que se arma el recorrido.
 
 Cada área marca sus insumos con un color. **El color define qué tan urgente es:**
 
-| Color | Significado | Qué implica para vos |
+| Color | Prioridad | Qué implica para vos |
 |---|---|---|
-| 🔴 **Urgente** | El área lo necesita **hoy** | **Se consigue hoy sí o sí.** No es negociable |
-| 🟡 **Stock bajo** | Se está por acabar | Compralo si el recorrido lo permite |
-| 🟢 **Stock OK** | Reposición normal | Puede esperar al próximo recorrido |
+| 🔴 **Rojo** | Urgente | **Se consigue hoy sí o sí.** No es negociable |
+| 🟡 **Amarillo** | Media | Compralo si el recorrido lo permite |
+| 🟢 **Verde** | Baja | Puede esperar al próximo recorrido |
+
+> ℹ️ En la pantalla los colores figuran como *"Urgente"*, *"Stock bajo"* y *"Stock OK"*.
+> Es la misma escala.
 
 > ⚠️ **Un insumo en rojo no puede quedar pendiente al final del día.** Si no lo
 > conseguís en el recorrido normal, hay que salir a buscarlo (ver Sección 7).

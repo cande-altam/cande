@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 1 | **FUDO** | Punto de venta: ventas, caja, stock, cuentas corrientes | Cajeros, Vendedores, Mozos, Baristas |
 | 2 | **Web Pedidos de Clientes**<br>`pedidos-de-clientes-cc.netlify.app` | Encargues y pedidos a futuro (tortas, catering, eventos) | Cajeros, Vendedores, Mozos |
-| 3 | **Web Pedidos de Producción**<br>`pedidos-produccion.netlify.app` | Pedido diario de cada área de producción | Cajeros, Vendedores, Mozos, Baristas |
+| 3 | **Web Pedidos de Producción**<br>`pedidos-produccion.netlify.app` | Dos cosas distintas: el **pedido de producción** (qué hay que producir) y el **pedido de insumos** (qué hay que comprar) | **Todas las áreas y los dos locales** |
 
 > **Baristas:** la Web de Pedidos de Clientes **no es de tu área** — esa la usan
 > caja y ventas.
@@ -40,6 +40,62 @@ Se carga **una vez por turno**, antes del horario límite de cada área.
 > ⚠️ **Si no cargás a tiempo, producción no puede cumplir.**
 > El pedido es para el **día siguiente**, salvo que el encargado indique otra cosa.
 > Si te olvidaste, avisá al encargado **inmediatamente** — no lo dejes pasar.
+
+---
+
+## Pedidos de insumos
+
+> ### 🔑 Todas las áreas hacen su propio pedido de insumos, todos los días.
+> No hay excepciones. **Lo que un área no carga, nadie lo compra.**
+
+No confundir con el pedido de producción: son **dos cosas distintas dentro de la misma
+web**.
+
+| | **Pedido de producción** | **Pedido de insumos** |
+|---|---|---|
+| **Para qué** | Decirle a producción **cuánto preparar** | Decirle a Compras **qué falta comprar** |
+| **Quién lo carga** | Los locales de venta | **Todas las áreas y los dos locales** |
+| **Qué se pide** | Productos terminados | Insumos, materias primas y elementos |
+| **Cada cuánto** | Una vez por turno | **Todos los días** |
+
+### Paso a paso
+
+1. Ingresá a **`pedidos-produccion.netlify.app`** → **Pedido de insumos**
+2. Seleccioná **el local o el área** que corresponda
+3. Cargá **todos los insumos, elementos o materias que falten**
+4. Por cada insumo indicá **cantidad** y **prioridad**. También podés agregar
+   **comentarios aclaratorios**
+
+### Las tres prioridades
+
+| Color | Prioridad | Qué significa |
+|---|---|---|
+| 🔴 **Rojo** | **Urgente** | Se necesita **hoy**. Compras tiene que conseguirlo sí o sí |
+| 🟡 **Amarillo** | **Media** | Se está por acabar. Se compra si el recorrido lo permite |
+| 🟢 **Verde** | **Baja** | Reposición normal. Puede esperar al próximo recorrido |
+
+> ℹ️ **En la pantalla los colores aparecen con otro nombre:** verde figura como
+> *"Stock OK"*, amarillo como *"Stock bajo"* y rojo como *"Urgente"*. Es la misma
+> escala — el color es lo que manda.
+
+### Los comentarios
+
+Sirven para aclararle algo **a la persona de Compras**: una marca específica, un
+tamaño, un proveedor preferido, cualquier condición particular.
+
+> **Usalos.** Un comentario a tiempo evita que vuelva la compra equivocada.
+
+### Importante
+
+- **Cargá el pedido antes de las 9:00 hs** — a esa hora Compras revisa el pedido
+  completo y arma el recorrido del día. Lo que entre después, probablemente quede
+  para mañana.
+- **Un insumo en rojo no puede quedar sin cargar.** Si te olvidaste y lo necesitás
+  hoy, avisá directamente a Compras además de cargarlo.
+- Lo que Compras no llega a comprar queda como **pendiente** y aparece solo en el
+  pedido del día siguiente.
+
+> 📖 Qué hace Compras con esto: **[Manual de Compras](../produccion/compras.md)**.
 
 ---
 
