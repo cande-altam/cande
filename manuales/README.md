@@ -37,6 +37,12 @@ y **un local de producción**.
 > funciona de forma independiente **solo para pedir insumos**, no como área de
 > producción aparte. Su operación queda cubierta por los manuales de venta.
 
+### 🧹 Transversal
+
+| Área | Manual | Estado |
+|---|---|---|
+| Limpieza | [limpieza.md](limpieza.md) | 🔴 v0.5 — **Borrador**, falta definir el reparto de tareas |
+
 ### 📋 Documentos comunes
 
 Aplican a varios roles a la vez. **Son la fuente única de verdad** — si cambia un
@@ -48,6 +54,7 @@ horario, un PIN o una URL, se actualiza acá primero.
 | [comunes/atencion-y-reclamos.md](comunes/atencion-y-reclamos.md) | Método LAST, 7 pasos de atención, upselling, tiempos |
 | [comunes/higiene-y-presentacion.md](comunes/higiene-y-presentacion.md) | Higiene personal, manipulación, cadena de frío, qué reportar |
 | [comunes/pedidos-y-pagos-a-proveedores.md](comunes/pedidos-y-pagos-a-proveedores.md) | Calendario de pedidos y pagos por proveedor, circuito de autorización |
+| [comunes/jornada-y-presentismo.md](comunes/jornada-y-presentismo.md) | Esquema 6 días + 1 de descanso y presentismo |
 
 ### 🧩 Para escribir un manual nuevo
 
