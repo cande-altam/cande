@@ -357,7 +357,7 @@ window.CloudHistory = {
 
 <script>
 "use strict";
-const APP_VERSION="2026-08-05 historial-v1";
+const APP_VERSION="2026-08-06 vacaciones-nov25-abr26";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -813,6 +813,43 @@ function seedTaken(){
   persist();
 }
 
+/* ---------------- SEMILLA 2: vacaciones tomadas nov 2025 – abr 2026 (calendario "Horarios y
+   calendarios" escaneado que mandaste). Los nombres que ya no están en el equipo (Laura, Juan, Hugo,
+   Tamara, Magali) se dejaron afuera. Los rangos se reconstruyeron cruzando cuántas celdas seguidas
+   tenía cada persona semana a semana — varias personas dan justo su tope de 14 días sumando esto más
+   lo que ya estaba cargado (Vanesa, Aarón, Luciana, Zoe, Valentina, Dana), lo que confirma que el
+   armado quedó bien. Los 2 días sueltos de Brenda quedaron como "pendiente" porque su posición exacta
+   en la grilla es la parte más ambigua de la imagen: confirmalos o corregilos desde el listado.
+   Ojo: Javier y Natalia quedan con más días tomados que los que les corresponden por antigüedad para
+   2025 (a Javier ya le habíamos cargado otro tramo en julio, y acá suma otro de casi un mes en
+   febrero-marzo; a Natalia le da un mes seguido en marzo) — puede ser una excepción de la empresa o
+   que alguno de estos rangos en realidad sea de otro período; revisalo si el saldo negativo que van a
+   mostrar no es lo que esperás. */
+function seedTakenNov2025Abr2026(){
+  const TAG="seed-nov2025-abr2026-v1";
+  if(state.taken.some(t=>t.seedTag===TAG))return;
+  let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,periodo:2025,estado:"confirmada",nota:"",...extra});
+  state.taken.push(
+    mk({n:"Paula",desde:"2026-02-01",hasta:"2026-02-13"}),
+    mk({n:"Javier",desde:"2026-02-02",hasta:"2026-03-01"}),
+    mk({n:"Luis",desde:"2026-02-15",hasta:"2026-02-25"}),
+    mk({n:"Leandro",desde:"2026-02-16",hasta:"2026-02-17"}),
+    mk({n:"Brenda",desde:"2026-02-26",hasta:"2026-02-26",estado:"pendiente",nota:"día suelto de un calendario escaneado: confirmar la fecha exacta en la planilla original"}),
+    mk({n:"Brenda",desde:"2026-03-01",hasta:"2026-03-01",estado:"pendiente",nota:"día suelto de un calendario escaneado: confirmar la fecha exacta en la planilla original"}),
+    mk({n:"Luciana",desde:"2026-02-24",hasta:"2026-03-03"}),
+    mk({n:"Vanesa",desde:"2026-03-02",hasta:"2026-03-14"}),
+    mk({n:"Aaron",desde:"2026-03-02",hasta:"2026-03-15"}),
+    mk({n:"Natalia",desde:"2026-03-02",hasta:"2026-03-29"}),
+    mk({n:"Zoe",desde:"2026-03-09",hasta:"2026-03-11",nota:"vacaciones junto con Lucas"}),
+    mk({n:"Lucas",desde:"2026-03-09",hasta:"2026-03-11",nota:"vacaciones junto con Zoe"}),
+    mk({n:"Margarita",desde:"2026-03-23",hasta:"2026-04-05"}),
+    mk({n:"Valentina",desde:"2026-03-30",hasta:"2026-04-12"}),
+    mk({n:"Rebeca",desde:"2026-04-06",hasta:"2026-04-16"}),
+    mk({n:"Dana",desde:"2026-04-13",hasta:"2026-04-26"}),
+  );
+  persist();
+}
+
 // saca del estado cualquier referencia a alguien que ya no está en el equipo (PEOPLE), para que no
 // queden vacaciones o ajustes colgados de gente que dejó de trabajar acá.
 function limpiarPersonasDadasDeBaja(){
@@ -826,6 +863,7 @@ document.getElementById("appVersion").textContent="v"+APP_VERSION;
 loadLS();
 seedOverrides();
 seedTaken();
+seedTakenNov2025Abr2026();
 limpiarPersonasDadasDeBaja();
 initControls();
 render();
