@@ -279,7 +279,47 @@ const ESTADO_LABELS = { borrador: "Borrador", enviado: "Enviado", aceptado: "Ace
 const TABS = [
   { key: "nuevo",         label: "📝 Nuevo presupuesto" },
   { key: "presupuestos",  label: "📄 Presupuestos" },
+  { key: "cantidades",    label: "🧮 Cantidades por evento" },
   { key: "config",        label: "⚙️ Configuración" },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CALCULADORA DE CANTIDADES POR EVENTO
+// Sirve de borrador y ayuda memoria: "para 40 personas en un coffee break, ¿cuánto
+// de cada cosa hago?". Las plantillas son EDITABLES — las cantidades por persona son
+// conocimiento del negocio, no del sistema; estas son solo un punto de partida para
+// no arrancar de una pantalla vacía.
+// ─────────────────────────────────────────────────────────────────────────────
+const PLANTILLAS_EVENTO_INICIALES = [
+  { nombre: "☕ Coffee break", notas: "Media mañana o media tarde, 30–45 min.", renglones: [
+    { nombre: "Bocaditos dulces (mini facturas, alfajorcitos)", porPersona: 3, unidad: "unidades", modo: "persona", nota: "" },
+    { nombre: "Bocaditos salados (mini sándwiches, tartaletas)", porPersona: 2, unidad: "unidades", modo: "persona", nota: "" },
+    { nombre: "Café / té / infusiones", porPersona: 1.5, unidad: "tazas", modo: "persona", nota: "Siempre se sirve más de una vuelta." },
+    { nombre: "Jugo / agua saborizada", porPersona: 0.25, unidad: "litros", modo: "persona", nota: "" }
+  ]},
+  { nombre: "🥐 Desayuno / Merienda", notas: "Servicio sentado.", renglones: [
+    { nombre: "Medialunas", porPersona: 2, unidad: "unidades", modo: "persona", nota: "" },
+    { nombre: "Sándwiches de miga (triángulos)", porPersona: 3, unidad: "unidades", modo: "persona", nota: "" },
+    { nombre: "Café con leche / infusión", porPersona: 1, unidad: "tazas", modo: "persona", nota: "" },
+    { nombre: "Jugo de naranja", porPersona: 0.2, unidad: "litros", modo: "persona", nota: "" }
+  ]},
+  { nombre: "🎂 Cumpleaños infantil", notas: "2–3 horas. Los chicos comen bastante menos que un adulto.", renglones: [
+    { nombre: "Bocaditos salados", porPersona: 5, unidad: "unidades", modo: "persona", nota: "Contar los adultos aparte: comen el doble." },
+    { nombre: "Bocaditos dulces / mesa dulce", porPersona: 4, unidad: "unidades", modo: "persona", nota: "" },
+    { nombre: "Torta (porciones)", porPersona: 1, unidad: "porciones", modo: "persona", nota: "" },
+    { nombre: "Gaseosa / jugo", porPersona: 0.4, unidad: "litros", modo: "persona", nota: "" }
+  ]},
+  { nombre: "🥂 Cumpleaños adulto / After office", notas: "3–4 horas, servicio de pie.", renglones: [
+    { nombre: "Bocaditos salados", porPersona: 8, unidad: "unidades", modo: "persona", nota: "Si reemplaza la cena, subir a 12." },
+    { nombre: "Bocaditos dulces / mesa dulce", porPersona: 4, unidad: "unidades", modo: "persona", nota: "" },
+    { nombre: "Torta (porciones)", porPersona: 1, unidad: "porciones", modo: "persona", nota: "" },
+    { nombre: "Bebida sin alcohol", porPersona: 0.5, unidad: "litros", modo: "persona", nota: "" }
+  ]},
+  { nombre: "💍 Casamiento / Mesa dulce", notas: "Mesa dulce de cierre.", renglones: [
+    { nombre: "Piezas de mesa dulce", porPersona: 7, unidad: "unidades", modo: "persona", nota: "Entre 6 y 8 según cuántas variedades haya." },
+    { nombre: "Torta (porciones)", porPersona: 1, unidad: "porciones", modo: "persona", nota: "" },
+    { nombre: "Torta principal", porPersona: 1, unidad: "unidad", modo: "fijo", nota: "Una sola, sin importar los invitados." }
+  ]}
 ];
 
 const state = {
@@ -293,6 +333,15 @@ const state = {
   busqueda: "",
   viewingId: null,
   aceptandoId: null,
+  plantillasEvento: {},
+  borradores: {},
+  calcPlantillaId: "",
+  calcPersonas: 40,
+  calcRenglones: null,   // null = todavía no se eligió plantilla
+  calcNombre: "",
+  calcNotas: "",
+  editandoPlantillaId: null,
+  verBorradorId: null,
 };
 
 // ── Helpers ──────────────────────────────────────────────
@@ -416,6 +465,7 @@ function render() {
   switch (state.view) {
     case "nuevo": renderNuevoView(container); break;
     case "presupuestos": renderListadoView(container); break;
+    case "cantidades": renderCantidadesView(container); break;
     case "config": renderConfigView(container); break;
     default: container.innerHTML = `<div class="empty-state">Vista no encontrada.</div>`;
   }
@@ -442,6 +492,8 @@ function renderLogin() {
 function attachListeners() {
   onValue(ref(db, "presupuestos/items"), snap => { state.presupuestos = snap.val() || {}; if (!state.formOpen) render(); });
   onValue(ref(db, "presupuestos/config"), snap => { state.config = snap.val() || {}; });
+  onValue(ref(db, "presupuestos/plantillasEvento"), snap => { state.plantillasEvento = snap.val() || {}; if (!state.formOpen) render(); });
+  onValue(ref(db, "presupuestos/borradoresCantidades"), snap => { state.borradores = snap.val() || {}; if (!state.formOpen) render(); });
 }
 
 // =============================================================
@@ -488,6 +540,13 @@ window.updateTotalPreview = function() {
 // NUEVO PRESUPUESTO
 // =============================================================
 function renderNuevoView(container) {
+  // Si se viene desde la calculadora de cantidades, las líneas ya vienen con la descripción y la
+  // cantidad calculada: solo falta ponerles precio. Se consumen una sola vez.
+  const desdeCantidades = state._itemsDesdeCantidades;
+  state._itemsDesdeCantidades = null;
+  const itemsPrecargados = desdeCantidades && desdeCantidades.length
+    ? desdeCantidades.map(it => itemRowHtml(it)).join("")
+    : itemRowHtml();
   state.formOpen = true;
   container.innerHTML = `
     <div class="page-title">Nuevo presupuesto</div>
@@ -505,7 +564,7 @@ function renderNuevoView(container) {
       </div>
       <div class="item-row-wrap">
         <div class="item-row item-row-header"><div>Descripción</div><div>Área que lo prepara</div><div>Cantidad</div><div>Precio unit.</div><div>Subtotal</div><div></div></div>
-        <div id="items-container">${itemRowHtml()}</div>
+        <div id="items-container">${itemsPrecargados}</div>
       </div>
 
       <div class="form-row" style="margin-top:14px">
@@ -755,6 +814,282 @@ function renderDetalleImprimible(container, id) {
 // =============================================================
 // CONFIG
 // =============================================================
+// =============================================================
+// CANTIDADES POR EVENTO (borrador y ayuda memoria)
+// =============================================================
+// Las unidades contables se redondean para arriba: no se puede servir media medialuna.
+// Las de peso o volumen conservan un decimal, porque ahí sí tiene sentido "3,5 litros".
+const UNIDADES_CONTINUAS = ["kg", "kilo", "litro", "lt", "l", "gr", "gramo", "cc", "ml"];
+function esUnidadContinua(unidad) {
+  const u = stripAccents(String(unidad || "")).toLowerCase();
+  return UNIDADES_CONTINUAS.some(x => u.startsWith(x));
+}
+function calcularTotalRenglon(renglon, personas) {
+  const por = Number(renglon?.porPersona) || 0;
+  if (renglon?.modo === "fijo") return por;
+  const bruto = por * (Number(personas) || 0);
+  return esUnidadContinua(renglon?.unidad) ? Math.round(bruto * 10) / 10 : Math.ceil(bruto);
+}
+function fmtCantidad(n) {
+  const num = Number(n) || 0;
+  return Number.isInteger(num) ? String(num) : num.toLocaleString("es-AR", { maximumFractionDigits: 2 });
+}
+
+// La primera vez no hay plantillas guardadas: se siembran las iniciales para no dejar la
+// pantalla vacía. A partir de ahí manda lo que el usuario haya editado.
+window.sembrarPlantillasEvento = async function() {
+  if (Object.keys(state.plantillasEvento).length) {
+    if (!confirm("Ya tenés plantillas cargadas. Esto agrega las sugeridas SIN borrar las tuyas. ¿Seguir?")) return;
+  }
+  for (const pl of PLANTILLAS_EVENTO_INICIALES) {
+    const renglones = {};
+    pl.renglones.forEach((r, i) => { renglones["r" + i] = { ...r, orden: i }; });
+    await set(push(ref(db, "presupuestos/plantillasEvento")), { nombre: pl.nombre, notas: pl.notas, renglones, creadoTs: Date.now() });
+  }
+  showToast("✅ Se cargaron las plantillas sugeridas. Editalas con tus cantidades reales.", "success");
+  render();
+};
+
+window.setCalcPlantilla = function(id) {
+  state.calcPlantillaId = id;
+  const pl = state.plantillasEvento[id];
+  // Se copian los renglones al borrador: tocar una cantidad acá NO cambia la plantilla.
+  state.calcRenglones = pl
+    ? objToSortedEntries(pl.renglones, (a, b) => (a[1].orden || 0) - (b[1].orden || 0)).map(([, r]) => ({ ...r }))
+    : null;
+  state.calcNombre = pl ? pl.nombre : "";
+  state.calcNotas = pl ? (pl.notas || "") : "";
+  render();
+};
+window.setCalcPersonas = function(v) {
+  state.calcPersonas = Math.max(0, parseInt(v, 10) || 0);
+  render();
+};
+window.setCalcRenglon = function(idx, campo, valor) {
+  const r = (state.calcRenglones || [])[idx];
+  if (!r) return;
+  r[campo] = campo === "porPersona" ? (parseFloat(valor) || 0) : valor;
+  render();
+};
+window.quitarCalcRenglon = function(idx) {
+  if (!state.calcRenglones) return;
+  state.calcRenglones.splice(idx, 1);
+  render();
+};
+window.agregarCalcRenglon = function() {
+  if (!state.calcRenglones) state.calcRenglones = [];
+  state.calcRenglones.push({ nombre: "", porPersona: 1, unidad: "unidades", modo: "persona", nota: "" });
+  render();
+};
+window.setCalcNotas = function(v) { state.calcNotas = v; };
+window.setCalcNombre = function(v) { state.calcNombre = v; };
+
+window.guardarBorradorCantidades = async function() {
+  if (!state.calcRenglones || !state.calcRenglones.length) { showToast("⚠️ No hay renglones para guardar.", "warn"); return; }
+  const personas = state.calcPersonas;
+  const renglones = state.calcRenglones.map(r => ({ ...r, total: calcularTotalRenglon(r, personas) }));
+  await set(push(ref(db, "presupuestos/borradoresCantidades")), {
+    nombre: state.calcNombre || "Sin nombre",
+    plantillaId: state.calcPlantillaId || "",
+    personas, notas: state.calcNotas || "",
+    renglones, fecha: todayISO(), creadoTs: Date.now()
+  });
+  showToast("✅ Borrador guardado.", "success");
+  render();
+};
+
+// Guardar los cambios del borrador COMO plantilla: es lo que convierte el ayuda memoria en
+// conocimiento reutilizable — la próxima vez ya arranca con las cantidades corregidas.
+window.guardarComoPlantilla = async function() {
+  if (!state.calcRenglones || !state.calcRenglones.length) { showToast("⚠️ No hay renglones para guardar.", "warn"); return; }
+  const nombre = prompt("¿Con qué nombre guardar esta plantilla?\n\nSi usás el mismo nombre de una existente, se actualiza esa.", state.calcNombre || "");
+  if (nombre === null || !nombre.trim()) return;
+  const renglones = {};
+  state.calcRenglones.forEach((r, i) => { renglones["r" + i] = { ...r, orden: i }; });
+  const existente = Object.entries(state.plantillasEvento).find(([, pl]) => (pl.nombre || "").trim().toLowerCase() === nombre.trim().toLowerCase());
+  const datos = { nombre: nombre.trim(), notas: state.calcNotas || "", renglones };
+  if (existente) {
+    await update(ref(db, `presupuestos/plantillasEvento/${existente[0]}`), datos);
+    showToast(`✅ Plantilla "${nombre.trim()}" actualizada.`, "success");
+    render();
+  } else {
+    await set(push(ref(db, "presupuestos/plantillasEvento")), { ...datos, creadoTs: Date.now() });
+    showToast(`✅ Plantilla "${nombre.trim()}" creada.`, "success");
+    render();
+  }
+};
+
+window.eliminarPlantillaEvento = async function(id) {
+  const pl = state.plantillasEvento[id];
+  if (!pl) return;
+  if (!confirm(`¿Borrar la plantilla "${pl.nombre}"? Los borradores ya guardados no se tocan.`)) return;
+  await remove(ref(db, `presupuestos/plantillasEvento/${id}`));
+  if (state.calcPlantillaId === id) { state.calcPlantillaId = ""; state.calcRenglones = null; }
+  showToast("🗑️ Plantilla eliminada.", "success");
+  render();
+};
+
+window.verBorrador = function(id) { state.verBorradorId = state.verBorradorId === id ? null : id; render(); };
+window.eliminarBorrador = async function(id) {
+  const b = state.borradores[id];
+  if (!b) return;
+  if (!confirm(`¿Borrar el borrador "${b.nombre}" (${b.personas} personas)?`)) return;
+  await remove(ref(db, `presupuestos/borradoresCantidades/${id}`));
+  showToast("🗑️ Borrador eliminado.", "success");
+  render();
+};
+window.retomarBorrador = function(id) {
+  const b = state.borradores[id];
+  if (!b) return;
+  state.calcRenglones = (b.renglones || []).map(r => ({ ...r }));
+  state.calcPersonas = b.personas || 0;
+  state.calcNombre = b.nombre || "";
+  state.calcNotas = b.notas || "";
+  state.calcPlantillaId = b.plantillaId || "";
+  state.verBorradorId = null;
+  showToast("📋 Borrador retomado — podés seguir ajustándolo.", "success");
+  render();
+};
+
+// Puente con lo que el módulo ya hace: el borrador se convierte en las líneas de un
+// presupuesto, así no hay que volver a tipear las cantidades para cotizarlo.
+window.pasarAPresupuesto = function() {
+  if (!state.calcRenglones || !state.calcRenglones.length) { showToast("⚠️ No hay renglones para pasar.", "warn"); return; }
+  const personas = state.calcPersonas;
+  state._itemsDesdeCantidades = state.calcRenglones
+    .filter(r => (r.nombre || "").trim())
+    .map(r => ({
+      descripcion: `${r.nombre}${r.unidad ? ` (${r.unidad})` : ""}`,
+      cantidad: calcularTotalRenglon(r, personas),
+      precioUnitario: ""
+    }));
+  showToast(`📝 ${state._itemsDesdeCantidades.length} renglones pasados al presupuesto — completá los precios.`, "success");
+  navigate("nuevo");
+};
+
+function renderCantidadesView(container) {
+  state.formOpen = true;
+  const plantillas = objToSortedEntries(state.plantillasEvento, (a, b) => (a[1].nombre || "").localeCompare(b[1].nombre || ""));
+  const personas = state.calcPersonas;
+  const renglones = state.calcRenglones;
+
+  const filas = (renglones || []).map((r, idx) => {
+    const total = calcularTotalRenglon(r, personas);
+    return `
+      <tr>
+        <td><input class="form-input" style="min-width:200px" value="${escapeHtml(r.nombre || "")}" placeholder="Producto" onchange="setCalcRenglon(${idx},'nombre',this.value)"></td>
+        <td><input type="number" step="0.01" min="0" class="form-input" style="max-width:90px" value="${r.porPersona ?? ""}" onchange="setCalcRenglon(${idx},'porPersona',this.value)"></td>
+        <td><input class="form-input" style="max-width:100px" value="${escapeHtml(r.unidad || "")}" placeholder="unidades" onchange="setCalcRenglon(${idx},'unidad',this.value)"></td>
+        <td><select class="form-select" style="max-width:130px" onchange="setCalcRenglon(${idx},'modo',this.value)">
+          <option value="persona" ${r.modo !== "fijo" ? "selected" : ""}>Por persona</option>
+          <option value="fijo" ${r.modo === "fijo" ? "selected" : ""}>Cantidad fija</option>
+        </select></td>
+        <td style="white-space:nowrap"><strong style="font-size:16px">${fmtCantidad(total)}</strong> <span class="text-muted">${escapeHtml(r.unidad || "")}</span></td>
+        <td><input class="form-input" style="min-width:170px" value="${escapeHtml(r.nota || "")}" placeholder="Ayuda memoria..." onchange="setCalcRenglon(${idx},'nota',this.value)"></td>
+        <td><button class="btn btn-danger btn-sm" onclick="quitarCalcRenglon(${idx})">✕</button></td>
+      </tr>`;
+  }).join("");
+
+  const borradores = objToSortedEntries(state.borradores, (a, b) => (b[1].creadoTs || 0) - (a[1].creadoTs || 0));
+
+  container.innerHTML = `
+    <div class="page-title">Cantidades por evento</div>
+    <div class="page-sub">Borrador y ayuda memoria: elegí el tipo de evento y la cantidad de invitados, y ajustá lo que haga falta. No compromete nada — es para pensar el evento antes de cotizarlo.</div>
+
+    ${!plantillas.length ? `
+      <div class="section-block">
+        <div class="section-title" style="margin-bottom:8px">Todavía no hay plantillas cargadas</div>
+        <div class="text-muted" style="margin-bottom:12px">Podés arrancar con unas sugeridas (coffee break, desayuno, cumpleaños, mesa dulce) y después ajustarlas con tus cantidades reales — las de arranque son solo para no partir de cero.</div>
+        <button class="btn btn-primary" onclick="sembrarPlantillasEvento()">✨ Cargar plantillas sugeridas</button>
+      </div>` : ""}
+
+    <div class="section-block">
+      <div class="form-row" style="align-items:flex-end">
+        <div class="form-group" style="max-width:280px">
+          <label class="form-label">Tipo de evento</label>
+          <select class="form-select" id="calc-plantilla" onchange="setCalcPlantilla(this.value)">
+            <option value="">— Elegir —</option>
+            ${plantillas.map(([id, pl]) => `<option value="${id}" ${state.calcPlantillaId === id ? "selected" : ""}>${escapeHtml(pl.nombre)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="form-group" style="max-width:160px">
+          <label class="form-label">¿Cuántas personas?</label>
+          <input type="number" min="0" step="1" class="form-input" id="calc-personas" value="${personas}" onchange="setCalcPersonas(this.value)" oninput="setCalcPersonas(this.value)">
+        </div>
+        ${renglones ? `<div class="form-group" style="max-width:220px">
+          <label class="form-label">Nombre del borrador</label>
+          <input class="form-input" value="${escapeHtml(state.calcNombre)}" placeholder="Ej. Cumple Sofía 12/09" onchange="setCalcNombre(this.value)">
+        </div>` : ""}
+      </div>
+      ${state.calcNotas ? `<div class="text-muted" style="margin-top:4px">📌 ${escapeHtml(state.calcNotas)}</div>` : ""}
+    </div>
+
+    ${renglones ? `
+    <div class="section-block">
+      <div class="section-header">
+        <div class="section-title">Para ${personas} persona${personas === 1 ? "" : "s"}</div>
+        <button class="btn btn-ghost btn-sm" onclick="agregarCalcRenglon()">+ Agregar renglón</button>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Producto</th><th>Por persona</th><th>Unidad</th><th>Cálculo</th><th>Total a preparar</th><th>Ayuda memoria</th><th></th></tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+      <div class="form-group" style="margin-top:12px">
+        <label class="form-label">Notas del evento</label>
+        <textarea class="form-input" rows="2" placeholder="Ej. la mamá pidió sin TACC para 3 chicos" onchange="setCalcNotas(this.value)">${escapeHtml(state.calcNotas)}</textarea>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn btn-primary" onclick="guardarBorradorCantidades()">💾 Guardar borrador</button>
+        <button class="btn btn-ghost" onclick="guardarComoPlantilla()" title="Para que la próxima vez este tipo de evento ya arranque con estas cantidades">⭐ Guardar como plantilla</button>
+        <button class="btn btn-ghost" onclick="pasarAPresupuesto()" title="Pasa estos renglones al formulario de presupuesto, con las cantidades ya calculadas">📝 Pasar a presupuesto</button>
+      </div>
+    </div>` : ""}
+
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">Borradores guardados</div>
+      ${borradores.length ? `<div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th>Nombre</th><th>Evento</th><th>Personas</th><th>Fecha</th><th></th></tr></thead>
+        <tbody>${borradores.map(([id, b]) => `
+          <tr>
+            <td>${escapeHtml(b.nombre)}</td>
+            <td>${escapeHtml(state.plantillasEvento[b.plantillaId]?.nombre || "—")}</td>
+            <td>${b.personas}</td>
+            <td>${fmtDate(b.fecha)}</td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-ghost btn-sm" onclick="verBorrador('${id}')">${state.verBorradorId === id ? "▴" : "▾"}</button>
+              <button class="btn btn-turq btn-sm" onclick="retomarBorrador('${id}')">↩️ Retomar</button>
+              <button class="btn btn-danger btn-sm" onclick="eliminarBorrador('${id}')">🗑️</button>
+            </td>
+          </tr>
+          ${state.verBorradorId === id ? `<tr><td colspan="5" style="background:var(--cream);padding:14px 16px">
+            ${b.notas ? `<div class="text-muted" style="margin-bottom:8px">📌 ${escapeHtml(b.notas)}</div>` : ""}
+            <table class="data-table"><thead><tr><th>Producto</th><th>Por persona</th><th>Total</th><th>Nota</th></tr></thead><tbody>
+              ${(b.renglones || []).map(r => `<tr><td>${escapeHtml(r.nombre)}</td><td>${fmtCantidad(r.porPersona)}${r.modo === "fijo" ? " (fijo)" : ""}</td><td><strong>${fmtCantidad(r.total)}</strong> ${escapeHtml(r.unidad || "")}</td><td class="text-muted">${escapeHtml(r.nota || "")}</td></tr>`).join("")}
+            </tbody></table>
+          </td></tr>` : ""}`).join("")}</tbody>
+      </table></div>` : `<div class="empty-state">Todavía no guardaste ningún borrador.</div>`}
+    </div>
+
+    ${plantillas.length ? `
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">Plantillas de evento</div>
+      <div class="text-muted" style="margin-bottom:10px">Son las cantidades por persona con las que arranca cada tipo de evento. Para cambiarlas, elegí el evento arriba, ajustá los renglones y usá "⭐ Guardar como plantilla".</div>
+      <div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th>Evento</th><th>Renglones</th><th></th></tr></thead>
+        <tbody>${plantillas.map(([id, pl]) => `<tr>
+          <td>${escapeHtml(pl.nombre)}${pl.notas ? `<div class="text-muted" style="font-size:11px">${escapeHtml(pl.notas)}</div>` : ""}</td>
+          <td>${Object.keys(pl.renglones || {}).length}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-ghost btn-sm" onclick="setCalcPlantilla('${id}')">Usar</button>
+            <button class="btn btn-danger btn-sm" onclick="eliminarPlantillaEvento('${id}')">🗑️</button>
+          </td>
+        </tr>`).join("")}</tbody>
+      </table></div>
+    </div>` : ""}`;
+}
+
 window.cambiarPasswordAdmin = async function() {
   const nueva = document.getElementById("cfg-nueva-pass").value;
   if (!nueva || nueva.length < 4) { showToast("⚠️ La contraseña debe tener al menos 4 caracteres.", "warn"); return; }

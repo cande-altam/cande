@@ -82,6 +82,12 @@ En la pestaña **Insumos** hay un botón "Buscar posibles duplicados" que revisa
 
 ---
 
+
+- **🧮 Cantidades por evento (borrador y ayuda memoria).** Para pensar un evento antes de cotizarlo: se elige el tipo (coffee break, desayuno, cumpleaños infantil o adulto, mesa dulce) y la cantidad de invitados, y sale cuánto hay que preparar de cada cosa. Cada renglón tiene su cantidad **por persona** (o **cantidad fija**, para lo que no se multiplica — la torta principal es una sola sean 50 o 200 invitados) y un campo de **ayuda memoria** para las notas que uno siempre olvida ("los chicos comen la mitad", "contar los adultos aparte").
+  - Las unidades contables se redondean **para arriba** (no se sirve media medialuna); las de peso o volumen conservan decimales, porque ahí sí tiene sentido "7,5 litros".
+  - Es un **borrador**: ajustar una cantidad no toca la plantilla. Si esas cantidades nuevas son las buenas, **"⭐ Guardar como plantilla"** las deja para la próxima vez — así el ayuda memoria se va afinando con la experiencia real en vez de quedar en un papel.
+  - Los borradores se guardan con nombre y fecha, se pueden retomar, y **"📝 Pasar a presupuesto"** los convierte en las líneas del presupuesto con las cantidades ya calculadas: solo queda ponerles precio.
+  - Las plantillas iniciales son un punto de partida editable para no arrancar de una pantalla vacía — las cantidades reales las define el negocio, no el sistema.
 ## Módulo: Presupuestos
 
 Ubicado en `presupuestos/`. URL: `https://<tu-sitio>.netlify.app/presupuestos/`. Contraseña inicial: `presupuestos2025` (cambiable desde **Configuración**).
