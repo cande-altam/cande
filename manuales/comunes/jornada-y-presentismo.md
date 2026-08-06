@@ -27,6 +27,13 @@ de trabajo.
   de antemano con el encargado.
 - El descanso **no se acumula ni se cambia por dinero** sin autorización.
 
+> ### 🚧 Hay al menos una excepción sin resolver
+> El área de **[Limpieza](../limpieza.md)** trabaja **lunes, miércoles y viernes de
+> 13:00 a 17:00** — tres turnos de cuatro horas, no seis días.
+>
+> Falta definir si es una excepción contemplada o si el esquema 6+1 no aplica a todos
+> los puestos. **Impacta directamente en cómo se calcula el presentismo de esa persona.**
+
 ---
 
 ## Presentismo

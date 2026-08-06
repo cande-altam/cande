@@ -1,139 +1,212 @@
 # Manual de Procedimientos — Limpieza
 
 **Candela Café & Patisserie**
-*Versión 0.5 — BORRADOR | Agosto 2026*
-
----
-
-> ## 🚧 Antes de completar este manual hay que resolver una cosa
->
-> Al cruzar los manuales que ya existen apareció esto: **todas las tareas de limpieza
-> están hoy asignadas a los roles operativos.** El barista limpia la barra, el vendedor
-> la vitrina, el mozo el salón, el piso y los baños.
->
-> Es decir: **tal como están escritos los manuales hoy, no queda nada para el área de
-> Limpieza.** Eso no puede ser correcto si el área existe.
->
-> Entonces, o bien:
->
-> 1. **Limpieza hace la limpieza profunda** y los roles siguen con el mantenimiento de
->    su puesto durante el turno; o
-> 2. **Limpieza tomó tareas que los otros manuales todavía le asignan al mozo o al
->    vendedor**, y esos manuales quedaron desactualizados.
->
-> **Hay que definir cuál de las dos es.** Es lo primero — el resto del manual depende
-> de esa respuesta. Ver [Quién limpia qué](#quién-limpia-qué).
+*Versión 1.0 | Agosto 2026*
 
 ---
 
 ## 🎯 Objetivo del rol
 
-Que el local esté **limpio, ordenado y en condiciones** para recibir clientes y para
-producir alimentos. La limpieza no es estética: en un negocio de alimentos es parte de
-la seguridad del producto.
+Que los locales estén **limpios, ordenados y en condiciones** para recibir clientes y
+para producir alimentos.
+
+La limpieza en un negocio de alimentos **no es estética: es seguridad del producto**.
+Restos de harina, grasa acumulada o una basura mal cerrada no son un problema de
+prolijidad — son un riesgo.
 
 ---
 
-## Quién limpia qué
+## 🕐 Horario
 
-Esto es lo que **hoy dicen los manuales existentes**. La columna de la derecha es la
-que hay que confirmar.
+**Lunes, miércoles y viernes de 13:00 a 17:00 hs.**
 
-### Barra
+| | |
+|---|---|
+| **Días** | Lunes · Miércoles · Viernes |
+| **Horario** | 13:00 a 17:00 hs |
+| **Turnos por semana** | 3 |
 
-| Tarea | Hoy la hace | ¿Pasa a Limpieza? |
+---
+
+## 📍 Dónde se trabaja
+
+El trabajo se divide en **dos locales**:
+
+| Local | Qué es |
+|---|---|
+| 🏪 **Local de venta** | Atención al público: baño de clientes y exterior |
+| 🥖 **Cuadra de producción** | Donde se produce: superficies, maquinarias, pisos y depósito |
+
+---
+
+## 🧰 Herramientas de trabajo
+
+### Productos químicos
+
+| Producto | Para qué |
+|---|---|
+| **Desodorante de pisos** | Pisos |
+| **Desengrasante** | Paredes, mesadas, heladeras, superficies con grasa |
+| **Detergente** | Lavado general |
+| **Lavandina** | ⚠️ **Uso restringido** — ver reglas abajo |
+
+### Elementos
+
+Guantes descartables · Escoba · Pala · Secador de piso · Trapos · Papel toalla
+descartable · Esponjas · Manguera
+
+---
+
+## ⚠️ Las cuatro reglas de limpieza
+
+> Estas no se negocian. Están antes que cualquier tarea de las que siguen.
+
+### 1. Primero se barre, después se moja
+
+> ### ⛔ Queda prohibido realizar lavajes sin barrido previo.
+
+**Antes de usar agua o cualquier producto químico**, hay que retirar los restos de
+**harina, grasa y materias primas**.
+
+Si se moja primero, la harina se convierte en engrudo y la grasa se dispersa: se
+trabaja el doble y queda peor.
+
+### 2. La lavandina tiene uso restringido
+
+> ### ⛔ No se puede usar lavandina diluida en baldes de agua.
+
+Solo se permite en **aplicaciones con rejillas o microfibras**.
+
+El uso de productos con lavandina debe ser **limitado**.
+
+### 3. Nada de residuos por los desagües
+
+> ### ⛔ Queda prohibido arrojar residuos a través de bachas, desagües y cañerías.
+
+Todo residuo sólido va a la basura. Ninguna excepción, por chico que sea.
+
+### 4. La basura sale cerrada
+
+Para retirar basura al exterior:
+
+- Debe estar **correctamente almacenada en bolsas cerradas**
+- **Sin pinchaduras ni roturas**
+- **Cajas, cartones y embalajes** también van **en bolsas cerradas**
+
+---
+
+# 🏪 LOCAL DE VENTA
+
+## 1. Baño de clientes — Se arranca por acá
+
+El turno **empieza** con un primer chequeo del baño de clientes.
+
+| Frecuencia | Qué se hace |
+|---|---|
+| **Cada turno** | Limpieza general |
+| **Una vez por semana** | Limpieza profunda |
+
+---
+
+## 2. Exterior del local
+
+Después del baño, se sigue con el exterior:
+
+| Tarea | Detalle |
+|---|---|
+| 🌿 **Riego de plantas** | Canteros y macetas |
+| 🛋️ **Polvo — limpieza profunda** | Sillones fijos, mesas fijas y almohadones |
+| ☂️ **Polvo — limpieza superficial** | Sombrillas y sillas de tela |
+| 🕸️ **Remoción** | Telarañas, basura y acumulación de tierra en rincones, esquinas, escalones y aberturas |
+| 🚮 **Recolección de residuos** | Envoltorios y colillas de cigarrillo en espacios de paso, bajo mesas, macetas y canteros |
+
+> ℹ️ **Ojo con la diferencia:** los sillones fijos, las mesas fijas y los almohadones
+> llevan **limpieza profunda** del polvo. Las sombrillas y las sillas de tela, solo
+> **superficial**.
+
+---
+
+# 🥖 CUADRA DE PRODUCCIÓN
+
+## 3. Exterior
+
+| Tarea | Detalle |
+|---|---|
+| 🚮 **Recolección de residuos** | Envoltorios, botellas, bolsas y colillas de cigarrillo del **frente y lateral** del local |
+| 🅿️ **Limpieza del frente** | Área de estacionamiento |
+
+---
+
+## 4. Superficies y maquinarias
+
+| Tarea | Detalle |
+|---|---|
+| 🧴 **Limpieza y desengrase** | Paredes, mesadas, heladeras y superficies |
+| 🌾 **Remoción de restos de harina** | Maquinarias |
+| 🗄️ **Polvo y restos** | Repisas, estantes y muebles de guardado |
+| 🍽️ **Limpieza de mesadas** | Mesadas de trabajo |
+| 🧹 **Pisos** | Toda la cuadra de producción |
+| 🚻 **Baño** | Limpieza de baño |
+
+> ⚠️ **Las maquinarias primero se barren.** Los restos de harina se retiran en seco,
+> antes de acercar agua o producto. Ver [Regla 1](#1-primero-se-barre-después-se-moja).
+
+---
+
+## 5. Orden y retiro
+
+| Tarea | Detalle |
+|---|---|
+| 📦 **Orden y guardado** | Materias primas, insumos, herramientas, accesorios, descartables y elementos de trabajo |
+| 🗑️ **Retiro** | Bolsas, envoltorios, embalajes y cajas vacías |
+
+---
+
+## 6. Una vez por semana
+
+| Tarea | Dónde |
+|---|---|
+| 🚿 **Limpieza profunda del baño de clientes** | Local de venta |
+| 🧺 **Lavado de cajones de transporte de mercadería** | Cuadra de producción |
+
+---
+
+# 📋 QUIÉN LIMPIA QUÉ
+
+Cada rol **mantiene su propio puesto durante el turno**. Limpieza hace la limpieza
+estructural, profunda y de las zonas comunes.
+
+| Zona | Lo hace el rol operativo | Lo hace **Limpieza** |
 |---|---|---|
-| Portafiltro después de cada café | Barista | *(a definir)* |
-| Lanza vaporizadora después de usar | Barista | *(a definir)* |
-| Utensilios entre preparaciones | Barista | *(a definir)* |
-| Bandeja escurridora y pileta de barra (cierre) | Barista | *(a definir)* |
-| Grupos de la cafetera a fondo (cierre) | Barista | *(a definir)* |
+| **Barra** | Portafiltro, lanza vaporizadora, utensilios, pileta de barra, grupos de cafetera | — |
+| **Mostrador** | Vitrina, mostrador y heladera del puesto | — |
+| **Salón** | Mesas entre cliente y cliente, vajilla | — |
+| **Baño de clientes** | Revisión al cierre | **Limpieza general y profunda** |
+| **Exterior del local** | — | **Todo** |
+| **Cuadra de producción** | Su puesto y sus utensilios | **Paredes, mesadas, maquinarias, pisos, depósito y baño** |
 
-### Mostrador
-
-| Tarea | Hoy la hace | ¿Pasa a Limpieza? |
-|---|---|---|
-| Limpieza general del mostrador (apertura) | Vendedor | *(a definir)* |
-| Vitrina limpia durante el turno | Vendedor | *(a definir)* |
-| Vitrina, mostrador y heladera (cierre) | Vendedor | *(a definir)* |
-
-### Salón
-
-| Tarea | Hoy la hace | ¿Pasa a Limpieza? |
-|---|---|---|
-| Mesas y sillas (apertura) | Mozo | *(a definir)* |
-| Vidrios y vitrinas del salón | Mozo | *(a definir)* |
-| Mesa entre cliente y cliente | Mozo | *(a definir)* |
-| Vajilla | Mozo | *(a definir)* |
-| **Piso del salón (cierre)** | Mozo | *(a definir)* |
-| **Baños (cierre)** | Mozo | *(a definir)* |
-
-### Producción
-
-Los manuales de área todavía **no tienen relevada la limpieza**. Está listado como
-pendiente en los cinco. Cuando se releve, hay que decidir lo mismo: qué hace el área y
-qué hace Limpieza.
-
-> ### 🔑 La regla que hay que evitar
-> **Una tarea sin dueño no se hace.** Si un ítem queda como "lo hace el que puede", no
-> lo hace nadie. Cada línea de las tablas de arriba tiene que terminar con **un solo
-> responsable**.
+> ### 🔑 Una tarea sin dueño no se hace.
+> Si algo no está en ninguna de las dos columnas, avisale al encargado antes de que se
+> convierta en un problema.
 
 ---
 
-## Frecuencias
+## 📦 Tu pedido de insumos
 
-Estructura sugerida para ordenar el trabajo. **Falta cargar el detalle real** de cada
-bloque.
+> ### 🔑 Compras solo consigue lo que se pide por este medio.
+> **Es responsabilidad de cada área hacer su propio pedido de insumos.** Lo que no
+> cargues, nadie lo compra.
 
-### Por turno
+### Paso a paso
 
-Mantenimiento durante el servicio, para que el local no se degrade mientras hay gente.
+1. Abrí el navegador e ingresá a **`pedidos-produccion.netlify.app`** →
+   **Pedido de insumos**
+2. Seleccioná **el local o el área de producción**
+3. Cargá **todos los insumos, elementos o materias que falten**
+4. Por cada uno indicá **cantidad** y **prioridad**. También podés agregar
+   **comentarios aclaratorios**
 
-*(a completar)*
-
-### Diaria
-
-Al cierre, deja el local listo para abrir al día siguiente.
-
-*(a completar)*
-
-### Semanal
-
-Lo que no se puede hacer todos los días pero no puede pasar de una semana.
-
-*(a completar)*
-
-### Mensual / profunda
-
-Equipos, campanas, cámaras, detrás de los muebles.
-
-*(a completar)*
-
----
-
-## Higiene y seguridad del trabajo
-
-- **Nunca mezclar productos de limpieza.** Sobre todo lavandina con cualquier cosa que
-  contenga amoníaco o ácido: genera gases tóxicos.
-- **Los productos van siempre en su envase original**, con su etiqueta. Nunca en
-  botellas de bebida.
-- **Guardá los productos lejos de los alimentos** y de las zonas de producción.
-- **Usá los elementos de protección** que correspondan a cada producto.
-- **Señalizá el piso mojado** mientras se seca.
-- Si un producto se acabó, **cargalo en el pedido de insumos** (ver abajo).
-
----
-
-## 📋 Tu pedido de insumos diario
-
-> ### 🔑 Limpieza carga su propio pedido de insumos, igual que el resto de las áreas.
-> **Lo que no cargues, nadie lo compra.**
-
-1. Entrá a **`pedidos-produccion.netlify.app`** → **Pedido de insumos**
-2. Seleccioná **el área o el local** que corresponda
-3. Cargá **todo lo que falte**: productos de limpieza, trapos, bolsas, guantes
-4. Poné **cantidad** y **prioridad**:
+### Las tres prioridades
 
 | Color | Prioridad | Cuándo usarlo |
 |---|---|---|
@@ -141,58 +214,82 @@ Equipos, campanas, cámaras, detrás de los muebles.
 | 🟡 **Amarillo** | Media | Se está por acabar |
 | 🟢 **Verde** | Baja | Reposición normal |
 
-> ⚠️ **Cargalo antes de las 9:00 hs.** A esa hora Compras arma el recorrido del día.
+> ⚠️ **Cargalo antes de las 9:00 hs.** A esa hora Compras revisa el pedido completo y
+> arma el recorrido del día.
 
-> 📖 Detalle en **[Herramientas digitales](comunes/herramientas-digitales.md)**.
+> 📖 Detalle completo en **[Herramientas digitales](comunes/herramientas-digitales.md)**.
 
 ---
 
-## Qué reportar al encargado
+## 🧴 Seguridad con los productos
 
-- Un producto de limpieza que **se acabó** y no está cargado
+- **Nunca mezclar productos de limpieza.** Sobre todo lavandina con cualquier cosa que
+  contenga amoníaco o ácido: genera gases tóxicos.
+- **Los productos van siempre en su envase original**, con su etiqueta. Nunca en
+  botellas de bebida.
+- **Guardá los productos lejos de los alimentos** y de las zonas de producción.
+- **Usá guantes descartables** para el manejo de químicos.
+- **Señalizá el piso mojado** mientras se seca.
+
+---
+
+## 📣 Qué reportar al encargado
+
+- Un producto de limpieza que **se acabó** y no está cargado en el pedido
 - Un equipo **roto o que pierde**
 - Una zona que **no se pudo limpiar** y por qué
+- **Plagas** o indicios (roedores, insectos)
 - Cualquier condición que sea **riesgo de higiene** para el producto
 
 ---
 
-## Indicadores de desempeño (KPIs)
-
-*(a confirmar junto con las frecuencias)*
+## 📊 Indicadores de desempeño (KPIs)
 
 | Indicador | Meta |
 |---|---|
-| Baños en condiciones durante todo el turno | 100% |
-| Local listo para abrir a horario | 100% |
-| Limpieza semanal cumplida | Sin atrasos |
-| Productos de limpieza | Sin cortes de stock |
+| **Baño de clientes** | Limpieza general en **cada turno**, sin excepción |
+| **Limpieza profunda semanal** | Cumplida — baño y cajones de transporte |
+| **Barrido previo** | **100%** — nunca se moja sin barrer antes |
+| **Basura** | Siempre en bolsas cerradas y sin roturas |
+| **Insumos de limpieza** | Sin cortes de stock |
 
 ---
 
-## ✅ Checklist diario — Limpieza
+## ✅ Checklist por turno — Limpieza
 
-> 🚧 **Provisorio.** Se completa cuando se resuelvan las frecuencias y el reparto de
-> tareas.
+*Lunes, miércoles y viernes · 13:00 a 17:00 hs*
 
-### Apertura
+### 🏪 Local de venta
 
-- ☐ Baños limpios y con papel, jabón y toallas
-- ☐ Pisos limpios
-- ☐ Vidrios sin marcas
-- ☐ Cestos vaciados y con bolsa
+- ☐ **Baño de clientes** — chequeo inicial y limpieza general
+- ☐ Riego de plantas en canteros y macetas
+- ☐ Polvo de sillones fijos, mesas fijas y almohadones (profunda)
+- ☐ Polvo de sombrillas y sillas de tela (superficial)
+- ☐ Telarañas, tierra y basura en rincones, esquinas, escalones y aberturas
+- ☐ Residuos, envoltorios y colillas en espacios de paso, bajo mesas, macetas y canteros
 
-### Durante el turno
+### 🥖 Cuadra de producción
 
-- ☐ Baños revisados y repuestos
-- ☐ Pisos de zonas de paso mantenidos
-- ☐ Cestos vaciados antes de que se llenen
+- ☐ Residuos del frente y lateral del local
+- ☐ Frente del local — área de estacionamiento
+- ☐ Paredes, mesadas, heladeras y superficies — limpieza y desengrase
+- ☐ Restos de harina en maquinarias
+- ☐ Repisas, estantes y muebles de guardado
+- ☐ Mesadas de trabajo
+- ☐ Baño
+- ☐ Pisos de toda la cuadra
+- ☐ Materias primas, insumos, herramientas y descartables guardados y en orden
+- ☐ Bolsas, envoltorios, embalajes y cajas vacías retirados
 
-### Cierre
+### 📅 Semanal
 
-- ☐ Pisos del salón y del sector de trabajo
-- ☐ Baños a fondo
-- ☐ Cestos vaciados y bolsas nuevas
-- ☐ Productos guardados en su lugar
+- ☐ Limpieza profunda del baño de clientes
+- ☐ Lavado de cajones de transporte de mercadería
+
+### Antes de irte
+
+- ☐ Basura retirada en bolsas cerradas, sin roturas
+- ☐ Productos guardados en su lugar, lejos de los alimentos
 - ☐ Pedido de insumos cargado si faltó algo
 - ☐ Incidencias del turno reportadas al encargado
 
@@ -200,24 +297,23 @@ Equipos, campanas, cámaras, detrás de los muebles.
 
 ## 🚧 Pendientes de definición
 
-- [ ] **🔴 El reparto de tareas.** Lo del recuadro de arriba: qué limpia cada rol
-      operativo y qué limpia el área de Limpieza. **Es lo primero.** Si cambia, hay que
-      actualizar los manuales de Baristas, Vendedores/Mozos y los de producción.
-- [ ] **Dónde trabaja Limpieza.** ¿En los dos locales de venta, en el de producción, o
-      en los tres? ¿Una persona por local o una que rota?
-- [ ] **Horario y jornada.** A qué hora entra y sale, y si es antes de abrir, después de
-      cerrar o durante el servicio. El esquema general es
-      [6 días + 1 de descanso](comunes/jornada-y-presentismo.md).
-- [ ] **Frecuencias reales.** Qué se limpia por turno, diario, semanal y mensual.
-- [ ] **Qué productos se usan** para cada superficie, y en qué dilución. Esto conviene
-      que lo revise alguien que conozca los productos que compran — no debería salir
-      de un manual escrito de memoria.
-- [ ] **Baños durante el turno.** Hoy los manuales solo los mencionan al cierre. Alguien
-      tiene que revisarlos durante el servicio.
-- [ ] **Zonas de producción.** Limpieza de hornos, amasadoras, cámaras y campanas: quién
-      y cada cuánto. Va junto con el relevamiento de las áreas.
-- [ ] **Registro.** Si se firma una planilla de limpieza, sobre todo para baños y para
-      la limpieza profunda. En un negocio de alimentos suele pedirse en inspección.
+- [ ] **🔴 Los días que Limpieza no trabaja.** El área cubre lunes, miércoles y viernes
+      de 13 a 17. **Martes, jueves, sábado y domingo no hay nadie.** Falta definir por
+      escrito quién se hace cargo esos días de lo que no puede esperar — sobre todo
+      **el baño de clientes** y **los pisos de la cuadra**.
+- [ ] **🔴 El esquema de jornada.** [Jornada y presentismo](comunes/jornada-y-presentismo.md)
+      dice **6 días + 1 de descanso para todas las áreas**, pero Limpieza trabaja 3 días
+      de 4 horas. O es una excepción, o el esquema 6+1 no aplica a todos. Hay que
+      aclararlo — impacta en el presentismo.
+- [ ] **Qué producto va en cada superficie.** Están los cuatro productos, falta la
+      correspondencia y las diluciones. Conviene que lo revise alguien que los conozca.
+- [ ] **Los locales de venta son dos** (SLA 5.0 y San Luis). El manual habla de "el
+      local de venta" en singular — falta definir si Limpieza cubre los dos y cómo se
+      reparten los tres turnos semanales.
+- [ ] **Registro de limpieza.** Si se firma una planilla, sobre todo del baño y de la
+      limpieza profunda semanal. En inspección suele pedirse.
+- [ ] **Limpieza de hornos, amasadoras y campanas.** No figura. Va junto con el
+      relevamiento de las áreas de producción.
 
 ---
 
@@ -227,5 +323,5 @@ Equipos, campanas, cámaras, detrás de los muebles.
 - [Jornada de trabajo y presentismo](comunes/jornada-y-presentismo.md)
 - [Herramientas digitales](comunes/herramientas-digitales.md)
 - [Manual de Encargado de Local](venta/encargado-de-local.md)
-- [Manual de Vendedores y Mozos](venta/vendedores-y-mozos.md) — limpieza de salón y mostrador
-- [Manual de Baristas](venta/baristas.md) — limpieza de barra
+- [Manual de Vendedores y Mozos](venta/vendedores-y-mozos.md)
+- [Manual de Baristas](venta/baristas.md)

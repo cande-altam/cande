@@ -41,7 +41,7 @@ y **un local de producción**.
 
 | Área | Manual | Estado |
 |---|---|---|
-| Limpieza | [limpieza.md](limpieza.md) | 🔴 v0.5 — **Borrador**, falta definir el reparto de tareas |
+| Limpieza | [limpieza.md](limpieza.md) | 🟡 v1.0 — Agosto 2026 · con puntos a definir |
 
 ### 📋 Documentos comunes
 
