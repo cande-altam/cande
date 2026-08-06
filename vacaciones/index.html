@@ -357,7 +357,7 @@ window.CloudHistory = {
 
 <script>
 "use strict";
-const APP_VERSION="2026-08-06 vacaciones-nov25-abr26";
+const APP_VERSION="2026-08-06 vacaciones-nov25-abr26-fix-sync";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -530,7 +530,7 @@ function applyRemoteState(remote){
   if(JSON.stringify(remote)===JSON.stringify(state)){setSyncStatus("ok");return;}
   suspendHistory=true;
   state=Object.assign(defaultState(),remote);
-  limpiarPersonasDadasDeBaja();
+  runMigrations(); // por si este dispositivo tiene semillas nuevas que la nube todavía no vio
   localStorage.setItem(LS,JSON.stringify(state));
   suspendHistory=false;
   render();
@@ -858,13 +858,21 @@ function limpiarPersonasDadasDeBaja(){
   Object.keys(state.overridesTomado).forEach(n=>{if(!BY_NAME[n])delete state.overridesTomado[n];});
 }
 
+// agrupa todas las semillas + limpieza para poder reaplicarlas también cuando llega el estado de la
+// nube (ver applyRemoteState): si no se reaplican ahí, una nube desactualizada que llega justo después
+// del arranque pisa las semillas recién cargadas en este dispositivo y las borra para siempre (bug real:
+// pasó con la semilla de vacaciones nov 2025 - abr 2026, que desaparecía al recargar).
+function runMigrations(){
+  seedOverrides();
+  seedTaken();
+  seedTakenNov2025Abr2026();
+  limpiarPersonasDadasDeBaja();
+}
+
 /* ---------------- BOOT ---------------- */
 document.getElementById("appVersion").textContent="v"+APP_VERSION;
 loadLS();
-seedOverrides();
-seedTaken();
-seedTakenNov2025Abr2026();
-limpiarPersonasDadasDeBaja();
+runMigrations();
 initControls();
 render();
 undoStack.length=0;redoStack.length=0;syncUndoRedoButtons();
