@@ -113,6 +113,9 @@
   .mini-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:7px 9px;font-size:12.5px}
   .mini-row .x{margin-left:auto;cursor:pointer;color:var(--ink-soft);border:none;background:none;font-size:15px;line-height:1;padding:2px 4px}
   .mini-row .x:hover{color:var(--crit)}
+  .mini-row .editIcon{margin-left:auto;cursor:pointer;color:var(--ink-soft);border:none;background:none;font-size:12px;line-height:1;padding:2px 4px;opacity:.7}
+  .mini-row .editIcon:hover{opacity:1;color:var(--accent-ink)}
+  .mini-row .editIcon+.x{margin-left:0}
   .pill{display:inline-block;padding:1px 7px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.3px}
   .pill.he{background:var(--teal-soft);color:var(--teal-ink)}
   .pill.abs{background:var(--warn-soft);color:var(--warn)}
@@ -339,6 +342,7 @@
             <select id="nuevoFranco"><option value="auto">Sin fijar (variable cada semana)</option></select>
           </div>
           <button class="btn primary" id="btnAddPersona" style="margin-top:11px;width:100%">+ Agregar persona</button>
+          <button class="btn" id="btnCancelarEdicionPersona" style="margin-top:7px;width:100%;display:none">Cancelar edición</button>
           <div class="mini-list" id="personaList"></div>
         </div>
       </section>
@@ -619,7 +623,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-07 agregar-persona";
+const APP_VERSION="2026-08-07 editar-persona";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -1589,6 +1593,30 @@ function fillPersonSelects(){
   document.getElementById("roleMain").innerHTML=Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join("");
   syncRoleControls();
 }
+// edición de una persona agregada a mano (ver tarjeta "Sumar persona al equipo"): reusa el mismo
+// formulario en vez de duplicarlo, cambiando el botón a "Guardar cambios" mientras dura la edición.
+let editandoPersonaIdx=null;
+function iniciarEdicionPersona(i){
+  const p=state.peopleExtra[i];if(!p)return;
+  editandoPersonaIdx=i;
+  document.getElementById("nuevoNombre").value=p.n;
+  document.getElementById("nuevoNombre").disabled=true;
+  document.getElementById("nuevoRole").value=p.role;
+  document.getElementById("nuevoLoc").value=p.loc;
+  document.getElementById("nuevoFranco").value=p.franco?DAYS.findIndex(d=>d[0]===p.franco):"auto";
+  document.getElementById("btnAddPersona").textContent="Guardar cambios";
+  document.getElementById("btnCancelarEdicionPersona").style.display="";
+  document.getElementById("nuevoRole").scrollIntoView({block:"center",behavior:"smooth"});
+}
+function cancelarEdicionPersona(){
+  editandoPersonaIdx=null;
+  document.getElementById("nuevoNombre").value="";
+  document.getElementById("nuevoNombre").disabled=false;
+  document.getElementById("nuevoLoc").value="SL";
+  document.getElementById("nuevoFranco").value="auto";
+  document.getElementById("btnAddPersona").textContent="+ Agregar persona";
+  document.getElementById("btnCancelarEdicionPersona").style.display="none";
+}
 function syncFrancoDaySelection(){
   const n=document.getElementById("francoPerson").value;
   const sel=document.getElementById("francoDay");if(!n||!sel)return;
@@ -1644,8 +1672,9 @@ function renderMini(){
   const pl=document.getElementById("personaList");
   if(pl){
     pl.innerHTML=(state.peopleExtra||[]).length?state.peopleExtra.map((p,i)=>
-      `<div class="mini-row"><b>${p.n}</b> · ${ROLE_LABEL[p.role].toLowerCase()} · ${p.loc==="both"?"los dos locales":p.loc} <button class="x" data-i="${i}" data-t="persona">×</button></div>`
+      `<div class="mini-row"><b>${p.n}</b> · ${ROLE_LABEL[p.role].toLowerCase()} · ${p.loc==="both"?"los dos locales":p.loc}${p.franco?` · franco ${DAYS.find(d=>d[0]===p.franco)[1]}`:""} <button class="editIcon" data-i="${i}" title="Editar puesto/local/franco">✎</button><button class="x" data-i="${i}" data-t="persona">×</button></div>`
     ).join(""):`<p class="sub" style="padding:0">Todavía no agregaste a nadie nuevo desde acá.</p>`;
+    pl.querySelectorAll(".editIcon").forEach(b=>b.addEventListener("click",()=>iniciarEdicionPersona(+b.dataset.i)));
   }
   const rol=document.getElementById("roleOverrideList");
   if(rol){
@@ -1670,6 +1699,7 @@ function renderMini(){
       const p=state.peopleExtra[+b.dataset.i];
       if(!confirm(`¿Sacar a ${p.n} del equipo? También se van a borrar sus turnos, francos y reglas asignadas.`))return;
       state.peopleExtra.splice(+b.dataset.i,1);
+      cancelarEdicionPersona(); // por si justo estabas editando a esta persona (o a otra que corrió de índice)
       rebuildPeople();
       limpiarPersonasDadasDeBaja();
       dedupeFixed();regenerateFixedHalfExtras();
@@ -1693,10 +1723,23 @@ function initControls(){
   document.getElementById("btnAddPersona").addEventListener("click",()=>{
     const nombre=document.getElementById("nuevoNombre").value.trim();
     if(!nombre)return toast("Escribí un nombre");
-    if(BY_NAME[nombre])return toast(`${nombre} ya está en el equipo`);
     const role=document.getElementById("nuevoRole").value;
     const loc=document.getElementById("nuevoLoc").value;
     const francoVal=document.getElementById("nuevoFranco").value;
+    if(editandoPersonaIdx!=null){
+      // editando a alguien que ya existe: el nombre no se puede tocar acá (si hace falta renombrar,
+      // pedirlo directamente — ver el caso de Leandro Villagra/Tolaba, que necesitó migrar datos ya
+      // guardados). Solo se actualizan puesto/local/franco.
+      const persona=state.peopleExtra[editandoPersonaIdx];
+      persona.role=role;persona.loc=loc;
+      if(francoVal==="auto")delete persona.franco;else persona.franco=DAYS[+francoVal][0];
+      rebuildPeople();
+      fillPersonSelects();renderMini();render();persist();
+      toast(`${persona.n} actualizado`);
+      cancelarEdicionPersona();
+      return;
+    }
+    if(BY_NAME[nombre])return toast(`${nombre} ya está en el equipo`);
     const persona={n:nombre,role,loc};
     if(francoVal!=="auto")persona.franco=DAYS[+francoVal][0];
     state.peopleExtra.push(persona);
@@ -1705,6 +1748,7 @@ function initControls(){
     document.getElementById("nuevoNombre").value="";
     toast(`${nombre} agregado al equipo 🎉`);
   });
+  document.getElementById("btnCancelarEdicionPersona").addEventListener("click",cancelarEdicionPersona);
   document.getElementById("btnAuto").addEventListener("click",autocomplete);
   document.getElementById("weekStart").addEventListener("change",e=>{
     state.weekStart=e.target.value;
