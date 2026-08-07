@@ -57,6 +57,22 @@ Desde ahí ves todo lo que pidió cada área y cada local, y vas marcando lo que
 
 > ℹ️ **El vehículo es compartido.** Vos lo usás a la mañana y el **Ayudante de Cocina**
 > a la tarde. Se entrega en condiciones para el turno siguiente.
+
+### El vehículo también es tu responsabilidad
+
+Además de usarlo, **Compras se hace cargo de mantenerlo**:
+
+| Tarea | Cada cuánto |
+|---|---|
+| 🧹 **Barrer y limpiar el interior** (restos de pan, suciedad) | **Todos los días** — igual que el Ayudante en su turno |
+| ⛽ **Reponer combustible** | Cuando sea necesario |
+| 🚿 **Llevarlo a lavar** | **Cada 10 días** |
+
+> 🔑 **La llave está en el local de venta San Luis** y el vehículo queda estacionado en
+> la **cuadra de producción**.
+
+> 📖 Protocolo completo de carga y traslado en
+> **[Vehículo y traslado de mercadería](../comunes/vehiculo-de-transporte.md)**.
 3. **Cada local revisa la mercadería que llega.** No se firma nada — la revisión es
    responsabilidad de quien recibe en el local.
 

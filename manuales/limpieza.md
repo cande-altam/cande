@@ -184,6 +184,7 @@ estructural, profunda y de las zonas comunes.
 | **Baño de clientes** | Revisión al cierre | **Limpieza general y profunda** |
 | **Exterior del local** | — | **Todo** |
 | **Cuadra de producción** | Su puesto y sus utensilios | **Paredes, mesadas, maquinarias, pisos, depósito y baño** |
+| **Vehículo de transporte** | Compras y Ayudante de Cocina — barrido diario, lavado cada 10 días | — |
 
 > ### 🔑 Una tarea sin dueño no se hace.
 > Si algo no está en ninguna de las dos columnas, avisale al encargado antes de que se

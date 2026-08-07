@@ -33,6 +33,33 @@ Todos los días, antes de salir:
 
 ---
 
+## Dónde está todo
+
+| Qué | Dónde |
+|---|---|
+| 🚐 **El vehículo** | Estacionado en la **cuadra de producción** |
+| 🔑 **La llave** | Siempre en el **local de venta San Luis** |
+| 📄 **Los documentos** | Dentro del vehículo |
+
+> ℹ️ **La llave y el vehículo no están en el mismo lugar.** Tenelo en cuenta al
+> arrancar el turno: primero se pasa por San Luis por la llave.
+
+---
+
+## Cuidado del vehículo — Quién hace qué
+
+| Tarea | Cada cuánto | Quién |
+|---|---|---|
+| 🧹 **Barrido y limpieza superficial del interior** — restos de pan y suciedad | **Todos los días** | **Compras** y **Ayudante de Cocina**, cada uno en su turno |
+| ⛽ **Reposición de combustible** | Cuando sea necesario | **Compras** |
+| 🚿 **Lavado del vehículo** | **Cada 10 días** | **Compras** |
+
+> ### 🔑 La limpieza diaria del interior es de los dos.
+> No es "del que lo ensució": **cada turno barre y limpia lo suyo antes de entregarlo**.
+> Ahí viajan alimentos.
+
+---
+
 ## Por qué esto necesita reglas escritas
 
 Un vehículo con **dos responsables por día** y sin protocolo de entrega es donde la
@@ -154,13 +181,35 @@ Esto no es prudencia vial genérica: **atrás llevás cajones apilados hasta el 
 
 ---
 
+# 🚨 EN CASO DE ACCIDENTE
+
+> ### 1. Primero, las personas.
+> **Verificá que no haya víctimas.** Antes que el vehículo, antes que la mercadería,
+> antes que cualquier otra cosa.
+
+> ### 2. Avisá a Administración inmediatamente.
+> No esperes a volver, no lo resuelvas por tu cuenta.
+
+| Orden | Qué hacés |
+|---|---|
+| **1** | Verificar que **no haya víctimas** |
+| **2** | Dar aviso a **Administración**, de inmediato |
+
+> 📄 **Los documentos del vehículo están dentro del vehículo.** Ahí los tenés si te los
+> piden.
+
+---
+
 # 🔄 LA ENTREGA ENTRE TURNOS
 
 ## Al terminar tu turno
 
+- ☐ **Interior barrido** — restos de pan y suciedad
 - ☐ **Caja de carga limpia** y sin restos
 - ☐ **Sin mercadería ni cajones olvidados**
 - ☐ **Combustible y cubiertas** — si notaste algo, avisalo
+- ☐ **Vehículo estacionado** en la cuadra de producción
+- ☐ **Llave devuelta** al local de venta San Luis
 - ☐ **Novedades avisadas al encargado** (un ruido nuevo, un golpe, una luz encendida)
 
 > Lo que no se avisa, aparece en el turno del otro.
@@ -171,6 +220,7 @@ Esto no es prudencia vial genérica: **atrás llevás cajones apilados hasta el 
 
 ### Antes de salir
 
+- ☐ Llave retirada del local de venta San Luis
 - ☐ Combustible revisado
 - ☐ Cubiertas revisadas
 - ☐ Caja de carga limpia y seca
@@ -193,22 +243,23 @@ Esto no es prudencia vial genérica: **atrás llevás cajones apilados hasta el 
 ## 🚧 Lo que falta definir
 
 - [ ] **Quién puede manejarlo.** ¿Solo estas dos personas? ¿Hace falta algún requisito?
-- [ ] **Combustible.** Quién carga, con qué plata y con qué comprobante. *Se cruza con
-      el circuito de dinero de Compras* — si la nafta sale del estimado diario, tiene
-      que estar contemplada ahí. Ver
+- [ ] **Con qué plata se carga el combustible.** Ya está definido que lo repone Compras,
+      pero no de dónde sale la plata. *Se cruza con el circuito de dinero de Compras* —
+      si sale del estimado diario, tiene que estar contemplada ahí. Ver
       [Manual de Compras, Sección 3](../produccion/compras.md).
-- [ ] **Limpieza del vehículo.** Cada cuánto, quién y con qué producto. Hoy el
-      [manual de Limpieza](../limpieza.md) **no lo menciona** — o entra ahí, o queda a
-      cargo de quien lo usa.
-- [ ] **Dónde queda al terminar cada turno** y **quién tiene las llaves**.
 - [ ] **🔴 Si queda registro de algo.** Aunque sea un cuaderno con kilometraje y
       novedades. **Sin registro, un daño no tiene turno** y la discusión termina siendo
       palabra contra palabra. Es lo más importante de esta lista.
-- [ ] **Documentación.** Dónde están cédula, seguro y VTV, y quién controla los
-      vencimientos.
-- [ ] **Service y mantenimiento programado.** Quién lo agenda y lo controla.
-- [ ] **Si pasa algo:** desperfecto en la calle (a quién se avisa y qué se hace con la
-      mercadería que va arriba), accidente, y quién se hace cargo de una multa.
+- [ ] **Vencimientos.** Los documentos están en el vehículo, pero falta **quién controla
+      que seguro y VTV estén al día**. Conviene además **tener una copia fuera del
+      vehículo**: si el utilitario no está, los papeles tampoco.
+- [ ] **Service y mantenimiento programado.** Quién lo agenda y lo controla. El lavado
+      cada 10 días ya tiene dueño; el service no.
+- [ ] **Desperfecto en la calle.** El accidente ya está resuelto (víctimas →
+      Administración). Falta el caso de una rotura mecánica: a quién se avisa y **qué se
+      hace con la mercadería que va arriba**, que es lo que se echa a perder mientras se
+      espera.
+- [ ] **Multas.** Quién se hace cargo y cómo se resuelven.
 - [ ] **Orden de fragilidad.** Confirmar la tabla de la Sección 4 con quien carga.
 
 ---
