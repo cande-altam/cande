@@ -253,6 +253,15 @@
       </section>
 
       <section class="card" style="margin-bottom:18px">
+        <div class="calHead" style="padding-bottom:6px">
+          <h2 style="flex:1">Pedidos para <span id="solicitudesAnio"></span></h2>
+          <button class="btn sm" id="btnCopiarLink" type="button" title="Copiar el link para mandarles a todos">🔗 Copiar link para compartir</button>
+        </div>
+        <p class="sub">Cada persona carga sus fechas preferidas desde ese link (sin necesitar esta contraseña) — queda registrado el día y la hora en que lo mandó.</p>
+        <div class="card-body" id="solicitudesList"></div>
+      </section>
+
+      <section class="card" style="margin-bottom:18px">
         <h2>Balance por persona</h2>
         <p class="sub">Días que corresponden por ley, menos lo ya tomado, por período.</p>
         <div class="tbl-scroll">
@@ -353,11 +362,22 @@ window.CloudHistory = {
     }).catch(err=>{console.error("history list:",err);cb(null);});
   }
 };
+
+// Pedidos de vacaciones para el año que viene, cargados por cada persona desde pedido.html (página
+// pública, sin la contraseña de acá). Viven en un nodo aparte de vacaciones/state para que esa
+// página no necesite tocar (ni conocer) el resto del estado de la app — solo escribe acá.
+const solicitudesRef = ref(db, "vacaciones/solicitudes");
+onValue(solicitudesRef, snap=>{
+  window.dispatchEvent(new CustomEvent("solicitudes-update",{detail:snap.val()||{}}));
+}, err=>console.error("solicitudes onValue:",err));
+window.SolicitudesSync = {
+  remove(id){ remove(ref(db,"vacaciones/solicitudes/"+id)).catch(err=>console.error("solicitudes remove:",err)); }
+};
 </script>
 
 <script>
 "use strict";
-const APP_VERSION="2026-08-07 vacaciones-leandro-tolaba-y-personal-adicional";
+const APP_VERSION="2026-08-07 pedido-vacaciones-v1";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -626,6 +646,7 @@ function render(){
   renderBalance();
   renderVacList();
   renderAlerts();
+  renderSolicitudes();
   renderCalendar();
   fillFormSelects();
 }
@@ -703,6 +724,39 @@ function renderAlerts(){
   el.innerHTML=alerts.map(a=>`<div class="alert ${a.t}"><span class="dot"></span><div><b>${a.h}</b> ${a.m}</div></div>`).join("");
 }
 
+// Pedidos de vacaciones para el año que viene, cargados desde pedido.html (ver evento
+// "solicitudes-update" en el módulo Firebase de arriba). Viven aparte de `state`: no pasan por
+// persist()/undo/historial, son solo lo que cada persona mandó desde afuera.
+let solicitudes={};
+const ANIO_PEDIDO=anioActual()+1;
+function renderSolicitudes(){
+  document.getElementById("solicitudesAnio").textContent=ANIO_PEDIDO;
+  const el=document.getElementById("solicitudesList");
+  const filas=Object.entries(solicitudes).map(([id,s])=>({id,...s})).filter(s=>s.periodo===ANIO_PEDIDO);
+  if(!filas.length){el.innerHTML=`<p class="sub" style="padding:0">Todavía no llegó ningún pedido para ${ANIO_PEDIDO}.</p>`;return;}
+  filas.sort((a,b)=>(a.enviadoEn||"").localeCompare(b.enviadoEn||""));
+  // superposición: dos pedidos de PERSONAS DISTINTAS con fechas que se cruzan
+  function seSuperponen(a,b){return a.n!==b.n&&a.desde<=b.hasta&&b.desde<=a.hasta;}
+  el.innerHTML=filas.map(s=>{
+    const dias=rangoDias(s.desde,s.hasta);
+    const corresponde=diasCorrespondenEfectivos(s.n,ANIO_PEDIDO).dias;
+    const excede=corresponde>0&&dias>corresponde;
+    const cruces=filas.filter(o=>o.id!==s.id&&seSuperponen(s,o));
+    const enviado=s.enviadoEn?new Date(s.enviadoEn).toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"}):"—";
+    const avisos=[
+      excede?`<span class="pill pend" title="Le corresponden ${corresponde} días para ${ANIO_PEDIDO}">⚠ pide ${dias}d, le corresponden ${corresponde}</span>`:"",
+      cruces.length?`<span class="pill pend" title="${cruces.map(c=>c.n).join(', ')}">⚠ se cruza con ${cruces.map(c=>c.n).join(', ')}</span>`:"",
+    ].filter(Boolean).join(" ");
+    return`<div class="mini-row"><b>${s.n}</b>${s.orden>1?` (opción ${s.orden})`:""} · ${fmtFecha(s.desde)} al ${fmtFecha(s.hasta)} (${dias}d) ${avisos}${s.nota?` · <i>${s.nota}</i>`:""} · <span style="color:var(--ink-soft)">enviado ${enviado}</span> <button class="x" data-id="${s.id}" title="Borrar pedido">×</button></div>`;
+  }).join("");
+  el.querySelectorAll(".x").forEach(b=>b.addEventListener("click",()=>{
+    if(!confirm("¿Borrar este pedido?"))return;
+    window.SolicitudesSync&&window.SolicitudesSync.remove(b.dataset.id);
+    toast("Pedido borrado");
+  }));
+}
+window.addEventListener("solicitudes-update",e=>{solicitudes=e.detail||{};renderSolicitudes();});
+
 let calMonth=hoy().getMonth(),calYear=hoy().getFullYear();
 function vacacionesEnDia(iso){
   return state.taken.filter(t=>t.desde<=iso&&iso<=t.hasta);
@@ -775,6 +829,12 @@ function initControls(){
   railToggle.addEventListener("click",()=>{
     const open=railBody.classList.toggle("open");
     railToggle.setAttribute("aria-expanded",open?"true":"false");
+  });
+
+  document.getElementById("btnCopiarLink").addEventListener("click",async ()=>{
+    const url=new URL("pedido.html",location.href).href;
+    try{await navigator.clipboard.writeText(url);toast("Link copiado 🔗");}
+    catch(e){prompt("Copiá el link:",url);}
   });
 
   document.getElementById("vPerson").addEventListener("change",syncPeriodoOptions);
