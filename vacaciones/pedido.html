@@ -121,31 +121,50 @@ const PERSONAS=["Aaron","Brenda","Dana","Érica","Gabriel","Gonzalo","Guadalupe"
   "Valentina","Vanesa","Walter","Zoe"].sort((a,b)=>a.localeCompare(b,"es"));
 
 const PERIODO = new Date().getFullYear()+1; // "el año que viene", se actualiza solo cada año
+const MIN_OPCIONES = 2;
 
-document.getElementById("intro").textContent =
-  `Contanos qué fechas te gustaría tomarte en ${PERIODO}. Podés cargar más de una opción por si la primera no se puede.`;
+// Meses habilitados para pedir vacaciones en este ciclo: octubre-noviembre 2026, y luego
+// febrero-diciembre 2027 (diciembre 2026 y enero 2027 quedan afuera, temporada alta). Si el ciclo
+// cambia el año que viene, actualizar estas dos fechas (no se puede derivar solo).
+const VENTANAS=[
+  {desde:"2026-10-01",hasta:"2026-11-30"},
+  {desde:"2027-02-01",hasta:"2027-12-31"},
+];
+function fmtCorta(iso){const[y,m,d]=iso.split("-");return`${d}/${m}/${y}`;}
+const VENTANAS_TXT=VENTANAS.map(v=>`${fmtCorta(v.desde)} al ${fmtCorta(v.hasta)}`).join(" y ");
+function rangoValido(desde,hasta){return VENTANAS.some(v=>desde>=v.desde&&hasta<=v.hasta);}
+
+document.getElementById("intro").innerHTML =
+  `Contanos qué fechas te gustaría tomarte en ${PERIODO}. Tenés que cargar <b>al menos ${MIN_OPCIONES} opciones</b> de fecha, por si la primera no se puede.`
+  +`<br><br><b>Meses habilitados para pedir:</b> ${VENTANAS_TXT}. Fuera de esas fechas no se puede pedir.`;
 
 const selPersona=document.getElementById("persona");
 selPersona.innerHTML += PERSONAS.map(n=>`<option value="${n}">${n}</option>`).join("");
 
 const opcionesEl=document.getElementById("opciones");
 let opcionN=0;
+function actualizarBotonesQuitar(){
+  const filas=[...opcionesEl.querySelectorAll(".opcion")];
+  filas.forEach(fila=>{
+    const q=fila.querySelector(".quitar");
+    if(q)q.style.display=filas.length>MIN_OPCIONES?"":"none";
+  });
+}
 function agregarOpcion(){
   opcionN++;
-  const id="op"+opcionN;
   const div=document.createElement("div");
   div.className="opcion";
-  div.dataset.id=id;
   div.innerHTML=`
-    <span class="num">Opción ${opcionN}${opcionN>1?'<button type="button" class="quitar" title="Quitar">×</button>':""}</span>
+    <span class="num">Opción ${opcionN}<button type="button" class="quitar" title="Quitar">×</button></span>
     <div class="row2" style="margin-top:8px">
-      <div class="field" style="margin-top:0"><label>Desde</label><input type="date" class="fDesde"></div>
-      <div class="field" style="margin-top:0"><label>Hasta</label><input type="date" class="fHasta"></div>
+      <div class="field" style="margin-top:0"><label>Desde</label><input type="date" class="fDesde" min="${VENTANAS[0].desde}" max="${VENTANAS[VENTANAS.length-1].hasta}"></div>
+      <div class="field" style="margin-top:0"><label>Hasta</label><input type="date" class="fHasta" min="${VENTANAS[0].desde}" max="${VENTANAS[VENTANAS.length-1].hasta}"></div>
     </div>`;
   opcionesEl.appendChild(div);
-  const quitar=div.querySelector(".quitar");
-  if(quitar)quitar.addEventListener("click",()=>div.remove());
+  div.querySelector(".quitar").addEventListener("click",()=>{div.remove();actualizarBotonesQuitar();});
+  actualizarBotonesQuitar();
 }
+agregarOpcion();
 agregarOpcion();
 document.getElementById("btnAgregar").addEventListener("click",agregarOpcion);
 
@@ -168,9 +187,10 @@ document.getElementById("btnEnviar").addEventListener("click", async ()=>{
     if(!desde&&!hasta)continue;
     if(!desde||!hasta)return mostrarError("Completá las dos fechas (desde y hasta) de cada opción, o dejá la opción vacía.");
     if(hasta<desde)return mostrarError('La fecha "hasta" no puede ser anterior a la fecha "desde".');
+    if(!rangoValido(desde,hasta))return mostrarError(`Esa opción cae fuera de los meses habilitados (${VENTANAS_TXT}). Revisá las fechas.`);
     opciones.push({desde,hasta});
   }
-  if(!opciones.length)return mostrarError("Cargá al menos una fecha desde/hasta.");
+  if(opciones.length<MIN_OPCIONES)return mostrarError(`Tenés que cargar al menos ${MIN_OPCIONES} opciones de fecha (con las dos fechas completas cada una).`);
 
   const btn=document.getElementById("btnEnviar");
   btn.disabled=true;btn.textContent="Enviando…";
@@ -201,7 +221,7 @@ document.getElementById("btnOtro").addEventListener("click",()=>{
   document.getElementById("okCard").classList.remove("show");
   document.getElementById("formCard").style.display="";
   selPersona.value="";
-  opcionesEl.innerHTML="";opcionN=0;agregarOpcion();
+  opcionesEl.innerHTML="";opcionN=0;agregarOpcion();agregarOpcion();
   document.getElementById("nota").value="";
   limpiarError();
 });
