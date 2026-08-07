@@ -256,9 +256,10 @@ El resto de las tareas **se comparten con el ayudante del turno mañana**:
 - [ ] **El cruce y el reparto de Compras.** Compras también lleva mercadería a los
       locales (a primera hora y antes de las 13:00). Falta aclarar **qué mueve cada
       uno** para que no se dupliquen ni se pisen — sobre todo en San Luis.
-- [ ] **Cuidado del vehículo.** El vehículo es **compartido con Compras**, que lo usa a
-      la mañana. Las reglas de uso, limpieza y entrega entre turnos están sin cargar —
-      ver [Vehículo de transporte](../comunes/vehiculo-de-transporte.md).
+- [ ] **Entrega del vehículo.** El utilitario es **compartido con Compras**, que lo usa
+      a la mañana. El protocolo de traslado ya está escrito, pero falta definir dónde
+      queda, quién tiene las llaves y si se deja constancia — ver
+      [Vehículo y traslado de mercadería](../comunes/vehiculo-de-transporte.md).
 - [ ] **Control de lo que se entrega.** Hoy el local recibe y revisa, pero no se firma
       nada. Si falta algo del cruce, no queda registro de qué salió.
 - [ ] **Temperatura del frizer y de la estufa de fermentación.** No figuran. Si el pan

@@ -1,24 +1,35 @@
-# Vehículo de transporte — Candela Café & Patisserie
+# Vehículo y traslado de mercadería — Candela Café & Patisserie
 
-*Versión 0.5 — INCOMPLETO | Agosto 2026*
+*Versión 1.0 | Agosto 2026*
 
 > **Documento común.** Aplica a **Compras** y al **Ayudante de Cocina**, que son
-> quienes usan el vehículo.
-
-> 🚧 **Faltan las reglas de cuidado.** La estructura está armada y el reparto de uso
-> documentado, pero **el contenido de mantenimiento todavía no se cargó**. Ver
-> [Lo que falta](#-lo-que-falta-definir).
+> quienes usan el vehículo y trasladan la mercadería.
 
 ---
 
-## Quién lo usa y cuándo
+## El vehículo
 
-> ### 🔑 El vehículo es compartido. Dos personas por día.
+**Un utilitario de la empresa**, que se usa **todos los días**.
+
+> ### 🔑 Es compartido. Dos personas por día.
 
 | Turno | Quién lo usa | Para qué |
 |---|---|---|
 | 🌅 **Mañana** | **Compras** | Reparto de mercadería a los locales y recorrido de compras |
 | 🌇 **Tarde** | **Ayudante de Cocina** | Cruce de mercadería de la cuadra al local de ventas |
+
+### Antes de usarlo — Revisión
+
+Todos los días, antes de salir:
+
+| Qué se revisa |
+|---|
+| ⛽ **Estado del combustible** |
+| 🛞 **Estado de las cubiertas** |
+
+> ⚠️ **Si algo no está bien, avisá antes de salir** — no al volver. Un problema
+> detectado en el playón se resuelve; el mismo problema en la calle deja la mercadería
+> parada.
 
 ---
 
@@ -27,118 +38,178 @@
 Un vehículo con **dos responsables por día** y sin protocolo de entrega es donde la
 responsabilidad se diluye. La frase que hay que evitar es **"así me lo dejaron"**.
 
-Con dos turnos, cada cosa que no esté definida se convierte en un problema de nadie:
-
-- Si aparece un rayón, **no se sabe de qué turno es**
+- Si aparece un daño, **no se sabe de qué turno es**
 - Si queda sin combustible, **el del turno siguiente pierde tiempo**
 - Si queda sucio, **el que carga alimentos arranca con el problema**
 
-> ### 🔑 La regla de fondo
-> **El vehículo se entrega como te gustaría recibirlo.** Limpio, cargado y sin
-> novedades — o con la novedad avisada.
+> ### 🔑 El vehículo se entrega como te gustaría recibirlo.
 
 ---
 
-## Transporta alimentos
+# 📦 PROTOCOLO DE TRASLADO DE MERCADERÍA
 
-Esto no es un vehículo cualquiera: **lleva pan, pastelería y productos crudos**.
-
-- La caja de carga es, en la práctica, **una superficie de contacto con alimentos**
-- La suciedad, la humedad y los olores **pasan al producto**
-- Un cajón apoyado sobre una superficie sucia **contamina toda la tanda**
-
-> 📖 Criterios generales en
-> **[Higiene y presentación](higiene-y-presentacion.md)**.
+> ### 🔑 La mercadería viaja como se vende.
+> Si llega golpeada, aplastada o volcada, **no se vende**. El traslado no es un trámite
+> entre dos puntos: es parte de la calidad del producto.
 
 ---
 
-## Antes de salir
+## 1. La caja de carga es una superficie de contacto con alimentos
 
-*(a completar)*
+Antes de cargar cualquier cosa:
 
-## Al terminar el turno
+- La caja tiene que estar **limpia y seca**
+- **Sin restos** del traslado anterior — harina, migas, envoltorios
+- **Sin olores** — la mercadería los toma
 
-*(a completar)*
+> ⛔ **No se carga sobre una caja sucia.** Si está sucia, se limpia primero.
 
-## La entrega entre turnos
+---
 
-*(a completar)*
+## 2. Cada producto en su contenedor
 
-## Si pasa algo
+| Mercadería | Va en | Cuándo |
+|---|---|---|
+| 🥖 **Pan horneado y pastelería** | **Cajones** aptos para transporte | Cruce de la mañana |
+| 🍞 **Mercadería ya horneada** | **Canastos** | Turno tarde |
+| 🥐 **Productos crudos** | **Latas** | Turno tarde |
+| ❄️ **Facturas crudas y pan surtido** | **Latas** con plástico protector, en **latero** con poncho | Para hornear al día siguiente |
 
-*(a completar)*
+> ⛔ **Nada viaja suelto.** Ni una bandeja, ni una caja de tortas sin su contenedor.
+
+---
+
+## 3. Cómo se carga
+
+### Los cajones
+
+> **Son encastrables: se pueden apilar hasta el techo.**
+
+El encastre es **lo que los hace seguros**. De ahí sale la regla:
+
+- ✅ **Si encastran, se apilan** — hasta el techo, sin problema
+- ⛔ **Si no encastran, no se apilan.** Un cajón mal encastrado es una torre que se cae
+  en la primera frenada
+
+### Las latas
+
+> **Las latas van siempre en el latero del propio utilitario.**
+
+El utilitario tiene su latero: para eso está.
+
+- ⛔ **Nunca sueltas en el piso** de la caja
+- ⛔ **Nunca apiladas fuera del latero**
+
+---
+
+## 4. Orden de carga — De lo que aguanta a lo que no
+
+> 🚧 **Este orden lo propuse a partir de los productos que figuran en los manuales.
+> Confirmalo con quien carga todos los días.**
+
+De **más resistente** a **más delicado**:
+
+| | Producto | Puede llevar peso encima |
+|---|---|---|
+| 1 | **Pan de mesa** (miñón, francés) | ✅ Sí |
+| 2 | **Facturas y masas** | ✅ Sí, con cuidado |
+| 3 | **Budines** | ⚠️ Poco |
+| 4 | **Porciones y tartas** | ⛔ No |
+| 5 | **Tortas** | ⛔ **Nada encima. Nunca.** |
+
+**La regla práctica:** lo pesado abajo, lo delicado arriba, **las tortas siempre
+últimas y solas**.
+
+---
+
+## 5. Antes de arrancar
+
+- ☐ **Nada suelto** — todo encastrado o en el latero
+- ☐ **Nada sobresaliendo** de su contenedor
+- ☐ **Puertas cerradas** y trabadas
+
+---
+
+## 6. Al manejar
+
+Esto no es prudencia vial genérica: **atrás llevás cajones apilados hasta el techo**.
+
+| Situación | Cómo |
+|---|---|
+| **Arrancar y frenar** | Suave. La carga se mueve con vos |
+| **Curvas** | Despacio — es donde se vuelca una torre de cajones |
+| **Lomos de burro y pozos** | Casi detenido |
+
+> ⚠️ **Una frenada brusca puede costar la producción de la mañana.** Se sale con tiempo
+> para no tener que apurarse.
+
+---
+
+## 7. Al descargar
+
+- **No apoyes los cajones en el piso.** Van directo del vehículo a su lugar
+- **Descargá en orden inverso** — lo delicado sale primero
+- **Revisá que no quede nada** en la caja de carga
+- Si algo llegó dañado, **avisá en el momento**, no después
+
+---
+
+# 🔄 LA ENTREGA ENTRE TURNOS
+
+## Al terminar tu turno
+
+- ☐ **Caja de carga limpia** y sin restos
+- ☐ **Sin mercadería ni cajones olvidados**
+- ☐ **Combustible y cubiertas** — si notaste algo, avisalo
+- ☐ **Novedades avisadas al encargado** (un ruido nuevo, un golpe, una luz encendida)
+
+> Lo que no se avisa, aparece en el turno del otro.
 
 ---
 
 ## ✅ Checklist — Uso del vehículo
 
-> 🚧 **Provisorio.** Se completa cuando se carguen las reglas.
-
 ### Antes de salir
 
-- ☐ Revisión previa hecha *(a definir qué se revisa)*
+- ☐ Combustible revisado
+- ☐ Cubiertas revisadas
 - ☐ Caja de carga limpia y seca
-- ☐ Carga acomodada y estable
+- ☐ Mercadería en su contenedor — cajones, canastos o latas
+- ☐ Latas en el latero del utilitario
+- ☐ Cajones encastrados
+- ☐ Lo delicado arriba, tortas solas y últimas
+- ☐ Nada suelto ni sobresaliendo
+- ☐ Puertas cerradas
 
 ### Al volver
 
-- ☐ Vehículo limpio por dentro
-- ☐ Sin mercadería ni cajones olvidados
+- ☐ Todo descargado, nada olvidado en la caja
+- ☐ Caja de carga limpia
 - ☐ Novedades avisadas al encargado
-- ☐ Vehículo entregado en condiciones para el turno siguiente
+- ☐ Vehículo en condiciones para el turno siguiente
 
 ---
 
 ## 🚧 Lo que falta definir
 
-Esto es lo que necesito para completar el documento. **No lo escribo de memoria**:
-inventar reglas de mantenimiento de un vehículo que no conozco sería peor que dejarlo
-en blanco.
-
-### Sobre el vehículo
-
-- [ ] **Qué vehículo es.** Tipo (utilitario, moto, auto), y si es del negocio o de
-      alguien del equipo.
 - [ ] **Quién puede manejarlo.** ¿Solo estas dos personas? ¿Hace falta algún requisito?
-
-### Antes de salir
-
-- [ ] **Qué se revisa.** Combustible, aceite, agua, neumáticos, luces — cuáles de estos
-      y con qué frecuencia.
-- [ ] **Cómo se acomoda la carga.** Si hay una forma de estibar los cajones, cuántos se
-      pueden apilar, si algo no puede ir junto a otra cosa.
-
-### Durante el uso
-
-- [ ] **Combustible.** Quién carga, con qué plata y con qué comprobante. *Esto conecta
-      con el circuito de dinero de Compras* — ver
+- [ ] **Combustible.** Quién carga, con qué plata y con qué comprobante. *Se cruza con
+      el circuito de dinero de Compras* — si la nafta sale del estimado diario, tiene
+      que estar contemplada ahí. Ver
       [Manual de Compras, Sección 3](../produccion/compras.md).
-- [ ] **Dónde se estaciona** durante el recorrido y en el local.
-
-### Limpieza
-
-- [ ] **Cada cuánto se limpia**, quién lo hace y con qué producto.
-- [ ] **Si entra en el circuito de Limpieza** o lo hace quien lo usa. Hoy el
-      [manual de Limpieza](../limpieza.md) **no lo menciona**.
-
-### La entrega entre turnos
-
-- [ ] **Dónde queda el vehículo** al terminar cada turno.
-- [ ] **Quién tiene las llaves** y cómo pasan de un turno al otro.
-- [ ] **Con cuánto combustible** se entrega.
-- [ ] **Si se deja constancia** de algo — aunque sea un cuaderno con kilometraje y
-      novedades. Sin registro, un daño no tiene turno.
-
-### Documentación y respaldo
-
-- [ ] **Dónde están** cédula, seguro y VTV, y quién controla los vencimientos.
-- [ ] **Service y mantenimiento programado:** quién lo agenda y lo controla.
-
-### Si pasa algo
-
-- [ ] **Desperfecto en la calle:** a quién se avisa y qué se hace con la mercadería.
-- [ ] **Accidente o siniestro:** a quién se llama, en qué orden.
-- [ ] **Multa:** quién la paga y cómo se resuelve.
+- [ ] **Limpieza del vehículo.** Cada cuánto, quién y con qué producto. Hoy el
+      [manual de Limpieza](../limpieza.md) **no lo menciona** — o entra ahí, o queda a
+      cargo de quien lo usa.
+- [ ] **Dónde queda al terminar cada turno** y **quién tiene las llaves**.
+- [ ] **🔴 Si queda registro de algo.** Aunque sea un cuaderno con kilometraje y
+      novedades. **Sin registro, un daño no tiene turno** y la discusión termina siendo
+      palabra contra palabra. Es lo más importante de esta lista.
+- [ ] **Documentación.** Dónde están cédula, seguro y VTV, y quién controla los
+      vencimientos.
+- [ ] **Service y mantenimiento programado.** Quién lo agenda y lo controla.
+- [ ] **Si pasa algo:** desperfecto en la calle (a quién se avisa y qué se hace con la
+      mercadería que va arriba), accidente, y quién se hace cargo de una multa.
+- [ ] **Orden de fragilidad.** Confirmar la tabla de la Sección 4 con quien carga.
 
 ---
 
