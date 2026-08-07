@@ -594,7 +594,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-05 historial-v1";
+const APP_VERSION="2026-08-07 leandro-villagra";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -603,7 +603,7 @@ const PEOPLE=[
   {n:"Lucía",role:"barista",loc:"SL",franco:"mar"},
   {n:"Luciana",role:"barista",loc:"both",franco:"vie"},
   {n:"Gabriel",role:"barista",loc:"both",franco:"lun"},
-  {n:"Leandro",role:"barista",loc:"SLA",franco:"jue"},
+  {n:"Leandro Villagra",role:"barista",loc:"SLA",franco:"jue"},
   {n:"Mariano",role:"barista",loc:"both",he:true},
   {n:"Luis",role:"cocina",loc:"SL",franco:"jue"},
   {n:"Vanesa",role:"cocina",loc:"SL",franco:"mie"},
@@ -1856,8 +1856,25 @@ function limpiarPersonasDadasDeBaja(){
   Object.keys(state.backupOverride).forEach(n=>{if(!BY_NAME[n])delete state.backupOverride[n];});
   Object.keys(state.assign).forEach(k=>{if(!BY_NAME[state.assign[k]])delete state.assign[k];});
 }
+// Leandro (el barista, SLA) pasa a llamarse "Leandro Villagra" para no confundirlo con Leandro
+// Tolaba (persona aparte, solo en el módulo de Vacaciones — producción/Cuadra). Migra cualquier
+// referencia a "Leandro" que ya hubiera quedado guardada en turnos asignados, reglas fijas, franco,
+// etc., para que no se pierdan al cambiar el nombre. Inofensivo correrla de nuevo si ya no queda
+// nada por migrar (por eso va antes de limpiarPersonasDadasDeBaja: si no, esa limpieza borraría
+// todo lo que todavía dijera "Leandro" en vez de renombrarlo).
+function renombrarLeandroVillagra(){
+  const DE="Leandro",A="Leandro Villagra";
+  Object.keys(state.assign).forEach(k=>{if(state.assign[k]===DE)state.assign[k]=A;});
+  state.ex.forEach(e=>{if(e.n===DE)e.n=A;});
+  state.abs.forEach(a=>{if(a.n===DE)a.n=A;});
+  state.fixed.forEach(f=>{if(f.n===DE)f.n=A;});
+  if(Object.prototype.hasOwnProperty.call(state.francoFixed,DE)){state.francoFixed[A]=state.francoFixed[DE];delete state.francoFixed[DE];}
+  if(Object.prototype.hasOwnProperty.call(state.roleOverride,DE)){state.roleOverride[A]=state.roleOverride[DE];delete state.roleOverride[DE];}
+  if(Object.prototype.hasOwnProperty.call(state.backupOverride,DE)){state.backupOverride[A]=state.backupOverride[DE];delete state.backupOverride[DE];}
+}
 function runMigrations(){
   state.ex.forEach(e=>{if(e.id==null)e.id=Date.now()+"-"+Math.round(Math.random()*1e6);});
+  renombrarLeandroVillagra();
   seedFixedRules();
   seedCocinaComprasCajero();
   limpiarPersonasDadasDeBaja();
