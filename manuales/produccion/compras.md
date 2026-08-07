@@ -65,8 +65,10 @@ Además de usarlo, **Compras se hace cargo de mantenerlo**:
 | Tarea | Cada cuánto |
 |---|---|
 | 🧹 **Barrer y limpiar el interior** (restos de pan, suciedad) | **Todos los días** — igual que el Ayudante en su turno |
-| ⛽ **Reponer combustible** | Cuando sea necesario |
+| ⛽ **Reponer combustible** — el dinero se lo pedís a **Administración** en el recorrido | Cuando sea necesario |
 | 🚿 **Llevarlo a lavar** | **Cada 10 días** |
+| 📄 **Controlar que seguro y VTV estén al día** | Permanente |
+| 🔧 **Verificarlo y llevarlo a service** | Cuando corresponda |
 
 > 🔑 **La llave está en el local de venta San Luis** y el vehículo queda estacionado en
 > la **cuadra de producción**.

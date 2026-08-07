@@ -53,10 +53,20 @@ Todos los días, antes de salir:
 | 🧹 **Barrido y limpieza superficial del interior** — restos de pan y suciedad | **Todos los días** | **Compras** y **Ayudante de Cocina**, cada uno en su turno |
 | ⛽ **Reposición de combustible** | Cuando sea necesario | **Compras** |
 | 🚿 **Lavado del vehículo** | **Cada 10 días** | **Compras** |
+| 📄 **Control de seguro y VTV** | Permanente | **Compras** |
+| 🔧 **Verificación y service** | Cuando corresponda | **Compras** |
 
 > ### 🔑 La limpieza diaria del interior es de los dos.
 > No es "del que lo ensució": **cada turno barre y limpia lo suyo antes de entregarlo**.
 > Ahí viajan alimentos.
+
+### El dinero del combustible
+
+**Compras le pide el dinero a Administración durante su recorrido diario**, igual que
+el resto de las compras del día.
+
+> 📖 Es el mismo circuito del estimado de gasto —
+> **[Manual de Compras, Sección 3](../produccion/compras.md)**.
 
 ---
 
@@ -181,7 +191,9 @@ Esto no es prudencia vial genérica: **atrás llevás cajones apilados hasta el 
 
 ---
 
-# 🚨 EN CASO DE ACCIDENTE
+# 🚨 SI PASA ALGO EN LA CALLE
+
+Vale lo mismo para un **accidente** y para un **desperfecto mecánico**:
 
 > ### 1. Primero, las personas.
 > **Verificá que no haya víctimas.** Antes que el vehículo, antes que la mercadería,
@@ -198,6 +210,29 @@ Esto no es prudencia vial genérica: **atrás llevás cajones apilados hasta el 
 > 📄 **Los documentos del vehículo están dentro del vehículo.** Ahí los tenés si te los
 > piden.
 
+> ⚠️ **Si vas con mercadería, decilo en el aviso.** Lo que va arriba se sigue echando a
+> perder mientras se resuelve el problema — cuanto antes lo sepa Administración, más
+> chance hay de rescatarla.
+
+---
+
+# 🎫 MULTAS
+
+> ### 🔑 Las multas están a nombre del vehículo.
+> Por eso **cada persona es responsable de las multas aplicadas durante sus días y
+> horarios de trabajo**, y puede tener que hacerse cargo económicamente.
+
+Esto quiere decir algo muy concreto: **una multa se asigna por fecha y hora**.
+
+| Cuándo se cometió | De quién es |
+|---|---|
+| Turno mañana | **Compras** |
+| Turno tarde | **Ayudante de Cocina** |
+
+> ⚠️ **Una multa llega semanas después.** Para entonces nadie se acuerda de quién tenía
+> el vehículo ese martes a las 10:40. **Por eso hace falta el registro de uso** — es lo
+> que permite asignarla con justicia, y lo que te protege si no era tuya.
+
 ---
 
 # 🔄 LA ENTREGA ENTRE TURNOS
@@ -213,6 +248,127 @@ Esto no es prudencia vial genérica: **atrás llevás cajones apilados hasta el 
 - ☐ **Novedades avisadas al encargado** (un ruido nuevo, un golpe, una luz encendida)
 
 > Lo que no se avisa, aparece en el turno del otro.
+
+---
+
+---
+
+# 📓 REGISTRO DE USO
+
+> 🚧 **Propuesta — todavía no está implementado.** Elegí una de las opciones de abajo
+> y arrancá; después se puede cambiar.
+
+## Por qué hace falta
+
+Con **dos personas por día** y **multas que se cobran a quien manejaba**, el registro
+deja de ser una prolijidad: **es lo que protege a la persona.**
+
+Sin registro, cualquiera de estas preguntas termina en "yo creo que…":
+
+| Pregunta | Cuándo aparece |
+|---|---|
+| ¿Quién lo manejaba el martes a las 10:40? | Cuando llega una multa, **semanas después** |
+| ¿Cuándo apareció este golpe? | Cuando alguien lo nota |
+| ¿Cuándo se cargó combustible por última vez? | Cuando queda vacío |
+| ¿Cuándo fue el último lavado? | A los 10 días |
+| ¿Cuándo vence la VTV? | Cuando ya venció |
+
+---
+
+## La regla del registro
+
+> ### 🔑 Si tarda más de un minuto, no se llena.
+> Un registro que nadie completa es peor que no tener ninguno: da una falsa sensación
+> de control.
+
+**Menos campos, completados siempre**, le gana a muchos campos completados a veces.
+
+---
+
+## Qué se anota — Lo mínimo
+
+| Campo | Por qué |
+|---|---|
+| **Fecha y turno** | Es lo que asigna una multa |
+| **Quién lo usó** | Idem |
+| **Kilometraje al salir y al volver** | Detecta usos no previstos y sirve para el service |
+| **Combustible cargado** | Monto y litros, si se cargó |
+| **Novedades** | Un golpe, un ruido nuevo, una luz encendida. **Si no hay, se escribe "sin novedades"** |
+
+Y aparte, un lugar donde queden las **fechas que no cambian todos los días**:
+último lavado, último service, vencimiento de VTV y de seguro.
+
+---
+
+## Opciones para arrancar
+
+| | Opción | Esfuerzo de armado | Esfuerzo diario | Se puede consultar a distancia |
+|---|---|---|---|---|
+| **A** | **Cuaderno en la guantera** | Ninguno | Bajo | ❌ Hay que ir al vehículo |
+| **B** | **Formulario de Google** | 15 minutos | Muy bajo | ✅ |
+| **C** | **Planilla de Google Sheets** | 10 minutos | Bajo | ✅ |
+| **D** | **Módulo en la web de Pedidos** | Desarrollo | Muy bajo | ✅ |
+| **E** | **Grupo de WhatsApp** | Ninguno | Muy bajo | ⚠️ Se pierde en el scroll |
+
+### A — Cuaderno en la guantera
+
+Un cuaderno y una birome atados adentro del vehículo.
+
+- ✅ **Arranca mañana**, sin depender de nada
+- ✅ Nadie necesita celular ni datos
+- ❌ Si se pierde o se moja, **se perdió todo**
+- ❌ Administración **tiene que ir al vehículo** para verlo
+- ❌ No sirve para buscar: encontrar un martes de hace dos meses es hojear
+
+### B — Formulario de Google ⭐ *(la que recomiendo para empezar)*
+
+Un formulario corto, con el link guardado en el celular de los dos.
+
+- ✅ **La fecha y la hora quedan solas** — que es justo lo que resuelve las multas
+- ✅ Se llena en **30 segundos** desde el celular
+- ✅ Cae solo en una planilla que **Administración mira sin pedirle nada a nadie**
+- ✅ Permite **subir una foto** — sirve para dejar constancia del estado al entregar
+- ✅ Se puede migrar después sin perder lo cargado
+- ❌ Hace falta señal en el momento (se puede completar al llegar)
+
+### C — Planilla de Google Sheets
+
+La misma idea, pero escribiendo directo en la planilla.
+
+- ✅ Se ve todo el historial de una
+- ❌ **Editar una planilla desde el celular es incómodo** — se pisan celdas
+- ❌ La fecha hay que escribirla a mano, y ahí se cuela el error
+
+### D — Módulo en la web de Pedidos de Producción
+
+Una sección más en `pedidos-produccion.netlify.app`, donde ya entran todos los días.
+
+- ✅ **Un solo lugar** para todo
+- ✅ Puede **avisar solo** cuando se acerca el service, el lavado o la VTV
+- ✅ Queda junto al resto de los datos del negocio
+- ❌ Hay que desarrollarlo — conviene **recién cuando el registro ya demostró que se usa**
+
+### E — Grupo de WhatsApp
+
+Un grupo con Compras, Ayudante y Administración: foto y mensaje al entregar.
+
+- ✅ **Cero fricción** — ya lo usan todos los días
+- ❌ **No se puede consultar**: buscar algo de hace dos meses es imposible
+- ❌ Sin estructura, cada uno anota distinto
+- ⚠️ Sirve **como complemento** para avisar una novedad urgente, no como registro
+
+---
+
+## La recomendación
+
+1. **Arrancá con el Formulario de Google (B).** Se arma en 15 minutos y resuelve lo
+   más importante: que la fecha y la hora queden solas.
+2. **Dale un mes.** Si se llena todos los días, el registro ya es un hábito.
+3. **Recién ahí evaluá el módulo en la web (D)**, que agrega los avisos automáticos de
+   service y vencimientos.
+
+> ⚠️ **Lo que no funciona: empezar por el sistema más completo.** Si el hábito no
+> existe, la herramienta no lo crea.
 
 ---
 
@@ -242,24 +398,14 @@ Esto no es prudencia vial genérica: **atrás llevás cajones apilados hasta el 
 
 ## 🚧 Lo que falta definir
 
+- [ ] **🔴 Elegir e implementar el registro de uso.** Es lo que falta para que la regla
+      de multas funcione en la práctica. Ver [Registro de uso](#-registro-de-uso).
 - [ ] **Quién puede manejarlo.** ¿Solo estas dos personas? ¿Hace falta algún requisito?
-- [ ] **Con qué plata se carga el combustible.** Ya está definido que lo repone Compras,
-      pero no de dónde sale la plata. *Se cruza con el circuito de dinero de Compras* —
-      si sale del estimado diario, tiene que estar contemplada ahí. Ver
-      [Manual de Compras, Sección 3](../produccion/compras.md).
-- [ ] **🔴 Si queda registro de algo.** Aunque sea un cuaderno con kilometraje y
-      novedades. **Sin registro, un daño no tiene turno** y la discusión termina siendo
-      palabra contra palabra. Es lo más importante de esta lista.
-- [ ] **Vencimientos.** Los documentos están en el vehículo, pero falta **quién controla
-      que seguro y VTV estén al día**. Conviene además **tener una copia fuera del
-      vehículo**: si el utilitario no está, los papeles tampoco.
-- [ ] **Service y mantenimiento programado.** Quién lo agenda y lo controla. El lavado
-      cada 10 días ya tiene dueño; el service no.
-- [ ] **Desperfecto en la calle.** El accidente ya está resuelto (víctimas →
-      Administración). Falta el caso de una rotura mecánica: a quién se avisa y **qué se
-      hace con la mercadería que va arriba**, que es lo que se echa a perder mientras se
-      espera.
-- [ ] **Multas.** Quién se hace cargo y cómo se resuelven.
+- [ ] **Copia de los documentos fuera del vehículo.** Los originales van adentro, que
+      está bien para tenerlos a mano — pero **si el utilitario no está, los papeles
+      tampoco**. Conviene una copia en Administración.
+- [ ] **Cada cuánto corresponde el service.** Compras es quien lo lleva, pero falta el
+      criterio: por kilometraje, por tiempo, o lo que indique el fabricante.
 - [ ] **Orden de fragilidad.** Confirmar la tabla de la Sección 4 con quien carga.
 
 ---
