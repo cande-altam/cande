@@ -58,6 +58,7 @@ horario, un PIN o una URL, se actualiza acá primero.
 | [comunes/higiene-y-presentacion.md](comunes/higiene-y-presentacion.md) | Higiene personal, manipulación, cadena de frío, qué reportar |
 | [comunes/pedidos-y-pagos-a-proveedores.md](comunes/pedidos-y-pagos-a-proveedores.md) | Calendario de pedidos y pagos por proveedor, circuito de autorización |
 | [comunes/jornada-y-presentismo.md](comunes/jornada-y-presentismo.md) | Esquema 6 días + 1 de descanso y presentismo |
+| [comunes/vehiculo-de-transporte.md](comunes/vehiculo-de-transporte.md) | 🚧 Uso compartido del vehículo — **falta cargar las reglas de cuidado** |
 
 ### 🧩 Para escribir un manual nuevo
 

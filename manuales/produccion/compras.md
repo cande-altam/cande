@@ -51,8 +51,12 @@ Desde ahí ves todo lo que pidió cada área y cada local, y vas marcando lo que
 
 ## 1. Primer reparto — 6:45 hs
 
-1. Cargá la mercadería del día para **SLA 5.0** y **San Luis**.
+1. Cargá la mercadería del día para **SLA 5.0** y **San Luis** en el
+   **[vehículo de transporte](../comunes/vehiculo-de-transporte.md)**.
 2. Llevala a cada local a primera hora.
+
+> ℹ️ **El vehículo es compartido.** Vos lo usás a la mañana y el **Ayudante de Cocina**
+> a la tarde. Se entrega en condiciones para el turno siguiente.
 3. **Cada local revisa la mercadería que llega.** No se firma nada — la revisión es
    responsabilidad de quien recibe en el local.
 

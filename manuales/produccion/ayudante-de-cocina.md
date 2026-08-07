@@ -40,7 +40,8 @@ producción al local de ventas**.
 
 1. **Trasvasá** el pan horneado (**miñón**) y los productos de pastelería a **cajones
    aptos para el transporte**
-2. **Cargá** los cajones en el **vehículo de traslado**
+2. **Cargá** los cajones en el
+   **[vehículo de traslado](../comunes/vehiculo-de-transporte.md)**
 3. **Llevá** la mercadería al **local de ventas**
 
 ### Qué va en los primeros minutos de la mañana
@@ -255,7 +256,9 @@ El resto de las tareas **se comparten con el ayudante del turno mañana**:
 - [ ] **El cruce y el reparto de Compras.** Compras también lleva mercadería a los
       locales (a primera hora y antes de las 13:00). Falta aclarar **qué mueve cada
       uno** para que no se dupliquen ni se pisen — sobre todo en San Luis.
-- [ ] **Quién maneja el vehículo de traslado** y quién es responsable de su estado.
+- [ ] **Cuidado del vehículo.** El vehículo es **compartido con Compras**, que lo usa a
+      la mañana. Las reglas de uso, limpieza y entrega entre turnos están sin cargar —
+      ver [Vehículo de transporte](../comunes/vehiculo-de-transporte.md).
 - [ ] **Control de lo que se entrega.** Hoy el local recibe y revisa, pero no se firma
       nada. Si falta algo del cruce, no queda registro de qué salió.
 - [ ] **Temperatura del frizer y de la estufa de fermentación.** No figuran. Si el pan
