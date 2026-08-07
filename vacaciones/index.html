@@ -357,7 +357,7 @@ window.CloudHistory = {
 
 <script>
 "use strict";
-const APP_VERSION="2026-08-06 vacaciones-fix-leandro";
+const APP_VERSION="2026-08-07 vacaciones-leandro-tolaba-y-personal-adicional";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -366,7 +366,11 @@ const PEOPLE=[
   {n:"Lucía",ingreso:"2023-12-01"},
   {n:"Luciana",ingreso:"2023-12-01"},
   {n:"Gabriel",ingreso:"2024-06-01"},
-  {n:"Leandro",ingreso:"2024-08-01"},
+  // "Leandro" (sin apellido) es Leandro Villagra, el barista — no confundir con Leandro Tolaba
+  // (producción/Cuadra, más abajo). La fecha de ingreso que tenía cargada (2024-08-01) en realidad
+  // era la de Tolaba por error; la real de Villagra es 2026-06-15 (confirmado).
+  {n:"Leandro",ingreso:"2026-06-15"},
+  {n:"Leandro Tolaba",ingreso:"2024-08-01"},
   {n:"Mariano",ingreso:"2025-10-01"},
   {n:"Luis",ingreso:"2023-12-01"},
   {n:"Vanesa",ingreso:"2025-06-18"},
@@ -389,6 +393,15 @@ const PEOPLE=[
   {n:"Milagros",ingreso:"2023-12-01"},
   {n:"Zoe",ingreso:"2024-08-01"},
   {n:"Rebeca",ingreso:"2024-06-01"},
+  // sumados desde la planilla de personal (RRHH): figuran como activos ahí y en la de vacaciones
+  // 2025, pero no estaban en ninguno de los dos módulos. Por ahora solo en Vacaciones (a pedido).
+  {n:"Hugo",ingreso:"2019-11-21"},
+  {n:"Tamara",ingreso:"2022-10-16"},
+  {n:"Magali",ingreso:"2023-02-13"},
+  {n:"Juan",ingreso:"2025-07-17"},
+  {n:"Laura",ingreso:"2022-02-02"},
+  {n:"Tatiana",ingreso:"2023-10-01"},
+  {n:"Walter",ingreso:"2022-02-23"},
 ];
 const BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
 
@@ -813,13 +826,11 @@ function seedTaken(){
   persist();
 }
 
-/* ---------------- SEMILLA 2: vacaciones tomadas nov 2025 – abr 2026 (calendario "Horarios y
-   calendarios" escaneado que mandaste). Los nombres que ya no están en el equipo (Laura, Juan, Hugo,
-   Tamara, Magali) se dejaron afuera. Los rangos se reconstruyeron cruzando cuántas celdas seguidas
-   tenía cada persona semana a semana — varias personas dan justo su tope de 14 días sumando esto más
-   lo que ya estaba cargado (Vanesa, Aarón, Luciana, Zoe, Valentina, Dana), lo que confirma que el
-   armado quedó bien. Los 2 días sueltos de Brenda quedaron como "pendiente" porque su posición exacta
-   en la grilla es la parte más ambigua de la imagen: confirmalos o corregilos desde el listado.
+/* ---------------- SEMILLA 2: vacaciones tomadas nov 2025 – abr 2026, reconstruida originalmente
+   desde el calendario escaneado "Horarios y calendarios" (los nombres de gente que ya no está en el
+   equipo se dejaron afuera). Paula, Brenda y el tramo de Leandro se corrigieron después con la
+   planilla real ("Vacaciones 2025", ver corregirSemillaNov2025Abr2026 más abajo) — no tocar los
+   valores de acá, las correcciones viven aparte para no reordenar los ids ya guardados en la nube.
    Ojo: Javier y Natalia quedan con más días tomados que los que les corresponden por antigüedad para
    2025 (a Javier ya le habíamos cargado otro tramo en julio, y acá suma otro de casi un mes en
    febrero-marzo; a Natalia le da un mes seguido en marzo) — puede ser una excepción de la empresa o
@@ -857,12 +868,50 @@ function limpiarPersonasDadasDeBaja(){
   Object.keys(state.overridesTomado).forEach(n=>{if(!BY_NAME[n])delete state.overridesTomado[n];});
 }
 
-// el calendario escaneado de la semilla nov2025-abr2026 tenía un "Leandro" que en realidad es otra
-// persona homónima, no el Leandro del equipo — se cargó por error. Como la semilla ya corrió en varios
-// dispositivos/en la nube, sacar la línea de seedTakenNov2025Abr2026 no alcanza: hay que borrar el
-// registro puntual donde ya haya quedado guardado.
-function limpiarLeandroMalAtribuido(){
-  state.taken=state.taken.filter(t=>!(t.seedTag==="seed-nov2025-abr2026-v1"&&t.n==="Leandro"));
+/* Correcciones sobre la semilla nov2025-abr2026, hechas después de conseguir la planilla real
+   ("Vacaciones 2025", con columna "Fecha definida/Hasta" confirmada) en vez de reconstruir todo a
+   ojo desde el calendario escaneado:
+   - Paula: eran 13 días (01/02-13/02), la planilla real dice 14 días (01/02-14/02).
+   - Brenda: eran dos días sueltos sin confirmar (26/02 y 01/03); la planilla real los junta en un
+     solo tramo seguido, 28/02-01/03.
+   - El tramo de 2 días (16/02-17/02) que se había sacado por estar mal atribuido a "Leandro" en
+     realidad es de Leandro Tolaba (producción/Cuadra), no de Leandro Villagra (el barista) — se
+     vuelve a cargar, pero en la ficha correcta. */
+function corregirSemillaNov2025Abr2026(){
+  const TAG="seed-nov2025-abr2026-v1";
+  if(!state.taken.some(t=>t.seedTag===TAG))return; // todavía no corrió la semilla base
+  const paula=state.taken.find(t=>t.seedTag===TAG&&t.n==="Paula"&&t.hasta==="2026-02-13");
+  if(paula)paula.hasta="2026-02-14";
+  const brendaSueltos=state.taken.filter(t=>t.seedTag===TAG&&t.n==="Brenda"&&t.estado==="pendiente");
+  if(brendaSueltos.length){
+    state.taken=state.taken.filter(t=>!(t.seedTag===TAG&&t.n==="Brenda"&&t.estado==="pendiente"));
+    state.taken.push({id:`seed-${TAG}-brenda-fix`,seedTag:TAG,n:"Brenda",desde:"2026-02-28",hasta:"2026-03-01",periodo:2025,estado:"confirmada",nota:""});
+  }
+  if(!state.taken.some(t=>t.seedTag===TAG&&t.n==="Leandro Tolaba"))
+    state.taken.push({id:`seed-${TAG}-leandro-tolaba`,seedTag:TAG,n:"Leandro Tolaba",desde:"2026-02-16",hasta:"2026-02-17",periodo:2025,estado:"confirmada",nota:""});
+}
+
+/* SEMILLA 3: Hugo, Tamara, Magali, Juan, Laura, Tatiana y Walter — activos según la planilla de
+   personal (RRHH) pero ausentes de este módulo. Fechas tomadas desde la planilla "Vacaciones 2025"
+   (columna "Fecha definida/Hasta" cuando estaba confirmada). Tatiana y Walter no tienen fecha
+   definida ahí ("a charlar" / rango con datos inconsistentes) así que se cargan como ajuste manual
+   del total (mismo mecanismo que ya se usaba para Érica), no como rango de fechas. */
+function seedTakenPersonalAdicional(){
+  const TAG="seed-personal-adicional-v1";
+  if(state.taken.some(t=>t.seedTag===TAG))return;
+  let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,periodo:2025,estado:"confirmada",nota:"",...extra});
+  state.taken.push(
+    mk({n:"Hugo",desde:"2026-03-02",hasta:"2026-03-29"}),
+    mk({n:"Tamara",desde:"2026-03-16",hasta:"2026-03-22"}),
+    mk({n:"Magali",desde:"2026-03-18",hasta:"2026-03-28"}),
+    mk({n:"Juan",desde:"2026-02-02",hasta:"2026-02-15"}),
+    mk({n:"Laura",desde:"2026-02-01",hasta:"2026-02-12"}),
+  );
+  if(!state.overridesTomado["Tatiana"])state.overridesTomado["Tatiana"]={};
+  if(state.overridesTomado["Tatiana"][2025]==null)state.overridesTomado["Tatiana"][2025]=2;
+  if(!state.overridesTomado["Walter"])state.overridesTomado["Walter"]={};
+  if(state.overridesTomado["Walter"][2025]==null)state.overridesTomado["Walter"][2025]=2;
+  persist();
 }
 
 // agrupa todas las semillas + limpieza para poder reaplicarlas también cuando llega el estado de la
@@ -873,7 +922,8 @@ function runMigrations(){
   seedOverrides();
   seedTaken();
   seedTakenNov2025Abr2026();
-  limpiarLeandroMalAtribuido();
+  corregirSemillaNov2025Abr2026();
+  seedTakenPersonalAdicional();
   limpiarPersonasDadasDeBaja();
 }
 
