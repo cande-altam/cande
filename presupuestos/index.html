@@ -148,11 +148,16 @@ textarea.form-input{resize:vertical;min-height:60px;}
 
 /* PRINT */
 .print-only{display:none;}
-@page{margin:16mm 14mm;}
+/* margin:0 es lo que saca el pie de página que agrega el NAVEGADOR al imprimir (la URL del sitio,
+   la fecha y el número de página). No hay forma de ocultarlo desde el HTML: el navegador lo dibuja
+   dentro del margen de la hoja, así que sin margen no tiene dónde escribirlo.
+   Los márgenes visuales se devuelven como padding del contenido, para que el documento se siga
+   viendo igual. */
+@page{margin:0;}
 @media print{
   .header,.nav-mobile-menu,.tabs,.no-print,#toast{display:none!important;}
   body{background:#fff;font-size:12px;-webkit-print-color-adjust:exact;-moz-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
-  .main{max-width:100%;padding:0;}
+  .main{max-width:100%;padding:16mm 14mm;}
   .print-only{display:block;}
   .section-block{box-shadow:none;border:none;padding:0 4mm;}
   .doc-header{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}

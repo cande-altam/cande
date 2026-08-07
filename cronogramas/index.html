@@ -207,10 +207,14 @@
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--negro);color:var(--crema);padding:11px 18px;border-radius:11px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.3)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  /* Sin margen de hoja, el navegador no tiene dónde imprimir su pie con la URL del sitio, la fecha
+     y el número de página. El margen visual se devuelve como padding del contenido. */
+  @page{margin:0}
   @media print{
     .top,.rail,.no-print{display:none!important}
     .layout{grid-template-columns:1fr}
     body{background:#fff}
+    .wrap{padding:14mm 12mm}
     .card{box-shadow:none;border-color:#ccc;break-inside:avoid}
   }
 
