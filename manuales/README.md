@@ -31,11 +31,14 @@ y **un local de producción**.
 | Especialidades | [produccion/especialidades.md](produccion/especialidades.md) | 🟠 v0.5 — **Solo fórmulas**, falta el proceso |
 | Sandwiches | [produccion/sandwiches.md](produccion/sandwiches.md) | 🔴 v0.5 — **Casi vacío**, sin fichas de sandwich |
 | Compras | [produccion/compras.md](produccion/compras.md) | 🟡 v1.0 — Julio 2026 · con puntos a definir |
+| Ayudante de cocina *(San Luis)* | [produccion/ayudante-de-cocina.md](produccion/ayudante-de-cocina.md) | 🟡 v1.0 — Agosto 2026 · con puntos a definir |
+| Jefe de cocina *(San Luis)* | — | ⬜ Pendiente |
 | *Bases y preparaciones* | [produccion/bases.md](produccion/bases.md) | 🟠 v0.5 — 6 bases, falta el proceso |
 
-> **Cocina San Luis no lleva manual propio.** Forma parte del local San Luis y
-> funciona de forma independiente **solo para pedir insumos**, no como área de
-> producción aparte. Su operación queda cubierta por los manuales de venta.
+> **Sobre Cocina San Luis.** No es un área de producción aparte: forma parte del local
+> San Luis y funciona de forma independiente **solo para pedir insumos**. Pero **sí
+> tiene operación y personal propios** — un jefe de cocina y un ayudante, que además se
+> encarga del cruce de mercadería entre la cuadra y el local de ventas.
 
 ### 🧹 Transversal
 

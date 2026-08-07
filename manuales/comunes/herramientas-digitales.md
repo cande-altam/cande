@@ -125,6 +125,17 @@ Al cargar productos, el sistema pide un PIN por cada área:
 
 ✅ Producción puede ver el pedido de inmediato desde su pantalla.
 
+### Guía de envío
+
+Dice **qué mercadería va a qué local** y **en qué cantidad**. La usa quien prepara y
+traslada mercadería entre la cuadra de producción y los locales de venta.
+
+1. Ingresá a **`pedidos-produccion.netlify.app`**
+2. Tocá **"Guía de envío"** en el menú
+
+> ⚠️ **Las cantidades se chequean acá, no de memoria.** Es lo que evita que un local
+> se quede corto y el otro con sobrante.
+
 ### Ver la guía de producción
 
 1. Ingresá a **`pedidos-produccion.netlify.app`**
