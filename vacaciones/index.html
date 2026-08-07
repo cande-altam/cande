@@ -357,7 +357,7 @@ window.CloudHistory = {
 
 <script>
 "use strict";
-const APP_VERSION="2026-08-06 vacaciones-nov25-abr26-fix-sync";
+const APP_VERSION="2026-08-06 vacaciones-fix-leandro";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -833,7 +833,6 @@ function seedTakenNov2025Abr2026(){
     mk({n:"Paula",desde:"2026-02-01",hasta:"2026-02-13"}),
     mk({n:"Javier",desde:"2026-02-02",hasta:"2026-03-01"}),
     mk({n:"Luis",desde:"2026-02-15",hasta:"2026-02-25"}),
-    mk({n:"Leandro",desde:"2026-02-16",hasta:"2026-02-17"}),
     mk({n:"Brenda",desde:"2026-02-26",hasta:"2026-02-26",estado:"pendiente",nota:"día suelto de un calendario escaneado: confirmar la fecha exacta en la planilla original"}),
     mk({n:"Brenda",desde:"2026-03-01",hasta:"2026-03-01",estado:"pendiente",nota:"día suelto de un calendario escaneado: confirmar la fecha exacta en la planilla original"}),
     mk({n:"Luciana",desde:"2026-02-24",hasta:"2026-03-03"}),
@@ -858,6 +857,14 @@ function limpiarPersonasDadasDeBaja(){
   Object.keys(state.overridesTomado).forEach(n=>{if(!BY_NAME[n])delete state.overridesTomado[n];});
 }
 
+// el calendario escaneado de la semilla nov2025-abr2026 tenía un "Leandro" que en realidad es otra
+// persona homónima, no el Leandro del equipo — se cargó por error. Como la semilla ya corrió en varios
+// dispositivos/en la nube, sacar la línea de seedTakenNov2025Abr2026 no alcanza: hay que borrar el
+// registro puntual donde ya haya quedado guardado.
+function limpiarLeandroMalAtribuido(){
+  state.taken=state.taken.filter(t=>!(t.seedTag==="seed-nov2025-abr2026-v1"&&t.n==="Leandro"));
+}
+
 // agrupa todas las semillas + limpieza para poder reaplicarlas también cuando llega el estado de la
 // nube (ver applyRemoteState): si no se reaplican ahí, una nube desactualizada que llega justo después
 // del arranque pisa las semillas recién cargadas en este dispositivo y las borra para siempre (bug real:
@@ -866,6 +873,7 @@ function runMigrations(){
   seedOverrides();
   seedTaken();
   seedTakenNov2025Abr2026();
+  limpiarLeandroMalAtribuido();
   limpiarPersonasDadasDeBaja();
 }
 
