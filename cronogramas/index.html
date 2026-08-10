@@ -631,10 +631,14 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-10 borrar-dia-ausencia";
+const APP_VERSION="2026-08-10 topes-cajero-barista-cocina";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
+// máximo de personas por turno (base + refuerzos) para los puestos que tienen un tope fijo. Cajero
+// siempre es 1 solo (no admite refuerzo); barista y cocina admiten como mucho 1 refuerzo además de
+// la persona de base. Los puestos que no están acá no tienen tope.
+const MAX_TURNO={cajero:1,barista:2,cocina:2};
 // loc: 'SL' | 'SLA' | 'both'
 // PEOPLE_BASE es la lista fija del código. PEOPLE es la que se usa en todo el resto de la app —
 // se recalcula (rebuildPeople, más abajo) sumándole state.peopleExtra, que es donde vive la gente
@@ -1193,18 +1197,19 @@ function locTable(loc,title,worked){
         for(let d=0;d<7;d++)h+=selHTML(d,loc,shift,row.role,row.idx,sellable(d,loc,shift),isClosed(d,loc,shift));
         h+=`</tr>`;
       });
-      h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,brows[0].label));
+      const cap=MAX_TURNO[role]!=null?Math.max(0,MAX_TURNO[role]-brows.length):undefined;
+      h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,brows[0].label),cap);
     });
     // refuerzos con un puesto que este local no tiene como fila base (ej: Bacha/Envíos en SLA):
     // sin esto, "Personas extra" los guardaba pero no aparecían en ningún lado.
     const extraOnlyRoles=[...new Set(state.ex.filter(e=>e.loc===loc&&e.shift===shift&&!roles.includes(e.role)).map(e=>e.role))];
-    extraOnlyRoles.forEach(role=>{h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,ROLE_LABEL[role]||role));});
+    extraOnlyRoles.forEach(role=>{h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,ROLE_LABEL[role]||role),MAX_TURNO[role]);});
   });
   h+=restRows(loc,worked);
   h+=`</tbody></table></div></section>`;
   return h;
 }
-function extraRowsHTML(loc,shift,role,label){
+function extraRowsHTML(loc,shift,role,label,cap){
   let h="";
   const maxE=Math.max(0,...DAYS.map((_,d)=>exAt(d,loc,shift,role).length));
   for(let r=0;r<maxE;r++){
@@ -1217,13 +1222,20 @@ function extraRowsHTML(loc,shift,role,label){
   }
   // fila siempre disponible al final, para sumar un refuerzo eligiendo directamente a la persona en
   // el casillero del día que haga falta — sin tener que ir al panel lateral y completar 5 campos.
-  h+=`<tr><td class="puesto extra">${label} +</td>`;
-  for(let d=0;d<7;d++)h+=newExtraCellHTML(d,loc,shift,role);
-  h+=`</tr>`;
+  // Si el puesto tiene tope 0 (cajero: nunca admite refuerzo) directamente no se ofrece la fila; si
+  // tiene un tope mayor, la fila se muestra pero cada día se habilita por separado más abajo (ver
+  // newExtraCellHTML) — así un día que ya llegó al tope no ofrece sumar uno más, aunque otro día de
+  // la misma semana todavía tenga lugar.
+  if(cap!==0){
+    h+=`<tr><td class="puesto extra">${label} +</td>`;
+    for(let d=0;d<7;d++)h+=newExtraCellHTML(d,loc,shift,role,cap);
+    h+=`</tr>`;
+  }
   return h;
 }
-function newExtraCellHTML(d,loc,shift,role){
+function newExtraCellHTML(d,loc,shift,role,cap){
   if(isClosed(d,loc,shift))return `<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
+  if(cap!==undefined&&exAt(d,loc,shift,role).length>=cap)return `<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
   const opts=PEOPLE.map(p=>`<option value="${p.n}">${p.n}${roleFor(p.n)!==role?" ⤵":""}</option>`).join("");
   return `<td class="cell extra ${isWknd(d)?"wknd":""}"><div class="excell"><select class="cellsel empty" data-newex="${d}|${loc}|${shift}|${role}"><option value="">+ agregar</option>${opts}</select></div></td>`;
 }
@@ -1963,6 +1975,12 @@ function initControls(){
       loc=document.getElementById("exLoc").value,role=document.getElementById("exRole").value;
     const dupe=state.ex.find(e=>e.n===n&&e.day===day&&e.shift===shift&&e.loc===loc&&e.role===role);
     if(dupe)return toast(dupe.auto?`${n} ya está ahí por una regla fija permanente — no hace falta agregarlo`:`${n} ya estaba agregado en ese turno`);
+    const maxTotal=MAX_TURNO[role];
+    if(maxTotal!=null){
+      const baseCount=rowsFor(loc,shift).filter(r=>r.role===role).length;
+      const existing=exAt(day,loc,shift,role).length;
+      if(baseCount+existing>=maxTotal)return toast(`${ROLE_LABEL[role]} ya está completo ese turno (máximo ${maxTotal}).`);
+    }
     state.ex.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),n,day,shift,loc,role,half:document.getElementById("exHalf").checked});
     document.getElementById("exHalf").checked=false;
     renderMini();render();persist();toast(n+" agregada/o ese día");
