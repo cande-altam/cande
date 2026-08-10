@@ -130,11 +130,6 @@
   .cta-empty-btn{margin-top:10px;padding:14px 26px;font-size:15px;width:100%;max-width:320px}
   .loc-head{display:flex;align-items:center;gap:10px;padding:14px 16px 0}
   .loc-head h2{font-size:18px}
-  .loc-tag{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:7px}
-  .tag-sl{background:var(--teal-soft);color:var(--teal-ink)}
-  .tag-sla{background:var(--crema);color:var(--accent-ink)}
-  :root[data-theme="dark"] .tag-sla{background:#332b23}
-  @media (prefers-color-scheme:dark){.tag-sla{background:#332b23}}
   .tbl-scroll{overflow-x:auto;padding:12px 16px 16px}
   table.grid{border-collapse:separate;border-spacing:0;width:100%;min-width:720px}
   table.grid th,table.grid td{padding:0;text-align:left}
@@ -619,7 +614,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-07 editar-persona";
+const APP_VERSION="2026-08-07 vendedor-mozo-refuerzos";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -668,20 +663,20 @@ const EVENT_HE=["Dana","Brenda","Guadalupe","Aaron","Lucía","Luciana","Gabriel"
 function rowsFor(loc,shift){
   if(loc==="SL"&&shift==="M")return[
     {role:"cajero",idx:0,label:"Cajero"},{role:"barista",idx:0,label:"Barista"},
-    {role:"atencion",idx:0,label:"Atención"},{role:"atencion",idx:1,label:"Atención"},
-    {role:"atencion",idx:2,label:"Atención",wk:true},
+    {role:"atencion",idx:0,label:"Vendedor 1"},{role:"atencion",idx:1,label:"Vendedor 2"},
+    {role:"atencion",idx:2,label:"Mozo 1",wk:true},
     {role:"cocina",idx:0,label:"Cocina"},{role:"compras",idx:0,label:"Compras"},
     {role:"ayudante",idx:0,label:"Bacha/Envíos"}];
   if(loc==="SL"&&shift==="T")return[
     {role:"cajero",idx:0,label:"Cajero"},{role:"barista",idx:0,label:"Barista"},
-    {role:"atencion",idx:0,label:"Atención"},{role:"atencion",idx:1,label:"Atención"},{role:"atencion",idx:2,label:"Atención"},
+    {role:"atencion",idx:0,label:"Vendedor 1"},{role:"atencion",idx:1,label:"Vendedor 2"},{role:"atencion",idx:2,label:"Mozo 1"},
     {role:"cocina",idx:0,label:"Cocina"},{role:"ayudante",idx:0,label:"Envíos"}];
   if(loc==="SLA"&&shift==="M")return[
-    {role:"barista",idx:0,label:"Barista"},{role:"atencion",idx:0,label:"Moza"},
-    {role:"atencion",idx:1,label:"Moza",wk:true},{role:"cocina",idx:0,label:"Cocina"}];
+    {role:"barista",idx:0,label:"Barista"},{role:"atencion",idx:0,label:"Mozo 1"},
+    {role:"atencion",idx:1,label:"Mozo 2",wk:true},{role:"cocina",idx:0,label:"Cocina"}];
   return[
-    {role:"barista",idx:0,label:"Barista"},{role:"atencion",idx:0,label:"Moza"},
-    {role:"atencion",idx:1,label:"Moza"},{role:"cocina",idx:0,label:"Cocina"}];
+    {role:"barista",idx:0,label:"Barista"},{role:"atencion",idx:0,label:"Mozo 1"},
+    {role:"atencion",idx:1,label:"Mozo 2"},{role:"cocina",idx:0,label:"Cocina"}];
 }
 const isWknd=d=>d>=5;
 function isClosed(d,loc,shift){return state.rules.some(r=>r.type==="cierre"&&r.day===d&&(r.loc===loc||r.loc==="both")&&(r.shift===shift||r.shift==="ALL"));}
@@ -1133,8 +1128,15 @@ function extraCellHTML(e){
   const label=(e.n?e.n+" · ":"")+DAYS[e.day][1]+" "+(e.shift==="M"?"mañana":"tarde");
   return `<td class="cell extra ${isWknd(e.day)?"wknd":""}"><div class="excell"><select class="cellsel filled ${dupe?"dupe":""} ${he?"he":""}" data-ex="${e.id}"${errAttr}><option value="">— quitar</option>${opts}</select>${badge}${noteBtnHTML(ck,label)}</div></td>`;
 }
-function locTable(loc,title,tag,tagcls,worked){
-  let h=`<section class="card"><div class="loc-head"><h2>${title}</h2><span class="loc-tag ${tagcls}">${tag}</span></div><div class="tbl-scroll"><table class="grid"><thead><tr><th>Puesto</th>`;
+// nombre a mostrar para la fila de refuerzo de un puesto: en San Luis los refuerzos de atención se
+// llaman "Mozo 2" (ni "Vendedor 1/2" ni "Mozo 1", que ya son las filas base) — en el resto de los
+// casos se usa el nombre de la primera fila base de ese puesto.
+function extraLabelFor(loc,role,defaultLabel){
+  if(loc==="SL"&&role==="atencion")return"Mozo 2";
+  return defaultLabel;
+}
+function locTable(loc,title,worked){
+  let h=`<section class="card"><div class="loc-head"><h2>${title}</h2></div><div class="tbl-scroll"><table class="grid"><thead><tr><th>Puesto</th>`;
   DAYS.forEach((dd,i)=>h+=`<th class="${isWknd(i)?"wknd":""}">${dd[2]}</th>`);
   h+=`</tr></thead><tbody>`;
   [["M","Mañana"],["T","Tarde"]].forEach(([shift,slabel])=>{
@@ -1148,12 +1150,12 @@ function locTable(loc,title,tag,tagcls,worked){
         for(let d=0;d<7;d++)h+=selHTML(d,loc,shift,row.role,row.idx,sellable(d,loc,shift),isClosed(d,loc,shift));
         h+=`</tr>`;
       });
-      h+=extraRowsHTML(loc,shift,role,brows[0].label);
+      h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,brows[0].label));
     });
     // refuerzos con un puesto que este local no tiene como fila base (ej: Bacha/Envíos en SLA):
     // sin esto, "Personas extra" los guardaba pero no aparecían en ningún lado.
     const extraOnlyRoles=[...new Set(state.ex.filter(e=>e.loc===loc&&e.shift===shift&&!roles.includes(e.role)).map(e=>e.role))];
-    extraOnlyRoles.forEach(role=>{h+=extraRowsHTML(loc,shift,role,ROLE_LABEL[role]||role);});
+    extraOnlyRoles.forEach(role=>{h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,ROLE_LABEL[role]||role));});
   });
   h+=restRows(loc,worked);
   h+=`</tbody></table></div></section>`;
@@ -1170,7 +1172,17 @@ function extraRowsHTML(loc,shift,role,label){
     }
     h+=`</tr>`;
   }
+  // fila siempre disponible al final, para sumar un refuerzo eligiendo directamente a la persona en
+  // el casillero del día que haga falta — sin tener que ir al panel lateral y completar 5 campos.
+  h+=`<tr><td class="puesto extra">${label} +</td>`;
+  for(let d=0;d<7;d++)h+=newExtraCellHTML(d,loc,shift,role);
+  h+=`</tr>`;
   return h;
+}
+function newExtraCellHTML(d,loc,shift,role){
+  if(isClosed(d,loc,shift))return `<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
+  const opts=PEOPLE.map(p=>`<option value="${p.n}">${p.n}${roleFor(p.n)!==role?" ⤵":""}</option>`).join("");
+  return `<td class="cell extra ${isWknd(d)?"wknd":""}"><div class="excell"><select class="cellsel empty" data-newex="${d}|${loc}|${shift}|${role}"><option value="">+ agregar</option>${opts}</select></div></td>`;
 }
 function restRows(loc,worked){
   const roster=PEOPLE.filter(p=>p.loc===loc||p.loc==="both");
@@ -1201,8 +1213,8 @@ function renderSched(worked,empty){
     return;
   }
   sched.innerHTML=
-    locTable("SL","San Luis","SLA 5.0","tag-sl",worked)+
-    locTable("SLA","SLA","Sucursal","tag-sla",worked);
+    locTable("SL","San Luis",worked)+
+    locTable("SLA","SLA",worked);
   document.querySelectorAll(".cellsel[data-k]").forEach(sel=>{
     sel.addEventListener("change",e=>{
       const k=e.target.dataset.k,val=e.target.value;
@@ -1220,6 +1232,15 @@ function renderSched(worked,empty){
         if(!quitarRefuerzoAuto(state.ex[idx]))state.ex.splice(idx,1);
       }
       renderMini();render();persist();
+    });
+  });
+  document.querySelectorAll(".cellsel[data-newex]").forEach(sel=>{
+    sel.addEventListener("change",e=>{
+      const val=e.target.value;if(!val)return;
+      const[d,loc,shift,role]=e.target.dataset.newex.split("|");
+      state.ex.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),n:val,day:+d,shift,loc,role});
+      renderMini();render();persist();
+      toast(`${val} agregado como refuerzo`);
     });
   });
   document.querySelectorAll("[data-err]").forEach(el=>{
