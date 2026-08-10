@@ -116,6 +116,9 @@
   .mini-row .editIcon{margin-left:auto;cursor:pointer;color:var(--ink-soft);border:none;background:none;font-size:12px;line-height:1;padding:2px 4px;opacity:.7}
   .mini-row .editIcon:hover{opacity:1;color:var(--accent-ink)}
   .mini-row .editIcon+.x{margin-left:0}
+  .daychip{display:inline-flex;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:1px 3px 1px 7px;font-size:11px}
+  .daychip .xday{border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:12px;line-height:1;padding:2px 3px}
+  .daychip .xday:hover{color:var(--crit)}
   .pill{display:inline-block;padding:1px 7px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.3px}
   .pill.he{background:var(--teal-soft);color:var(--teal-ink)}
   .pill.abs{background:var(--warn-soft);color:var(--warn)}
@@ -628,7 +631,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-07 incompatibilidades";
+const APP_VERSION="2026-08-10 borrar-dia-ausencia";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -1707,7 +1710,12 @@ function syncRoleControls(){
 }
 function renderMini(){
   const al=document.getElementById("absList");
-  al.innerHTML=state.abs.map((a,i)=>`<div class="mini-row"><span class="pill abs">Aus.</span> <b>${a.n}</b> · ${a.days.map(d=>DAYS[d][2]).join(", ")||"—"} <button class="x" data-i="${i}" data-t="abs">×</button></div>`).join("");
+  // cada día de ausencia se puede sacar suelto (xday) sin tener que borrar toda la fila de la
+  // persona — antes el único botón borraba TODOS los días de ausencia juntos, así que si alguien
+  // tenía más de un día cargado no había forma de sacar solo uno.
+  al.innerHTML=state.abs.map((a,i)=>`<div class="mini-row" style="flex-wrap:wrap"><span class="pill abs">Aus.</span> <b>${a.n}</b> ${
+    a.days.length?a.days.map(d=>`<span class="daychip">${DAYS[d][2]}<button class="xday" data-ai="${i}" data-d="${d}" title="Sacar este día">×</button></span>`).join(""):"· —"
+  } <button class="x" data-i="${i}" data-t="abs" title="Sacar todos los días de ausencia de ${a.n}">🗑</button></div>`).join("");
   const el=document.getElementById("exList");
   el.innerHTML=state.ex.map((e,i)=>`<div class="mini-row"><span class="pill he">+</span> <b>${e.n}</b> · ${DAYS[e.day][2]} ${e.shift==="M"?"AM":"PM"} · ${e.loc} ${ROLE_LABEL[e.role].toLowerCase()} <button class="x" data-i="${i}" data-t="ex">×</button></div>`).join("");
   const rl=document.getElementById("ruleList");
@@ -1756,6 +1764,13 @@ function renderMini(){
     });
     rol.innerHTML=rows.length?rows.join(""):`<p class="sub" style="padding:0">Nadie tiene el puesto cambiado todavía — todos usan el default del sistema.</p>`;
   }
+  document.querySelectorAll(".daychip .xday").forEach(b=>b.addEventListener("click",()=>{
+    const ai=+b.dataset.ai,d=+b.dataset.d;
+    const a=state.abs[ai];if(!a)return;
+    a.days=a.days.filter(x=>x!==d);
+    if(!a.days.length)state.abs.splice(ai,1);
+    renderMini();render();persist();
+  }));
   document.querySelectorAll(".mini-row .x").forEach(b=>b.addEventListener("click",()=>{
     const t=b.dataset.t;
     if(t==="franco"){delete state.francoFixed[b.dataset.i];renderMini();render();persist();return;}
