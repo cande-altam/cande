@@ -631,7 +631,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-10 topes-cajero-barista-cocina";
+const APP_VERSION="2026-08-10 no-repetir-ausencia-borrada";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -721,7 +721,7 @@ function peopleFor(role,loc){
 }
 
 /* ---------------- STATE ---------------- */
-function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[]};}
+function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{}};}
 // las reglas "semilla" (seedFixedRules, seedCocinaComprasCajero) se cargan una sola vez por tag.
 // Antes se detectaba "ya cargada" mirando si quedaba algún turno fijo con ese tag — pero si borrabas
 // el grupo ENTERO, no quedaba ninguno, y el sistema lo tomaba como "todavía no cargada" y lo volvía a
@@ -840,6 +840,7 @@ function aplicarAusenciasPorVacaciones(){
       if(t.estado!=="confirmada")return; // "a confirmar" no bloquea el autocompletado todavía
       if(!BY_NAME[t.n])return;
       if(!(t.desde<=iso&&iso<=t.hasta))return;
+      if(state.ausObviada[t.n+"|"+iso])return; // la borraste vos a mano: no se vuelve a poner sola
       let a=state.abs.find(x=>x.n===t.n);
       if(!a){a={n:t.n,days:[]};state.abs.push(a);}
       if(!a.days.includes(d)){a.days.push(d);a.days.sort((x,y)=>x-y);changed=true;}
@@ -1780,6 +1781,10 @@ function renderMini(){
     const ai=+b.dataset.ai,d=+b.dataset.d;
     const a=state.abs[ai];if(!a)return;
     a.days=a.days.filter(x=>x!==d);
+    // si lo borraste vos a mano, que no se vuelva a poner solo la próxima vez que sincronice con
+    // Vacaciones (era el bug real: la ausencia derivada de una vacación confirmada se reconstruía
+    // sola en cuanto llegaba una actualización de ese módulo, aunque la hubieras borrado acá).
+    const iso=isoDe(d);if(iso)state.ausObviada[a.n+"|"+iso]=true;
     if(!a.days.length)state.abs.splice(ai,1);
     renderMini();render();persist();
   }));
@@ -1802,7 +1807,11 @@ function renderMini(){
     }
     if(t==="incompat"){state.incompat.splice(+b.dataset.i,1);renderMini();render();persist();return;}
     const i=+b.dataset.i;
-    if(t==="abs")state.abs.splice(i,1);
+    if(t==="abs"){
+      const a=state.abs[i];
+      if(a)a.days.forEach(d=>{const iso=isoDe(d);if(iso)state.ausObviada[a.n+"|"+iso]=true;});
+      state.abs.splice(i,1);
+    }
     else if(t==="ex"){
       delete state.comments["ex:"+state.ex[i].id];
       if(!quitarRefuerzoAuto(state.ex[i]))state.ex.splice(i,1);
@@ -2080,6 +2089,8 @@ function limpiarPersonasDadasDeBaja(){
   Object.keys(state.assign).forEach(k=>{if(!BY_NAME[state.assign[k]])delete state.assign[k];});
   if(!state.incompat)state.incompat=[];
   state.incompat=state.incompat.filter(r=>BY_NAME[r.a]&&BY_NAME[r.b]);
+  if(!state.ausObviada)state.ausObviada={};
+  Object.keys(state.ausObviada).forEach(k=>{if(!BY_NAME[k.split("|")[0]])delete state.ausObviada[k];});
 }
 // Leandro (el barista, SLA) pasa a llamarse "Leandro Villagra" para no confundirlo con Leandro
 // Tolaba (persona aparte, solo en el módulo de Vacaciones — producción/Cuadra). Migra cualquier
