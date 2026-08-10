@@ -248,7 +248,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-10 19:35";
+const APP_VERSION = "2026-08-10 19:54";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -300,6 +300,7 @@ const state = {
   _facturaFotoFile: null,
   _escaneoReintentoChico: false,
   _escaneoPorPartes: false,
+  _escaneoModoPreciso: false,
   facturasFiltro: "todas",
   facturasBusqueda: "",
   pagosFiltro: "no_pagado",
@@ -1001,9 +1002,10 @@ window.escanearFacturaPorPartes = async function(partes) {
     for (let i = 0; i < total; i++) {
       showToast(`🤖 Leyendo parte ${i + 1} de ${total}...`, "warn");
       const recorte = await recortarFotoEscaneo(state._facturaFotoFile, i, total, ESCANEO_DIM, ESCANEO_CALIDAD);
-      const resp = await fetch("/.netlify/functions/extraer-factura", {
-        method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ imageBase64: recorte.split(",")[1], mediaType: "image/jpeg", insumosConocidos, pistas: state._escaneoPistas || null })
+      const resp = await fetchEscaneo("/.netlify/functions/extraer-factura", {
+        imageBase64: recorte.split(",")[1], mediaType: "image/jpeg", insumosConocidos,
+        pistas: state._escaneoPistas || null,
+        modelo: state._escaneoModoPreciso ? "preciso" : "rapido"
       });
       const raw = await resp.text();
       let data;
@@ -1029,11 +1031,11 @@ window.escanearFacturaPorPartes = async function(partes) {
 window.escanearFacturaAltaResolucion = async function() {
   if (!state._facturaFotoFile) { showToast("⚠️ Subí primero una foto de la factura.", "warn"); return; }
   try {
-    showToast("🔍 Reintentando con el máximo detalle — puede tardar bastante más...", "warn");
+    showToast("🔍 Reintentando con el máximo detalle y el modelo más preciso — puede tardar bastante más...", "warn");
     state._facturaFotoScanDataUrl = await compressImageToDataUrl(state._facturaFotoFile, ESCANEO_DIM_ALTA, ESCANEO_CALIDAD_ALTA);
-    // Se permite el fallback automático a una versión chica si esta se pasa de tiempo.
     state._escaneoReintentoChico = false;
-    await window.escanearFactura();
+    state._escaneoModoPreciso = true;
+    try { await window.escanearFactura(); } finally { state._escaneoModoPreciso = false; }
   } catch (err) {
     console.error(err);
     showToast("⚠️ No se pudo procesar la foto en alta resolución.", "warn");
@@ -1079,6 +1081,26 @@ function normCuit(s) {
   return String(s || "").replace(/\D/g, "");
 }
 
+// El navegador (sobre todo iOS) corta las conexiones largas por su cuenta y devuelve un
+// "Load failed" que no le dice nada a nadie. Con un corte propio el mensaje es claro y, sobre
+// todo, se puede decidir qué hacer después (leer por partes).
+const ESCANEO_TIMEOUT_MS = 25000;
+async function fetchEscaneo(url, body, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms || ESCANEO_TIMEOUT_MS);
+  try {
+    return await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal: ctrl.signal });
+  } catch (err) {
+    const e = new Error(err && err.name === "AbortError"
+      ? "La lectura tardó más de lo esperado y se cortó."
+      : `No se pudo contactar el servicio de lectura (${err && err.message ? err.message : "error de red"}).`);
+    e.porTiempo = true;
+    throw e;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 function catalogoParaEscaneo() {
   return Object.entries(state.insumos).map(([id, ins]) => ({
     id, nombre: ins.nombre, unidad: ins.unidad || "",
@@ -1096,13 +1118,12 @@ window.escanearFactura = async function() {
     // Se le pasa unidad, contenido por unidad y último precio conocido para que pueda detectar
     // sola cuando el precio de la factura es por bulto y no por unidad de medida.
     const insumosConocidos = catalogoParaEscaneo();
-    const resp = await fetch("/.netlify/functions/extraer-factura", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      // Las pistas son lo que el usuario contestó cuando el primer escaneo no pudo identificar la
-      // factura (proveedor, CUIT, N°): con eso el segundo intento puede reconocer los ítems y
-      // completar el resto, en vez de volver a fallar igual.
-      body: JSON.stringify({ imageBase64: base64, mediaType: "image/jpeg", insumosConocidos, pistas: state._escaneoPistas || null })
+    // Las pistas son lo que el usuario contestó cuando el primer escaneo no pudo identificar la
+    // factura (proveedor, CUIT, N°): con eso el segundo intento puede reconocer los ítems.
+    const resp = await fetchEscaneo("/.netlify/functions/extraer-factura", {
+      imageBase64: base64, mediaType: "image/jpeg", insumosConocidos,
+      pistas: state._escaneoPistas || null,
+      modelo: state._escaneoModoPreciso ? "preciso" : "rapido"
     });
 
     const rawText = await resp.text();
@@ -4936,17 +4957,14 @@ async function diagnosticarEscaneo() {
   const PIXEL = "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==";
   try {
     const t0 = Date.now();
-    const resp = await fetch("/.netlify/functions/extraer-factura", {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ imageBase64: PIXEL, mediaType: "image/jpeg" })
-    });
+    const resp = await fetchEscaneo("/.netlify/functions/extraer-factura", { imageBase64: PIXEL, mediaType: "image/jpeg" }, 20000);
     const ms = Date.now() - t0;
     const texto = await resp.text();
     let data = null;
     try { data = JSON.parse(texto); } catch {}
     if (resp.status === 404) return { causa: "no-publicada", ms, mensaje: "La función de escaneo <strong>no está publicada</strong> (HTTP 404). Por eso no se puede leer ninguna factura. Hay que revisar el deploy en Netlify." };
     if (data && /ANTHROPIC_API_KEY/.test(data.error || "")) return { causa: "sin-clave", ms, mensaje: "Falta configurar <code>ANTHROPIC_API_KEY</code> en Netlify (Site settings → Environment variables). Sin esa clave el escaneo no puede funcionar, por más buena que sea la foto." };
-    if (resp.status === 504 || resp.status === 502) return { causa: "tiempo", ms, mensaje: `La función existe pero se pasó de tiempo (HTTP ${resp.status}, ${ms} ms) hasta con una imagen mínima. Es el límite de tiempo del plan de Netlify: con facturas reales va a fallar seguido.` };
+    if (resp.status === 504 || resp.status === 502) return { causa: "tiempo", ms, mensaje: `La función existe pero se pasó de tiempo (HTTP ${resp.status}, ${ms} ms) hasta con una imagen mínima. Es el límite de tiempo de la función en Netlify. Probá <em>"📄 Leer por partes"</em>: cada franja es un pedido más chico. Si sigue fallando incluso así, el límite del plan es demasiado bajo para este servicio y hay que subirlo en Netlify (Site configuration → Functions) — no se arregla desde la app.` };
     if (resp.ok) return { causa: "ok", ms, mensaje: `La función responde correctamente (${ms} ms).` };
     return { causa: "otro", ms, mensaje: `La función respondió HTTP ${resp.status} en ${ms} ms: ${escapeHtml((data && data.error) || texto).slice(0, 300)}` };
   } catch (err) {

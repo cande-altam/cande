@@ -91,7 +91,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: "Body inválido." }) };
   }
 
-  const { imageBase64, mediaType, texto, insumosConocidos, productosConocidos, proveedorNombre } = payload;
+  const { imageBase64, mediaType, texto, insumosConocidos, productosConocidos, proveedorNombre, modelo } = payload;
   const textoLimpio = typeof texto === "string" ? texto.trim() : "";
   if (!imageBase64 && !textoLimpio) {
     return { statusCode: 400, body: JSON.stringify({ error: "Falta la lista: mandá una foto o pegá el texto." }) };
@@ -131,7 +131,9 @@ exports.handler = async (event) => {
         // función serverless puede esperar antes de cortar, así que una lista larga SIEMPRE daba
         // "tiempo de espera agotado". El cliente ahora manda la lista por partes (ver
         // leerListaPrecios), y cada parte entra cómoda en este techo más chico.
-        model: "claude-sonnet-5",
+        // Mismo criterio que el escaneo de facturas: el límite es el tiempo de la función, no la
+        // capacidad del modelo. Haiku entra holgado; Sonnet queda para el modo "preciso".
+        model: modelo === "preciso" ? "claude-sonnet-5" : "claude-haiku-4-5",
         max_tokens: 4000,
         messages: [{ role: "user", content }]
       })

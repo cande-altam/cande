@@ -70,7 +70,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: "Body inválido." }) };
   }
 
-  const { imageBase64, mediaType, insumosConocidos, pistas } = payload;
+  const { imageBase64, mediaType, insumosConocidos, pistas, modelo } = payload;
   if (!imageBase64) {
     return { statusCode: 400, body: JSON.stringify({ error: "Falta la imagen." }) };
   }
@@ -110,7 +110,12 @@ exports.handler = async (event) => {
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "claude-sonnet-5",
+        // La restricción real de este escaneo NO es la capacidad del modelo sino el TIEMPO: la
+        // función serverless corta a los pocos segundos, y con Sonnet hasta una imagen mínima se
+        // pasaba (502 a los 6,5 s medido en producción). Haiku hace esta tarea —leer un ticket y
+        // devolver JSON— muy por debajo de ese límite. Sonnet queda disponible como modo "preciso"
+        // para las facturas difíciles, donde el usuario acepta esperar.
+        model: modelo === "preciso" ? "claude-sonnet-5" : "claude-haiku-4-5",
         // Una factura de mayorista con 30 ítems necesita cerca de 1.700 tokens de salida; con el
         // techo anterior (1536) el JSON salía CORTADO y el escaneo fallaba entero. Es un techo, no
         // un objetivo: el modelo corta cuando termina, y se le pide omitir los campos nulos para
