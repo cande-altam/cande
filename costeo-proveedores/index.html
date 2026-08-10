@@ -248,7 +248,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-10 19:29";
+const APP_VERSION = "2026-08-10 19:35";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -826,6 +826,11 @@ function renderNuevaFacturaView(container) {
         </div>
       </div>
 
+      <!-- El resultado del escaneo va ACÁ, pegado a la foto: es lo primero que se mira cuando algo
+           falla. Estaba más abajo, después de todos los campos, y quedaba fuera de la pantalla —
+           el usuario solo alcanzaba a ver un toast de 3 segundos y no sabía qué había pasado. -->
+      <div id="escaneo-pendientes"></div>
+
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Proveedor</label>
@@ -882,7 +887,6 @@ function renderNuevaFacturaView(container) {
       </div>
       <div class="text-muted" style="margin-bottom:14px">Cargá el IVA tal como figura discriminado en la factura — sirve para llevar el control de IVA crédito fiscal (lo ves resumido por mes en la pestaña "IVA").</div>
 
-      <div id="escaneo-pendientes"></div>
 
       <div class="section-header" style="margin-top:18px">
         <div class="section-title">📦 Insumos de esta factura</div>
@@ -1375,8 +1379,11 @@ function mostrarPendientesDelEscaneo(data, opts) {
     <div class="text-muted" style="font-size:11px">Con lo que completes acá, se vuelve a leer la misma foto — normalmente alcanza para reconocer los ítems. Si preferís, también podés cargar todo a mano abajo y guardar igual.</div>
   </div>`;
   showToast(errorEscaneo || escaneoVacio
-    ? "🤔 No se pudo identificar la factura — contestá las preguntas para seguir."
+    ? "🤔 No se pudo identificar la factura — mirá el aviso de arriba."
     : "⚠️ El escaneo quedó incompleto — revisá los avisos.", "warn");
+  // Llevar la pantalla al aviso: en el celular, aunque ahora esté arriba, puede quedar fuera de
+  // vista si se scrolleó el formulario.
+  try { cont.scrollIntoView({ behavior: "smooth", block: "center" }); } catch {}
 }
 
 // Toma lo que el usuario contestó en el panel, lo vuelca al formulario y reintenta el escaneo
