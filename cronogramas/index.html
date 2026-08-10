@@ -447,6 +447,20 @@
 
       <section class="card">
         <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">No pueden trabajar juntos</span>
+          <p class="sub" style="padding:4px 0 0">Si las dos personas quedan en el mismo turno (mañana o tarde, cualquier local), se marca como error en la grilla.</p>
+          <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><label for="incompatA">Persona</label><select id="incompatA"></select></div>
+            <div><label for="incompatB">No puede trabajar con</label><select id="incompatB"></select></div>
+          </div>
+          <div class="field"><label for="incompatNota">Motivo (opcional, solo para vos)</label><input id="incompatNota" type="text" placeholder="Ej: se llevan mal / no conviene por X motivo"></div>
+          <button class="btn" id="btnAddIncompat" style="margin-top:11px;width:100%">+ Agregar regla</button>
+          <div class="mini-list" id="incompatList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
           <span class="eyebrow">Reglas especiales</span>
           <p class="sub" style="padding:4px 0 0">Cierres de turno o notas para esta semana.</p>
           <div class="field">
@@ -618,7 +632,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-07 vendedor-mozo-refuerzos";
+const APP_VERSION="2026-08-07 incompatibilidades";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -704,7 +718,7 @@ function peopleFor(role,loc){
 }
 
 /* ---------------- STATE ---------------- */
-function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[]};}
+function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[]};}
 // las reglas "semilla" (seedFixedRules, seedCocinaComprasCajero) se cargan una sola vez por tag.
 // Antes se detectaba "ya cargada" mirando si quedaba algún turno fijo con ese tag — pero si borrabas
 // el grupo ENTERO, no quedaba ninguno, y el sistema lo tomaba como "todavía no cargada" y lo volvía a
@@ -973,6 +987,15 @@ function validate(){
     dayShift[ks].forEach(o=>{seen[o.name]=(seen[o.name]||0)+1;});
     Object.keys(seen).forEach(nm=>{if(seen[nm]>1)alerts.push({t:"crit",h:nm,m:`está en dos lugares a la vez el ${DAYS[+d][1].toLowerCase()} a la ${sh==="M"?"mañana":"tarde"}.`});});
   });
+  // 1b incompatibilidades ("no pueden trabajar juntos") en el mismo turno, cualquier local
+  if(state.incompat.length)Object.keys(dayShift).forEach(ks=>{
+    const[d,sh]=ks.split("|");
+    const names=[...new Set(dayShift[ks].map(o=>o.name))];
+    for(let i=0;i<names.length;i++)for(let j=i+1;j<names.length;j++){
+      if(sonIncompatibles(names[i],names[j]))
+        alerts.push({t:"crit",h:`${names[i]} y ${names[j]}`,m:`no pueden trabajar juntos y están los dos el ${DAYS[+d][1].toLowerCase()} a la ${sh==="M"?"mañana":"tarde"}.`});
+    }
+  });
   // 2 double shift same day (M+T) -> HE, salvo turno cortado marcado como medio turno
   const isHalfAt=(nm,d,sh)=>state.ex.some(e=>e.n===nm&&e.day===d&&e.shift===sh&&e.half);
   for(let d=0;d<7;d++){
@@ -1102,8 +1125,9 @@ function selHTML(d,loc,shift,role,idx,active,closed){
   if(cur){Object.keys(state.assign).forEach(kk=>{if(kk!==k){const[dd,,sh]=kk.split("|");if(+dd===d&&sh===shift&&state.assign[kk]===cur)dupe=true;}});
     state.ex.forEach(e=>{if(e.n===cur&&e.day===d&&e.shift===shift)dupe=true;});}
   const he=cur&&isDoubleShift(cur,d);
-  const cls=`cellsel ${cur?"filled":"empty"} ${dupe?"dupe":""} ${he?"he":""}`;
-  const errAttr=dupe?` data-err="${dupeMsg(cur,d,shift)}"`:"";
+  const errMsg=dupe?dupeMsg(cur,d,shift):incompatMsgFor(cur,d,shift);
+  const cls=`cellsel ${cur?"filled":"empty"} ${errMsg?"dupe":""} ${he?"he":""}`;
+  const errAttr=errMsg?` data-err="${errMsg}"`:"";
   const label=(cur?cur+" · ":"")+DAYS[d][1]+" "+(shift==="M"?"mañana":"tarde");
   return `<td class="cell ${isWknd(d)?"wknd":""}"><select class="${cls}" data-k="${k}"${errAttr}><option value="">—</option>${opts}</select>${noteBtnHTML(k,label)}</td>`;
 }
@@ -1117,6 +1141,21 @@ function isDoubleShift(name,d){
   state.ex.forEach(e=>{if(e.n===name&&e.day===d){if(e.shift==="M")m=true;else t=true;}});
   return m&&t;
 }
+// "X no puede trabajar con Y": se compara el mismo turno (día+mañana/tarde) sin importar el local —
+// dos personas incompatibles no deberían coincidir en el horario, aunque estén en puestos distintos.
+function sonIncompatibles(a,b){return state.incompat.some(r=>(r.a===a&&r.b===b)||(r.a===b&&r.b===a));}
+function quienesEnTurno(d,shift){
+  const set=new Set();
+  Object.keys(state.assign).forEach(kk=>{const[dd,,sh]=kk.split("|");if(+dd===d&&sh===shift&&state.assign[kk])set.add(state.assign[kk]);});
+  state.ex.forEach(e=>{if(e.day===d&&e.shift===shift&&e.n)set.add(e.n);});
+  return set;
+}
+function incompatMsgFor(name,d,shift){
+  if(!name)return null;
+  const otros=[...quienesEnTurno(d,shift)].filter(o=>o!==name);
+  const choque=otros.find(o=>sonIncompatibles(name,o));
+  return choque?`🚫 ${name} no puede trabajar con ${choque} — los dos están el ${DAYS[d][1].toLowerCase()} a la ${shift==="M"?"mañana":"tarde"}.`:null;
+}
 function exAt(d,loc,shift,role){return state.ex.filter(e=>e.day===d&&e.loc===loc&&e.shift===shift&&e.role===role);}
 function extraCellHTML(e){
   // a diferencia de la grilla base, "Personas extra" es refuerzo libre: cualquiera puede cubrir
@@ -1127,10 +1166,11 @@ function extraCellHTML(e){
   state.ex.forEach(o=>{if(o!==e&&o.n===e.n&&o.day===e.day&&o.shift===e.shift)dupe=true;});
   const he=isDoubleShift(e.n,e.day);
   const badge=e.half?`<span class="halfbadge">½</span>`:"";
-  const errAttr=dupe?` data-err="${dupeMsg(e.n,e.day,e.shift)}"`:"";
+  const errMsg=dupe?dupeMsg(e.n,e.day,e.shift):incompatMsgFor(e.n,e.day,e.shift);
+  const errAttr=errMsg?` data-err="${errMsg}"`:"";
   const ck="ex:"+e.id;
   const label=(e.n?e.n+" · ":"")+DAYS[e.day][1]+" "+(e.shift==="M"?"mañana":"tarde");
-  return `<td class="cell extra ${isWknd(e.day)?"wknd":""}"><div class="excell"><select class="cellsel filled ${dupe?"dupe":""} ${he?"he":""}" data-ex="${e.id}"${errAttr}><option value="">— quitar</option>${opts}</select>${badge}${noteBtnHTML(ck,label)}</div></td>`;
+  return `<td class="cell extra ${isWknd(e.day)?"wknd":""}"><div class="excell"><select class="cellsel filled ${errMsg?"dupe":""} ${he?"he":""}" data-ex="${e.id}"${errAttr}><option value="">— quitar</option>${opts}</select>${badge}${noteBtnHTML(ck,label)}</div></td>`;
 }
 // nombre a mostrar para la fila de refuerzo de un puesto: en San Luis los refuerzos de atención se
 // llaman "Mozo 2" (ni "Vendedor 1/2" ni "Mozo 1", que ya son las filas base) — en el resto de los
@@ -1593,6 +1633,9 @@ function openImportView(){
 function fillPersonSelects(){
   document.getElementById("nuevoRole").innerHTML=Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join("");
   document.getElementById("nuevoFranco").innerHTML=`<option value="auto">Sin fijar (variable cada semana)</option>`+DAYS.map((d,i)=>`<option value="${i}">${d[1]}</option>`).join("");
+  const incompatOpts=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n}</option>`).join("");
+  document.getElementById("incompatA").innerHTML=incompatOpts;
+  document.getElementById("incompatB").innerHTML=incompatOpts;
   const opts=`<option value="">Elegí…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
   document.getElementById("absPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n}</option>`).join("");
   document.getElementById("exPerson").innerHTML=opts;
@@ -1697,6 +1740,12 @@ function renderMini(){
     ).join(""):`<p class="sub" style="padding:0">Todavía no agregaste a nadie nuevo desde acá.</p>`;
     pl.querySelectorAll(".editIcon").forEach(b=>b.addEventListener("click",()=>iniciarEdicionPersona(+b.dataset.i)));
   }
+  const il=document.getElementById("incompatList");
+  if(il){
+    il.innerHTML=state.incompat.length?state.incompat.map((r,i)=>
+      `<div class="mini-row"><span class="pill abs">🚫</span> <b>${r.a}</b> con <b>${r.b}</b>${r.nota?` · <i>${r.nota}</i>`:""} <button class="x" data-i="${i}" data-t="incompat">×</button></div>`
+    ).join(""):`<p class="sub" style="padding:0">Todavía no cargaste ninguna incompatibilidad.</p>`;
+  }
   const rol=document.getElementById("roleOverrideList");
   if(rol){
     const names=new Set([...Object.keys(state.roleOverride),...Object.keys(state.backupOverride)]);
@@ -1728,6 +1777,7 @@ function renderMini(){
       toast(`${p.n} sacado del equipo`);
       return;
     }
+    if(t==="incompat"){state.incompat.splice(+b.dataset.i,1);renderMini();render();persist();return;}
     const i=+b.dataset.i;
     if(t==="abs")state.abs.splice(i,1);
     else if(t==="ex"){
@@ -1770,6 +1820,17 @@ function initControls(){
     toast(`${nombre} agregado al equipo 🎉`);
   });
   document.getElementById("btnCancelarEdicionPersona").addEventListener("click",cancelarEdicionPersona);
+  document.getElementById("btnAddIncompat").addEventListener("click",()=>{
+    const a=document.getElementById("incompatA").value,b=document.getElementById("incompatB").value;
+    if(!a||!b)return toast("Elegí las dos personas");
+    if(a===b)return toast("Elegí dos personas distintas");
+    if(sonIncompatibles(a,b))return toast("Esa regla ya existe");
+    const nota=document.getElementById("incompatNota").value.trim();
+    state.incompat.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),a,b,nota});
+    renderMini();render();persist();
+    document.getElementById("incompatNota").value="";
+    toast(`Regla agregada: ${a} no trabaja con ${b}`);
+  });
   document.getElementById("btnAuto").addEventListener("click",autocomplete);
   document.getElementById("weekStart").addEventListener("change",e=>{
     state.weekStart=e.target.value;
@@ -1988,6 +2049,8 @@ function limpiarPersonasDadasDeBaja(){
   Object.keys(state.roleOverride).forEach(n=>{if(!BY_NAME[n])delete state.roleOverride[n];});
   Object.keys(state.backupOverride).forEach(n=>{if(!BY_NAME[n])delete state.backupOverride[n];});
   Object.keys(state.assign).forEach(k=>{if(!BY_NAME[state.assign[k]])delete state.assign[k];});
+  if(!state.incompat)state.incompat=[];
+  state.incompat=state.incompat.filter(r=>BY_NAME[r.a]&&BY_NAME[r.b]);
 }
 // Leandro (el barista, SLA) pasa a llamarse "Leandro Villagra" para no confundirlo con Leandro
 // Tolaba (persona aparte, solo en el módulo de Vacaciones — producción/Cuadra). Migra cualquier
