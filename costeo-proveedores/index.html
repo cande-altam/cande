@@ -248,7 +248,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-10 19:54";
+const APP_VERSION = "2026-08-10 19:59";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -301,6 +301,7 @@ const state = {
   _escaneoReintentoChico: false,
   _escaneoPorPartes: false,
   _escaneoModoPreciso: false,
+  _releidoPorFaltantes: false,
   facturasFiltro: "todas",
   facturasBusqueda: "",
   pagosFiltro: "no_pagado",
@@ -1034,6 +1035,7 @@ window.escanearFacturaAltaResolucion = async function() {
     showToast("🔍 Reintentando con el máximo detalle y el modelo más preciso — puede tardar bastante más...", "warn");
     state._facturaFotoScanDataUrl = await compressImageToDataUrl(state._facturaFotoFile, ESCANEO_DIM_ALTA, ESCANEO_CALIDAD_ALTA);
     state._escaneoReintentoChico = false;
+    state._releidoPorFaltantes = false;
     state._escaneoModoPreciso = true;
     try { await window.escanearFactura(); } finally { state._escaneoModoPreciso = false; }
   } catch (err) {
@@ -1337,9 +1339,17 @@ function mostrarPendientesDelEscaneo(data, opts) {
   // Muchos tickets declaran cuántos ítems tienen ("Cantidad de ítems: 30"). Es un control de
   // completitud gratis: si se leyeron menos, faltan líneas y hay que avisarlo.
   const declarados = Number(data?.cantidadItemsDeclarada) || 0;
-  const leidos = document.querySelectorAll("#items-container .item-row").length;
+  const leidos = Array.from(document.querySelectorAll("#items-container .item-row")).filter(r =>
+    (r.querySelector(".item-insumo-id")?.value || "").trim() || (r.querySelector(".item-insumo-search")?.value || "").trim()).length;
   if (declarados > 0 && leidos < declarados) {
-    avisos.push(`<div class="item-warn" style="margin:0 0 8px">📋 El comprobante declara <strong>${declarados} ítems</strong> y se reconocieron <strong>${leidos}</strong>. Faltan líneas: probá <em>"📄 Leer por partes"</em>, que relee la foto por franjas, o cargá las que falten a mano.</div>`);
+    avisos.push(`<div class="item-warn" style="margin:0 0 8px">📋 El comprobante declara <strong>${declarados} ítems</strong> y se reconocieron <strong>${leidos}</strong>. Faltan líneas.
+      <div style="margin-top:8px"><button type="button" class="btn btn-primary btn-sm" onclick="escanearFacturaPorPartes(3)">📄 Releer por partes y completar</button></div></div>`);
+    // El sistema YA SABE que faltan líneas, así que no tiene sentido esperar a que el usuario lo
+    // resuelva: relee la foto por franjas una sola vez y junta lo que falte.
+    if (!state._escaneoPorPartes && state._facturaFotoFile && !state._releidoPorFaltantes) {
+      state._releidoPorFaltantes = true;
+      setTimeout(() => { window.escanearFacturaPorPartes(3); }, 400);
+    }
   }
 
   // Preguntas concretas, en orden de utilidad para el reconocimiento automático.
@@ -1440,6 +1450,19 @@ window.responderPendientesDelEscaneo = async function() {
 };
 
 function aplicarDatosEscaneados(data) {
+  // El modelo a veces declara un campo como ilegible y aun así devuelve un valor. Ese valor no es
+  // confiable por definición: si él mismo dice que no lo pudo leer, usarlo es peor que dejarlo
+  // vacío. Pasó con el CUIT de un ticket real, donde devolvió el del CLIENTE (o sea, el del propio
+  // negocio) y habría terminado creando un proveedor con la identidad de uno mismo.
+  const ilegiblesDeclarados = new Set(Array.isArray(data?.camposIlegibles) ? data.camposIlegibles : []);
+  data = { ...data };
+  for (const campo of ["proveedor", "cuit", "fecha", "numeroFactura", "montoTotal", "iva"]) {
+    if (ilegiblesDeclarados.has(campo)) data[campo] = null;
+  }
+  // Y nunca tomar como proveedor el CUIT del propio negocio, si está configurado.
+  const cuitPropio = normCuit(state.config?.cuitPropio);
+  if (cuitPropio && normCuit(data.cuit) === cuitPropio) { data.cuit = null; data.proveedor = null; }
+
   if (data.proveedor || data.cuit) {
     const sel = document.getElementById("f-proveedor");
     const match = matchProveedor(data);
@@ -4911,6 +4934,17 @@ function renderConfigView(container) {
       </div>
     </div>
     <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">🏢 Datos del negocio</div>
+      <div class="text-muted" style="margin-bottom:10px">Muchos comprobantes muestran arriba los datos de <strong>quien compra</strong> (o sea, ustedes). Cargando acá el CUIT propio, el escaneo nunca lo va a tomar por error como si fuera el del proveedor — que terminaría creando un proveedor con el nombre del propio negocio.</div>
+      <div class="form-row" style="align-items:flex-end">
+        <div class="form-group" style="max-width:220px">
+          <label class="form-label">CUIT del negocio</label>
+          <input class="form-input" id="cfg-cuit-propio" placeholder="30-71643947-6" value="${escapeHtml(state.config.cuitPropio || "")}">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="guardarCuitPropio()">Guardar</button>
+      </div>
+    </div>
+    <div class="section-block">
       <div class="section-title" style="margin-bottom:10px">⚡ Rendimiento</div>
       <div class="text-muted">Las fotos de las facturas cargadas antes de esta versión se guardaban dentro de la propia factura, así que se descargaban todas juntas cada vez que abrías la app — con muchas facturas eso son decenas de MB y hace que todo vaya lento. Este botón las mueve a una rama aparte: se siguen viendo igual, pero solo se descarga la que pedís.</div>
       <div style="margin-top:10px">
@@ -4926,6 +4960,13 @@ function renderConfigView(container) {
 
 // Mueve las fotos de las facturas ya cargadas a la rama aparte. Hasta que se corra, esas facturas
 // siguen trayendo su foto embebida y el listado completo sigue pesando de más en cada carga.
+window.guardarCuitPropio = async function() {
+  const valor = document.getElementById("cfg-cuit-propio").value.trim();
+  await set(ref(db, "costeo/config/cuitPropio"), valor);
+  state.config = { ...state.config, cuitPropio: valor };
+  showToast(valor ? "✅ CUIT del negocio guardado." : "✅ CUIT del negocio borrado.", "success");
+};
+
 window.migrarFotosFacturas = async function() {
   const conFoto = Object.entries(state.facturas).filter(([, f]) => f.foto);
   const out = document.getElementById("cfg-migracion");
