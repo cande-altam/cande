@@ -14,6 +14,9 @@ Analizá la imagen y devolvé SOLO un JSON válido, sin texto adicional y sin bl
   "numeroFactura": string | null,
   "montoTotal": number | null,
   "iva": number | null,
+  "descuentos": number | null,
+  "preciosIncluyenIva": boolean | null,
+  "cantidadItemsDeclarada": number | null,
   "items": [
     { "nombre": string, "insumoId": string | null, "marca": string | null, "cantidad": number | null, "unidad": string | null, "contenidoPorUnidad": number | null, "unidadContenido": string | null, "precioUnitario": number | null, "importe": number | null }
   ],
@@ -22,16 +25,23 @@ Analizá la imagen y devolvé SOLO un JSON válido, sin texto adicional y sin bl
 }
 Reglas:
 - Si no podés leer un dato con confianza, poné null. No inventes valores.
-- "proveedor" debe ser la RAZÓN SOCIAL del proveedor (el nombre legal/fiscal que figura en la factura, normalmente junto al CUIT o en el encabezado impositivo) — NO un nombre de fantasía, marca o logo comercial si son distintos de la razón social.
-- "montoTotal" es el total final de la factura (con IVA si corresponde), como número sin símbolos de moneda ni separadores de miles (usá punto decimal).
-- "iva" es el monto de IVA discriminado en la factura (suele figurar como "IVA 21%", "IVA 10.5%", o la suma de varias alícuotas de IVA si hay más de una) — un número en pesos, no un porcentaje. Si la factura es de un monotributista y no discrimina IVA, poné null. Si hay varias líneas de IVA a distintas alícuotas, sumalas en un solo número.
-- "items" son las líneas de detalle de la factura (insumos comprados). Si no hay detalle de líneas legible, devolvé un array vacío.
-- "marca" de cada ítem: la marca comercial del producto SI figura impresa en la línea de detalle (ej. "Levadura Leudex", "Levadura Duquesa") — un mismo insumo puede comprarse en varias marcas distintas al mismo o a distinto proveedor, y cada marca puede tener su propio precio, así que es importante no perderla. Si no hay marca legible o el ítem no es de ese tipo (ej. es un insumo genérico sin marca), poné null.
-- Para cada ítem: "cantidad" y "unidad" son los que figuran impresos en la línea (ej. "5", "kg"); "importe" es el subtotal de esa línea (cantidad × precio unitario, tal como figura impreso, sin IVA a menos que la factura solo muestre precios con IVA incluido). Prestá especial atención a no confundir la columna de cantidad con la de código de producto o de precio — son la causa más común de error. Si la factura solo muestra precio unitario e importe pero no cantidad explícita, podés inferir "cantidad" = importe / precioUnitario; si solo muestra cantidad e importe, inferí "precioUnitario" = importe / cantidad. Si algún valor no cierra o no es legible, poné null en ese campo en vez de adivinar.
+- IMPORTANTE — para ahorrar espacio, OMITÍ del JSON los campos que sean null. Si no leíste la marca, simplemente no incluyas "marca". Los ítems son lo único que no se puede recortar.
+- **FORMATO ARGENTINO DE NÚMEROS**: la COMA es el separador DECIMAL y el punto el de miles. "4,660" es 4,66 (cuatro kilos con 660 gramos), NO cuatro mil seiscientos sesenta. "$ 8029,34" son 8029,34 pesos. Devolvé siempre los números con punto decimal (4.66, 8029.34). Verificá cada línea: cantidad × precioUnitario tiene que dar el importe impreso. Si te da un número absurdo (millones), casi seguro interpretaste mal una coma.
+- **DISPOSICIÓN EN VARIOS RENGLONES**: en los tickets de mayorista cada ítem ocupa DOS o TRES renglones — primero "cantidad x $ precio unitario" con el importe a la derecha, y DEBAJO la descripción del producto. A veces hay un tercer renglón con la cantidad de piezas ("1 H", "3 HORMA", "2 H"). Esos renglones son UN SOLO ítem: la descripción es la del renglón de abajo, y la cantidad/precio los de arriba. No los tomes como ítems separados ni pierdas la descripción.
+- **PRODUCTOS POR PESO**: cuando la cantidad tiene decimales (4,660 / 10,460 / 6,000) el producto se vende POR KILO: "cantidad" es el peso en kg y "precioUnitario" es el precio por kg. En ese caso "contenidoPorUnidad" es 1 — el precio YA es por unidad de medida, no es un bulto. El renglón "3 HORMA" o "1 H" indica cuántas piezas son, no cambia el precio por kilo.
+- **LÍNEAS DE DESCUENTO**: las líneas con importe NEGATIVO o que empiezan con "OFS", "DTO", "DESC", "BONIF", "AHORRO" son descuentos/ofertas, NO son ítems comprados. NO las incluyas en "items"; sumalas en "descuentos" como número positivo.
+- **CUIDADO — "CLIENTE" NO ES EL PROVEEDOR**: muchos tickets muestran arriba los datos de QUIEN COMPRA (etiquetados "CLIENTE", "Sr./Sres.", "Razón social del cliente") junto a su CUIT y condición fiscal. Ese NO es el proveedor: es el negocio que está cargando la factura. El proveedor es quien EMITE el comprobante (suele estar en el encabezado del ticket, arriba de todo, o en el pie junto al CAE). Si lo único que se ve es el bloque del CLIENTE, devolvé "proveedor": null y "cuit": null — es preferible que el usuario lo elija a crear un proveedor con el nombre del propio negocio.
+- "montoTotal" es el TOTAL final del comprobante (el que se pagó), como número sin símbolos ni separadores de miles.
+- "iva" es el monto de IVA discriminado (ej. la línea "IVA 21%"), en pesos, no un porcentaje. Si hay varias alícuotas, sumalas.
+- "preciosIncluyenIva": mirá si los precios de las líneas ya tienen el IVA o no. Si el comprobante muestra SUBTOTAL + IVA = TOTAL, entonces los precios de las líneas son SIN IVA → false. Si el total coincide con la suma de los importes de las líneas, son con IVA → true. Si no podés determinarlo, null.
+- "cantidadItemsDeclarada": si el ticket dice cuántos ítems tiene ("Cantidad de ítems: 30"), copiá ese número. Sirve como control: si extrajiste menos ítems que ese número, te faltaron líneas — revisá de nuevo antes de responder.
+- "items" son las líneas de detalle (productos comprados). Si no hay detalle legible, devolvé un array vacío.
+- "marca" de cada ítem: la marca comercial si figura en la línea (ej. "Levadura Leudex"). Un mismo insumo puede comprarse en varias marcas a distinto precio, así que no se puede perder.
+- Para cada ítem: "cantidad" y "unidad" son los impresos; "importe" es el subtotal de esa línea. No confundas la columna de cantidad con la de código de producto — es el error más común. Si solo hay precio unitario e importe, inferí cantidad = importe / precioUnitario.
 - "fecha" en formato ISO YYYY-MM-DD.
-- "contenidoPorUnidad" / "unidadContenido": MUY IMPORTANTE. Muchos productos se venden por bulto/fardo/balde/caja, y el precio de la línea es el del BULTO, no el de la unidad de medida real. Ejemplos: "Dulce de leche Campo Quijano x 25 kg" → contenidoPorUnidad: 25, unidadContenido: "kg" (cada unidad comprada trae 25 kg); "Gaseosa 500ml fardo x6" → contenidoPorUnidad: 6, unidadContenido: "unidad"; "Aceite caja x 12 botellas" → 12 / "unidad". Buscá esta información en el texto del ítem (x25kg, x 6, fardo, caja, balde, pack, bidón). Si el ítem se vende suelto, sin bulto, poné contenidoPorUnidad: 1. Si no podés determinarlo con confianza, poné null — NO adivines.
-- "calidadImagen": tu evaluación de qué tan legible está la foto ("buena" si se lee todo con claridad, "regular" si hay partes dudosas, "mala" si gran parte es ilegible).
-- "camposIlegibles": lista de los nombres de los campos que NO pudiste leer con confianza y dejaste en null por eso (ej. ["numeroFactura", "cuit", "items[2].precioUnitario"]). Si pudiste leer todo con confianza, devolvé un array vacío. Sé honesto acá: es preferible declarar que no se leyó a inventar un valor.`;
+- "contenidoPorUnidad" / "unidadContenido": para productos vendidos por BULTO donde el precio de la línea es el del bulto entero y no el de la unidad de medida. Ejemplos: "Dulce de leche x 25 kg" → 25 / "kg"; "Gaseosa fardo x6" → 6 / "unidad". Si se vende suelto o por peso, poné 1. Si no podés determinarlo, omitilo — NO adivines.
+- "calidadImagen": qué tan legible está la foto ("buena", "regular", "mala").
+- "camposIlegibles": los campos que no pudiste leer con confianza. Array vacío si leíste todo. Sé honesto: es preferible declarar que no se leyó a inventar.`;
 
 const CATALOG_INSTRUCTIONS = `
 
@@ -101,7 +111,11 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 1536,
+        // Una factura de mayorista con 30 ítems necesita cerca de 1.700 tokens de salida; con el
+        // techo anterior (1536) el JSON salía CORTADO y el escaneo fallaba entero. Es un techo, no
+        // un objetivo: el modelo corta cuando termina, y se le pide omitir los campos nulos para
+        // que el detalle largo entre holgado.
+        max_tokens: 8000,
         messages: [{
           role: "user",
           content: [
@@ -129,7 +143,18 @@ exports.handler = async (event) => {
     try {
       parsed = JSON.parse(match[0]);
     } catch {
-      return { statusCode: 502, body: JSON.stringify({ error: "No se pudo interpretar la respuesta de la IA." }) };
+      // Si se cortó por longitud, el JSON queda incompleto. Se avisa como tal para que el cliente
+      // pueda reintentar leyendo la factura por partes en vez de mostrar un error genérico.
+      const truncado = data.stop_reason === "max_tokens";
+      return {
+        statusCode: 502,
+        body: JSON.stringify({
+          truncado,
+          error: truncado
+            ? "La factura tiene demasiado detalle y la lectura quedó cortada. Se va a reintentar leyéndola por partes."
+            : "No se pudo interpretar la respuesta de la IA."
+        })
+      };
     }
 
     return { statusCode: 200, headers: { "content-type": "application/json" }, body: JSON.stringify(parsed) };

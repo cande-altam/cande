@@ -248,7 +248,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-10 11:24";
+const APP_VERSION = "2026-08-10 11:38";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -299,6 +299,7 @@ const state = {
   _escaneoPistas: null,
   _facturaFotoFile: null,
   _escaneoReintentoChico: false,
+  _escaneoPorPartes: false,
   facturasFiltro: "todas",
   facturasBusqueda: "",
   pagosFiltro: "no_pagado",
@@ -819,6 +820,7 @@ function renderNuevaFacturaView(container) {
         </div>
         <div class="form-group" style="flex:0 0 auto;min-width:auto">
           <button type="button" class="btn btn-primary" id="scan-btn" onclick="escanearFactura()" disabled>🤖 Reintentar escaneo</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="scan-partes-btn" onclick="escanearFacturaPorPartes(2)" disabled title="Para facturas largas: relee la foto por franjas y junta los ítems. Tarda más pero no se corta.">📄 Leer por partes</button>
           <button type="button" class="btn btn-ghost btn-sm" id="scan-alta-btn" onclick="escanearFacturaAltaResolucion()" disabled title="Manda la foto con el máximo detalle. Tarda más, pero lee facturas con letra muy chica o muy cargadas.">🔍 Reintentar en alta resolución</button>
           <div class="text-muted" style="margin-top:6px;max-width:220px">El escaneo se hace automáticamente al subir la foto. Si quedó mal leída, probá "alta resolución" — tarda más pero lee mejor la letra chica.</div>
         </div>
@@ -951,6 +953,75 @@ const ESCANEO_DIM_REINTENTO = 1100, ESCANEO_CALIDAD_REINTENTO = 0.7;
 // ponerlo por default fue justamente lo que hizo que dejara de reconocerse cualquier factura.
 const ESCANEO_DIM_ALTA = 2200, ESCANEO_CALIDAD_ALTA = 0.92;
 
+// Recorta una franja horizontal de la foto. Un ticket de mayorista largo no entra en una sola
+// lectura (el detalle se corta a mitad de camino), y una imagen no se puede "partir" como el texto:
+// hay que recortarla de verdad. Se solapan las partes para no perder la línea del corte.
+function recortarFotoEscaneo(file, parte, total, maxDim, calidad) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("No se pudo leer el archivo."));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("No se pudo procesar la imagen."));
+      img.onload = () => {
+        const SOLAPE = 0.06; // 6% de solape para que ninguna línea quede cortada entre partes
+        const altoParte = img.height / total;
+        const desde = Math.max(0, altoParte * parte - img.height * SOLAPE);
+        const hasta = Math.min(img.height, altoParte * (parte + 1) + img.height * SOLAPE);
+        const sh = hasta - desde;
+        let w = img.width, h = sh;
+        const escala = Math.min(1, maxDim / Math.max(w, h));
+        w = Math.round(w * escala); h = Math.round(h * escala);
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, desde, img.width, sh, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", calidad));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Lee la factura en varias franjas y junta los ítems. Solo se usa cuando la lectura completa se
+// corta por longitud: es más lenta, así que no conviene por defecto.
+window.escanearFacturaPorPartes = async function(partes) {
+  if (!state._facturaFotoFile) { showToast("⚠️ Subí primero una foto de la factura.", "warn"); return; }
+  const total = partes || 2;
+  const btn = document.getElementById("scan-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "🤖 Leyendo por partes..."; }
+  const items = [];
+  let cabecera = null;
+  try {
+    const insumosConocidos = catalogoParaEscaneo();
+    for (let i = 0; i < total; i++) {
+      showToast(`🤖 Leyendo parte ${i + 1} de ${total}...`, "warn");
+      const recorte = await recortarFotoEscaneo(state._facturaFotoFile, i, total, ESCANEO_DIM, ESCANEO_CALIDAD);
+      const resp = await fetch("/.netlify/functions/extraer-factura", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ imageBase64: recorte.split(",")[1], mediaType: "image/jpeg", insumosConocidos, pistas: state._escaneoPistas || null })
+      });
+      const raw = await resp.text();
+      let data;
+      try { data = JSON.parse(raw); } catch { continue; }
+      if (!resp.ok) continue;
+      if (Array.isArray(data.items)) items.push(...data.items);
+      // La cabecera (proveedor, fecha, total) está en la primera parte; el total y el IVA, en la última.
+      cabecera = { ...(cabecera || {}), ...Object.fromEntries(Object.entries(data).filter(([k, v]) => k !== "items" && v !== null && v !== undefined)) };
+    }
+    if (!items.length && !cabecera) throw new Error("No se pudo leer ninguna parte de la factura.");
+    aplicarDatosEscaneados({ ...(cabecera || {}), items });
+    mostrarPendientesDelEscaneo({ ...(cabecera || {}), items });
+    showToast(`✅ Factura leída por partes: ${items.length} ítems.`, "success");
+  } catch (err) {
+    console.error("Error al escanear por partes:", err);
+    showToast(`⚠️ No se pudo leer la factura por partes: ${err && err.message ? err.message : "error desconocido"}`, "warn");
+    mostrarPendientesDelEscaneo({}, { errorEscaneo: err && err.message ? err.message : "" });
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "🤖 Reintentar escaneo"; }
+  }
+};
+
 window.escanearFacturaAltaResolucion = async function() {
   if (!state._facturaFotoFile) { showToast("⚠️ Subí primero una foto de la factura.", "warn"); return; }
   try {
@@ -981,6 +1052,7 @@ window.handleFacturaFotoChange = async function(e) {
     document.getElementById("factura-foto-preview").innerHTML = `<img src="${dataUrl}" class="photo-thumb">`;
     document.getElementById("scan-btn").disabled = false;
     document.getElementById("scan-alta-btn").disabled = false;
+    document.getElementById("scan-partes-btn").disabled = false;
     // Auto-scan as soon as a photo is chosen (camera or gallery) — the manual button stays
     // enabled below in case the auto-scan fails and the user wants to retry.
     await window.escanearFactura();
@@ -1003,6 +1075,14 @@ function normCuit(s) {
   return String(s || "").replace(/\D/g, "");
 }
 
+function catalogoParaEscaneo() {
+  return Object.entries(state.insumos).map(([id, ins]) => ({
+    id, nombre: ins.nombre, unidad: ins.unidad || "",
+    contenidoPorUnidad: ins.contenidoPorUnidad || null,
+    ultimoPrecio: Math.round(precioEfectivoInsumo(id) * 100) / 100 || null
+  }));
+}
+
 window.escanearFactura = async function() {
   if (!state._facturaFotoDataUrl) return;
   const btn = document.getElementById("scan-btn");
@@ -1011,11 +1091,7 @@ window.escanearFactura = async function() {
     const base64 = (state._facturaFotoScanDataUrl || state._facturaFotoDataUrl).split(",")[1];
     // Se le pasa unidad, contenido por unidad y último precio conocido para que pueda detectar
     // sola cuando el precio de la factura es por bulto y no por unidad de medida.
-    const insumosConocidos = Object.entries(state.insumos).map(([id, ins]) => ({
-      id, nombre: ins.nombre, unidad: ins.unidad || "",
-      contenidoPorUnidad: ins.contenidoPorUnidad || null,
-      ultimoPrecio: Math.round(precioEfectivoInsumo(id) * 100) / 100 || null
-    }));
+    const insumosConocidos = catalogoParaEscaneo();
     const resp = await fetch("/.netlify/functions/extraer-factura", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -1038,7 +1114,15 @@ window.escanearFactura = async function() {
       err.porTiempo = resp.status === 504 || resp.status === 502;
       throw err;
     }
-    if (!resp.ok) throw new Error(data.error || `Error al escanear la factura (HTTP ${resp.status}).`);
+    if (!resp.ok) {
+      // El detalle no entró en una sola lectura: se relee la factura por franjas en vez de fallar.
+      if (data.truncado && state._facturaFotoFile && !state._escaneoPorPartes) {
+        state._escaneoPorPartes = true;
+        try { await window.escanearFacturaPorPartes(2); return; }
+        finally { state._escaneoPorPartes = false; }
+      }
+      throw new Error(data.error || `Error al escanear la factura (HTTP ${resp.status}).`);
+    }
 
     aplicarDatosEscaneados(data);
     mostrarPendientesDelEscaneo(data);
@@ -1193,6 +1277,13 @@ function mostrarPendientesDelEscaneo(data, opts) {
   if (ilegibles.length) {
     avisos.push(`<div class="item-note" style="margin:0 0 8px">✍️ No se pudieron leer con seguridad: <strong>${ilegibles.map(escapeHtml).join(", ")}</strong>.</div>`);
   }
+  // Muchos tickets declaran cuántos ítems tienen ("Cantidad de ítems: 30"). Es un control de
+  // completitud gratis: si se leyeron menos, faltan líneas y hay que avisarlo.
+  const declarados = Number(data?.cantidadItemsDeclarada) || 0;
+  const leidos = document.querySelectorAll("#items-container .item-row").length;
+  if (declarados > 0 && leidos < declarados) {
+    avisos.push(`<div class="item-warn" style="margin:0 0 8px">📋 El comprobante declara <strong>${declarados} ítems</strong> y se reconocieron <strong>${leidos}</strong>. Faltan líneas: probá <em>"📄 Leer por partes"</em>, que relee la foto por franjas, o cargá las que falten a mano.</div>`);
+  }
 
   // Preguntas concretas, en orden de utilidad para el reconocimiento automático.
   if (estadoProv !== "ok") {
@@ -1311,6 +1402,17 @@ function aplicarDatosEscaneados(data) {
   if (data.numeroFactura) document.getElementById("f-numero").value = data.numeroFactura;
   if (data.montoTotal != null && !Number.isNaN(Number(data.montoTotal))) document.getElementById("f-monto").value = data.montoTotal;
   if (data.iva != null && !Number.isNaN(Number(data.iva))) document.getElementById("f-iva-monto").value = data.iva;
+  // Muchos tickets de mayorista listan los precios SIN IVA y lo suman al final. Si el escaneo lo
+  // detecta, se destilda "Con IVA" para que los precios se guarden como lo que realmente son.
+  if (data.preciosIncluyenIva === false || data.preciosIncluyenIva === true) {
+    const toggle = document.getElementById("f-iva-toggle");
+    const deberiaEstarOn = data.preciosIncluyenIva === true;
+    if (toggle && toggle.classList.contains("on") !== deberiaEstarOn) window.toggleIvaFactura(toggle);
+  }
+  if (data.descuentos != null && !Number.isNaN(Number(data.descuentos)) && Number(data.descuentos) > 0) {
+    const cargos = document.getElementById("f-cargos");
+    if (cargos && !cargos.value) cargos.value = -Math.abs(Number(data.descuentos));
+  }
 
   if (Array.isArray(data.items) && data.items.length) {
     const cont = document.getElementById("items-container");
