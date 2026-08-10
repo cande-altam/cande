@@ -631,7 +631,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-10 no-repetir-ausencia-borrada";
+const APP_VERSION="2026-08-10 fix-filas-refuerzo-duplicadas";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -1213,30 +1213,35 @@ function locTable(loc,title,worked){
 function extraRowsHTML(loc,shift,role,label,cap){
   let h="";
   const maxE=Math.max(0,...DAYS.map((_,d)=>exAt(d,loc,shift,role).length));
-  for(let r=0;r<maxE;r++){
-    h+=`<tr><td class="puesto extra">${label} +</td>`;
-    for(let d=0;d<7;d++){
-      const e=exAt(d,loc,shift,role)[r];
-      h+=(e&&!isClosed(d,loc,shift))?extraCellHTML(e):`<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
-    }
-    h+=`</tr>`;
+  if(cap===undefined){
+    // sin tope: todas las filas con datos existentes, más una fila siempre disponible al final
+    // para sumar un refuerzo eligiendo directamente a la persona en el casillero del día que haga
+    // falta — sin tener que ir al panel lateral y completar 5 campos.
+    for(let r=0;r<maxE;r++)h+=filaRefuerzo(loc,shift,role,label,r,false);
+    h+=filaRefuerzo(loc,shift,role,label,maxE,true);
+    return h;
   }
-  // fila siempre disponible al final, para sumar un refuerzo eligiendo directamente a la persona en
-  // el casillero del día que haga falta — sin tener que ir al panel lateral y completar 5 campos.
-  // Si el puesto tiene tope 0 (cajero: nunca admite refuerzo) directamente no se ofrece la fila; si
-  // tiene un tope mayor, la fila se muestra pero cada día se habilita por separado más abajo (ver
-  // newExtraCellHTML) — así un día que ya llegó al tope no ofrece sumar uno más, aunque otro día de
-  // la misma semana todavía tenga lugar.
-  if(cap!==0){
-    h+=`<tr><td class="puesto extra">${label} +</td>`;
-    for(let d=0;d<7;d++)h+=newExtraCellHTML(d,loc,shift,role,cap);
-    h+=`</tr>`;
-  }
+  // con tope: una sola fila por cada "lugar" de refuerzo posible (cap en total), y cada casillero
+  // vacío de esas filas ya sirve para agregar — no hace falta una fila aparte para eso. Si hay datos
+  // viejos que superan el tope (cargados antes de fijarlo) igual se muestran, nunca se esconden,
+  // pero esas filas de más no ofrecen agregar a nadie nuevo.
+  const totalRows=Math.max(cap,maxE);
+  for(let r=0;r<totalRows;r++)h+=filaRefuerzo(loc,shift,role,label,r,r<cap);
   return h;
 }
-function newExtraCellHTML(d,loc,shift,role,cap){
-  if(isClosed(d,loc,shift))return `<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
-  if(cap!==undefined&&exAt(d,loc,shift,role).length>=cap)return `<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
+function filaRefuerzo(loc,shift,role,label,r,permiteAgregar){
+  let h=`<tr><td class="puesto extra">${label} +</td>`;
+  for(let d=0;d<7;d++){
+    const e=exAt(d,loc,shift,role)[r];
+    if(isClosed(d,loc,shift))h+=`<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
+    else if(e)h+=extraCellHTML(e);
+    else if(permiteAgregar)h+=newExtraCellHTML(d,loc,shift,role);
+    else h+=`<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
+  }
+  h+=`</tr>`;
+  return h;
+}
+function newExtraCellHTML(d,loc,shift,role){
   const opts=PEOPLE.map(p=>`<option value="${p.n}">${p.n}${roleFor(p.n)!==role?" ⤵":""}</option>`).join("");
   return `<td class="cell extra ${isWknd(d)?"wknd":""}"><div class="excell"><select class="cellsel empty" data-newex="${d}|${loc}|${shift}|${role}"><option value="">+ agregar</option>${opts}</select></div></td>`;
 }
