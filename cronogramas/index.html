@@ -447,7 +447,7 @@
       <section class="card">
         <div class="card-body" style="padding-bottom:16px">
           <span class="eyebrow">No pueden trabajar juntos</span>
-          <p class="sub" style="padding:4px 0 0">Si las dos personas quedan en el mismo turno (mañana o tarde, cualquier local), se marca como error en la grilla.</p>
+          <p class="sub" style="padding:4px 0 0">Si las dos personas quedan en el mismo turno (mañana o tarde) y el mismo local, se marca como error en la grilla. En locales distintos no cuenta.</p>
           <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <div><label for="incompatA">Persona</label><select id="incompatA"></select></div>
             <div><label for="incompatB">No puede trabajar con</label><select id="incompatB"></select></div>
@@ -631,7 +631,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-10 fix-filas-refuerzo-duplicadas";
+const APP_VERSION="2026-08-10 incompatibilidad-por-local";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -991,14 +991,17 @@ function validate(){
     dayShift[ks].forEach(o=>{seen[o.name]=(seen[o.name]||0)+1;});
     Object.keys(seen).forEach(nm=>{if(seen[nm]>1)alerts.push({t:"crit",h:nm,m:`está en dos lugares a la vez el ${DAYS[+d][1].toLowerCase()} a la ${sh==="M"?"mañana":"tarde"}.`});});
   });
-  // 1b incompatibilidades ("no pueden trabajar juntos") en el mismo turno, cualquier local
+  // 1b incompatibilidades ("no pueden trabajar juntos") en el mismo turno Y el mismo local — si
+  // están el mismo turno pero en locales distintos, no cuenta como choque.
   if(state.incompat.length)Object.keys(dayShift).forEach(ks=>{
     const[d,sh]=ks.split("|");
-    const names=[...new Set(dayShift[ks].map(o=>o.name))];
-    for(let i=0;i<names.length;i++)for(let j=i+1;j<names.length;j++){
-      if(sonIncompatibles(names[i],names[j]))
-        alerts.push({t:"crit",h:`${names[i]} y ${names[j]}`,m:`no pueden trabajar juntos y están los dos el ${DAYS[+d][1].toLowerCase()} a la ${sh==="M"?"mañana":"tarde"}.`});
-    }
+    ["SL","SLA"].forEach(loc=>{
+      const names=[...new Set(dayShift[ks].filter(o=>o.loc===loc).map(o=>o.name))];
+      for(let i=0;i<names.length;i++)for(let j=i+1;j<names.length;j++){
+        if(sonIncompatibles(names[i],names[j]))
+          alerts.push({t:"crit",h:`${names[i]} y ${names[j]}`,m:`no pueden trabajar juntos y están los dos el ${DAYS[+d][1].toLowerCase()} a la ${sh==="M"?"mañana":"tarde"} en ${loc==="SL"?"San Luis":"SLA"}.`});
+      }
+    });
   });
   // 2 double shift same day (M+T) -> HE, salvo turno cortado marcado como medio turno
   const isHalfAt=(nm,d,sh)=>state.ex.some(e=>e.n===nm&&e.day===d&&e.shift===sh&&e.half);
@@ -1129,7 +1132,7 @@ function selHTML(d,loc,shift,role,idx,active,closed){
   if(cur){Object.keys(state.assign).forEach(kk=>{if(kk!==k){const[dd,,sh]=kk.split("|");if(+dd===d&&sh===shift&&state.assign[kk]===cur)dupe=true;}});
     state.ex.forEach(e=>{if(e.n===cur&&e.day===d&&e.shift===shift)dupe=true;});}
   const he=cur&&isDoubleShift(cur,d);
-  const errMsg=dupe?dupeMsg(cur,d,shift):incompatMsgFor(cur,d,shift);
+  const errMsg=dupe?dupeMsg(cur,d,shift):incompatMsgFor(cur,d,loc,shift);
   const cls=`cellsel ${cur?"filled":"empty"} ${errMsg?"dupe":""} ${he?"he":""}`;
   const errAttr=errMsg?` data-err="${errMsg}"`:"";
   const label=(cur?cur+" · ":"")+DAYS[d][1]+" "+(shift==="M"?"mañana":"tarde");
@@ -1145,20 +1148,22 @@ function isDoubleShift(name,d){
   state.ex.forEach(e=>{if(e.n===name&&e.day===d){if(e.shift==="M")m=true;else t=true;}});
   return m&&t;
 }
-// "X no puede trabajar con Y": se compara el mismo turno (día+mañana/tarde) sin importar el local —
-// dos personas incompatibles no deberían coincidir en el horario, aunque estén en puestos distintos.
+// "X no puede trabajar con Y": se compara el mismo turno (día+mañana/tarde) Y el mismo local — si
+// están en el mismo horario pero en San Luis y SLA respectivamente, no cuenta como choque.
 function sonIncompatibles(a,b){return state.incompat.some(r=>(r.a===a&&r.b===b)||(r.a===b&&r.b===a));}
-function quienesEnTurno(d,shift){
+// "no pueden trabajar juntos" es por local: si están en el mismo turno pero en San Luis y SLA
+// respectivamente, no cuenta como choque — solo importa si coinciden en el mismo local.
+function quienesEnTurno(d,loc,shift){
   const set=new Set();
-  Object.keys(state.assign).forEach(kk=>{const[dd,,sh]=kk.split("|");if(+dd===d&&sh===shift&&state.assign[kk])set.add(state.assign[kk]);});
-  state.ex.forEach(e=>{if(e.day===d&&e.shift===shift&&e.n)set.add(e.n);});
+  Object.keys(state.assign).forEach(kk=>{const[dd,ll,sh]=kk.split("|");if(+dd===d&&ll===loc&&sh===shift&&state.assign[kk])set.add(state.assign[kk]);});
+  state.ex.forEach(e=>{if(e.day===d&&e.loc===loc&&e.shift===shift&&e.n)set.add(e.n);});
   return set;
 }
-function incompatMsgFor(name,d,shift){
+function incompatMsgFor(name,d,loc,shift){
   if(!name)return null;
-  const otros=[...quienesEnTurno(d,shift)].filter(o=>o!==name);
+  const otros=[...quienesEnTurno(d,loc,shift)].filter(o=>o!==name);
   const choque=otros.find(o=>sonIncompatibles(name,o));
-  return choque?`🚫 ${name} no puede trabajar con ${choque} — los dos están el ${DAYS[d][1].toLowerCase()} a la ${shift==="M"?"mañana":"tarde"}.`:null;
+  return choque?`🚫 ${name} no puede trabajar con ${choque} — los dos están el ${DAYS[d][1].toLowerCase()} a la ${shift==="M"?"mañana":"tarde"} en ${loc==="SL"?"San Luis":"SLA"}.`:null;
 }
 function exAt(d,loc,shift,role){return state.ex.filter(e=>e.day===d&&e.loc===loc&&e.shift===shift&&e.role===role);}
 function extraCellHTML(e){
@@ -1170,7 +1175,7 @@ function extraCellHTML(e){
   state.ex.forEach(o=>{if(o!==e&&o.n===e.n&&o.day===e.day&&o.shift===e.shift)dupe=true;});
   const he=isDoubleShift(e.n,e.day);
   const badge=e.half?`<span class="halfbadge">½</span>`:"";
-  const errMsg=dupe?dupeMsg(e.n,e.day,e.shift):incompatMsgFor(e.n,e.day,e.shift);
+  const errMsg=dupe?dupeMsg(e.n,e.day,e.shift):incompatMsgFor(e.n,e.day,e.loc,e.shift);
   const errAttr=errMsg?` data-err="${errMsg}"`:"";
   const ck="ex:"+e.id;
   const label=(e.n?e.n+" · ":"")+DAYS[e.day][1]+" "+(e.shift==="M"?"mañana":"tarde");
