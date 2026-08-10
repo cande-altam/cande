@@ -248,7 +248,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-10 11:38";
+const APP_VERSION = "2026-08-10 19:29";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -1132,10 +1132,28 @@ window.escanearFactura = async function() {
     // Si se pasó de tiempo, casi siempre es por el tamaño de la foto: se reintenta UNA vez con una
     // versión más chica antes de darse por vencido. Es la diferencia entre "no reconoce nada" y
     // "reconoce igual, un poco menos fino".
+    // Ante un "tardó demasiado", lo primero es LEER POR PARTES, no achicar la foto.
+    // Razón: en una factura larga el tiempo se va generando la respuesta (30 ítems son más de
+    // 1.700 tokens de salida), no leyendo la imagen. Achicar la foto no reduce el detalle en
+    // absoluto, así que ese reintento estaba condenado a fallar igual. Partir la foto sí divide
+    // el trabajo: cada franja tiene menos ítems y cada pedido entra holgado en el tiempo.
+    if (err && err.porTiempo && state._facturaFotoFile && !state._escaneoPorPartes) {
+      state._escaneoPorPartes = true;
+      try {
+        await window.escanearFacturaPorPartes(2);
+        return;
+      } catch (err2) {
+        console.error("La lectura por partes también falló:", err2);
+      } finally {
+        state._escaneoPorPartes = false;
+      }
+    }
+    // Recién si no hay foto para partir se prueba con una versión más liviana (sirve cuando el
+    // problema es la subida y no el largo del detalle).
     if (err && err.porTiempo && !state._escaneoReintentoChico && state._facturaFotoFile) {
       state._escaneoReintentoChico = true;
       try {
-        showToast("⏳ Tardó demasiado — reintentando con una versión más liviana de la foto...", "warn");
+        showToast("⏳ Reintentando con una versión más liviana de la foto...", "warn");
         state._facturaFotoScanDataUrl = await compressImageToDataUrl(state._facturaFotoFile, ESCANEO_DIM_REINTENTO, ESCANEO_CALIDAD_REINTENTO);
         btn.disabled = false;
         await window.escanearFactura();
@@ -1149,6 +1167,20 @@ window.escanearFactura = async function() {
     // en que hay que preguntarle al usuario, no en el que hay que quedarse callado: se muestra el
     // mismo panel de preguntas que cuando el escaneo salió incompleto.
     mostrarPendientesDelEscaneo({}, { errorEscaneo: msg });
+    // Y se diagnostica solo: la diferencia entre "falta la clave de la API" y "la foto es difícil"
+    // es enorme y se arregla en lugares distintos, pero desde afuera las dos se ven igual.
+    try {
+      const diag = await diagnosticarEscaneo();
+      const cont = document.getElementById("escaneo-pendientes");
+      if (cont && diag.causa !== "ok") {
+        cont.insertAdjacentHTML("afterbegin", `<div class="section-block" style="border-color:var(--terra);margin-bottom:14px">
+          <div class="section-title" style="margin-bottom:8px">🩺 Qué está fallando</div>
+          <div class="item-warn" style="margin:0">${diag.mensaje}</div>
+        </div>`);
+      } else if (cont && diag.causa === "ok") {
+        cont.insertAdjacentHTML("afterbegin", `<div class="item-note" style="margin:0 0 10px">🩺 La conexión con el servicio de lectura funciona (${diag.ms} ms), así que el problema está en esta factura en particular — probá <em>"📄 Leer por partes"</em>.</div>`);
+      }
+    } catch (e) { console.error("No se pudo diagnosticar:", e); }
   } finally {
     btn.disabled = false; btn.textContent = "🤖 Escanear con IA";
   }
@@ -4888,9 +4920,12 @@ window.migrarFotosFacturas = async function() {
 // Diagnóstico de un solo click: dice si la función de escaneo está publicada y respondiendo, que
 // es lo primero a descartar cuando "no reconoce ninguna factura". Manda una imagen mínima de 1x1
 // para no gastar una foto real ni tiempo de la IA.
-window.probarEscaneo = async function() {
-  const out = document.getElementById("cfg-diag");
-  out.textContent = "Probando...";
+// Prueba la función de escaneo con una imagen mínima y devuelve la CAUSA concreta del problema.
+// Separado de la UI para poder usarlo también automáticamente cuando falla un escaneo real: sin
+// esto, "no se pudo escanear" tapaba cuatro problemas muy distintos (función no publicada, falta
+// la clave de la API, se pasa de tiempo, o la lectura en sí falló) que se arreglan en lugares
+// distintos — y sin saber cuál era, cualquier arreglo era a ciegas.
+async function diagnosticarEscaneo() {
   const PIXEL = "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==";
   try {
     const t0 = Date.now();
@@ -4900,25 +4935,25 @@ window.probarEscaneo = async function() {
     });
     const ms = Date.now() - t0;
     const texto = await resp.text();
-    if (resp.status === 404) {
-      out.innerHTML = `❌ La función de escaneo <strong>no está publicada</strong> (HTTP 404). Por eso ninguna factura se reconoce. Hay que revisar el deploy de Netlify.`;
-      return;
-    }
     let data = null;
     try { data = JSON.parse(texto); } catch {}
-    if (resp.ok) {
-      out.innerHTML = `✅ La función responde correctamente (${ms} ms). El escaneo está operativo.`;
-    } else if (data && /ANTHROPIC_API_KEY/.test(data.error || "")) {
-      out.innerHTML = `❌ Falta configurar <code>ANTHROPIC_API_KEY</code> en Netlify (Site settings → Environment variables). Sin esa clave el escaneo no puede funcionar.`;
-    } else if (resp.status === 504 || resp.status === 502) {
-      out.innerHTML = `⚠️ La función existe pero se pasó de tiempo (HTTP ${resp.status}, ${ms} ms). Con fotos reales va a fallar seguido: es el límite de tiempo del plan de Netlify.`;
-    } else {
-      out.innerHTML = `⚠️ La función respondió HTTP ${resp.status} en ${ms} ms: ${escapeHtml((data && data.error) || texto).slice(0, 300)}`;
-    }
+    if (resp.status === 404) return { causa: "no-publicada", ms, mensaje: "La función de escaneo <strong>no está publicada</strong> (HTTP 404). Por eso no se puede leer ninguna factura. Hay que revisar el deploy en Netlify." };
+    if (data && /ANTHROPIC_API_KEY/.test(data.error || "")) return { causa: "sin-clave", ms, mensaje: "Falta configurar <code>ANTHROPIC_API_KEY</code> en Netlify (Site settings → Environment variables). Sin esa clave el escaneo no puede funcionar, por más buena que sea la foto." };
+    if (resp.status === 504 || resp.status === 502) return { causa: "tiempo", ms, mensaje: `La función existe pero se pasó de tiempo (HTTP ${resp.status}, ${ms} ms) hasta con una imagen mínima. Es el límite de tiempo del plan de Netlify: con facturas reales va a fallar seguido.` };
+    if (resp.ok) return { causa: "ok", ms, mensaje: `La función responde correctamente (${ms} ms).` };
+    return { causa: "otro", ms, mensaje: `La función respondió HTTP ${resp.status} en ${ms} ms: ${escapeHtml((data && data.error) || texto).slice(0, 300)}` };
   } catch (err) {
-    out.innerHTML = `❌ No se pudo contactar la función de escaneo: ${escapeHtml(err && err.message ? err.message : "error desconocido")}`;
+    return { causa: "sin-red", ms: 0, mensaje: `No se pudo contactar la función de escaneo: ${escapeHtml(err && err.message ? err.message : "error desconocido")}` };
   }
+}
+
+window.probarEscaneo = async function() {
+  const out = document.getElementById("cfg-diag");
+  out.textContent = "Probando...";
+  const r = await diagnosticarEscaneo();
+  out.innerHTML = (r.causa === "ok" ? "✅ " : r.causa === "tiempo" ? "⚠️ " : "❌ ") + r.mensaje;
 };
+
 
 // ── Bootstrap ────────────────────────────────────────────
 attachListeners();
