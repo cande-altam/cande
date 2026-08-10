@@ -248,7 +248,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-03 13:16";
+const APP_VERSION = "2026-08-10 11:24";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -408,8 +408,25 @@ function objToSortedEntries(obj, cmp) {
 
 // ── Auth ─────────────────────────────────────────────────
 async function attemptLogin(password) {
+  // La contraseña vive en la base y llega por onValue, que es ASINCRÓNICO: al abrir la app,
+  // state.config todavía está vacío. Antes, si alguien apretaba "Ingresar" en ese instante (o con
+  // la conexión lenta), el código concluía que no había ninguna contraseña guardada y ESCRIBÍA la
+  // de fábrica ENCIMA de la real — y a partir de ahí la contraseña buena dejaba de funcionar.
+  // Por eso, antes de dar por hecho que no hay contraseña, se lee el valor autoritativo de la base.
   let pass = state.config.adminPassword;
   if (!pass) {
+    try {
+      const snap = await get(ref(db, "costeo/config/adminPassword"));
+      pass = snap.val() || "";
+    } catch (e) {
+      // Sin conexión no se puede verificar nada; es preferible fallar el login a pisar la
+      // contraseña guardada con la de fábrica.
+      console.error("No se pudo leer la contraseña guardada:", e);
+      throw e;
+    }
+  }
+  if (!pass) {
+    // Recién acá se puede afirmar que la base no tiene ninguna contraseña: primer uso.
     pass = DEFAULT_ADMIN_PASS;
     await set(ref(db, "costeo/config/adminPassword"), pass);
   }
@@ -598,7 +615,7 @@ function renderLogin() {
             <input class="form-input" type="password" id="login-pass" placeholder="••••••" onkeydown="if(event.key==='Enter')handleLoginSubmit()">
           </div>
           <button class="btn btn-primary" id="login-btn" onclick="handleLoginSubmit()">Ingresar</button>
-          <div id="login-err" style="color:var(--terra);font-size:12px;display:none">Contraseña incorrecta.</div>
+          <div id="login-err" style="color:var(--terra);font-size:12px;display:none">Contraseña incorrecta.<div style="color:var(--gray);margin-top:6px;line-height:1.5">Si no la recordás, se puede ver y cambiar en la consola de Firebase (Realtime Database → <code>costeo/config/adminPassword</code>). La de fábrica es <code>costeo2025</code>.</div></div>
         </div>
       </div>
     </div>`;
