@@ -35,23 +35,25 @@
 
 ## Calendario por proveedor
 
-| Proveedor | Día de pedido | Día de pago | Método de pago |
-|---|---|---|---|
-| **CALSA** | Lunes, miércoles y viernes | Lunes, miércoles y viernes | Efectivo o transferencia |
-| **CARFILA** | Lunes | Martes | Efectivo o transferencia |
-| **COCA COLA** | Lunes y viernes | Martes y sábado | Efectivo o transferencia |
-| **COSALTA** | Lunes y jueves | Martes y viernes | Efectivo o transferencia |
-| **GALOPPO** | Jueves | Viernes | Efectivo o transferencia |
-| **QUESO DE CABRA** | Jueves | Viernes | Solo transferencia |
-| **SALTA PLAST** | Martes | Miércoles | Solo transferencia |
-| **SERENÍSIMA** | Viernes | Lunes | Solo efectivo |
-| **NUECES** | Martes y jueves | Miércoles y viernes | Solo efectivo |
-| **YOGUR GRIEGO** | Lunes y jueves | Martes y viernes | Efectivo o transferencia |
-| **CAMPO QUIJANO (DDL)** | Martes y jueves | Miércoles y viernes | Solo efectivo |
-| **LA ROTONDA LÁCTEOS** | Lunes y jueves | Martes y viernes | Solo efectivo |
-| **LA FRANCISCA** | Lunes y jueves | Martes y viernes | Solo efectivo |
-| **FRUTOS CONGELADOS** | Lunes y jueves | Martes y viernes | Solo efectivo |
-| **TÉCNICOS Y ARREGLOS** | Avisar a Administración | Avisar a Administración | Efectivo o transferencia |
+| Proveedor | Día de pedido | Día de pago / Llegada | Método de pago | Forma de compra |
+|---|---|---|---|---|
+| **CALSA** | Lunes, miércoles y viernes | Lunes, miércoles y viernes | Efectivo o transferencia | Pedido de insumos |
+| **CARFILA** | Viernes | Lunes | Efectivo o transferencia | Preventista en local |
+| **LAS FLORES** (pan de miga) | Lunes, miércoles y viernes | Lunes, miércoles y viernes | Solo efectivo | Pedido de insumos |
+| **COCA COLA** | Lunes y viernes | Martes y sábado | Efectivo o transferencia | Preventista en local |
+| **COSALTA** | Lunes y jueves | Martes y viernes | Efectivo o transferencia | Preventista en local |
+| **GALOPPO** | Lunes y viernes | Lunes y viernes | Efectivo o transferencia | Preventista en local |
+| **QUESO DE CABRA** | Jueves | Viernes | Solo transferencia | Preventista por WhatsApp |
+| **SALTA PLAST** | Martes | Miércoles | Solo transferencia | Preventista por WhatsApp |
+| **SERENÍSIMA** | Viernes | Lunes | Solo efectivo | Preventista por WhatsApp |
+| **NUECES** | Martes y jueves | Miércoles y viernes | Solo efectivo | Preventista por WhatsApp |
+| **YOGUR GRIEGO** | Lunes y jueves | Martes y viernes | Efectivo o transferencia | Preventista por WhatsApp |
+| **CAMPO QUIJANO (DDL)** | Martes y jueves | Miércoles y viernes | Solo efectivo | Pedido de insumos |
+| **LA ROTONDA LÁCTEOS** | Lunes y jueves | Martes y viernes | Solo efectivo | Pedido de insumos |
+| **LA FRANCISCA** | Lunes y jueves | Martes y viernes | Solo efectivo | Pedido de insumos |
+| **FRUTOS CONGELADOS** | Lunes y jueves | Martes y viernes | Solo efectivo | Pedido de insumos |
+| **FRUTOS SECOS** | Lunes y jueves | Martes y viernes | Solo efectivo | Pedido de insumos |
+| **TÉCNICOS Y ARREGLOS** | Avisar a Administración | Avisar a Administración | Efectivo o transferencia | Por WhatsApp |
 
 ---
 
@@ -59,27 +61,27 @@
 
 *La misma información, ordenada como se usa en el día a día.*
 
-### 🔵 Lunes — 8 proveedores *(día pesado)*
+### 🔵 Lunes — 10 proveedores *(día pesado)*
 
-CALSA · CARFILA · COCA COLA · COSALTA · YOGUR GRIEGO · LA ROTONDA LÁCTEOS ·
-LA FRANCISCA · FRUTOS CONGELADOS
+CALSA · LAS FLORES · COCA COLA · COSALTA · GALOPPO · YOGUR GRIEGO · LA ROTONDA LÁCTEOS ·
+LA FRANCISCA · FRUTOS CONGELADOS · FRUTOS SECOS
 
 ### 🟢 Martes — 3 proveedores
 
 SALTA PLAST · NUECES · CAMPO QUIJANO (DDL)
 
-### 🟢 Miércoles — 1 proveedor
+### 🟢 Miércoles — 2 proveedores
 
-CALSA
+CALSA · LAS FLORES
 
 ### 🔵 Jueves — 9 proveedores *(día pesado)*
 
-COSALTA · GALOPPO · QUESO DE CABRA · NUECES · YOGUR GRIEGO · CAMPO QUIJANO (DDL) ·
-LA ROTONDA LÁCTEOS · LA FRANCISCA · FRUTOS CONGELADOS
+COSALTA · QUESO DE CABRA · NUECES · YOGUR GRIEGO · CAMPO QUIJANO (DDL) ·
+LA ROTONDA LÁCTEOS · LA FRANCISCA · FRUTOS CONGELADOS · FRUTOS SECOS
 
-### 🟢 Viernes — 3 proveedores
+### 🟢 Viernes — 6 proveedores
 
-CALSA · COCA COLA · SERENÍSIMA
+CALSA · LAS FLORES · CARFILA · COCA COLA · GALOPPO · SERENÍSIMA
 
 ### ⚪ Sábado y domingo — Sin pedidos
 
@@ -91,15 +93,21 @@ CALSA · COCA COLA · SERENÍSIMA
 
 | Día | Proveedores a pagar | Cantidad |
 |---|---|---|
-| **Lunes** | CALSA · SERENÍSIMA | 2 |
-| **Martes** | CARFILA · COCA COLA · COSALTA · YOGUR GRIEGO · LA ROTONDA · LA FRANCISCA · FRUTOS CONGELADOS | 7 |
-| **Miércoles** | CALSA · SALTA PLAST · NUECES · CAMPO QUIJANO | 4 |
+| **Lunes** | CALSA · CARFILA · LAS FLORES · GALOPPO · SERENÍSIMA | 5 |
+| **Martes** | COCA COLA · COSALTA · YOGUR GRIEGO · LA ROTONDA · LA FRANCISCA · FRUTOS CONGELADOS · FRUTOS SECOS | 7 |
+| **Miércoles** | CALSA · LAS FLORES · SALTA PLAST · NUECES · CAMPO QUIJANO | 5 |
 | **Jueves** | — | 0 |
-| **Viernes** | CALSA · COSALTA · GALOPPO · QUESO DE CABRA · NUECES · YOGUR GRIEGO · CAMPO QUIJANO · LA ROTONDA · LA FRANCISCA · FRUTOS CONGELADOS | **10** |
+| **Viernes** | CALSA · LAS FLORES · COSALTA · GALOPPO · QUESO DE CABRA · NUECES · YOGUR GRIEGO · CAMPO QUIJANO · LA ROTONDA · LA FRANCISCA · FRUTOS CONGELADOS · FRUTOS SECOS | **12** |
 | **Sábado** | COCA COLA | 1 |
 
-> ⚠️ **El viernes es el día más pesado de pagos: 10 proveedores**, seis de ellos
+> ⚠️ **El viernes es el día más pesado de pagos: 12 proveedores**, siete de ellos
 > **solo en efectivo**. El efectivo del viernes hay que preverlo el jueves.
+
+> 🚧 **Ojo — esta tabla no coincidía con el calendario.** La versión de Drive listaba
+> 10 proveedores el viernes y ponía FRUTOS SECOS y FRUTOS CONGELADOS los lunes y
+> jueves, cuando el calendario dice **martes y viernes**. Acá está recalculada desde el
+> calendario. **Confirmá cuál de las dos es la correcta** — de esto depende cuánto
+> efectivo hay que tener el viernes.
 
 ---
 
@@ -110,12 +118,14 @@ al local antes del día de pago:
 
 | Proveedor | Se paga |
 |---|---|
+| LAS FLORES | Lunes, miércoles y viernes |
 | SERENÍSIMA | Lunes |
 | NUECES | Miércoles y viernes |
 | CAMPO QUIJANO (DDL) | Miércoles y viernes |
 | LA ROTONDA LÁCTEOS | Martes y viernes |
 | LA FRANCISCA | Martes y viernes |
 | FRUTOS CONGELADOS | Martes y viernes |
+| FRUTOS SECOS | Martes y viernes |
 
 ## Proveedores que solo aceptan transferencia
 
