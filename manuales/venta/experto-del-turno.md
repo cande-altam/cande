@@ -21,6 +21,40 @@ dura, y que quede constancia de cómo salió.
 > No es un cargo permanente: es **quien tiene la responsabilidad durante ese turno**.
 > Siempre hay uno, y **siempre se sabe quién es**.
 
+## Cómo funciona el puesto
+
+### Es móvil
+
+**El Experto cambia de turno a turno.** Se define **al armar el cronograma**, así que
+está decidido antes de que arranque el turno — no se discute en el momento.
+
+> ✅ **Mirá el cronograma:** si te toca ser Experto, lo sabés desde que sale.
+
+### Tenés tu rol propio, y además sos Experto
+
+Esto es lo que hace exigente al puesto: **no estás liberado de tareas**. Seguís siendo
+cajero, vendedor, mozo o barista, y **encima** tenés la responsabilidad del turno.
+
+De ahí salen dos reglas prácticas:
+
+| | |
+|---|---|
+| 🔁 **Cuando dejás tu puesto, avisá** | Si tenés que atender un reclamo o resolver algo, decile a alguien que cubra. Tu puesto no queda solo |
+| ⚖️ **La responsabilidad del turno tiene prioridad** | Si hay un conflicto con un cliente o algo se está rompiendo, **eso va primero**. Tu tarea espera |
+
+> ### 🔑 Ser Experto no es hacer más tareas.
+> Es **tener la última palabra durante el turno**. La mayor parte del tiempo estás en
+> tu puesto como todos; la diferencia aparece cuando algo se sale de lo previsto.
+
+### En producción no hay Experto
+
+En la cuadra de producción **cada área tiene su maestro**, que es el responsable de su
+propio turno. El Experto es de los **locales de venta**.
+
+> **Compras y el Ayudante de Cocina tienen su base en el local de venta**, aunque
+> cubran tareas en la cuadra — los dos locales están pegados físicamente. Por eso
+> **reportan al Experto del turno**.
+
 ---
 
 ## Tu alcance — Las tres áreas
@@ -266,6 +300,14 @@ se va a dejar de hacer.
 - Faltante en una entrega
 - Reclamo de cliente que escaló
 
+### Dónde se carga
+
+**El reporte va a cargarse en la web**, en una de las que ya se usan todos los días.
+
+> 🚧 **Falta implementarlo.** Mientras no exista la pantalla, el reporte se hace donde
+> indique Administración — pero **se hace igual**. Un turno sin reporte es un turno del
+> que no queda nada.
+
 ---
 
 ## 10. Cierre del turno
@@ -333,26 +375,19 @@ se va a dejar de hacer.
 
 ## 🚧 Pendientes de definición
 
-- [ ] **🔴 Dónde se deja el reporte.** Sin un lugar definido, el reporte no existe.
-      Las opciones son las mismas que evalué para el registro del vehículo — ver
-      [Vehículo y traslado, sección Registro](../comunes/vehiculo-de-transporte.md#-registro-de-uso).
-      Conviene que **los dos usen el mismo sistema**.
-- [ ] **Quién es el Experto en cada turno.** ¿Es un puesto fijo por persona, rota, o se
-      define al armar el cronograma? **Tiene que estar claro antes de que arranque el
-      turno**, no discutirse cuando aparece un problema.
-- [ ] **Si el Experto tiene además su propio puesto.** ¿Es alguien que atiende y además
-      es Experto, o está liberado de tareas para poder mirar el conjunto? Cambia por
-      completo lo que se le puede pedir.
+- [ ] **🔴 Construir la pantalla del reporte** en la web de Pedidos de Producción.
+      Es lo único que falta para que el reporte del turno funcione de verdad.
 - [ ] **Hasta dónde llega su autoridad con el cliente.** Si puede no cobrar un ítem,
       hasta qué monto, y cuándo tiene que consultar a Administración.
-- [ ] **Quién lee los reportes.** Un reporte que nadie lee se deja de escribir.
-- [ ] **Relación con Administración.** Qué decide el Experto solo y qué consulta. Hoy la
-      frontera aparece clara solo en el tema pagos.
+- [ ] **Quién lee los reportes y cada cuánto.** Un reporte que nadie lee se deja de
+      escribir. Conviene definir quién los revisa y qué hace con lo que encuentra.
+- [ ] **Quién cubre tu puesto** cuando dejás tu tarea para atender algo del turno.
+      ¿Es el compañero más cercano, o hay alguien designado?
 - [ ] **Los llamados de atención.** El manual de Cajeros los menciona como consecuencia
       de una falta. Falta definir si los aplica el Experto o Administración.
-- [ ] **Cronogramas y turnos del personal.** Existe una planilla *"Horarios y
-      calendarios"*. Falta definir si armar los turnos es responsabilidad de este puesto
-      o de Administración.
+- [ ] **El maestro de cada área de producción.** Es el equivalente al Experto en la
+      cuadra y **todavía no tiene manual**. Conviene escribirlo — sobre todo para
+      definir qué reporta y a quién.
 
 ---
 

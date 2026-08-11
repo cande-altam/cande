@@ -33,6 +33,7 @@ y **un local de producción**.
 | Compras | [produccion/compras.md](produccion/compras.md) | 🟡 v1.0 — Julio 2026 · con puntos a definir |
 | Ayudante de cocina *(San Luis)* | [produccion/ayudante-de-cocina.md](produccion/ayudante-de-cocina.md) | 🟡 v1.0 — Agosto 2026 · con puntos a definir |
 | Jefe de cocina *(San Luis)* | — | ⬜ Pendiente |
+| **Maestro de área** | — | ⬜ Pendiente — el equivalente al Experto en la cuadra |
 | *Bases y preparaciones* | [produccion/bases.md](produccion/bases.md) | 🟠 v0.5 — 6 bases, falta el proceso |
 
 > **Sobre Cocina San Luis.** No es un área de producción aparte: forma parte del local
