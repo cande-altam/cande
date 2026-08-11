@@ -162,6 +162,8 @@
   .cellsel.dupe{background:var(--crit-soft);color:var(--crit);font-weight:700}
   .cellsel.disabled{opacity:.32;pointer-events:none}
   .cellsel.he{box-shadow:inset 0 0 0 1.5px var(--teal)}
+  .cellsel.expert{background:var(--warn-soft);color:var(--warn);font-weight:700;box-shadow:inset 0 0 0 1.5px var(--warn)}
+  .cellsel.expert.he{box-shadow:inset 0 0 0 1.5px var(--warn),inset 0 0 0 3px var(--teal)}
   td.cell.closed{background:repeating-linear-gradient(45deg,var(--chip),var(--chip) 5px,transparent 5px,transparent 10px)}
   td.cell.inactive{background:var(--panel-2)}
   .celloff{display:block;text-align:center;padding:8px 5px;font-size:11px;color:var(--line-strong);user-select:none}
@@ -169,6 +171,7 @@
   .puesto.extra{font-style:italic;color:var(--accent-ink);font-weight:600}
   td.cell.extra .cellsel.filled{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent)}
   td.cell.extra .cellsel.filled.he{box-shadow:inset 0 0 0 1.5px var(--teal)}
+  td.cell.extra .cellsel.filled.expert{box-shadow:inset 0 0 0 1.5px var(--warn)}
   td.cell.extra .cellsel.filled.dupe{box-shadow:none}
   .excell{position:relative;display:flex;align-items:center}
   .excell .cellsel{flex:1}
@@ -397,6 +400,19 @@
           </div>
           <button class="btn" id="btnSetRoleBackup" style="margin-top:9px;width:100%">Guardar respaldos</button>
           <div class="mini-list" id="roleOverrideList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Experto del turno</span>
+          <p class="sub" style="padding:4px 0 0">Se destaca con ⭐ dondequiera que esa persona aparezca asignada en la grilla.</p>
+          <div class="field">
+            <label for="expertoPerson">Persona</label>
+            <select id="expertoPerson"></select>
+          </div>
+          <button class="btn" id="btnAddExperto" style="margin-top:9px;width:100%">⭐ Marcar como experto</button>
+          <div class="mini-list" id="expertoList"></div>
         </div>
       </section>
 
@@ -631,7 +647,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-10 incompatibilidad-por-local";
+const APP_VERSION="2026-08-10 experto-del-turno";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -721,7 +737,7 @@ function peopleFor(role,loc){
 }
 
 /* ---------------- STATE ---------------- */
-function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{}};}
+function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{},expertos:[]};}
 // las reglas "semilla" (seedFixedRules, seedCocinaComprasCajero) se cargan una sola vez por tag.
 // Antes se detectaba "ya cargada" mirando si quedaba algún turno fijo con ese tag — pero si borrabas
 // el grupo ENTERO, no quedaba ninguno, y el sistema lo tomaba como "todavía no cargada" y lo volvía a
@@ -1125,7 +1141,7 @@ function selHTML(d,loc,shift,role,idx,active,closed){
   const cur=state.assign[k]||"";
   if(!active)return `<td class="cell ${isWknd(d)?"wknd":""} ${closed?"closed":"inactive"}"><span class="celloff">${closed?"Cerrado":"·"}</span></td>`;
   const opts=peopleFor(role,loc).map(p=>{
-    return `<option value="${p.n}" ${p.n===cur?"selected":""}>${p.n}${roleFor(p.n)!==role?" ⤵":""}</option>`;
+    return `<option value="${p.n}" ${p.n===cur?"selected":""}>${nombreDestacado(p.n)}${roleFor(p.n)!==role?" ⤵":""}</option>`;
   }).join("");
   // dupe detection for this cell
   let dupe=false;
@@ -1133,7 +1149,7 @@ function selHTML(d,loc,shift,role,idx,active,closed){
     state.ex.forEach(e=>{if(e.n===cur&&e.day===d&&e.shift===shift)dupe=true;});}
   const he=cur&&isDoubleShift(cur,d);
   const errMsg=dupe?dupeMsg(cur,d,shift):incompatMsgFor(cur,d,loc,shift);
-  const cls=`cellsel ${cur?"filled":"empty"} ${errMsg?"dupe":""} ${he?"he":""}`;
+  const cls=`cellsel ${cur?"filled":"empty"} ${errMsg?"dupe":""} ${he?"he":""} ${cur&&esExperto(cur)?"expert":""}`;
   const errAttr=errMsg?` data-err="${errMsg}"`:"";
   const label=(cur?cur+" · ":"")+DAYS[d][1]+" "+(shift==="M"?"mañana":"tarde");
   return `<td class="cell ${isWknd(d)?"wknd":""}"><select class="${cls}" data-k="${k}"${errAttr}><option value="">—</option>${opts}</select>${noteBtnHTML(k,label)}</td>`;
@@ -1151,6 +1167,10 @@ function isDoubleShift(name,d){
 // "X no puede trabajar con Y": se compara el mismo turno (día+mañana/tarde) Y el mismo local — si
 // están en el mismo horario pero en San Luis y SLA respectivamente, no cuenta como choque.
 function sonIncompatibles(a,b){return state.incompat.some(r=>(r.a===a&&r.b===b)||(r.a===b&&r.b===a));}
+// "Experto del turno": marca permanente sobre la persona (no cambia semana a semana), para que se
+// destaque dondequiera que aparezca asignada en la grilla.
+function esExperto(name){return state.expertos.includes(name);}
+function nombreDestacado(name){return esExperto(name)?"⭐ "+name:name;}
 // "no pueden trabajar juntos" es por local: si están en el mismo turno pero en San Luis y SLA
 // respectivamente, no cuenta como choque — solo importa si coinciden en el mismo local.
 function quienesEnTurno(d,loc,shift){
@@ -1169,7 +1189,7 @@ function exAt(d,loc,shift,role){return state.ex.filter(e=>e.day===d&&e.loc===loc
 function extraCellHTML(e){
   // a diferencia de la grilla base, "Personas extra" es refuerzo libre: cualquiera puede cubrir
   // cualquier puesto puntual, no solo quienes ya tienen ese rol como principal o de respaldo.
-  const opts=PEOPLE.map(p=>`<option value="${p.n}" ${p.n===e.n?"selected":""}>${p.n}${roleFor(p.n)!==e.role?" ⤵":""}</option>`).join("");
+  const opts=PEOPLE.map(p=>`<option value="${p.n}" ${p.n===e.n?"selected":""}>${nombreDestacado(p.n)}${roleFor(p.n)!==e.role?" ⤵":""}</option>`).join("");
   let dupe=false;
   Object.keys(state.assign).forEach(kk=>{const[dd,,sh]=kk.split("|");if(+dd===e.day&&sh===e.shift&&state.assign[kk]===e.n)dupe=true;});
   state.ex.forEach(o=>{if(o!==e&&o.n===e.n&&o.day===e.day&&o.shift===e.shift)dupe=true;});
@@ -1179,7 +1199,7 @@ function extraCellHTML(e){
   const errAttr=errMsg?` data-err="${errMsg}"`:"";
   const ck="ex:"+e.id;
   const label=(e.n?e.n+" · ":"")+DAYS[e.day][1]+" "+(e.shift==="M"?"mañana":"tarde");
-  return `<td class="cell extra ${isWknd(e.day)?"wknd":""}"><div class="excell"><select class="cellsel filled ${errMsg?"dupe":""} ${he?"he":""}" data-ex="${e.id}"${errAttr}><option value="">— quitar</option>${opts}</select>${badge}${noteBtnHTML(ck,label)}</div></td>`;
+  return `<td class="cell extra ${isWknd(e.day)?"wknd":""}"><div class="excell"><select class="cellsel filled ${errMsg?"dupe":""} ${he?"he":""} ${esExperto(e.n)?"expert":""}" data-ex="${e.id}"${errAttr}><option value="">— quitar</option>${opts}</select>${badge}${noteBtnHTML(ck,label)}</div></td>`;
 }
 // nombre a mostrar para la fila de refuerzo de un puesto: en San Luis los refuerzos de atención se
 // llaman "Mozo 2" (ni "Vendedor 1/2" ni "Mozo 1", que ya son las filas base) — en el resto de los
@@ -1247,7 +1267,7 @@ function filaRefuerzo(loc,shift,role,label,r,permiteAgregar){
   return h;
 }
 function newExtraCellHTML(d,loc,shift,role){
-  const opts=PEOPLE.map(p=>`<option value="${p.n}">${p.n}${roleFor(p.n)!==role?" ⤵":""}</option>`).join("");
+  const opts=PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)}${roleFor(p.n)!==role?" ⤵":""}</option>`).join("");
   return `<td class="cell extra ${isWknd(d)?"wknd":""}"><div class="excell"><select class="cellsel empty" data-newex="${d}|${loc}|${shift}|${role}"><option value="">+ agregar</option>${opts}</select></div></td>`;
 }
 function restRows(loc,worked){
@@ -1655,11 +1675,11 @@ function openImportView(){
 function fillPersonSelects(){
   document.getElementById("nuevoRole").innerHTML=Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join("");
   document.getElementById("nuevoFranco").innerHTML=`<option value="auto">Sin fijar (variable cada semana)</option>`+DAYS.map((d,i)=>`<option value="${i}">${d[1]}</option>`).join("");
-  const incompatOpts=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n}</option>`).join("");
+  const incompatOpts=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)}</option>`).join("");
   document.getElementById("incompatA").innerHTML=incompatOpts;
   document.getElementById("incompatB").innerHTML=incompatOpts;
-  const opts=`<option value="">Elegí…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
-  document.getElementById("absPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n}</option>`).join("");
+  const opts=`<option value="">Elegí…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
+  document.getElementById("absPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)}</option>`).join("");
   document.getElementById("exPerson").innerHTML=opts;
   document.getElementById("exDay").innerHTML=DAYS.map((d,i)=>`<option value="${i}">${d[1]}</option>`).join("");
   document.getElementById("exRole").innerHTML=Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join("");
@@ -1668,16 +1688,18 @@ function fillPersonSelects(){
   const dayOpts=DAYS.map((d,i)=>`<option value="${i}">${d[1]}</option>`).join("");
   document.getElementById("ruleDay").innerHTML=dayOpts;
   document.getElementById("ruleNotaDay").innerHTML=dayOpts;
-  document.getElementById("fixedPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
+  document.getElementById("fixedPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
   document.getElementById("fixedDays").innerHTML=DAYS.map((d,i)=>`<label>${d[2]}<input type="checkbox" value="${i}"></label>`).join("");
   document.getElementById("fixedRole").innerHTML=Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join("");
   syncFixedLocVisibility();
-  document.getElementById("francoPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n}</option>`).join("");
+  document.getElementById("francoPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)}</option>`).join("");
   document.getElementById("francoDay").innerHTML=`<option value="auto">Automático (variable cada semana)</option>`+DAYS.map((d,i)=>`<option value="${i}">${d[1]}</option>`).join("");
   syncFrancoDaySelection();
-  document.getElementById("rolePerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${p.n} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
+  document.getElementById("rolePerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
   document.getElementById("roleMain").innerHTML=Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join("");
   syncRoleControls();
+  const expertoOpts=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)}</option>`).join("");
+  document.getElementById("expertoPerson").innerHTML=expertoOpts;
 }
 // edición de una persona agregada a mano (ver tarjeta "Sumar persona al equipo"): reusa el mismo
 // formulario en vez de duplicarlo, cambiando el botón a "Guardar cambios" mientras dura la edición.
@@ -1773,6 +1795,12 @@ function renderMini(){
       `<div class="mini-row"><span class="pill abs">🚫</span> <b>${r.a}</b> con <b>${r.b}</b>${r.nota?` · <i>${r.nota}</i>`:""} <button class="x" data-i="${i}" data-t="incompat">×</button></div>`
     ).join(""):`<p class="sub" style="padding:0">Todavía no cargaste ninguna incompatibilidad.</p>`;
   }
+  const el2=document.getElementById("expertoList");
+  if(el2){
+    el2.innerHTML=state.expertos.length?state.expertos.map((n,i)=>
+      `<div class="mini-row"><span class="pill he">⭐</span> <b>${n}</b> <button class="x" data-i="${i}" data-t="experto">×</button></div>`
+    ).join(""):`<p class="sub" style="padding:0">Todavía no marcaste a nadie como experto.</p>`;
+  }
   const rol=document.getElementById("roleOverrideList");
   if(rol){
     const names=new Set([...Object.keys(state.roleOverride),...Object.keys(state.backupOverride)]);
@@ -1816,6 +1844,7 @@ function renderMini(){
       return;
     }
     if(t==="incompat"){state.incompat.splice(+b.dataset.i,1);renderMini();render();persist();return;}
+    if(t==="experto"){state.expertos.splice(+b.dataset.i,1);fillPersonSelects();renderMini();render();persist();return;}
     const i=+b.dataset.i;
     if(t==="abs"){
       const a=state.abs[i];
@@ -1872,6 +1901,14 @@ function initControls(){
     renderMini();render();persist();
     document.getElementById("incompatNota").value="";
     toast(`Regla agregada: ${a} no trabaja con ${b}`);
+  });
+  document.getElementById("btnAddExperto").addEventListener("click",()=>{
+    const n=document.getElementById("expertoPerson").value;
+    if(!n)return toast("Elegí una persona");
+    if(esExperto(n))return toast(`${n} ya está marcado como experto`);
+    state.expertos.push(n);
+    fillPersonSelects();renderMini();render();persist();
+    toast(`${n} marcado como experto ⭐`);
   });
   document.getElementById("btnAuto").addEventListener("click",autocomplete);
   document.getElementById("weekStart").addEventListener("change",e=>{
@@ -2101,6 +2138,8 @@ function limpiarPersonasDadasDeBaja(){
   state.incompat=state.incompat.filter(r=>BY_NAME[r.a]&&BY_NAME[r.b]);
   if(!state.ausObviada)state.ausObviada={};
   Object.keys(state.ausObviada).forEach(k=>{if(!BY_NAME[k.split("|")[0]])delete state.ausObviada[k];});
+  if(!state.expertos)state.expertos=[];
+  state.expertos=state.expertos.filter(n=>BY_NAME[n]);
 }
 // Leandro (el barista, SLA) pasa a llamarse "Leandro Villagra" para no confundirlo con Leandro
 // Tolaba (persona aparte, solo en el módulo de Vacaciones — producción/Cuadra). Migra cualquier
