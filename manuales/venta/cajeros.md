@@ -34,7 +34,7 @@ Trabajás con tres herramientas:
 2. Registrá la apertura en **FUDO**.
 3. Verificá que haya **cambio suficiente** en billetes y monedas.
 
-> ⚠️ **Si el fondo no cuadra, avisá al encargado antes de atender al público.**
+> ⚠️ **Si el fondo no cuadra, avisá al Experto del turno antes de atender al público.**
 
 ---
 
@@ -71,10 +71,10 @@ Trabajás con tres herramientas:
 ## 4. Devoluciones
 
 1. Escuchá el motivo de la devolución.
-2. **Avisá al encargado** para que autorice.
+2. **Avisá al Experto del turno** para que autorice.
 3. Registrá la devolución en FUDO.
 
-> ⚠️ **Sin autorización del encargado, no se hace ninguna devolución.**
+> ⚠️ **Sin autorización del Experto del turno, no se hace ninguna devolución.**
 
 ---
 
@@ -96,7 +96,7 @@ Cuando un cliente deja una seña para un pedido futuro:
 
 - Las cuentas corrientes se gestionan desde **FUDO**.
 - **Confirmá siempre el saldo disponible** antes de cerrar la venta.
-- Para habilitar una nueva CC, el cliente debe estar **dado de alta por el encargado**.
+- Para habilitar una nueva CC, el cliente debe estar **dado de alta por el Experto del turno**.
 
 ---
 
@@ -106,7 +106,7 @@ Cuando un cliente deja una seña para un pedido futuro:
 2. Registrá el cierre en **FUDO**.
 3. Separá el **fondo para el turno siguiente**.
 4. Prepará el **sobre de depósito**.
-5. Entregá el sobre al **encargado**.
+5. Entregá el sobre al **Experto del turno**.
 
 > ⚠️ **Si hay diferencia, informala antes de salir** (ver Sección 8).
 
@@ -116,8 +116,8 @@ Cuando un cliente deja una seña para un pedido futuro:
 
 | Caso | Qué hacer |
 |---|---|
-| **Sobrante** | Informar al encargado — **no tocarlo** |
-| **Faltante** | Informar al encargado — puede requerir descuento según reglamento |
+| **Sobrante** | Informar al Experto del turno — **no tocarlo** |
+| **Faltante** | Informar al Experto del turno — puede requerir descuento según reglamento |
 
 > ⚠️ **Las diferencias siempre se reportan, aunque sean pequeñas.**
 
@@ -126,7 +126,7 @@ Cuando un cliente deja una seña para un pedido futuro:
 ## 9. Movimientos de stock
 
 - **Roturas, consumo interno, diferencias de inventario** → se registran en FUDO.
-- Pedí **autorización al encargado** antes de registrar cualquier movimiento especial.
+- Pedí **autorización al Experto del turno** antes de registrar cualquier movimiento especial.
 
 ---
 
@@ -213,8 +213,8 @@ producto. Se carga **una vez por turno**, antes del horario límite de cada áre
 ### Importante
 
 - Cargá siempre **antes del horario límite**.
-- El pedido es para el **día siguiente** (salvo que el encargado indique otra cosa).
-- Si te olvidaste, **avisá al encargado inmediatamente**.
+- El pedido es para el **día siguiente** (salvo que el Experto del turno indique otra cosa).
+- Si te olvidaste, **avisá al Experto del turno inmediatamente**.
 
 ---
 
@@ -279,7 +279,7 @@ producto. Se carga **una vez por turno**, antes del horario límite de cada áre
       (Especialidades / Facturería / Sandwiches / Cocina San Luis — antes de las **21:00 hs**)
 - ☐ Pedidos de Clientes del día: todos cargados, ninguno pendiente
 - ☐ Caja contada y registrada en FUDO
-- ☐ Diferencia informada al encargado (si la hay)
+- ☐ Diferencia informada al Experto del turno (si la hay)
 - ☐ Fondo separado para el turno siguiente
 - ☐ Sobre de depósito preparado y entregado
 

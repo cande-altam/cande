@@ -245,7 +245,7 @@ Esto quiere decir algo muy concreto: **una multa se asigna por fecha y hora**.
 - ☐ **Combustible y cubiertas** — si notaste algo, avisalo
 - ☐ **Vehículo estacionado** en la cuadra de producción
 - ☐ **Llave devuelta** al local de venta San Luis
-- ☐ **Novedades avisadas al encargado** (un ruido nuevo, un golpe, una luz encendida)
+- ☐ **Novedades avisadas al Experto del turno** (un ruido nuevo, un golpe, una luz encendida)
 
 > Lo que no se avisa, aparece en el turno del otro.
 
@@ -391,7 +391,7 @@ Un grupo con Compras, Ayudante y Administración: foto y mensaje al entregar.
 
 - ☐ Todo descargado, nada olvidado en la caja
 - ☐ Caja de carga limpia
-- ☐ Novedades avisadas al encargado
+- ☐ Novedades avisadas al Experto del turno
 - ☐ Vehículo en condiciones para el turno siguiente
 
 ---

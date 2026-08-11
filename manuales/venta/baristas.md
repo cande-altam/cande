@@ -33,7 +33,7 @@ Usás una herramienta digital en tu turno:
 3. **Limpiá la barra y los utensilios** antes de empezar.
 4. **Calibrá la molienda** del café (según el clima o el lote).
 5. Preparate un **café de prueba** — verificá sabor, temperatura y extracción.
-6. **Avisá al encargado** si algo no está en condiciones.
+6. **Avisá al Experto del turno** si algo no está en condiciones.
 
 > ⚠️ **No arranques a atender si la cafetera no está a temperatura y la molienda no
 > está correcta.**
@@ -118,7 +118,7 @@ Cuando un cliente tiene un problema con su bebida:
 3. **S — Solve (Resolver)**: Ofrecé **rehacer la bebida** o una alternativa.
 4. **T — Thanks (Agradecer)**: *"Gracias por decírnoslo, nos ayuda a mejorar."*
 
-> ⚠️ **Para problemas grandes, llamá al encargado. Nunca discutas con el cliente.**
+> ⚠️ **Para problemas grandes, llamá al Experto del turno. Nunca discutas con el cliente.**
 
 ---
 
@@ -168,8 +168,8 @@ Si no cargás a tiempo, producción no puede cumplir.
 ### Importante
 
 - Cargá **antes del horario límite** de cada área.
-- El pedido es para el **día siguiente** (salvo que el encargado indique otra cosa).
-- Si te olvidaste, **avisá al encargado inmediatamente**.
+- El pedido es para el **día siguiente** (salvo que el Experto del turno indique otra cosa).
+- Si te olvidaste, **avisá al Experto del turno inmediatamente**.
 
 ---
 
@@ -219,7 +219,7 @@ Si no cargás a tiempo, producción no puede cumplir.
 - ☐ Barra lista para el turno siguiente
 - ☐ Pedidos de Producción noche cargados
       (Especialidades / Facturería / Sandwiches / Cocina San Luis — antes de las **21:00 hs**)
-- ☐ Incidencias del turno reportadas al encargado
+- ☐ Incidencias del turno reportadas al Experto del turno
 
 ---
 

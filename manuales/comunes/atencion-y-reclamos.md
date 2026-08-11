@@ -41,7 +41,7 @@ Ofrecé una **solución concreta**, no una explicación:
 
 > ⚠️ **Nunca discutas con el cliente.**
 > ⚠️ **Nunca niegues el problema.**
-> ⚠️ **Si el reclamo es grande, llamá al encargado de inmediato.**
+> ⚠️ **Si el reclamo es grande, llamá al Experto del turno de inmediato.**
 
 No tenés que resolver todo solo/a. Escalar a tiempo es hacer bien tu trabajo, no
 es fallar.

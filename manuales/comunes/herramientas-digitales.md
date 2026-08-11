@@ -38,8 +38,8 @@ Se carga **una vez por turno**, antes del horario límite de cada área.
 > ni personal propio: la operación es del local San Luis.
 
 > ⚠️ **Si no cargás a tiempo, producción no puede cumplir.**
-> El pedido es para el **día siguiente**, salvo que el encargado indique otra cosa.
-> Si te olvidaste, avisá al encargado **inmediatamente** — no lo dejes pasar.
+> El pedido es para el **día siguiente**, salvo que el Experto del turno indique otra cosa.
+> Si te olvidaste, avisá al Experto del turno **inmediatamente** — no lo dejes pasar.
 
 ---
 

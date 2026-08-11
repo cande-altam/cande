@@ -19,7 +19,7 @@ y **un local de producción**.
 | Cajeros | [venta/cajeros.md](venta/cajeros.md) | ✅ v2.0 — Junio 2026 |
 | Vendedores y Mozos | [venta/vendedores-y-mozos.md](venta/vendedores-y-mozos.md) | ✅ v2.0 — Junio 2026 |
 | Baristas | [venta/baristas.md](venta/baristas.md) | ✅ v2.0 — Junio 2026 |
-| Encargado de local | [venta/encargado-de-local.md](venta/encargado-de-local.md) | 🟠 v0.9 — **Borrador, falta confirmar** |
+| **Experto del Turno** | [venta/experto-del-turno.md](venta/experto-del-turno.md) | 🟡 v1.0 — Agosto 2026 · con puntos a definir |
 
 ### 🥖 Local de producción
 

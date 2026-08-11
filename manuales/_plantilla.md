@@ -125,7 +125,7 @@ qué logra, no qué evita.*
 ### Cierre
 
 - ☐ […]
-- ☐ Incidencias del turno reportadas al encargado
+- ☐ Incidencias del turno reportadas al Experto del turno
 
 ---
 

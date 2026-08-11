@@ -24,7 +24,7 @@ de trabajo.
 
 - El día de descanso **está previsto en el cronograma**, no se improvisa.
 - **Trabajar el día de descanso no es lo normal.** Si pasa, tiene que estar acordado
-  de antemano con el encargado.
+  de antemano con el Experto del turno.
 - El descanso **no se acumula ni se cambia por dinero** sin autorización.
 
 > ### 🚧 Hay al menos una excepción sin resolver
@@ -52,7 +52,7 @@ cumple con su jornada.
   cambiarse.
 - **Avisá con anticipación** si no vas a poder venir, apenas lo sepas.
 - **Justificá las ausencias** con el comprobante que corresponda (certificado médico,
-  turno, lo que sea) y entregalo al encargado.
+  turno, lo que sea) y entregalo al Experto del turno.
 - **Respetá tu día de descanso** — cambiarlo por tu cuenta desordena el cronograma de
   todo el equipo.
 
@@ -72,7 +72,7 @@ cumple con su jornada.
 - [ ] **Qué ausencias no lo afectan.** Certificado médico, licencias, trámites — cuáles
       están contempladas y con qué comprobante.
 - [ ] **Cómo se asigna el día de descanso.** ¿Es fijo por persona o rota? ¿Quién lo
-      define, el encargado o Administración?
+      define, el Experto del turno o Administración?
 - [ ] **Cómo se pide un cambio de franco.** Con cuánta anticipación, a quién se le
       pide, y si hace falta que otra persona lo cubra.
 - [ ] **Feriados.** Cómo se trabajan y cómo impactan en el esquema 6+1.
@@ -86,6 +86,6 @@ cumple con su jornada.
 
 ## Documentos relacionados
 
-- [Manual de Encargado de Local](../venta/encargado-de-local.md) — quién controla la
+- [Manual de Experto del Turno](../venta/experto-del-turno.md) — quién controla la
   asistencia y arma los turnos
 - [Higiene y presentación](higiene-y-presentacion.md) — uniforme y presentación personal

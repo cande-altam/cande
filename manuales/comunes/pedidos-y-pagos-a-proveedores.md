@@ -160,7 +160,7 @@ cualquier reparación, sin importar el monto.
 ## 🚧 Pendientes de definición
 
 - [ ] **Quién hace el pedido al proveedor.** El documento no lo dice: puede ser
-      Compras, el encargado del local o Administración. Falta definirlo por escrito.
+      Compras, el Experto del turno del local o Administración. Falta definirlo por escrito.
 - [ ] **Cómo se avisa a Administración.** ¿WhatsApp, planilla, llamada? Hoy no está
       especificado y es el paso del que depende todo el circuito.
 - [ ] **Qué insumo compra cada proveedor.** El calendario no lo dice. Sin eso, quien

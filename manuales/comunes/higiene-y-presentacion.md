@@ -37,7 +37,7 @@
 
 - Verificá la **fecha de vencimiento** de fiambres y lácteos al inicio del turno.
 - Mantené la heladera **limpia y organizada**.
-- **Productos vencidos** → retirá y avisá al encargado **de inmediato**.
+- **Productos vencidos** → retirá y avisá al Experto del turno **de inmediato**.
 - **No rompas la cadena de frío** — no dejes productos fuera de la heladera sin
   necesidad.
 
@@ -47,8 +47,8 @@
 
 | Situación | A quién | Cuándo |
 |---|---|---|
-| Producto vencido | Encargado | De inmediato |
-| Producto agotado | Encargado | De inmediato |
-| Equipo que no funciona | Encargado | Antes de abrir |
-| Rotura o consumo interno | Encargado → registrar en FUDO | En el momento |
-| Incidencia del turno | Encargado | Al cierre |
+| Producto vencido | Experto del turno | De inmediato |
+| Producto agotado | Experto del turno | De inmediato |
+| Equipo que no funciona | Experto del turno | Antes de abrir |
+| Rotura o consumo interno | Experto del turno → registrar en FUDO | En el momento |
+| Incidencia del turno | Experto del turno | Al cierre |

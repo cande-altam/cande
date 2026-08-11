@@ -78,7 +78,7 @@ Cuando un cliente tiene un problema, seguí estos 4 pasos:
 4. **T — Thanks (Agradecer)**: *"Gracias por avisarnos, eso nos ayuda a mejorar."*
 
 > ⚠️ **Nunca discutas con el cliente. Nunca niegues el problema. Siempre avisá al
-> encargado si el reclamo es grande.**
+> Experto del turno si el reclamo es grande.**
 
 ---
 
@@ -87,7 +87,7 @@ Cuando un cliente tiene un problema, seguí estos 4 pasos:
 - Todos los panes se despachan **con pinza y papel — nunca con la mano**.
 - **Verificá siempre la frescura.** Pan viejo no sale.
 - Si una bandeja está baja, avisá a producción o reponé desde el depósito.
-- Cuando un producto se agota → **avisá al encargado de inmediato**.
+- Cuando un producto se agota → **avisá al Experto del turno de inmediato**.
 
 ---
 
@@ -113,7 +113,7 @@ Cuando un cliente tiene un problema, seguí estos 4 pasos:
 
 - **Verificá la fecha de vencimiento** al inicio del turno.
 - Mantené la heladera limpia y organizada.
-- **Productos vencidos** → retirá y avisá al encargado de inmediato.
+- **Productos vencidos** → retirá y avisá al Experto del turno de inmediato.
 - **No rompas la cadena de frío** — no dejes productos fuera de la heladera sin
   necesidad.
 
@@ -244,7 +244,7 @@ excelente: **bienvenida cálida, servicio rápido y despedida amable**.
 3. Limpiar **vidrios y vitrinas** del salón.
 4. Revisar **baños** y dejarlos limpios.
 5. Apagar **luces y equipos**.
-6. **Reportar al encargado** cualquier incidencia del turno.
+6. **Reportar al Experto del turno** cualquier incidencia del turno.
 
 ---
 
@@ -255,7 +255,7 @@ excelente: **bienvenida cálida, servicio rápido y despedida amable**.
 3. **S — Solve (Resolver)**: Ofrecé una solución — reponer, cambiar, no cobrar el ítem.
 4. **T — Thanks (Agradecer)**: *"Gracias por avisarnos, eso nos ayuda a mejorar."*
 
-> ⚠️ **Nunca discutas con el cliente. Para reclamos grandes, llamá al encargado de
+> ⚠️ **Nunca discutas con el cliente. Para reclamos grandes, llamá al Experto del turno de
 > inmediato.**
 
 ---
@@ -330,7 +330,7 @@ cumpleaños, encargues especiales, catering.
 
 ✅ Producción puede ver el pedido de inmediato.
 
-> ⚠️ **Si te olvidaste de cargar a tiempo, avisá al encargado inmediatamente.**
+> ⚠️ **Si te olvidaste de cargar a tiempo, avisá al Experto del turno inmediatamente.**
 
 ---
 
@@ -407,7 +407,7 @@ cumpleaños, encargues especiales, catering.
 - ☐ Pedidos de Producción noche cargados
       (Especialidades / Facturería / Sandwiches / Cocina San Luis — antes de las **21:00 hs**)
 - ☐ Pedidos de Clientes: ninguno pendiente
-- ☐ Incidencias del turno reportadas al encargado
+- ☐ Incidencias del turno reportadas al Experto del turno
 
 ---
 

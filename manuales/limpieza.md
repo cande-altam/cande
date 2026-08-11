@@ -187,7 +187,7 @@ estructural, profunda y de las zonas comunes.
 | **Vehículo de transporte** | Compras y Ayudante de Cocina — barrido diario, lavado cada 10 días | — |
 
 > ### 🔑 Una tarea sin dueño no se hace.
-> Si algo no está en ninguna de las dos columnas, avisale al encargado antes de que se
+> Si algo no está en ninguna de las dos columnas, avisale al Experto del turno antes de que se
 > convierta en un problema.
 
 ---
@@ -234,7 +234,7 @@ estructural, profunda y de las zonas comunes.
 
 ---
 
-## 📣 Qué reportar al encargado
+## 📣 Qué reportar al Experto del turno
 
 - Un producto de limpieza que **se acabó** y no está cargado en el pedido
 - Un equipo **roto o que pierde**
@@ -292,7 +292,7 @@ estructural, profunda y de las zonas comunes.
 - ☐ Basura retirada en bolsas cerradas, sin roturas
 - ☐ Productos guardados en su lugar, lejos de los alimentos
 - ☐ Pedido de insumos cargado si faltó algo
-- ☐ Incidencias del turno reportadas al encargado
+- ☐ Incidencias del turno reportadas al Experto del turno
 
 ---
 
@@ -323,6 +323,6 @@ estructural, profunda y de las zonas comunes.
 - [Higiene y presentación](comunes/higiene-y-presentacion.md)
 - [Jornada de trabajo y presentismo](comunes/jornada-y-presentismo.md)
 - [Herramientas digitales](comunes/herramientas-digitales.md)
-- [Manual de Encargado de Local](venta/encargado-de-local.md)
+- [Manual de Experto del Turno](venta/experto-del-turno.md)
 - [Manual de Vendedores y Mozos](venta/vendedores-y-mozos.md)
 - [Manual de Baristas](venta/baristas.md)

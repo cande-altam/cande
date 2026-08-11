@@ -54,11 +54,16 @@ Desde ahí ves todo lo que pidió cada área y cada local, y vas marcando lo que
 1. Cargá la mercadería del día para **SLA 5.0** y **San Luis** en el
    **[vehículo de transporte](../comunes/vehiculo-de-transporte.md)**.
 2. Llevala a cada local a primera hora.
+3. **Cada local revisa la mercadería que llega.** No se firma nada — la revisión es
+   responsabilidad de quien recibe en el local.
 
-> ℹ️ **El vehículo es compartido.** Vos lo usás a la mañana y el **Ayudante de Cocina**
-> a la tarde. Se entrega en condiciones para el turno siguiente.
+> ℹ️ Si un local detecta un faltante, lo reclama en el momento. No lo dejes para
+> después del recorrido.
 
 ### El vehículo también es tu responsabilidad
+
+**El utilitario es compartido:** vos lo usás a la mañana y el **Ayudante de Cocina** a
+la tarde. Se entrega en condiciones para el turno siguiente.
 
 Además de usarlo, **Compras se hace cargo de mantenerlo**:
 
@@ -73,13 +78,11 @@ Además de usarlo, **Compras se hace cargo de mantenerlo**:
 > 🔑 **La llave está en el local de venta San Luis** y el vehículo queda estacionado en
 > la **cuadra de producción**.
 
+> ⚠️ **Las multas son de quien manejaba.** Están a nombre del vehículo, así que
+> respondés por las de tu turno.
+
 > 📖 Protocolo completo de carga y traslado en
 > **[Vehículo y traslado de mercadería](../comunes/vehiculo-de-transporte.md)**.
-3. **Cada local revisa la mercadería que llega.** No se firma nada — la revisión es
-   responsabilidad de quien recibe en el local.
-
-> ℹ️ Si un local detecta un faltante, lo reclama en el momento. No lo dejes para
-> después del recorrido.
 
 ---
 
@@ -163,7 +166,7 @@ Hay **dos formas** en que se le paga a un proveedor. Las dos pasan por Administr
 
 Compras no adivina ni repone por su cuenta. Lo que no está en el sistema, no existe.
 Si un área reclama un insumo que nunca cargó, la falta es del área — pero avisale al
-encargado para que no vuelva a pasar.
+Experto del turno para que no vuelva a pasar.
 
 ---
 
@@ -336,7 +339,7 @@ Igual que en el primero: **cada local revisa lo que recibe, no se firma nada.**
 - ☐ Pendientes revisados — quedan para mañana
 - ☐ Ningún 🔴 urgente sin resolver (o Administración avisada)
 - ☐ Facturas del día presentadas a Administración
-- ☐ Incidencias del turno reportadas al encargado
+- ☐ Incidencias del turno reportadas al Experto del turno
 
 ---
 

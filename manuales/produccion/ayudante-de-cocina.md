@@ -243,7 +243,7 @@ El resto de las tareas **se comparten con el ayudante del turno mañana**:
 - ☐ **Cada lata con su plástico protector**
 - ☐ **Cada latero con su poncho de resguardo**
 - ☐ Vajilla al día y bacha ordenada
-- ☐ Incidencias del turno reportadas al encargado
+- ☐ Incidencias del turno reportadas al Experto del turno
 
 ---
 
