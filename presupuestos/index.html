@@ -284,6 +284,7 @@ const ESTADO_LABELS = { borrador: "Borrador", enviado: "Enviado", aceptado: "Ace
 const TABS = [
   { key: "nuevo",         label: "📝 Nuevo presupuesto" },
   { key: "presupuestos",  label: "📄 Presupuestos" },
+  { key: "clientes",      label: "👥 Clientes" },
   { key: "cantidades",    label: "🧮 Cantidades por evento" },
   { key: "config",        label: "⚙️ Configuración" },
 ];
@@ -347,6 +348,10 @@ const state = {
   calcNotas: "",
   editandoPlantillaId: null,
   verBorradorId: null,
+  editandoId: null,
+  _duplicando: null,
+  clientesBusqueda: "",
+  verClienteKey: null,
 };
 
 // ── Helpers ──────────────────────────────────────────────
@@ -487,6 +492,7 @@ function render() {
   switch (state.view) {
     case "nuevo": renderNuevoView(container); break;
     case "presupuestos": renderListadoView(container); break;
+    case "clientes": renderClientesView(container); break;
     case "cantidades": renderCantidadesView(container); break;
     case "config": renderConfigView(container); break;
     default: container.innerHTML = `<div class="empty-state">Vista no encontrada.</div>`;
@@ -566,18 +572,31 @@ function renderNuevoView(container) {
   // cantidad calculada: solo falta ponerles precio. Se consumen una sola vez.
   const desdeCantidades = state._itemsDesdeCantidades;
   state._itemsDesdeCantidades = null;
-  const itemsPrecargados = desdeCantidades && desdeCantidades.length
-    ? desdeCantidades.map(it => itemRowHtml(it)).join("")
-    : itemRowHtml();
+  // Editar o duplicar un presupuesto ya hecho: se precargan sus datos para no reescribir todo.
+  // Editar conserva el número y el estado; duplicar arma uno nuevo con los mismos ítems.
+  const editando = state.editandoId ? state.presupuestos[state.editandoId] : null;
+  const base = editando || (state._duplicando || null);
+  const itemsPrecargados = base && Array.isArray(base.items) && base.items.length
+    ? base.items.map(it => itemRowHtml(it)).join("")
+    : (desdeCantidades && desdeCantidades.length ? desdeCantidades.map(it => itemRowHtml(it)).join("") : itemRowHtml());
+  const notasGuardadas = Array.isArray(state.config.notasGuardadas) ? state.config.notasGuardadas : [];
   state.formOpen = true;
   container.innerHTML = `
-    <div class="page-title">Nuevo presupuesto</div>
-    <div class="page-sub">Armá una cotización para un cliente con ítems libres. El total se calcula solo.</div>
+    <div class="page-title">${editando ? `Editar presupuesto #${editando.numero}` : (base ? "Nuevo presupuesto (copia)" : "Nuevo presupuesto")}</div>
+    <div class="page-sub">${editando
+      ? "Estás modificando un presupuesto ya guardado: conserva su número y su estado."
+      : (base ? "Copia de un presupuesto anterior: cambiá lo que haga falta y guardalo como uno nuevo." : "Armá una cotización para un cliente con ítems libres. El total se calcula solo.")}</div>
+    ${editando && editando.estado === "aceptado" ? `<div class="section-block" style="border-color:var(--terra)"><strong>⚠️ Este presupuesto ya fue aceptado</strong><div class="text-muted">Ya se generó el pedido del cliente con estos valores. Si lo cambiás acá, el pedido que ya salió no se actualiza solo.</div></div>` : ""}
     <div id="nuevo-form" class="section-block">
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Nombre del cliente</label><input class="form-input" id="p-cliente-nombre" placeholder="Nombre y apellido"></div>
-        <div class="form-group"><label class="form-label">Teléfono</label><input class="form-input" id="p-cliente-telefono" placeholder="11-2345-6789"></div>
-        <div class="form-group"><label class="form-label">Fecha de entrega / evento</label><input type="date" class="form-input" id="p-fecha-entrega" value="${todayISO()}"></div>
+        <div class="form-group">
+          <label class="form-label">Nombre del cliente</label>
+          <input class="form-input" id="p-cliente-nombre" placeholder="Nombre y apellido" list="clientes-conocidos" value="${escapeHtml(base ? (base.cliente?.nombre || "") : "")}" oninput="mostrarHistorialCliente(this.value)">
+          <datalist id="clientes-conocidos">${listaClientes().map(c => `<option value="${escapeHtml(c.nombre)}">`).join("")}</datalist>
+          <div id="cliente-historial" class="text-muted" style="font-size:11px;margin-top:4px"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Teléfono</label><input class="form-input" id="p-cliente-telefono" placeholder="11-2345-6789" value="${escapeHtml(base ? (base.cliente?.telefono || "") : "")}"></div>
+        <div class="form-group"><label class="form-label">Fecha de entrega / evento</label><input type="date" class="form-input" id="p-fecha-entrega" value="${escapeHtml(editando ? (editando.fechaEntrega || todayISO()) : todayISO())}"></div>
       </div>
 
       <div class="section-header" style="margin-top:10px">
@@ -590,14 +609,25 @@ function renderNuevoView(container) {
       </div>
 
       <div class="form-row" style="margin-top:14px">
-        <div class="form-group" style="max-width:220px"><label class="form-label">Descuento (monto, opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="p-descuento" value="0" oninput="updateTotalPreview()"></div>
-        <div class="form-group"><label class="form-label">Notas (opcional)</label><input class="form-input" id="p-notas" placeholder="Ej. seña 50% al confirmar"></div>
+        <div class="form-group" style="max-width:220px"><label class="form-label">Descuento (monto, opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="p-descuento" value="${editando ? (editando.descuento || 0) : 0}" oninput="updateTotalPreview()"></div>
+      </div>
+      <div class="form-group" style="margin-top:4px">
+        <label class="form-label">Notas y aclaraciones (opcional)</label>
+        <textarea class="form-input" id="p-notas" rows="4" placeholder="Una aclaración por párrafo. Ej.:&#10;Seña del 50% al confirmar.&#10;Presupuesto válido por 15 días.&#10;La entrega incluye traslado dentro de la ciudad.">${escapeHtml(editando ? (editando.notas || "") : "")}</textarea>
+        <div class="text-muted" style="font-size:11px;margin-top:4px">Cada renglón se imprime como un párrafo aparte en el presupuesto.</div>
+        ${notasGuardadas.length ? `<div style="margin-top:8px">
+          <div class="text-muted" style="font-size:11px;margin-bottom:4px">Aclaraciones que usás seguido — tocá para agregarlas:</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${notasGuardadas.map((n, i) => `<button type="button" class="btn btn-ghost btn-sm" onclick="agregarNotaGuardada(${i})">+ ${escapeHtml(n.length > 42 ? n.slice(0, 42) + "…" : n)}</button>`).join("")}
+          </div>
+        </div>` : ""}
       </div>
 
       <div class="total-line">Subtotal: <span id="subtotal-preview">—</span></div>
       <div class="total-line grand">Total: <span id="total-preview">$0,00</span></div>
 
-      <button class="btn btn-primary" style="margin-top:10px" onclick="guardarPresupuesto()" id="guardar-btn">💾 Guardar presupuesto</button>
+      <button class="btn btn-primary" style="margin-top:10px" onclick="guardarPresupuesto()" id="guardar-btn">💾 ${editando ? "Guardar cambios" : "Guardar presupuesto"}</button>
+      ${editando || base ? `<button class="btn btn-ghost" style="margin-top:10px" onclick="cancelarEdicion()">Cancelar</button>` : ""}
     </div>`;
 }
 
@@ -626,18 +656,32 @@ window.guardarPresupuesto = async function() {
 
   try {
     const { subtotal, total } = calcTotales(items, descuento);
-    const numero = Object.keys(state.presupuestos).length + 1;
-    const data = {
-      numero,
-      cliente: { nombre, telefono },
-      fechaEntrega, items, descuento, subtotal, total, notas,
-      estado: "borrador",
-      pedidoClienteOrderId: null,
-      pedidoClienteOrderNum: null,
-      creadoTs: Date.now(), actualizadoTs: Date.now()
-    };
-    await set(push(ref(db, "presupuestos/items")), data);
-    showToast("✅ Presupuesto guardado como borrador.", "success");
+    const editandoId = state.editandoId;
+    const previo = editandoId ? state.presupuestos[editandoId] : null;
+    if (previo) {
+      // Editar conserva lo que identifica al presupuesto —su número, su estado y el pedido que
+      // haya generado— y cambia solo el contenido. Si no, cada corrección crearía un duplicado.
+      await update(ref(db, `presupuestos/items/${editandoId}`), {
+        cliente: { nombre, telefono },
+        fechaEntrega, items, descuento, subtotal, total, notas,
+        actualizadoTs: Date.now()
+      });
+      state.editandoId = null;
+      showToast(`✅ Presupuesto #${previo.numero} actualizado.`, "success");
+    } else {
+      const numero = Object.keys(state.presupuestos).length + 1;
+      await set(push(ref(db, "presupuestos/items")), {
+        numero,
+        cliente: { nombre, telefono },
+        fechaEntrega, items, descuento, subtotal, total, notas,
+        estado: "borrador",
+        pedidoClienteOrderId: null,
+        pedidoClienteOrderNum: null,
+        creadoTs: Date.now(), actualizadoTs: Date.now()
+      });
+      showToast("✅ Presupuesto guardado como borrador.", "success");
+    }
+    state._duplicando = null;
     navigate("presupuestos");
   } catch (err) {
     console.error(err);
@@ -651,7 +695,122 @@ window.guardarPresupuesto = async function() {
 // =============================================================
 window.setFiltro = function(f) { state.filtro = f; render(); };
 window.setBusqueda = function(val) { state.busqueda = val; render(); };
+// ── Clientes ────────────────────────────────────────────────────────────────
+// No hace falta una carga aparte: los clientes SON los que ya aparecen en los presupuestos.
+// Se agrupan por teléfono (lo más estable) y, si no hay, por nombre normalizado.
+function claveCliente(c) {
+  const tel = String(c?.telefono || "").replace(/\D/g, "");
+  if (tel.length >= 6) return "t:" + tel.slice(-8);
+  return "n:" + stripAccents(String(c?.nombre || "")).toLowerCase().trim();
+}
+function listaClientes() {
+  const mapa = new Map();
+  for (const [id, p] of Object.entries(state.presupuestos)) {
+    const c = p.cliente || {};
+    if (!c.nombre) continue;
+    const k = claveCliente(c);
+    const acc = mapa.get(k) || { key: k, nombre: c.nombre, telefono: c.telefono || "", presupuestos: [], total: 0, aceptados: 0, ultimaFecha: "" };
+    acc.nombre = c.nombre || acc.nombre;
+    if (c.telefono) acc.telefono = c.telefono;
+    acc.presupuestos.push({ id, ...p });
+    acc.total += Number(p.total) || 0;
+    if (p.estado === "aceptado") acc.aceptados++;
+    const f = p.fechaEntrega || "";
+    if (f > acc.ultimaFecha) acc.ultimaFecha = f;
+    mapa.set(k, acc);
+  }
+  return Array.from(mapa.values())
+    .map(c => ({ ...c, presupuestos: c.presupuestos.sort((a, b) => (b.creadoTs || 0) - (a.creadoTs || 0)) }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+
+// Al escribir el nombre en un presupuesto nuevo, mostrar lo que ya se le cotizó a ese cliente:
+// es la información que permite ofrecerle algo mejor (o al menos coherente con lo anterior).
+window.mostrarHistorialCliente = function(nombre) {
+  const cont = document.getElementById("cliente-historial");
+  if (!cont) return;
+  const n = stripAccents(String(nombre || "")).toLowerCase().trim();
+  if (n.length < 3) { cont.innerHTML = ""; return; }
+  const cli = listaClientes().find(c => stripAccents(c.nombre).toLowerCase().trim() === n);
+  if (!cli) { cont.innerHTML = ""; return; }
+  const ult = cli.presupuestos[0];
+  const tel = document.getElementById("p-cliente-telefono");
+  if (tel && !tel.value && cli.telefono) tel.value = cli.telefono;
+  cont.innerHTML = `📋 Ya tiene <strong>${cli.presupuestos.length}</strong> presupuesto${cli.presupuestos.length === 1 ? "" : "s"}${cli.aceptados ? ` (${cli.aceptados} aceptado${cli.aceptados === 1 ? "" : "s"})` : ""}. El último: ${fmtMoney(ult.total)} para el ${fmtDate(ult.fechaEntrega)}. <a href="#" onclick="duplicarPresupuesto('${ult.id}');return false;">Copiar ese presupuesto</a>`;
+};
+
+window.setClientesBusqueda = function(v) { state.clientesBusqueda = v; render(); };
+window.verCliente = function(k) { state.verClienteKey = state.verClienteKey === k ? null : k; render(); };
+
+function renderClientesView(container) {
+  state.formOpen = false;
+  const q = stripAccents(state.clientesBusqueda).toLowerCase().trim();
+  const clientes = listaClientes().filter(c => !q || stripAccents(c.nombre).toLowerCase().includes(q) || (c.telefono || "").includes(q));
+  container.innerHTML = `
+    <div class="page-title">Clientes</div>
+    <div class="page-sub">Se arman solos con los presupuestos que vas cargando. Sirven para ver qué le cotizaste a cada uno y volver a usarlo sin reescribirlo.</div>
+    <div class="form-row" style="margin-bottom:14px"><div class="form-group" style="max-width:320px">
+      <input class="form-input" id="buscador-clientes" placeholder="🔎 Buscar por nombre o teléfono..." value="${escapeHtml(state.clientesBusqueda)}" oninput="setClientesBusqueda(this.value)">
+    </div></div>
+    ${clientes.length ? `<div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>Cliente</th><th>Teléfono</th><th>Presupuestos</th><th>Aceptados</th><th>Total cotizado</th><th></th></tr></thead>
+      <tbody>${clientes.map(c => `
+        <tr>
+          <td><strong>${escapeHtml(c.nombre)}</strong></td>
+          <td>${escapeHtml(c.telefono) || "—"}</td>
+          <td>${c.presupuestos.length}</td>
+          <td>${c.aceptados || "—"}</td>
+          <td>${fmtMoney(c.total)}</td>
+          <td><button class="btn btn-ghost btn-sm" onclick="verCliente('${c.key}')">${state.verClienteKey === c.key ? "▴ Ocultar" : "▾ Ver presupuestos"}</button></td>
+        </tr>
+        ${state.verClienteKey === c.key ? `<tr><td colspan="6" style="background:var(--cream);padding:14px 16px">
+          <table class="data-table"><thead><tr><th>N°</th><th>Fecha</th><th>Total</th><th>Estado</th><th></th></tr></thead><tbody>
+            ${c.presupuestos.map(p => `<tr>
+              <td>#${p.numero}</td><td>${fmtDate(p.fechaEntrega)}</td><td>${fmtMoney(p.total)}</td>
+              <td><span class="badge">${escapeHtml(p.estado)}</span></td>
+              <td style="white-space:nowrap">
+                <button class="btn btn-ghost btn-sm" onclick="verPresupuesto('${p.id}')">Ver</button>
+                <button class="btn btn-turq btn-sm" onclick="duplicarPresupuesto('${p.id}')">📋 Copiar</button>
+              </td>
+            </tr>`).join("")}
+          </tbody></table>
+        </td></tr>` : ""}`).join("")}</tbody>
+    </table></div>` : `<div class="empty-state">${state.clientesBusqueda ? "Ningún cliente coincide con la búsqueda." : "Todavía no hay clientes: se crean solos al guardar presupuestos."}</div>`}`;
+}
+
 window.verPresupuesto = function(id) { state.viewingId = id; render(); };
+
+// Editar un presupuesto ya guardado, en vez de rehacerlo de cero.
+window.editarPresupuesto = function(id) {
+  state.editandoId = id;
+  state._duplicando = null;
+  state.viewingId = null;
+  navigate("nuevo");
+};
+// Duplicar: para el cliente que vuelve a pedir lo mismo con algún cambio.
+window.duplicarPresupuesto = function(id) {
+  const p = state.presupuestos[id];
+  if (!p) return;
+  state._duplicando = p;
+  state.editandoId = null;
+  state.viewingId = null;
+  showToast("📋 Copia lista — cambiá lo que haga falta y guardala como un presupuesto nuevo.", "success");
+  navigate("nuevo");
+};
+window.cancelarEdicion = function() {
+  state.editandoId = null;
+  state._duplicando = null;
+  navigate("presupuestos");
+};
+window.agregarNotaGuardada = function(idx) {
+  const notas = Array.isArray(state.config.notasGuardadas) ? state.config.notasGuardadas : [];
+  const txt = notas[idx];
+  if (!txt) return;
+  const ta = document.getElementById("p-notas");
+  if (!ta) return;
+  ta.value = ta.value.trim() ? ta.value.replace(/\s*$/, "") + "\n" + txt : txt;
+  ta.focus();
+};
 window.cerrarVista = function() { state.viewingId = null; render(); };
 
 window.cambiarEstado = async function(id, nuevoEstado) {
@@ -764,6 +923,8 @@ function renderListadoView(container) {
       <td><span class="badge badge-${p.estado}">${ESTADO_LABELS[p.estado] || p.estado}</span></td>
       <td style="white-space:nowrap">
         <button class="btn btn-ghost btn-sm" onclick="verPresupuesto('${id}')">Ver / Imprimir</button>
+        <button class="btn btn-turq btn-sm" onclick="editarPresupuesto('${id}')">✏️ Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="duplicarPresupuesto('${id}')" title="Crear uno nuevo con los mismos ítems">📋 Copiar</button>
         ${p.estado === "borrador" ? `<button class="btn btn-turq btn-sm" onclick="cambiarEstado('${id}','enviado')">Marcar enviado</button>` : ""}
         ${p.estado !== "aceptado" && p.estado !== "rechazado" ? `<button class="btn btn-primary btn-sm" onclick="cambiarEstado('${id}','aceptado')">Aceptar</button>` : ""}
         ${p.estado !== "aceptado" && p.estado !== "rechazado" ? `<button class="btn btn-danger btn-sm" onclick="cambiarEstado('${id}','rechazado')">Rechazar</button>` : ""}
@@ -828,7 +989,7 @@ function renderDetalleImprimible(container, id) {
       <div class="total-line">Subtotal: ${fmtMoney(p.subtotal)}</div>
       ${p.descuento > 0 ? `<div class="total-line">Descuento: -${fmtMoney(p.descuento)}</div>` : ""}
       <div class="total-line grand" style="color:var(--terra)">Total: ${fmtMoney(p.total)}</div>
-      ${p.notas ? `<div style="margin-top:16px"><div class="form-label">Notas</div><div>${escapeHtml(p.notas)}</div></div>` : ""}
+      ${p.notas ? `<div style="margin-top:16px"><div class="form-label">Notas</div><div style="white-space:pre-wrap;line-height:1.6">${escapeHtml(p.notas)}</div></div>` : ""}
       ${(p.items || []).some(esItemCafeteria) ? `<div class="text-muted" style="margin-top:18px;font-style:italic;font-size:11px;line-height:1.5;border-top:1px solid var(--cream-dark);padding-top:12px">${escapeHtml(CAFETERIA_LEGEND)}</div>` : ""}
     </div>`;
 }
@@ -1112,6 +1273,14 @@ function renderCantidadesView(container) {
     </div>` : ""}`;
 }
 
+window.guardarNotasGuardadas = async function() {
+  const lineas = document.getElementById("cfg-notas").value.split("\n").map(l => l.trim()).filter(Boolean);
+  await set(ref(db, "presupuestos/config/notasGuardadas"), lineas);
+  state.config = { ...state.config, notasGuardadas: lineas };
+  showToast(`✅ ${lineas.length} aclaración(es) guardadas.`, "success");
+  render();
+};
+
 window.cambiarPasswordAdmin = async function() {
   const nueva = document.getElementById("cfg-nueva-pass").value;
   if (!nueva || nueva.length < 4) { showToast("⚠️ La contraseña debe tener al menos 4 caracteres.", "warn"); return; }
@@ -1133,6 +1302,12 @@ function renderConfigView(container) {
     <div class="section-block">
       <div class="section-title" style="margin-bottom:10px">🔗 Pedidos de Clientes</div>
       <div class="text-muted">Al aceptar un presupuesto, se pide el local de retiro, vendedor/a, hora de entrega y seña, y se registra automáticamente como pedido nuevo en el sistema de Pedidos de Clientes (proyecto Firebase separado: <code>pedidos-de-clientes-4775b</code>). Esta app solo escribe ese pedido — no lo edita ni lo muestra después; el seguimiento de producción y entrega se hace desde el sistema de Pedidos de Clientes.</div>
+    </div>` + `
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:8px">📝 Aclaraciones que usás seguido</div>
+      <div class="text-muted" style="margin-bottom:10px">Las que escribas acá aparecen como botones en el presupuesto, para agregarlas de a una sin volver a tipearlas (seña, validez, condiciones de entrega...). Una por renglón.</div>
+      <textarea class="form-input" id="cfg-notas" rows="5" placeholder="Seña del 50% al confirmar.&#10;Presupuesto válido por 15 días.&#10;La entrega incluye traslado dentro de la ciudad.">${escapeHtml((state.config.notasGuardadas || []).join("\n"))}</textarea>
+      <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="guardarNotasGuardadas()">Guardar aclaraciones</button>
     </div>`;
 }
 
