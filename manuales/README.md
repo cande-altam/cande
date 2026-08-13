@@ -1,5 +1,28 @@
 # Manuales de Procedimientos — Candela Café & Patisserie
 
+> # ⛔ ESTOS ARCHIVOS YA NO SON LA VERSIÓN VIGENTE
+>
+> **Desde agosto de 2026 los manuales se trabajan en Google Drive.**
+>
+> 📄 **Documento vigente:**
+> [Manuales de Procedimientos — Candela Café & Patisserie](https://docs.google.com/document/d/1m1GcwS1IfsuxwWdi8OZNSrcDIK5QLzHbOXG3MBE6oLk/edit)
+>
+> Lo que hay en esta carpeta es el **material con el que se armó el documento**, y
+> quedó desactualizado. En particular, el documento de Drive tiene contenido que acá
+> **no existe**:
+>
+> | | |
+> |---|---|
+> | **Cajeros** | Triplicado en extensión: cuentas corrientes de empleados y clientes, registro de pagos, procedimientos preventivos de caja, baja de productos, transferencias entre locales, aplicaciones de delivery, criterios de pedido |
+> | **Administración** | Sección propia que acá no existe |
+> | **Vendedores y Mozos** | Reorganizado en Vendedores / Mozos / Ambos roles |
+> | **Proveedores** | Integrado dentro de Cajeros y Administración |
+>
+> **No edites estos archivos esperando que el equipo vea el cambio.** Si algo hay que
+> corregir, se corrige en el documento de Drive.
+
+---
+
 Panadería y cafetería de especialidad. **Dos locales de venta** (SLA 5.0 y San Luis)
 y **un local de producción**.
 
