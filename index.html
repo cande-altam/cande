@@ -451,7 +451,8 @@ textarea.fc{resize:vertical;min-height:56px}
 <div class="view" id="view-envios">
   <div class="sh" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
     <div><div class="st">Dashboard de Envíos</div><div class="ss">Pedidos a entregar hoy, agrupados por local</div></div>
-    <button class="btn btn-print" onclick="printEnvios()" style="display:flex;align-items:center;gap:6px">🖨️ Imprimir A4</button>
+    <button class="btn btn-print" onclick="printEnvios('hoy')" style="display:flex;align-items:center;gap:6px">🖨️ Imprimir Hoy</button>
+    <button class="btn btn-print" onclick="printEnvios('manana')" style="display:flex;align-items:center;gap:6px">🖨️ Imprimir Mañana</button>
   </div>
   <div id="envios-content"></div>
 </div>
@@ -1985,9 +1986,16 @@ function renderEnvios(){
     </div>`).join('');
 }
 
-function printEnvios(){
+function printEnvios(dia='hoy'){
+  const now=new Date();
+  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const tomorrow=new Date(today); tomorrow.setDate(today.getDate()+1);
+  const refDate=dia==='manana'?tomorrow:today;
+  const label=dia==='manana'?'Mañana':'Hoy';
+  const dateLabel=refDate.toLocaleDateString('es-AR',{weekday:'long',day:'2-digit',month:'2-digit',year:'2-digit'});
+
   const active=orders
-    .filter(o=>o.status==='pending'||o.status==='progress')
+    .filter(o=>isSameDay(o.deliveryDateTime,refDate))
     .sort((a,b)=>new Date(a.deliveryDateTime)-new Date(b.deliveryDateTime));
 
   const byLocal={};
@@ -1997,10 +2005,10 @@ function printEnvios(){
     byLocal[loc].push(o);
   });
 
-  const now=new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const emitido=now.toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
 
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
-  <title>Envíos · Candela</title>
+  <title>Envíos ${label} · Candela</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:Arial,sans-serif;font-size:11pt;color:#111;padding:18mm 15mm}
@@ -2021,9 +2029,11 @@ function printEnvios(){
     .sena{font-size:9pt;color:#065F46;font-weight:600}
     @media print{@page{size:A4;margin:0}body{padding:15mm}}
   </style></head><body>
-  <h1>📦 Dashboard de Envíos · Candela</h1>
-  <div class="sub">Emitido: ${now} · Pedidos activos (pendientes y en proceso)</div>
-  ${Object.entries(byLocal).map(([loc,ords])=>`
+  <h1>📦 Envíos ${label} · Candela</h1>
+  <div class="sub">${dateLabel} · Emitido: ${emitido} · ${active.length} pedido${active.length!==1?'s':''}</div>
+  ${active.length===0
+    ? '<p style="color:#888;margin-top:20px">Sin pedidos para este día.</p>'
+    : Object.entries(byLocal).map(([loc,ords])=>`
     <div class="local-title">📍 ${loc} <span style="font-size:11pt;font-weight:400;color:#555">(${ords.length} pedido${ords.length!==1?'s':''})</span></div>
     <table>
       <thead><tr>
@@ -2032,8 +2042,8 @@ function printEnvios(){
       <tbody>
       ${ords.map(o=>{
         const items=o.items?Object.values(o.items):[];
-        const statusLabel=o.status==='pending'?'Pendiente':o.status==='progress'?'En proceso':'Listo';
-        const statusClass=o.status==='pending'?'pending':o.status==='progress'?'progress':'done';
+        const statusLabel=o.status==='pending'?'Pendiente':o.status==='producing'?'En proceso':o.status==='ready'?'Listo para enviar':'Listo';
+        const statusClass=o.status==='pending'?'pending':o.status==='producing'?'progress':'done';
         return `<tr>
           <td><span class="num">${o.orderNum?'#'+o.orderNum:'-'}</span></td>
           <td><strong>${o.client||''}</strong>${o.phone?'<br><span style="font-size:9pt;color:#666">'+o.phone+'</span>':''}${o.sena?'<br><span class="sena">Seña: $'+o.sena+'</span>':''}</td>
