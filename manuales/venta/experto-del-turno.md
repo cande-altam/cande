@@ -198,8 +198,10 @@ obligatorio, pero es lo que hace la diferencia entre un compañero y un buchón.
 
 Al terminar tu turno, dejás un **informe con lo que pasó**.
 
-> ### Se hace todos los días, sin excepción.
-> Si no hubo nada que informar, se escribe eso mismo: **"sin novedades"**.
+> ### Cada turno envía su informe.
+> Hay un Experto por turno y **cada uno deja el suyo** — no se consolidan. Se hace
+> **todos los días, sin excepción**: si no hubo nada que informar, se escribe eso
+> mismo, **"sin novedades"**.
 
 ## Qué lleva
 
@@ -306,14 +308,13 @@ directos. Si falta algo, se reclama **en el momento**.
 
 - [ ] **Dónde se carga el informe.** Es lo único que falta para que el circuito
       funcione. Va en una de las webs que ya se usan.
-- [ ] **Uno o dos informes por día.** Hay dos turnos con un Experto cada uno. Confirmar
-      si cada Experto deja el suyo (dos por día por local) o si se consolida uno solo.
 - [ ] **Tope de compensación.** El Experto puede dar descuentos, cortesías y productos
       sin cargo. Falta definir si hay un límite de monto a partir del cual tiene que
       consultar a Gerencia.
-- [ ] **Roturas y consumo interno.** Quedó definido que los movimientos de stock
-      **entre locales** no requieren autorización. Falta definir quién autoriza las
-      **roturas, el consumo interno y las diferencias de inventario**.
+- [ ] **Roturas y diferencias de inventario.** Los movimientos **entre locales** no
+      requieren autorización, y el **consumo interno** ya tiene su regla propia (ver
+      Código de Ética). Falta definir quién autoriza las **roturas** y las
+      **diferencias de inventario**.
 - [ ] **Cuánto tiempo hay que tener en el local** para poder ser Experto, si es que hay
       un mínimo.
 - [ ] **Qué hace Gerencia con los informes.** Si los revisa a diario, semanalmente, y

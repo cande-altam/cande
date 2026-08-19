@@ -44,6 +44,22 @@ Es lo primero, porque acá se maneja dinero, producto y confianza ajena.
 > Una diferencia de caja informada es un dato. La misma diferencia descubierta después
 > es otra cosa completamente distinta.
 
+### Tu consumo en el local
+
+Hay un consumo **sin cargo** que te corresponde, y todo lo demás va a tu cuenta.
+No hay zona gris:
+
+| Beneficio | Qué incluye | Cómo se registra |
+|---|---|---|
+| **Pan Diario** *(Panadería, todos los días)* | 500 g de miñón + 4 tortillas + 2 facturas | Como **"Pan Diario"** |
+| **Consumo interno** | 3 tortillas **o** 3 facturas, + 1 café o infusión | Como **"Consumo Interno"** |
+
+> ### 🔑 Cualquier otro producto que consumas va a tu cuenta corriente. Sin excepción.
+> **No se permiten pagos en efectivo ni por medios digitales del personal.**
+
+> ⚠️ **Es responsabilidad de cada persona asegurar que su consumo quede bien
+> registrado.** No es tarea del cajero ni del Experto perseguirte para que lo cargues.
+
 ---
 
 ## 2. Respeto entre compañeros
@@ -178,9 +194,9 @@ La mayoría de los errores se corrigen hablando. Estas son de otra categoría:
 - [ ] **El canal para acoso y discriminación.** Este documento dice "Administración
       directamente", pero falta definir **quién** en concreto, cómo se contacta, y qué
       pasa después de que alguien habla. Sin eso, la puerta existe solo en el papel.
-- [ ] **Consumo del personal.** Qué se puede consumir en el turno, qué se paga y cómo
-      se registra. Hoy no está escrito en ningún lado, y es la zona gris más común en
-      gastronomía.
+- [x] ~~**Consumo del personal.**~~ **Ya estaba definido** en el manual de Cajeros y
+      ahora también acá: Pan Diario, Consumo Interno, y todo lo demás a la cuenta
+      corriente.
 - [ ] **Uso del celular.** Está puesto como "no en el área de atención" — confirmar si
       esa es la regla real.
 - [ ] **Redes sociales.** Si hay algo permitido (etiquetar al local, subir producto) y
