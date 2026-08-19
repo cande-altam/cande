@@ -1,296 +1,226 @@
 # Manual de Procedimientos — Experto del Turno
 
 **Candela Café & Patisserie**
-*Versión 1.0 | Agosto 2026*
+*Versión 2.0 | Agosto 2026*
 
 ---
 
-> ### 📌 Este rol reemplaza al de Encargado de Local
-> Donde los manuales decían *"avisá al encargado"*, ahora dice **Experto del turno**.
-> Es el mismo punto de escalamiento, con una diferencia importante: **hay uno por
-> turno**, no uno por local.
+## Qué es el Experto del Turno
+
+**Es la persona que más sabe del turno y la que está más capacitada para actuar.**
+A quien todos deberían recurrir ante cualquier duda o situación.
+
+El nombre no es casual. **Experto no es encargado ni supervisor.** La palabra busca
+darle valor y entidad a esa persona **sin el peso de ser un jefe**.
+
+> ### Tu responsabilidad es una sola: que el turno salga bien.
+> Todo lo demás sale de ahí.
 
 ---
 
-## 🎯 Objetivo del rol
+## Qué hace el Experto — y qué no
 
-**Ser el responsable del turno.** Que el local funcione de punta a punta mientras
-dura, y que quede constancia de cómo salió.
+| Sí | No |
+|---|---|
+| Resolver los problemas que aparecen en el turno | Ser el jefe de sus compañeros |
+| Solucionar conflictos con clientes | Autorizar devoluciones de dinero |
+| Revisar que los checklists diarios se hayan cumplido | Manejar la caja ni las diferencias |
+| Reorganizar los puestos si falta alguien | Sancionar o llamar la atención a nadie |
+| Dejar un informe diario a Gerencia | Decidir sobre el personal |
 
-> ### 🔑 En cada turno hay un Experto.
-> No es un cargo permanente: es **quien tiene la responsabilidad durante ese turno**.
-> Siempre hay uno, y **siempre se sabe quién es**.
+---
+
+## Lo que NO te corresponde
+
+Esto es importante que lo sepa todo el equipo, para que nadie te lo pida a vos:
+
+| Situación | A quién va |
+|---|---|
+| **Autorizar una devolución** | **Gerencia** |
+| **Devolver dinero a un cliente** | **Gerencia** — vos la solicitás, no la autorizás |
+| **El sobre de depósito** | Va a **Administración** todos los días, a través de **Compras** |
+| **Las diferencias de caja** | Las revisa **Administración** |
+| **Hablar con alguien del equipo** por algo que no cumplió | **Gerencia** |
+
+> Movimientos de stock entre locales: **no requieren autorización de nadie.**
+
+---
 
 ## Cómo funciona el puesto
 
 ### Es móvil
 
-**El Experto cambia de turno a turno.** Se define **al armar el cronograma**, así que
-está decidido antes de que arranque el turno — no se discute en el momento.
+**El Experto cambia de turno a turno.** Se define al armar el cronograma, así que está
+decidido antes de que arranque el turno.
 
-> ✅ **Mirá el cronograma:** si te toca ser Experto, lo sabés desde que sale.
+**Hay un Experto en los dos turnos, en los dos locales de venta.**
+
+### Lo elige Gerencia
+
+La elección la hace **Gerencia**, según la **performance y la capacidad** de cada
+persona. No es por antigüedad ni por turno.
+
+### Se paga aparte
+
+Los Expertos reciben un **bono extra**, además de su sueldo.
 
 ### Tenés tu rol propio, y además sos Experto
 
-Esto es lo que hace exigente al puesto: **no estás liberado de tareas**. Seguís siendo
-cajero, vendedor, mozo o barista, y **encima** tenés la responsabilidad del turno.
+**No estás liberado de tareas.** Seguís siendo cajero, vendedor, mozo o barista, y
+encima tenés la responsabilidad del turno.
 
 De ahí salen dos reglas prácticas:
 
 | | |
 |---|---|
-| 🔁 **Cuando dejás tu puesto, avisá** | Si tenés que atender un reclamo o resolver algo, decile a alguien que cubra. Tu puesto no queda solo |
-| ⚖️ **La responsabilidad del turno tiene prioridad** | Si hay un conflicto con un cliente o algo se está rompiendo, **eso va primero**. Tu tarea espera |
+| **Cuando dejás tu puesto, avisá** | Si tenés que atender algo, decile a alguien que cubra |
+| **La responsabilidad del turno tiene prioridad** | Si hay un conflicto o algo se está rompiendo, eso va primero |
 
-> ### 🔑 Ser Experto no es hacer más tareas.
-> Es **tener la última palabra durante el turno**. La mayor parte del tiempo estás en
-> tu puesto como todos; la diferencia aparece cuando algo se sale de lo previsto.
-
-### En producción no hay Experto
-
-En la cuadra de producción **cada área tiene su maestro**, que es el responsable de su
-propio turno. El Experto es de los **locales de venta**.
-
-> **Compras y el Ayudante de Cocina tienen su base en el local de venta**, aunque
-> cubran tareas en la cuadra — los dos locales están pegados físicamente. Por eso
-> **reportan al Experto del turno**.
+> ### Ser Experto no es hacer más tareas.
+> Es **ser el punto de referencia del turno**. La mayor parte del tiempo estás en tu
+> puesto como todos; la diferencia aparece cuando algo se sale de lo previsto.
 
 ---
 
-## Tu alcance — Las tres áreas
+# 1. Que el turno salga bien
 
-El Experto responde por **todo el local**, no por un sector:
-
-| Área | Qué mirás |
-|---|---|
-| 🛍️ **Mostrador** | Atención, vitrinas repuestas, tiempos |
-| 🪑 **Salón** | Recepción, servicio, mesas, limpieza |
-| 🍳 **Cocina** | Que salga lo que se pidió, en tiempo |
-
----
-
-## 1. Sos el punto de escalamiento
-
-Esto es lo primero que hay que entender del puesto. **Todo el equipo tiene
-instrucciones de recurrir a vos.**
-
-### Te avisan de inmediato
-
-| Situación | Quién avisa |
-|---|---|
-| El fondo de caja **no cuadra antes de abrir** | Cajero |
-| **Diferencia de caja** al cierre (sobrante o faltante) | Cajero |
-| Un producto **se agotó** | Vendedor |
-| Un producto está **vencido** | Vendedor |
-| Un equipo **no está en condiciones** en la apertura | Barista |
-| Un **reclamo grande** de un cliente | Todos |
-| Un pedido de producción **no se cargó a tiempo** | Quien debía cargarlo |
-
-### Te piden autorización
-
-Nada de esto pasa sin tu visto bueno:
-
-| Qué | La regla |
-|---|---|
-| **Devoluciones** | *"Sin autorización, no se hace ninguna devolución"* |
-| **Movimientos de stock** | Roturas, consumo interno, diferencias de inventario |
-| **Alta de cuenta corriente** | El cliente tiene que estar dado de alta antes |
-
-### Te entregan
-
-| Qué | Cuándo |
-|---|---|
-| **Sobre de depósito** | Al cierre de caja |
-| **Incidencias del turno** | Al cierre, todos los roles |
-
-> ### 🔑 Que te avisen no es que te molesten.
-> Es que el procedimiento funciona. **El problema aparece cuando no te avisan.** Si
-> alguien resolvió por su cuenta algo que requería autorización, corregilo aunque haya
-> salido bien.
-
----
-
-## 2. Apertura del turno
-
-Antes de arrancar, verificá que las tres áreas estén listas:
-
-| Área | Qué verificar | Responsable |
-|---|---|---|
-| **Caja** | Fondo contado, cambio suficiente, FUDO funcionando | Cajero |
-| **Mostrador / Salón** | Vitrinas repuestas, precios visibles, mesas limpias | Vendedor / Mozo |
-| **Barra** | Cafetera a temperatura, molienda calibrada, café de prueba hecho | Barista |
-
-También:
-
-- ☐ **Sé quiénes están** y en qué puesto
-- ☐ **Las dos webs abren** — Pedidos de Producción y Pedidos de Clientes
-- ☐ **Pedidos de clientes del día** revisados: qué se entrega y a qué hora
-- ☐ **Uniformes correctos**
-- ☐ Si **falta alguien**, reorganizá los puestos antes de abrir
-
-> ⚠️ **No abras con un equipo en falta sin haber reorganizado.** Es preferible demorar
-> la apertura cinco minutos que arrancar improvisando.
-
----
-
-## 3. Que el local funcione
-
-Esto es lo que hacés todo el turno, sin que nadie te lo pida.
+Esto es lo que hacés todo el tiempo, sin que nadie te lo pida.
 
 - **Mirá el conjunto.** El resto del equipo está en su puesto; vos ves el local entero.
 - **Anticipá.** Una fila que crece, una vitrina que se vacía, una mesa que espera hace
   rato — se resuelven antes de ser un problema.
-- **Reubicá gente** si un sector se satura y otro está tranquilo.
+- **Sos a quien le preguntan.** Si alguien tiene una duda, sos la primera puerta.
 
-> ### 🔑 Tu trabajo es que no se note que estuviste.
-> Un turno bien llevado se ve en que **nada llegó a romperse**.
+### Si falta alguien
 
----
+**Podés reorganizar los puestos.** No hace falta que consultes: resolvelo y seguí.
 
-## 4. Control de los pedidos de producción
+### Si alguien no te hace caso
 
-Este es el punto donde el local le falla al resto del negocio, y es tuyo.
+**Avisale a Gerencia.** No discutas, no insistas, no lo resuelvas por tu cuenta.
+No es tu función imponerte.
 
-**Cada área carga su propio pedido**, pero **vos verificás que se haya cargado.**
+### Apertura del local
 
-| Horario | Qué tiene que estar cargado |
-|---|---|
-| **9:00** | Panadería |
-| **16:00** | Pastelería |
-| **21:00** | Especialidades · Facturería · Sandwiches · Cocina San Luis |
-
-Si el horario pasó y el pedido no está:
-
-1. **Cargalo o hacelo cargar en el momento.**
-2. Avisá al área de producción que va tarde.
-3. **Registralo como incidencia** — si se repite, es un problema de la persona, no del día.
-
-> 📖 Detalle en **[Herramientas digitales](../comunes/herramientas-digitales.md)**.
+**El primero en llegar puede abrir el local.** No hay una persona designada — si sos
+vos, abrís.
 
 ---
 
-## 5. Manejo de caja
+# 2. Conflictos con clientes
 
-### Diferencias
-
-| Caso | Qué hacés |
-|---|---|
-| **Sobrante** | Lo recibís y lo registrás. **No se toca** |
-| **Faltante** | Lo registrás. Puede requerir descuento según reglamento |
-
-> ⚠️ **Toda diferencia se reporta, aunque sea mínima.** Una diferencia chica que no se
-> informa es peor que una grande que sí — porque rompe la costumbre de informar.
-
-### Sobre de depósito
-
-El cajero te lo entrega al cierre. **Verificá que el monto coincida con el cierre de
-FUDO** antes de recibirlo.
-
-### ⛔ La caja del local no paga proveedores
-
-**Ningún pago a proveedor sale de la caja.** Si un proveedor llega a cobrar y no hay
-dinero enviado por Administración, **no se le paga** — se avisa a Administración.
-
-> 📖 El circuito completo en
-> **[Pedidos y pagos a proveedores](../comunes/pedidos-y-pagos-a-proveedores.md)**.
-
----
-
-## 6. Recepción de mercadería
-
-Al local llega mercadería por **dos vías**:
-
-### De Compras
-
-Dos veces por día: **a primera hora** y **antes de las 13:00**.
-El local revisa lo que llega. **No se firma nada.**
-Si falta algo → se reclama **en el momento**, no después.
-
-### Directo del proveedor
-
-1. **El área de atención verifica** que llegó lo pedido.
-2. Si hay faltante o algo vino mal → **el cajero reclama al proveedor**.
-3. **Avisale a Compras**, para que quede registro de ese proveedor.
-
----
-
-## 7. Intervenir en conflictos con clientes
-
-### Cuándo te toca a vos
+## Cuándo te toca a vos
 
 El equipo maneja los reclamos con el **método LAST**. Intervenís cuando:
 
 - El reclamo **es grande**
 - La persona que atendió **ya intentó y no alcanzó**
 - El cliente **pide hablar con un responsable**
-- Hay que tomar una decisión que **el rol no puede tomar solo** (no cobrar, compensar)
+- Hay que **decidir una compensación**
 
-> 📖 El método completo en
-> **[Atención al cliente y reclamos](../comunes/atencion-y-reclamos.md)**.
+## Qué podés ofrecer
 
-### Cómo intervenir
+**Esto lo resolvés vos, sin consultar:**
+
+| | |
+|---|---|
+| **Descuento** | Sobre lo consumido |
+| **Producto sin cargo** | No cobrar el ítem del problema |
+| **Cortesía** | Invitar algo |
+| **Compensación** | Reponer, rehacer, cambiar |
+
+> ### Devolver dinero no lo autorizás vos.
+> Si **no hay otra solución posible**, sos vos quien **se la solicita a Gerencia**.
+> El cliente no tiene que enterarse de esa gestión: vos le decís que lo estás
+> resolviendo.
+
+## Cómo intervenir
 
 | # | Paso | Detalle |
 |---|---|---|
-| **1** | **Presentate y hacete cargo** | *"Hola, soy la responsable del turno. Contame qué pasó."* El cliente tiene que sentir que llegó a alguien que puede resolver |
-| **2** | **Escuchá al cliente primero** | La versión interna viene después. Nunca al revés |
-| **3** | **Nunca corrijas a tu compañero delante del cliente** | Resolvé primero, hablá después. En privado |
-| **4** | **Decidí algo concreto** | No cobrar, reponer, compensar. Una decisión, no una explicación |
-| **5** | **Cerrá el tema** | Que el cliente se vaya sabiendo qué se hizo |
-| **6** | **Hablá con quien atendió** | Qué pasó y qué se hace la próxima. Sin reto, con criterio |
+| 1 | **Presentate y hacete cargo** | *"Hola, soy la responsable del turno. Contame qué pasó."* |
+| 2 | **Escuchá al cliente primero** | La versión interna viene después. Nunca al revés |
+| 3 | **Nunca corrijas a tu compañero delante del cliente** | Resolvé primero, hablá después. En privado |
+| 4 | **Decidí algo concreto** | Descuento, cortesía, sin cargo. Una decisión, no una explicación |
+| 5 | **Cerrá el tema** | Que el cliente se vaya sabiendo qué se hizo |
 
-> ⚠️ **Lo que nunca:** discutir con el cliente, negar el problema, o dejarlo sin
-> respuesta. Si el tema te excede, **llamá a Administración** — pero no dejes al cliente
-> esperando sin saber qué pasa.
+> **Lo que nunca:** discutir con el cliente, negar el problema, o dejarlo sin respuesta.
 
 ---
 
-## 8. Control de checklists
+# 3. Control de los checklists
 
 Cada rol tiene el suyo y **lo completa quien ocupa el puesto**. Vos verificás que se
-haya hecho:
+haya hecho.
 
-| Rol | Checklist | Momentos |
-|---|---|---|
-| 🧾 **Cajero** | [Ver](cajeros.md#-checklist-diario--cajeroa) | Apertura · Durante · Cierre |
-| 🛍️ **Vendedor / Mozo** | [Ver](vendedores-y-mozos.md#-checklist-diario--vendedora-y-mozoa) | Apertura · Durante · Cierre |
-| ☕ **Barista** | [Ver](baristas.md#-checklist-diario--barista) | Apertura · Durante · Cierre |
-| 🍳 **Ayudante de cocina** | [Ver](../produccion/ayudante-de-cocina.md) | Según turno |
-| 🧹 **Limpieza** | [Ver](../limpieza.md) | Lunes, miércoles y viernes |
+| Rol | Momentos |
+|---|---|
+| **Cajero** | Apertura · Durante · Cierre |
+| **Vendedor / Mozo** | Apertura · Durante · Cierre |
+| **Barista** | Apertura · Durante · Cierre |
+| **Ayudante de cocina** | Según turno |
+| **Limpieza** | Lunes, miércoles y viernes |
 
-> ### 🔑 Controlar no es completarlo vos.
-> Si un checklist está sin hacer, **no lo tildes por el otro**. Se hace, y queda
-> registrado que no se había hecho. Un checklist completado por compromiso no sirve
-> para nada.
+### Cómo se controla
+
+- **El control es silencioso.** No anunciás que estás revisando.
+- Si algo quedó pendiente, **podés comentárselo a la persona**: *"che, esto todavía
+  está sin hacer"*.
+- **No lo tildes por el otro.** Un checklist completado por compromiso no sirve para nada.
+- **Todo lo que veas va al informe** (ver Sección 4).
 
 ---
 
-## 9. El reporte del turno
+## Por qué esto no es buchonear
 
-Al cerrar, dejás un **reporte breve**. Breve de verdad: si lleva más de cinco minutos,
-se va a dejar de hacer.
+Es la duda que va a tener todo el equipo, así que conviene decirlo de frente.
 
-> ### 📌 Esto es lo que faltaba
-> Hasta ahora, **siete tipos de incidencia se reportaban y no quedaban en ningún lado**.
-> Sin registro no hay forma de saber si algo se repite — que es justamente lo que
-> distingue un mal día de un problema.
->
-> **El reporte del turno es donde eso queda.**
+> ### El Experto no es un buchón. Es el responsable del turno.
 
-### Qué lleva el reporte
+**La diferencia está en tres cosas:**
 
-| # | Campo | Detalle |
-|---|---|---|
-| **1** | **Turno y Experto** | Fecha, turno y quién fue el responsable |
-| **2** | **Checklists** | Cuáles se cumplieron y cuáles no |
-| **3** | **Incidencias** | De la lista de abajo. Si no hubo, se escribe **"sin incidencias"** |
-| **4** | **Reclamos que escalaron** | Qué pasó y **cómo se resolvió** |
-| **5** | **Para el turno siguiente** | Lo que la próxima persona necesita saber |
+| | |
+|---|---|
+| **El control no es secreto** | Todo el equipo sabe que en cada turno hay un Experto, que revisa los checklists y que deja un informe. **Está escrito acá y en el manual de cada rol** |
+| **El rol rota** | Hoy sos vos, mañana es otro. Nadie controla a nadie desde arriba |
+| **El Experto no sanciona ni reta** | No es su función. Informa a Gerencia, y **es Gerencia quien habla con la persona** si hace falta |
 
-> El campo 5 es el que más se agradece. Un producto que se agotó, un equipo que anda
-> raro, un cliente que vuelve mañana a buscar algo.
+**Y una recomendación práctica:** si algo no se cumplió, **decíselo primero a la
+persona**. Que se entere por vos antes de que aparezca en un informe. No es
+obligatorio, pero es lo que hace la diferencia entre un compañero y un buchón.
 
-### Las incidencias que se registran
+> Informar lo que pasó en el turno **es la tarea**, no una traición. Un turno del que
+> no queda registro es un turno del que nadie aprende.
+
+---
+
+# 4. El informe diario
+
+Al terminar tu turno, dejás un **informe con lo que pasó**.
+
+> ### Se hace todos los días, sin excepción.
+> Si no hubo nada que informar, se escribe eso mismo: **"sin novedades"**.
+
+## Qué lleva
+
+| # | Campo |
+|---|---|
+| 1 | **Fecha, turno y local** |
+| 2 | **Quién fue el Experto** |
+| 3 | **Checklists** — cuáles se cumplieron y cuáles no, **con nombre** |
+| 4 | **Incidencias del turno** |
+| 5 | **Reclamos que escalaron** y cómo se resolvieron |
+| 6 | **Compensaciones otorgadas** — descuentos, cortesías, productos sin cargo |
+| 7 | **Lo que el turno siguiente tiene que saber** |
+
+## Quién lo lee
+
+> ### Solo Gerencia.
+> **Ningún otro Experto, ni Administración, ni ningún otro rol tiene acceso.**
+
+Gerencia es quien decide si hay que hablar con alguien, y quien lo hace.
+
+## Las incidencias que se registran
 
 - Venta no registrada en FUDO
 - Diferencia de caja
@@ -299,106 +229,106 @@ se va a dejar de hacer.
 - Producto vencido en vitrina o heladera
 - Faltante en una entrega
 - Reclamo de cliente que escaló
+- Rotura de vajilla
 
-### Dónde se carga
-
-**El reporte va a cargarse en la web**, en una de las que ya se usan todos los días.
-
-> 🚧 **Falta implementarlo.** Mientras no exista la pantalla, el reporte se hace donde
-> indique Administración — pero **se hace igual**. Un turno sin reporte es un turno del
-> que no queda nada.
+> **Falta definir dónde se carga el informe.** Va a ser en una de las webs que ya se
+> usan. Mientras no exista la pantalla, se hace donde indique Gerencia — pero se hace.
 
 ---
 
-## 10. Cierre del turno
+# 5. Lo demás que verificás
 
-- ☐ **Caja cerrada** y registrada en FUDO
-- ☐ **Sobre de depósito** recibido y verificado
-- ☐ **Diferencias** registradas (si las hubo)
-- ☐ **Pedidos de producción de las 21:00** cargados
-- ☐ **Pedidos de clientes** del día: ninguno pendiente
-- ☐ **Salón, mostrador y barra** limpios y listos
-- ☐ **Productos guardados**, heladeras cerradas
-- ☐ **Equipos apagados**, luces y llaves
-- ☐ **Reporte del turno** hecho
+Dos cosas más que sí te corresponden:
+
+### Pedidos de producción
+
+**Verificá que se hayan cargado a horario.**
+
+| Horario | Qué tiene que estar cargado |
+|---|---|
+| **9:00** | Panadería |
+| **16:00** | Pastelería |
+| **21:00** | Especialidades · Facturería · Sandwiches · Cocina San Luis |
+
+Si el horario pasó y el pedido no está: **cargalo o hacelo cargar en el momento**, y
+dejalo en el informe.
+
+### Recepción de mercadería
+
+**Verificá que llegue lo que tenía que llegar**, tanto de Compras como de proveedores
+directos. Si falta algo, se reclama **en el momento**.
+
+### Alta de cuentas corrientes
+
+**El alta de una cuenta corriente la habilitás vos.**
 
 ---
 
-## 📊 Indicadores de desempeño (KPIs)
+## Indicadores de desempeño
 
 | Indicador | Meta |
 |---|---|
-| **Reporte del turno** | Hecho **en todos los turnos**, sin excepción |
+| **Informe diario** | Hecho en **todos** los turnos |
 | **Checklists verificados** | 100% de los roles del turno |
-| **Pedidos de producción a tiempo** | 100% — los tres horarios |
 | **Reclamos escalados** | Resueltos **dentro del turno** |
-| **Diferencias de caja** | Todas reportadas, ninguna sin registrar |
-| **Productos vencidos en vitrina** | **0** |
+| **Pedidos de producción** | Cargados a horario, los tres |
+| **Situaciones informadas a Gerencia** | Todas, siempre |
 
 ---
 
-## ✅ Checklist — Experto del Turno
+## Checklist — Experto del Turno
 
 ### Al abrir el turno
 
 - ☐ Sé quiénes están y en qué puesto
-- ☐ Caja verificada con el cajero (fondo y cambio)
-- ☐ Vitrinas repuestas y con precios visibles
-- ☐ Barra lista (cafetera, molienda, café de prueba)
-- ☐ Las dos webs abren correctamente
-- ☐ Pedidos de clientes del día revisados
-- ☐ Uniformes correctos
-- ☐ Si falta alguien, puestos reorganizados
+- ☐ Si falta alguien, reorganicé los puestos
+- ☐ Revisé los pedidos de clientes que se entregan en este turno
 
 ### Durante el turno
 
 - ☐ Recorrí las tres áreas: mostrador, salón y cocina
 - ☐ Pedido de **Panadería** cargado (9:00)
 - ☐ Pedido de **Pastelería** cargado (16:00)
-- ☐ Mercadería recibida y revisada
-- ☐ Devoluciones y movimientos de stock autorizados uno por uno
+- ☐ Mercadería recibida y verificada
 - ☐ Intervine en los reclamos que lo necesitaron
-- ☐ Hablé con quien atendió, después de cada intervención
+- ☐ Anoté las compensaciones que otorgué
 
 ### Al cerrar el turno
 
 - ☐ Pedidos de las **21:00** cargados
-- ☐ Pedidos de clientes: ninguno pendiente
-- ☐ Caja cerrada, sobre de depósito recibido y verificado
-- ☐ Diferencias registradas
 - ☐ **Checklists de todos los roles verificados**
-- ☐ Los que faltaban, hechos — y anotado que faltaban
-- ☐ Local limpio y equipos apagados
-- ☐ **Reporte del turno completo**
+- ☐ A quien le faltaba algo, se lo comenté
+- ☐ **Informe del día completo** — o "sin novedades"
 
 ---
 
-## 🚧 Pendientes de definición
+## Pendientes de definición
 
-- [ ] **🔴 Construir la pantalla del reporte** en la web de Pedidos de Producción.
-      Es lo único que falta para que el reporte del turno funcione de verdad.
-- [ ] **Hasta dónde llega su autoridad con el cliente.** Si puede no cobrar un ítem,
-      hasta qué monto, y cuándo tiene que consultar a Administración.
-- [ ] **Quién lee los reportes y cada cuánto.** Un reporte que nadie lee se deja de
-      escribir. Conviene definir quién los revisa y qué hace con lo que encuentra.
-- [ ] **Quién cubre tu puesto** cuando dejás tu tarea para atender algo del turno.
-      ¿Es el compañero más cercano, o hay alguien designado?
-- [ ] **Los llamados de atención.** El manual de Cajeros los menciona como consecuencia
-      de una falta. Falta definir si los aplica el Experto o Administración.
-- [ ] **El maestro de cada área de producción.** Es el equivalente al Experto en la
-      cuadra y **todavía no tiene manual**. Conviene escribirlo — sobre todo para
-      definir qué reporta y a quién.
+- [ ] **Dónde se carga el informe.** Es lo único que falta para que el circuito
+      funcione. Va en una de las webs que ya se usan.
+- [ ] **Uno o dos informes por día.** Hay dos turnos con un Experto cada uno. Confirmar
+      si cada Experto deja el suyo (dos por día por local) o si se consolida uno solo.
+- [ ] **Tope de compensación.** El Experto puede dar descuentos, cortesías y productos
+      sin cargo. Falta definir si hay un límite de monto a partir del cual tiene que
+      consultar a Gerencia.
+- [ ] **Roturas y consumo interno.** Quedó definido que los movimientos de stock
+      **entre locales** no requieren autorización. Falta definir quién autoriza las
+      **roturas, el consumo interno y las diferencias de inventario**.
+- [ ] **Cuánto tiempo hay que tener en el local** para poder ser Experto, si es que hay
+      un mínimo.
+- [ ] **Qué hace Gerencia con los informes.** Si los revisa a diario, semanalmente, y
+      qué devolución recibe el equipo. Un informe que nadie devuelve se deja de escribir
+      con ganas.
 
 ---
 
 ## Documentos relacionados
 
-- [Manual de Cajeros](cajeros.md)
-- [Manual de Vendedores y Mozos](vendedores-y-mozos.md)
-- [Manual de Baristas](baristas.md)
-- [Manual de Ayudante de Cocina](../produccion/ayudante-de-cocina.md)
-- [Manual de Limpieza](../limpieza.md)
-- [Atención al cliente y reclamos](../comunes/atencion-y-reclamos.md)
-- [Herramientas digitales](../comunes/herramientas-digitales.md)
-- [Pedidos y pagos a proveedores](../comunes/pedidos-y-pagos-a-proveedores.md)
-- [Jornada de trabajo y presentismo](../comunes/jornada-y-presentismo.md)
+- Manual de Cajeros
+- Manual de Vendedores y Mozos
+- Manual de Baristas
+- Manual de Ayudante de Cocina
+- Manual de Limpieza
+- Atención al cliente y reclamos
+- Herramientas digitales
+- Código de Ética y Convivencia
