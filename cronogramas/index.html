@@ -405,13 +405,13 @@
 
       <section class="card">
         <div class="card-body" style="padding-bottom:16px">
-          <span class="eyebrow">Experto del turno</span>
-          <p class="sub" style="padding:4px 0 0">Se destaca con ⭐ dondequiera que esa persona aparezca asignada en la grilla.</p>
+          <span class="eyebrow">Experto Candela</span>
+          <p class="sub" style="padding:4px 0 0">Se destaca con ⭐ dondequiera que esa persona aparezca asignada en la grilla, y también al imprimir.</p>
           <div class="field">
             <label for="expertoPerson">Persona</label>
             <select id="expertoPerson"></select>
           </div>
-          <button class="btn" id="btnAddExperto" style="margin-top:9px;width:100%">⭐ Marcar como experto</button>
+          <button class="btn" id="btnAddExperto" style="margin-top:9px;width:100%">⭐ Marcar como Experto Candela</button>
           <div class="mini-list" id="expertoList"></div>
         </div>
       </section>
@@ -647,7 +647,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-10 experto-del-turno";
+const APP_VERSION="2026-08-11 feriados-experto-candela";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -655,6 +655,54 @@ const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",caj
 // siempre es 1 solo (no admite refuerzo); barista y cocina admiten como mucho 1 refuerzo además de
 // la persona de base. Los puestos que no están acá no tienen tope.
 const MAX_TURNO={cajero:1,barista:2,cocina:2};
+// Feriados nacionales de Argentina (Ley 27.399): "feriado" es de pago obligatorio si se trabaja;
+// "no_laborable" (puente turístico) es opcional para el empleador. Verificado 2026 completo; 2027
+// con los inamovibles/trasladables ya confirmados (los puentes de 2027 todavía no fueron
+// decretados al momento de cargar esto — agregarlos acá cuando se confirmen).
+const FERIADOS_AR=[
+  {fecha:"2026-01-01",nombre:"Año Nuevo",tipo:"feriado"},
+  {fecha:"2026-02-16",nombre:"Carnaval",tipo:"feriado"},
+  {fecha:"2026-02-17",nombre:"Carnaval",tipo:"feriado"},
+  {fecha:"2026-03-23",nombre:"Puente turístico",tipo:"no_laborable"},
+  {fecha:"2026-03-24",nombre:"Día Nacional de la Memoria",tipo:"feriado"},
+  {fecha:"2026-04-02",nombre:"Día del Veterano y los Caídos en Malvinas",tipo:"feriado"},
+  {fecha:"2026-04-03",nombre:"Viernes Santo",tipo:"feriado"},
+  {fecha:"2026-05-01",nombre:"Día del Trabajador",tipo:"feriado"},
+  {fecha:"2026-05-25",nombre:"Día de la Revolución de Mayo",tipo:"feriado"},
+  {fecha:"2026-06-20",nombre:"Paso a la Inmortalidad del Gral. Belgrano",tipo:"feriado"},
+  {fecha:"2026-07-09",nombre:"Día de la Independencia",tipo:"feriado"},
+  {fecha:"2026-07-10",nombre:"Puente turístico",tipo:"no_laborable"},
+  {fecha:"2026-08-17",nombre:"Paso a la Inmortalidad del Gral. San Martín",tipo:"feriado"},
+  {fecha:"2026-10-12",nombre:"Día del Respeto a la Diversidad Cultural",tipo:"feriado"},
+  {fecha:"2026-11-23",nombre:"Día de la Soberanía Nacional",tipo:"feriado"},
+  {fecha:"2026-12-07",nombre:"Puente turístico",tipo:"no_laborable"},
+  {fecha:"2026-12-08",nombre:"Inmaculada Concepción de María",tipo:"feriado"},
+  {fecha:"2026-12-25",nombre:"Navidad",tipo:"feriado"},
+  {fecha:"2027-01-01",nombre:"Año Nuevo",tipo:"feriado"},
+  {fecha:"2027-02-08",nombre:"Carnaval",tipo:"feriado"},
+  {fecha:"2027-02-09",nombre:"Carnaval",tipo:"feriado"},
+  {fecha:"2027-03-24",nombre:"Día Nacional de la Memoria",tipo:"feriado"},
+  {fecha:"2027-03-26",nombre:"Viernes Santo",tipo:"feriado"},
+  {fecha:"2027-04-02",nombre:"Día del Veterano y los Caídos en Malvinas",tipo:"feriado"},
+  {fecha:"2027-05-01",nombre:"Día del Trabajador",tipo:"feriado"},
+  {fecha:"2027-05-25",nombre:"Día de la Revolución de Mayo",tipo:"feriado"},
+  {fecha:"2027-06-20",nombre:"Paso a la Inmortalidad del Gral. Belgrano",tipo:"feriado"},
+  {fecha:"2027-07-09",nombre:"Día de la Independencia",tipo:"feriado"},
+  {fecha:"2027-08-16",nombre:"Paso a la Inmortalidad del Gral. San Martín",tipo:"feriado"},
+  {fecha:"2027-10-11",nombre:"Día del Respeto a la Diversidad Cultural",tipo:"feriado"},
+  {fecha:"2027-11-22",nombre:"Día de la Soberanía Nacional",tipo:"feriado"},
+  {fecha:"2027-12-08",nombre:"Inmaculada Concepción de María",tipo:"feriado"},
+  {fecha:"2027-12-25",nombre:"Navidad",tipo:"feriado"},
+];
+function feriadosEnSemana(){
+  if(!state.weekStart)return[];
+  const out=[];
+  for(let d=0;d<7;d++){
+    const iso=isoDe(d);if(!iso)continue;
+    FERIADOS_AR.filter(f=>f.fecha===iso).forEach(f=>out.push({...f,dia:d}));
+  }
+  return out;
+}
 // loc: 'SL' | 'SLA' | 'both'
 // PEOPLE_BASE es la lista fija del código. PEOPLE es la que se usa en todo el resto de la app —
 // se recalcula (rebuildPeople, más abajo) sumándole state.peopleExtra, que es donde vive la gente
@@ -1107,10 +1155,12 @@ function render(){
 function renderNotes(){
   const el=document.getElementById("noteBanner");if(!el)return;
   const items=[];
+  feriadosEnSemana().forEach(f=>items.push(`${f.tipo==="feriado"?"🎉":"🗓️"} ${DAYS[f.dia][1]} ${fmtFechaCorta(f.fecha)}: ${f.nombre}${f.tipo==="no_laborable"?" (no laborable, opcional)":" — feriado nacional"}`));
   state.rules.filter(r=>r.type==="cierre").forEach(r=>items.push(`🔒 ${DAYS[r.day][1]} · cierra ${r.shift==="M"?"a la mañana":r.shift==="T"?"a la tarde":"todo el día"} · ${r.loc==="both"?"ambos locales":r.loc==="SL"?"San Luis":"SLA"}`));
   state.rules.filter(r=>r.type==="nota").forEach(r=>items.push(`📌 ${DAYS[r.day][1]}: ${r.text}`));
   el.innerHTML=items.map(t=>`<div class="nb">${t}</div>`).join("");
 }
+function fmtFechaCorta(iso){const[,m,d]=iso.split("-");return`${d}/${m}`;}
 
 function renderCounts(v,empty){
   const el=document.getElementById("counts");
@@ -1167,8 +1217,8 @@ function isDoubleShift(name,d){
 // "X no puede trabajar con Y": se compara el mismo turno (día+mañana/tarde) Y el mismo local — si
 // están en el mismo horario pero en San Luis y SLA respectivamente, no cuenta como choque.
 function sonIncompatibles(a,b){return state.incompat.some(r=>(r.a===a&&r.b===b)||(r.a===b&&r.b===a));}
-// "Experto del turno": marca permanente sobre la persona (no cambia semana a semana), para que se
-// destaque dondequiera que aparezca asignada en la grilla.
+// "Experto Candela": marca permanente sobre la persona (no cambia semana a semana), para que se
+// destaque dondequiera que aparezca asignada en la grilla y al imprimir.
 function esExperto(name){return state.expertos.includes(name);}
 function nombreDestacado(name){return esExperto(name)?"⭐ "+name:name;}
 // "no pueden trabajar juntos" es por local: si están en el mismo turno pero en San Luis y SLA
@@ -1459,7 +1509,7 @@ function buildScheduleRows(loc,worked){
         const cells=DAYS.map((_,d)=>{
           if(!sellable(d,loc,shift))return{text:"Cerrado",muted:true};
           const v=state.assign[key(d,loc,shift,row.role,row.idx)];
-          return{text:v||"—",muted:!v};
+          return{text:v?(esExperto(v)?"⭐ ":"")+v:"—",muted:!v,expert:v&&esExperto(v)};
         });
         rows.push({label:row.label,cells});
       });
@@ -1467,7 +1517,8 @@ function buildScheduleRows(loc,worked){
       for(let r=0;r<maxE;r++){
         const cells=DAYS.map((_,d)=>{
           const e=exAt(d,loc,shift,role)[r];
-          return{text:e&&!isClosed(d,loc,shift)?e.n+(e.half?" ½":""):"",extra:true};
+          const filled=e&&!isClosed(d,loc,shift);
+          return{text:filled?(esExperto(e.n)?"⭐ ":"")+e.n+(e.half?" ½":""):"",extra:true,expert:filled&&esExperto(e.n)};
         });
         rows.push({label:`${brows[0].label} +`,cells,extra:true});
       }
@@ -1555,9 +1606,9 @@ function renderScheduleCanvas(){
         ctx.fillText(row.label,PAD+10,y+h/2+3);
         let cx=PAD+PU_W;
         row.cells.forEach(c=>{
-          ctx.fillStyle="#ffffff";ctx.fillRect(cx,y,COL_W,h);
-          ctx.fillStyle=c.muted?"#bbb":c.rest?"#5c574e":"#1a1a1a";
-          ctx.font=c.rest?"500 10.5px Arial, sans-serif":"500 11.5px Arial, sans-serif";
+          ctx.fillStyle=c.expert?"#fbf0d8":"#ffffff";ctx.fillRect(cx,y,COL_W,h);
+          ctx.fillStyle=c.expert?"#8a5a10":c.muted?"#bbb":c.rest?"#5c574e":"#1a1a1a";
+          ctx.font=c.expert?"700 11.5px Arial, sans-serif":c.rest?"500 10.5px Arial, sans-serif":"500 11.5px Arial, sans-serif";
           ctx.textAlign="center";
           if(row.rest){
             const lines=wrapCanvasText(ctx,c.text,COL_W-10);
@@ -1905,10 +1956,10 @@ function initControls(){
   document.getElementById("btnAddExperto").addEventListener("click",()=>{
     const n=document.getElementById("expertoPerson").value;
     if(!n)return toast("Elegí una persona");
-    if(esExperto(n))return toast(`${n} ya está marcado como experto`);
+    if(esExperto(n))return toast(`${n} ya está marcado como Experto Candela`);
     state.expertos.push(n);
     fillPersonSelects();renderMini();render();persist();
-    toast(`${n} marcado como experto ⭐`);
+    toast(`${n} marcado como Experto Candela ⭐`);
   });
   document.getElementById("btnAuto").addEventListener("click",autocomplete);
   document.getElementById("weekStart").addEventListener("change",e=>{
