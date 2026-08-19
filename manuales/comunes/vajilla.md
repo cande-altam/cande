@@ -22,7 +22,7 @@ Si se acumula, no hay vajilla limpia, y el salón se frena.
 
 | Rol | Su parte |
 |---|---|
-| 🍳 **Ayudante de Cocina** | **Responsable del lavado** y del orden del sector de bacha |
+| 🍳 **Ayudante de Cocina** | **Responsable del lavado y la fajina**, y del orden del sector de bacha |
 | 🪑 **Mozo** | Retira la vajilla de las mesas y la lleva a la bacha **desbarasada** |
 | ☕ **Barista** | Sus utensilios de barra los lava él, entre preparaciones |
 | 🛍️ **Vendedor** | Lleva a la bacha lo que junte en mostrador |
@@ -41,7 +41,8 @@ Si se acumula, no hay vajilla limpia, y el salón se frena.
 4. LAVAR        →  de lo menos graso a lo más graso
 5. ENJUAGAR     →  sin restos de detergente
 6. ESCURRIR     →  que seque solo
-7. GUARDAR      →  seco, en su lugar
+7. FAJINAR      →  pulir, sin marcas ni huellas
+8. GUARDAR      →  seco, en su lugar
 ```
 
 ---
@@ -106,18 +107,62 @@ suciedad.
 
 ---
 
-## 6. Secar
+## 6. Escurrir
 
-> ### ⚠️ Se escurre, no se seca con trapo.
-> Un trapo usado deja más de lo que saca. La vajilla **escurre y seca sola**.
+> ### ⚠️ La vajilla mojada no se seca con trapo.
+> Un repasador usado deja más de lo que saca. **Primero escurre sola.**
 
 - Poné todo en el **escurridor**, boca abajo.
-- Si hay que apurar algo, usá **papel descartable**, no un repasador que ya se usó.
 - **Los vasos y copas, boca abajo y separados.**
+- Esperá a que esté **seca** antes de fajinar.
 
 ---
 
-## 7. Guardar
+## 7. Fajinar
+
+> ### 🔑 Fajinar no es secar.
+> Secar es sacar el agua — eso lo hace el escurridor.
+> **Fajinar es pulir la vajilla ya seca** para que no le queden marcas de agua ni
+> huellas.
+
+Es lo que separa una copa limpia de una copa **impecable**. El cliente no ve el lavado;
+ve la marca de agua.
+
+### Con qué
+
+| | |
+|---|---|
+| 🧻 **Paño de fajina limpio** | **Exclusivo para esto.** No es el repasador de la mesada ni el de secarse las manos |
+| 🔄 **Se cambia** | Apenas se humedece — un paño mojado deja pelusa y marca |
+
+> ⛔ **Nunca fajines con un paño que se usó para otra cosa.** Es peor que no fajinar.
+
+### Cómo
+
+| Pieza | Cómo se hace |
+|---|---|
+| 🥂 **Copas** | Tomala **por el pie**, nunca por el cáliz. Pulí el cáliz por dentro y por fuera con el paño, sin apretar |
+| 🥛 **Vasos** | Por la base. Pulí el interior y el borde |
+| ☕ **Tazas** | Interior, borde y asa |
+| 🍽️ **Platos** | Toda la superficie, sobre todo el borde |
+| 🍴 **Cubiertos** | Hoja y mango. Es donde más se notan las marcas |
+
+> ⚠️ **No dejes huellas al guardar.** Se fajina y se guarda tomando la pieza por donde
+> el cliente no toma: copas por el pie, cubiertos por el mango, platos por el borde.
+
+### Cuándo
+
+- **Antes del servicio**, con lo que se va a usar en el turno.
+- **En los tiempos muertos** — es la tarea ideal para cuando el salón afloja.
+- **Nunca sobre la bacha.** Se fajina en una superficie limpia y seca, lejos del agua
+  sucia.
+
+> ### ⛔ Una copa con marca de agua no va a la mesa.
+> Si al fajinar aparece una marca que no sale, **la copa vuelve a la bacha.**
+
+---
+
+## 8. Guardar
 
 > ### ⛔ Nada se guarda húmedo.
 > Vajilla húmeda guardada = olor a encierro y hongos en el estante.
@@ -134,14 +179,46 @@ suciedad.
 > Corta, junta suciedad en la fisura y le dice al cliente que no miramos lo que le
 > servimos.
 
+### Qué hacer en el momento
+
 | Situación | Qué hacés |
 |---|---|
 | **Se rompió** | Retirá **todos** los pedazos, envolvelos antes de tirarlos |
 | **Está astillada o rajada** | Sacala de circulación, aunque se pueda usar |
 | **Se rompió dentro de la bacha** | **Vaciá la bacha antes de seguir.** Nunca metas la mano en agua con un vidrio roto |
+| **Se rompió cerca del cliente** | Primero el cliente: que no haya nadie lastimado. Después el piso |
 
-**Toda rotura se avisa al Experto del turno** — si falta vajilla, hay que reponerla
-antes de que se note en el salón.
+---
+
+### Toda rotura se registra
+
+> ### 🔑 Se anota **cuántas piezas** se rompieron y **qué día**, en la planilla.
+> No es para buscar culpables: es para saber cuánta vajilla se pierde por mes y
+> reponerla antes de que falte en pleno servicio.
+
+**Se anota siempre**, sin importar si fue una copa o seis platos, y sin importar cómo
+pasó.
+
+| Campo | |
+|---|---|
+| 📅 **Día** | La fecha en que se rompió |
+| 🔢 **Cantidad** | Cuántas piezas |
+
+> 💡 **Vale la pena sumar dos columnas más:** **qué pieza** (copa, taza, plato, vaso) y
+> **en qué turno**. Sin el tipo de pieza, la planilla dice cuánto se rompe pero no
+> **qué** hay que comprar. *(A confirmar.)*
+
+### Las dos reglas del registro
+
+> ⛔ **Una rotura sin anotar es el único error grave acá.**
+> Romper una copa le pasa a cualquiera. **No anotarla** es lo que hace que un día no
+> haya copas.
+
+> ✅ **Anotar no trae problemas.** El registro existe para reponer a tiempo, no para
+> descontarle a nadie.
+
+**Además de anotarla, avisale al Experto del turno** si la rotura deja al local corto
+de algo para ese mismo servicio.
 
 ---
 
@@ -162,8 +239,9 @@ antes de que se note en el salón.
 |---|---|
 | **Bacha al cierre** | **Vacía** — nada en remojo |
 | **Vajilla en el salón** | **0** piezas astilladas o rajadas |
-| **Vajilla guardada** | Seca, sin excepción |
-| **Roturas** | Todas avisadas al Experto del turno |
+| **Vajilla guardada** | Seca y fajinada, sin excepción |
+| **Copas en mesa** | **0** con marcas de agua o huellas |
+| **Roturas** | **Todas anotadas en la planilla**, el mismo día |
 
 ---
 
@@ -175,16 +253,20 @@ antes de que se note en el salón.
 - ☐ Restos a la basura **antes** de la bacha
 - ☐ Vajilla separada por tipo al dejarla
 - ☐ Bacha lavada a medida que llega, sin acumular
-- ☐ Roturas retiradas y avisadas
+- ☐ **Vajilla fajinada** en los tiempos muertos
+- ☐ Paño de fajina limpio y seco
+- ☐ Roturas retiradas y **anotadas en la planilla** (día y cantidad)
 
 ### Al cierre
 
 - ☐ **Bacha vacía y limpia**
 - ☐ Todo escurrido y seco
+- ☐ **Vajilla fajinada** — sin marcas ni huellas
 - ☐ Vajilla guardada en su lugar
 - ☐ Vasos y copas boca abajo
 - ☐ Sector de bacha ordenado
 - ☐ Piezas astilladas retiradas de circulación
+- ☐ Roturas del turno anotadas en la planilla
 
 ---
 
@@ -196,10 +278,16 @@ antes de que se note en el salón.
       [manual de Limpieza](../limpieza.md).
 - [ ] **Cada cuánto se cambia el agua** de la bacha, si hay un criterio además de
       "cuando se enfría o se ensucia".
+- [ ] **Cuántos paños de fajina hay** y quién los lava. Si el paño no se repone limpio
+      todos los días, la fajina no se puede hacer bien.
 - [ ] **Sanitizado.** Si además del lavado se hace algún paso de desinfección de
       vajilla, y con qué.
-- [ ] **Quién repone** la vajilla que se rompe, y si se registra en algún lado. Hoy la
-      rotura se avisa pero no queda contada.
+- [ ] **Dónde vive la planilla de roturas** — papel en la bacha, planilla de Google,
+      o dentro de la web. Conviene que use **el mismo sistema** que el reporte del turno
+      y el registro del vehículo, en vez de sumar un tercer lugar.
+- [ ] **Si se anota el tipo de pieza y el turno**, además del día y la cantidad.
+- [ ] **Quién revisa la planilla y cada cuánto**, para decidir cuándo reponer.
+- [ ] **Quién repone** la vajilla y con qué criterio de stock mínimo.
 
 ---
 
