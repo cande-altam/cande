@@ -248,7 +248,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-10 19:59";
+const APP_VERSION = "2026-08-20 20:32";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -304,6 +304,7 @@ const state = {
   _releidoPorFaltantes: false,
   facturasFiltro: "todas",
   facturasBusqueda: "",
+  facturaDetalleId: null,
   pagosFiltro: "no_pagado",
   pagosBusqueda: "",
   productosFiltro: "",
@@ -1303,6 +1304,51 @@ function estadoProveedorEscaneo() {
   return "falta";
 }
 
+// Control de completitud del escaneo: la plata tiene que cerrar.
+// Σ importes de las líneas − descuentos = subtotal impreso (el de antes del IVA).
+// Devuelve null cuando no hay con qué comparar (el comprobante no trae subtotal, o no se leyó
+// ninguna línea): no avisar es mejor que avisar mal.
+function controlSubtotalEscaneo(data, doc) {
+  const root = doc || document;
+  let subtotal = Number(data?.subtotal);
+  if (!(subtotal > 0)) {
+    // Fallback para facturas A donde los precios van sin IVA: subtotal = total − IVA. Solo en ese
+    // caso, porque si los precios ya incluyen IVA el total NO es comparable con los importes.
+    const total = Number(data?.montoTotal), iva = Number(data?.iva);
+    if (data?.preciosIncluyenIva === false && total > 0 && iva > 0 && total > iva) subtotal = total - iva;
+  }
+  if (!(subtotal > 0)) return null;
+
+  let suma = 0, leidos = 0, sinImporte = 0;
+  for (const row of Array.from(root.querySelectorAll("#items-container .item-row"))) {
+    const nombre = (row.querySelector(".item-insumo-id")?.value || "").trim() || (row.querySelector(".item-insumo-search")?.value || "").trim();
+    if (!nombre) continue;
+    leidos++;
+    const precioInput = row.querySelector(".item-precio");
+    // El importe impreso de la línea es el dato más confiable; si no se leyó, se reconstruye con
+    // cantidad × precio unitario, que es lo mismo que el ticket imprime.
+    const importe = Number(precioInput?.dataset?.importe);
+    if (importe > 0) { suma += importe; continue; }
+    const cantidad = Number(row.querySelector(".item-cantidad")?.value);
+    const precio = Number(precioInput?.value);
+    if (cantidad > 0 && precio > 0) suma += cantidad * precio;
+    else sinImporte++;
+  }
+  if (!leidos) return null;
+
+  const descuentos = Math.abs(Number(data?.descuentos) || 0);
+  const neto = suma - descuentos;
+  const falta = subtotal - neto;
+  // Tolerancia: 1% del subtotal (redondeos de la impresora, centavos por línea), con un piso de $1
+  // para comprobantes chicos.
+  const tolerancia = Math.max(subtotal * 0.01, 1);
+  return {
+    subtotal, suma, descuentos, neto, falta, leidos, sinImporte,
+    incompleto: sinImporte === 0 && falta > tolerancia,
+    sobra: sinImporte === 0 && falta < -tolerancia
+  };
+}
+
 function mostrarPendientesDelEscaneo(data, opts) {
   const cont = document.getElementById("escaneo-pendientes");
   if (!cont) return;
@@ -1336,20 +1382,27 @@ function mostrarPendientesDelEscaneo(data, opts) {
   if (ilegibles.length) {
     avisos.push(`<div class="item-note" style="margin:0 0 8px">✍️ No se pudieron leer con seguridad: <strong>${ilegibles.map(escapeHtml).join(", ")}</strong>.</div>`);
   }
-  // Muchos tickets declaran cuántos ítems tienen ("Cantidad de ítems: 30"). Es un control de
-  // completitud gratis: si se leyeron menos, faltan líneas y hay que avisarlo.
-  const declarados = Number(data?.cantidadItemsDeclarada) || 0;
-  const leidos = Array.from(document.querySelectorAll("#items-container .item-row")).filter(r =>
-    (r.querySelector(".item-insumo-id")?.value || "").trim() || (r.querySelector(".item-insumo-search")?.value || "").trim()).length;
-  if (declarados > 0 && leidos < declarados) {
-    avisos.push(`<div class="item-warn" style="margin:0 0 8px">📋 El comprobante declara <strong>${declarados} ítems</strong> y se reconocieron <strong>${leidos}</strong>. Faltan líneas.
+  // Control de completitud POR ARITMÉTICA, no por el contador de ítems del ticket.
+  // El contador ("Cantidad de ítems: 40") no sirve: en los tickets reales cuenta unidades o bultos,
+  // no líneas — uno con 15 productos declaraba 40 y otro con 14 declaraba 30, y eso disparaba una
+  // alarma falsa de "faltan líneas" en cada escaneo bueno. Lo que sí cierra siempre es la plata:
+  // la suma de los importes de las líneas, menos los descuentos, tiene que dar el subtotal impreso.
+  const ctrl = controlSubtotalEscaneo(data);
+  if (ctrl && ctrl.sinImporte > 0) {
+    avisos.push(`<div class="item-note" style="margin:0 0 8px">🧮 ${ctrl.sinImporte === 1 ? "Hay <strong>1 línea</strong> sin importe leído" : `Hay <strong>${ctrl.sinImporte} líneas</strong> sin importe leído`}, así que no se puede controlar contra el subtotal del comprobante. Revisá cantidades y precios antes de guardar.</div>`);
+  } else if (ctrl && ctrl.incompleto) {
+    avisos.push(`<div class="item-warn" style="margin:0 0 8px">🧮 Las líneas leídas suman <strong>${fmtMoney(ctrl.neto)}</strong> y el comprobante declara un subtotal de <strong>${fmtMoney(ctrl.subtotal)}</strong>: faltan <strong>${fmtMoney(ctrl.falta)}</strong>. Quedaron líneas sin leer.
       <div style="margin-top:8px"><button type="button" class="btn btn-primary btn-sm" onclick="escanearFacturaPorPartes(3)">📄 Releer por partes y completar</button></div></div>`);
-    // El sistema YA SABE que faltan líneas, así que no tiene sentido esperar a que el usuario lo
+    // El sistema YA SABE que falta plata, así que no tiene sentido esperar a que el usuario lo
     // resuelva: relee la foto por franjas una sola vez y junta lo que falte.
     if (!state._escaneoPorPartes && state._facturaFotoFile && !state._releidoPorFaltantes) {
       state._releidoPorFaltantes = true;
       setTimeout(() => { window.escanearFacturaPorPartes(3); }, 400);
     }
+  } else if (ctrl && ctrl.sobra) {
+    // Al revés: se leyó de más. Casi siempre es una línea de descuento/bonificación tomada como
+    // producto, o una línea duplicada al releer por partes. Conviene mirarlo antes de guardar.
+    avisos.push(`<div class="item-warn" style="margin:0 0 8px">🧮 Las líneas leídas suman <strong>${fmtMoney(ctrl.neto)}</strong>, <strong>${fmtMoney(-ctrl.falta)}</strong> más que el subtotal del comprobante (${fmtMoney(ctrl.subtotal)}). Puede haber una línea repetida, o un descuento cargado como si fuera un producto. Revisala antes de guardar.</div>`);
   }
 
   // Preguntas concretas, en orden de utilidad para el reconocimiento automático.
@@ -1992,6 +2045,75 @@ window.toggleFacturaEstado = async function(id) {
   showToast(nuevo === "pagado" ? "✅ Marcada como pagada." : "↩️ Marcada como no pagada.", "success");
 };
 
+// Qué quedó REALMENTE guardado de una factura, en texto plano y copiable.
+// Sirve para dos cosas: revisar línea por línea si el escaneo cargó lo que decía el comprobante
+// (el control de la plata está abajo de todo), y poder pegarlo en un mensaje cuando algo se cargó
+// mal y hace falta mostrar qué entendió el sistema.
+function diagnosticoFacturaTexto(id) {
+  const f = state.facturas[id];
+  if (!f) return "";
+  const L = [];
+  L.push(`FACTURA REGISTRADA (id ${id})`);
+  L.push(`Proveedor: ${f.proveedorNombre || "—"}${f.cuit ? ` · CUIT ${f.cuit}` : ""}`);
+  L.push(`Fecha: ${f.fecha || "—"} · N° ${f.numeroFactura || "—"}`);
+  L.push(`Monto total: ${f.montoTotal ?? "—"} · IVA: ${f.iva ?? "—"} · Otros cargos: ${f.cargosAdicionales ?? 0}`);
+  L.push(`Precios cargados ${f.preciosConIva ? "CON" : "SIN"} IVA · Estado: ${f.estado === "pagado" ? "pagado" : "no pagado"}`);
+  L.push(`Foto guardada: ${(f.foto || f.tieneFoto) ? "sí" : "no"}`);
+  L.push("");
+  const items = Array.isArray(f.items) ? f.items : [];
+  L.push(`ÍTEMS CARGADOS: ${items.length}`);
+  let sumaLineas = 0;
+  items.forEach((it, i) => {
+    const cant = Number(it.cantidad) || 0;
+    const contenido = Number(it.contenidoPorUnidad) || 1;
+    // precioLinea es lo que decía la factura por unidad de compra (el bulto); precioUnitario es lo
+    // que se guardó por unidad de medida. El importe de la línea se arma con el primero.
+    const precioLinea = Number(it.precioLinea) || (Number(it.precioUnitario) || 0) * contenido;
+    const importe = cant > 0 && precioLinea > 0 ? cant * precioLinea : 0;
+    sumaLineas += importe;
+    const nombre = it.insumoId && state.insumos[it.insumoId] ? state.insumos[it.insumoId].nombre : (it.nombre || "(sin nombre)");
+    L.push(`${String(i + 1).padStart(2, " ")}. ${nombre}${it.marca ? ` [${it.marca}]` : ""} — cant ${it.cantidad ?? "?"} × $${precioLinea ? precioLinea.toFixed(2) : "?"}${contenido !== 1 ? ` · contenido c/u ${contenido} → $${(Number(it.precioUnitario) || 0).toFixed(2)} por unidad de medida` : ""} = $${importe ? importe.toFixed(2) : "?"}${it.insumoId && state.insumos[it.insumoId] ? "" : "  ⚠️ sin insumo asociado"}`);
+  });
+  L.push("");
+  L.push("CONTROL DE LA PLATA");
+  L.push(`Suma de las líneas cargadas: $${sumaLineas.toFixed(2)}`);
+  const totalDeclarado = Number(f.montoTotal) || 0;
+  const ivaDeclarado = Number(f.iva) || 0;
+  const cargos = Number(f.cargosAdicionales) || 0;
+  const esperado = f.preciosConIva ? totalDeclarado - cargos : totalDeclarado - ivaDeclarado - cargos;
+  L.push(`Debería dar (total ${f.preciosConIva ? "" : "− IVA "}− otros cargos): $${esperado.toFixed(2)}`);
+  const dif = esperado - sumaLineas;
+  L.push(Math.abs(dif) <= Math.max(esperado * 0.01, 1)
+    ? "✅ Cierra: las líneas cargadas cubren el comprobante."
+    : `⚠️ NO cierra: ${dif > 0 ? `faltan $${dif.toFixed(2)}` : `sobran $${(-dif).toFixed(2)}`}.`);
+  return L.join("\n");
+}
+
+window.toggleFacturaDetalle = function(id) {
+  state.facturaDetalleId = state.facturaDetalleId === id ? null : id;
+  render();
+};
+
+window.copiarDiagnosticoFactura = async function(id) {
+  const texto = diagnosticoFacturaTexto(id);
+  if (!texto) return;
+  try {
+    await navigator.clipboard.writeText(texto);
+    showToast("📋 Diagnóstico copiado — ya lo podés pegar donde lo necesites.", "success");
+  } catch {
+    // navigator.clipboard no está disponible fuera de HTTPS ni en algunos navegadores del celular.
+    const ta = document.createElement("textarea");
+    ta.value = texto;
+    ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch {}
+    ta.remove();
+    showToast(ok ? "📋 Diagnóstico copiado." : "⚠️ No se pudo copiar solo — seleccioná el texto del detalle y copialo a mano.", ok ? "success" : "warn");
+  }
+};
+
 function renderFacturasView(container) {
   state.formOpen = false;
   const busqueda = state.facturasBusqueda.trim().toLowerCase();
@@ -2009,8 +2131,18 @@ function renderFacturasView(container) {
       <td>${(f.items || []).length} ítem(s)</td>
       <td>${(f.foto || f.tieneFoto) ? `<button class="btn btn-ghost btn-sm btn-icon" onclick="verFotoFactura('${id}')" title="Ver la foto de esta factura">🖼️</button>` : "—"}</td>
       <td><span class="badge ${f.estado === "pagado" ? "badge-pagado" : "badge-no-pagado"}">${f.estado === "pagado" ? "Pagado" : "No pagado"}</span></td>
-      <td><button class="btn btn-ghost btn-sm" onclick="toggleFacturaEstado('${id}')">${f.estado === "pagado" ? "Marcar no pagada" : "Marcar pagada"}</button></td>
-    </tr>`).join("");
+      <td>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="toggleFacturaDetalle('${id}')" title="Ver qué cargó el sistema de esta factura">${state.facturaDetalleId === id ? "▴" : "🔎"}</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleFacturaEstado('${id}')">${f.estado === "pagado" ? "Marcar no pagada" : "Marcar pagada"}</button>
+      </td>
+    </tr>
+    ${state.facturaDetalleId === id ? `<tr><td colspan="9" style="background:var(--cream);padding:12px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn btn-primary btn-sm" onclick="copiarDiagnosticoFactura('${id}')">📋 Copiar diagnóstico</button>
+        ${(f.foto || f.tieneFoto) ? `<button class="btn btn-ghost btn-sm" onclick="verFotoFactura('${id}')">🖼️ Ver la foto original</button>` : ""}
+      </div>
+      <pre style="margin:0;white-space:pre-wrap;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.5">${escapeHtml(diagnosticoFacturaTexto(id))}</pre>
+    </td></tr>` : ""}`).join("");
 
   container.innerHTML = `
     <div class="page-title">Facturas registradas</div>
