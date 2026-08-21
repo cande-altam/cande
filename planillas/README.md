@@ -7,8 +7,25 @@ producción, y para el cruce posterior contra facturas de compra y los reportes 
 
 | Archivo | Qué es |
 |---|---|
-| `Control_Stock_Semanal_Candela.xlsx` | El libro listo para usar e imprimir. |
-| `generar_planillas.py` | Script que genera el libro desde el catálogo real de la app. |
+| `crear_en_sheets.gs` | **Apps Script que construye la planilla en Google Sheets.** Es el camino principal. |
+| `Control_Stock_Semanal_Candela.xlsx` | El mismo relevamiento en Excel. Sirve para **imprimir las planillas en papel** (trae la configuración de impresión lista) y trae además el análisis autocontenido. |
+| `generar_planillas.py` | Genera el `.xlsx` desde el catálogo real de la app. |
+
+## Crear la planilla en Google Sheets
+
+1. Crear una hoja de cálculo **nueva y vacía** en Google Sheets.
+2. **Extensiones → Apps Script**.
+3. Borrar lo que haya y pegar todo `crear_en_sheets.gs`.
+4. Guardar, elegir la función `crearPlanilla` y **Ejecutar**.
+   La primera vez pide autorización: *Revisar permisos → elegir la cuenta →
+   Configuración avanzada → Ir a (nombre del proyecto) → Permitir*.
+5. Volver a la hoja de cálculo: quedan las 19 pestañas creadas.
+
+El script se niega a ejecutarse si la hoja ya tiene pestañas de la planilla, para no
+pisar datos cargados. Si hay que rehacerla, correrlo en una hoja nueva.
+
+> Esa planilla es **solo de carga**: no lleva hojas de análisis, porque la comparación
+> (stock inicial + compras − ventas − stock final) se hace aparte sobre estos datos.
 
 ## Regenerar el libro
 
