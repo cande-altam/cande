@@ -16,3 +16,6 @@
 
 /cronogramas/*
   Cache-Control: public, max-age=0, must-revalidate
+
+/informes/*
+  Cache-Control: public, max-age=0, must-revalidate

@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Candela · Informes de turno</title>
+<style>
+  :root{
+    --crema:#EEEBD7; --terracota:#E15D46; --turquesa:#9BD6CC; --negro:#22201F;
+    --bg:#F5F3E7; --panel:#FFFFFF; --panel-2:#FBFAF2; --ink:#22201F; --ink-soft:#5C574E;
+    --line:#DED9C4; --line-strong:#C9C3AC; --accent:#E15D46; --accent-ink:#B23a26;
+    --teal:#7FC6BA; --teal-ink:#2C6F63; --teal-soft:#E4F2EF;
+    --warn:#C98A1E; --warn-soft:#FBF0D8; --crit:#C23A22; --crit-soft:#F8E2DC;
+    --ok:#2C6F63; --ok-soft:#E4F2EF;
+    --chip:#F1EEDD; --shadow:0 1px 2px rgba(34,32,31,.06),0 6px 20px rgba(34,32,31,.06);
+    --font-display:'DM Serif Display','Playfair Display',Georgia,'Times New Roman',serif;
+    --font-body:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#1A1917; --panel:#242220; --panel-2:#2B2825; --ink:#EEEBD7; --ink-soft:#B4AE9C;
+      --line:#3A362F; --line-strong:#4A453B; --accent:#E9765F; --accent-ink:#F0937F;
+      --teal:#6FB7AB; --teal-ink:#9BD6CC; --teal-soft:#233531;
+      --warn:#E0B54C; --warn-soft:#3A3220; --crit:#E9765F; --crit-soft:#3B2621;
+      --ok:#9BD6CC; --ok-soft:#233531; --chip:#2F2C28; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1A1917; --panel:#242220; --panel-2:#2B2825; --ink:#EEEBD7; --ink-soft:#B4AE9C;
+    --line:#3A362F; --line-strong:#4A453B; --accent:#E9765F; --accent-ink:#F0937F;
+    --teal:#6FB7AB; --teal-ink:#9BD6CC; --teal-soft:#233531;
+    --warn:#E0B54C; --warn-soft:#3A3220; --crit:#E9765F; --crit-soft:#3B2621;
+    --ok:#9BD6CC; --ok-soft:#233531; --chip:#2F2C28; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --bg:#F5F3E7; --panel:#FFFFFF; --panel-2:#FBFAF2; --ink:#22201F; --ink-soft:#5C574E;
+    --line:#DED9C4; --line-strong:#C9C3AC; --accent:#E15D46; --accent-ink:#B23a26;
+    --teal:#7FC6BA; --teal-ink:#2C6F63; --teal-soft:#E4F2EF;
+    --warn:#C98A1E; --warn-soft:#FBF0D8; --crit:#C23A22; --crit-soft:#F8E2DC;
+    --ok:#2C6F63; --ok-soft:#E4F2EF; --chip:#F1EEDD; --shadow:0 1px 2px rgba(34,32,31,.06),0 6px 20px rgba(34,32,31,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:var(--font-display);font-weight:400;margin:0;text-wrap:balance}
+  button,select,input,textarea{font-family:inherit;font-size:inherit;color:inherit}
+  .wrap{max-width:1320px;margin:0 auto;padding:18px 20px 80px}
+
+  .top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);position:sticky;top:8px;z-index:40}
+  .brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+  .mark{width:38px;height:38px;border-radius:11px;background:radial-gradient(120% 120% at 30% 20%,var(--terracota),#c74027);display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-size:22px;line-height:1;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+  .brand h1{font-size:20px;letter-spacing:.2px}
+  .brand p{margin:1px 0 0;font-size:11.5px;color:var(--ink-soft);letter-spacing:.4px;text-transform:uppercase}
+  .appVersion{text-transform:none;letter-spacing:0;opacity:.55;cursor:default}
+  .btn{border:1px solid var(--line-strong);background:var(--panel-2);border-radius:9px;padding:8px 13px;cursor:pointer;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:.12s;color:var(--ink)}
+  .btn:hover{border-color:var(--ink-soft)}
+  .btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:5px 9px;font-size:11.5px}
+  .icon-btn{width:38px;height:38px;padding:0;justify-content:center;border-radius:10px}
+
+  .authGate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;z-index:100}
+  .authCard{width:100%;max-width:340px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:32px 28px;box-shadow:var(--shadow);text-align:center}
+  .authCard .mark{margin:0 auto 16px;width:44px;height:44px;font-size:24px}
+  .authCard h2{font-size:20px;margin-bottom:6px}
+  .authSub{color:var(--ink-soft);font-size:12.5px;margin-bottom:22px}
+  .authCard input{width:100%;background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:11px 13px;font-size:14px;text-align:center;letter-spacing:2px;margin-bottom:12px}
+  .authCard .btn{width:100%;justify-content:center}
+  .authErr{color:var(--crit);font-size:12.5px;margin-top:12px}
+
+  .layout{display:grid;grid-template-columns:330px 1fr;gap:18px;margin-top:18px;align-items:start}
+  @media (max-width:1000px){.layout{grid-template-columns:1fr;display:flex;flex-direction:column}main{order:1}.rail{order:2}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin-bottom:16px}
+  .card h2{font-size:16px;padding:14px 16px 0}
+  .card .sub{font-size:12px;color:var(--ink-soft);padding:2px 16px 0}
+  .card-body{padding:14px 16px}
+  .rail{display:flex;flex-direction:column;position:sticky;top:88px}
+  @media (max-width:1000px){.rail{position:static}}
+
+  .eyebrow{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent-ink);font-weight:700}
+  .field{margin-top:12px}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:600}
+  .field select,.field input{width:100%;background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 10px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+  /* semana de un vistazo */
+  .sem{overflow-x:auto;padding:0 16px 16px}
+  table.sem-tbl{border-collapse:separate;border-spacing:0;width:100%;min-width:620px}
+  table.sem-tbl th,table.sem-tbl td{padding:7px 8px;text-align:center;font-size:12px}
+  table.sem-tbl thead th{font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-soft);border-bottom:2px solid var(--line-strong)}
+  table.sem-tbl thead th:first-child,table.sem-tbl td:first-child{text-align:left;white-space:nowrap;font-weight:600}
+  table.sem-tbl td{border-bottom:1px solid var(--line)}
+  .est{display:inline-flex;align-items:center;justify-content:center;width:100%;border-radius:7px;padding:5px 4px;font-weight:700;font-size:11px;cursor:default}
+  .est.ok{background:var(--ok-soft);color:var(--ok);cursor:pointer}
+  .est.falta{background:var(--crit-soft);color:var(--crit)}
+  .est.futuro{background:var(--chip);color:var(--ink-soft);opacity:.6}
+  .est.novedad{background:var(--warn-soft);color:var(--warn);cursor:pointer}
+
+  /* ranking de incidencias */
+  .bar-row{display:flex;align-items:center;gap:9px;margin-top:8px;font-size:12.5px}
+  .bar-row .lbl{flex:0 0 46%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar-row .bar{flex:1;height:9px;background:var(--chip);border-radius:20px;overflow:hidden}
+  .bar-row .bar i{display:block;height:100%;background:var(--accent);border-radius:20px}
+  .bar-row .n{flex:0 0 auto;font-weight:800;font-variant-numeric:tabular-nums;font-family:var(--font-display)}
+
+  /* lista de informes */
+  .inf{border:1px solid var(--line);border-radius:12px;margin-top:10px;background:var(--panel-2);overflow:hidden}
+  .inf-head{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;flex-wrap:wrap}
+  .inf-head .fecha{font-weight:700;white-space:nowrap}
+  .inf-head .quien{color:var(--ink-soft);font-size:12.5px}
+  .inf-head .flechita{margin-left:auto;color:var(--ink-soft);transition:transform .15s}
+  .inf.open .inf-head .flechita{transform:rotate(180deg)}
+  .inf-body{display:none;padding:0 13px 14px;border-top:1px solid var(--line)}
+  .inf.open .inf-body{display:block}
+  .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.3px}
+  .pill.loc{background:var(--teal-soft);color:var(--teal-ink)}
+  .pill.turno{background:var(--chip);color:var(--ink-soft)}
+  .pill.sn{background:var(--ok-soft);color:var(--ok)}
+  .pill.inc{background:var(--crit-soft);color:var(--crit)}
+  .bloque{margin-top:13px}
+  .bloque h4{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);font-weight:700;font-family:var(--font-body)}
+  .bloque ul{margin:0;padding-left:18px}
+  .bloque li{margin-bottom:3px}
+  .texto{white-space:pre-wrap;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px}
+  .no-cumplio{color:var(--crit);font-weight:600}
+
+  .alert{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:10px;margin-top:8px;font-size:12.5px;border:1px solid transparent}
+  .alert .dot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex:none}
+  .alert.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+  .alert.warn .dot{background:var(--warn)}
+  .alert.crit{background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 30%,transparent)}
+  .alert.crit .dot{background:var(--crit)}
+  .alert.ok{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 30%,transparent);color:var(--ok);font-weight:600}
+  .empty{color:var(--ink-soft);font-size:13px;padding:14px 0;text-align:center}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:4px}
+  .kpi{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+  .kpi b{display:block;font-family:var(--font-display);font-size:21px;line-height:1.1}
+  .kpi span{font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--negro);color:var(--crema);padding:11px 18px;border-radius:11px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .footer-note{font-size:11.5px;color:var(--ink-soft);margin-top:14px;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="authGate" class="authGate">
+  <div class="authCard">
+    <div class="mark">C</div>
+    <h2>Informes de turno</h2>
+    <p class="authSub">Acceso exclusivo de Gerencia</p>
+    <input id="authPass" type="password" placeholder="Contraseña" autocomplete="off" inputmode="numeric">
+    <button class="btn primary" id="authBtn">Ingresar</button>
+    <p id="authErr" class="authErr" style="display:none">Contraseña incorrecta.</p>
+  </div>
+</div>
+
+<div class="wrap" id="appWrap" style="display:none">
+  <header class="top">
+    <div class="brand">
+      <div class="mark">C</div>
+      <div>
+        <h1>Informes de turno</h1>
+        <p>Candela · Café &amp; Patisserie <span class="appVersion" id="appVersion"></span></p>
+      </div>
+    </div>
+    <span id="syncStatus" class="appVersion" title="Estado de la conexión">☁️</span>
+    <button class="btn ghost icon-btn" id="btnTheme" title="Cambiar tema">◐</button>
+    <button class="btn ghost icon-btn" id="btnLogout" title="Cerrar sesión">🚪</button>
+  </header>
+
+  <div class="layout">
+    <aside class="rail">
+      <div class="card">
+        <h2>Filtros</h2>
+        <div class="card-body" style="padding-top:6px">
+          <div class="row2">
+            <div class="field"><label for="fDesde">Desde</label><input type="date" id="fDesde"></div>
+            <div class="field"><label for="fHasta">Hasta</label><input type="date" id="fHasta"></div>
+          </div>
+          <div class="field">
+            <label for="fLocal">Local</label>
+            <select id="fLocal"><option value="">Todos</option><option value="SLA">SLA 5.0</option><option value="SL">San Luis</option></select>
+          </div>
+          <div class="field">
+            <label for="fTurno">Turno</label>
+            <select id="fTurno"><option value="">Todos</option><option value="M">Mañana</option><option value="T">Tarde</option></select>
+          </div>
+          <div class="field">
+            <label for="fPersona">Persona</label>
+            <select id="fPersona"><option value="">Todas</option></select>
+          </div>
+          <div class="field">
+            <label for="fIncidencia">Tipo de incidencia</label>
+            <select id="fIncidencia"><option value="">Todas</option></select>
+          </div>
+          <button class="btn ghost" id="btnLimpiar" style="width:100%;justify-content:center;margin-top:14px">Limpiar filtros</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>En el período</h2>
+        <div class="card-body" style="padding-top:8px">
+          <div class="kpis" id="kpis"></div>
+          <div id="alertaFaltantes"></div>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="card">
+        <h2>La semana de un vistazo</h2>
+        <p class="sub">Qué turnos informaron y cuáles faltan. Tocá un turno informado para abrirlo.</p>
+        <div class="sem" id="semana"></div>
+      </div>
+
+      <div class="card">
+        <h2>Incidencias que se repiten</h2>
+        <p class="sub">Un mal día se ve distinto de un problema recurrente. Esto es lo segundo.</p>
+        <div class="card-body" style="padding-top:8px">
+          <div id="resumenIncidencias"></div>
+          <div style="margin-top:20px">
+            <span class="eyebrow">Incumplimientos por persona</span>
+            <div id="resumenPersonas"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Informes</h2>
+        <p class="sub" id="subInformes"></p>
+        <div class="card-body" style="padding-top:8px">
+          <div id="lista"></div>
+        </div>
+      </div>
+      <p class="footer-note">Los informes los cargan los Expertos del Turno desde <b>carga.html</b>. Esta pantalla es de solo lectura.</p>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
+  authDomain: "pedidos-de-produccion-ee3cb.firebaseapp.com",
+  databaseURL: "https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-produccion-ee3cb",
+  storageBucket: "pedidos-de-produccion-ee3cb.firebasestorage.app",
+  messagingSenderId: "744141794971",
+  appId: "1:744141794971:web:9639c8bf3834e4978ae03e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const APP_VERSION = "2026-08-20 informes-1";
+document.getElementById("appVersion").textContent = "v" + APP_VERSION;
+
+const LOCALES = { SLA: "SLA 5.0", SL: "San Luis" };
+const TURNOS = { M: "Mañana", T: "Tarde" };
+// Los 4 turnos que se esperan por día: 2 locales × 2 turnos. Es la base de "qué falta".
+const SLOTS = [["SLA", "M"], ["SLA", "T"], ["SL", "M"], ["SL", "T"]];
+const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+// La clave es DISTINTA de la de Cronogramas y Vacaciones (1412) a propósito: el rol de Experto
+// pierde sentido si los informes circulan entre pares. Ver la nota de seguridad en el README.
+const AUTH_KEY = "candela_informes_auth";
+const AUTH_PASS = "7025";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const toast = (msg) => { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1900); };
+
+function showApp() { $("authGate").style.display = "none"; $("appWrap").style.display = ""; }
+function attemptAuth() {
+  const input = $("authPass"), err = $("authErr");
+  if (input.value === AUTH_PASS) { sessionStorage.setItem(AUTH_KEY, "ok"); err.style.display = "none"; input.value = ""; showApp(); }
+  else err.style.display = "block";
+}
+$("authBtn").addEventListener("click", attemptAuth);
+$("authPass").addEventListener("keydown", e => { if (e.key === "Enter") attemptAuth(); });
+$("btnLogout").addEventListener("click", () => { sessionStorage.removeItem(AUTH_KEY); location.reload(); });
+$("btnTheme").addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme");
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("candela_theme", next);
+});
+const temaGuardado = localStorage.getItem("candela_theme");
+if (temaGuardado) document.documentElement.setAttribute("data-theme", temaGuardado);
+
+// ---------------------------------------------------------------------------
+// DATOS
+// ---------------------------------------------------------------------------
+let registros = {};   // id -> informe
+let abiertos = new Set();
+
+const hoyISO = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+function sumarDias(iso, n) {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+// Lunes de la semana de una fecha (getDay: 0=domingo).
+function lunesDe(iso) {
+  const d = new Date(iso + "T00:00:00");
+  const dow = (d.getDay() + 6) % 7;
+  return sumarDias(iso, -dow);
+}
+const fmtFecha = (iso) => {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}`;
+};
+const fmtFechaLarga = (iso) => {
+  const d = new Date(iso + "T00:00:00");
+  const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  return `${dias[d.getDay()]} ${fmtFecha(iso)}`;
+};
+
+// Por defecto se miran los últimos 14 días: alcanza para ver una repetición y no tanto como para
+// que el resumen se vuelva ilegible.
+$("fHasta").value = hoyISO();
+$("fDesde").value = sumarDias(hoyISO(), -13);
+
+onValue(ref(db, "informes/registros"), (snap) => {
+  registros = snap.val() || {};
+  $("syncStatus").textContent = "☁️";
+  $("syncStatus").title = "Datos actualizados";
+  render();
+}, (err) => {
+  console.error("informes onValue:", err);
+  $("syncStatus").textContent = "⚠️";
+  $("syncStatus").title = "No se pudieron leer los informes: " + (err.message || err.code);
+  toast("No se pudieron leer los informes.");
+});
+
+// ---------------------------------------------------------------------------
+// FILTROS
+// ---------------------------------------------------------------------------
+function filtros() {
+  return {
+    desde: $("fDesde").value, hasta: $("fHasta").value,
+    loc: $("fLocal").value, turno: $("fTurno").value,
+    persona: $("fPersona").value, incidencia: $("fIncidencia").value
+  };
+}
+// El rango de fechas NO se aplica acá: se usa como base para la lista, el resumen y los faltantes,
+// que sí comparten los demás filtros.
+function informesEnRango() {
+  const f = filtros();
+  return Object.entries(registros)
+    .map(([id, r]) => ({ id, ...r }))
+    .filter(r => r && r.fecha)
+    .filter(r => (!f.desde || r.fecha >= f.desde) && (!f.hasta || r.fecha <= f.hasta))
+    .sort((a, b) => (b.fecha + b.turno).localeCompare(a.fecha + a.turno));
+}
+function aplicarFiltros(lista) {
+  const f = filtros();
+  return lista.filter(r => {
+    if (f.loc && r.loc !== f.loc) return false;
+    if (f.turno && r.turno !== f.turno) return false;
+    if (f.persona) {
+      const enChecklist = (r.checklist || []).some(c => c.nombre === f.persona);
+      if (r.experto !== f.persona && !enChecklist) return false;
+    }
+    if (f.incidencia && !(r.incidencias || []).some(i => i.tipo === f.incidencia)) return false;
+    return true;
+  });
+}
+
+["fDesde", "fHasta", "fLocal", "fTurno", "fPersona", "fIncidencia"].forEach(id =>
+  $(id).addEventListener("change", render));
+$("btnLimpiar").addEventListener("click", () => {
+  $("fLocal").value = ""; $("fTurno").value = ""; $("fPersona").value = ""; $("fIncidencia").value = "";
+  $("fHasta").value = hoyISO(); $("fDesde").value = sumarDias(hoyISO(), -13);
+  render();
+});
+
+function refrescarOpcionesFiltro() {
+  const personas = new Set(), incidencias = new Set();
+  for (const r of Object.values(registros)) {
+    if (r?.experto) personas.add(r.experto);
+    for (const c of r?.checklist || []) if (c?.nombre) personas.add(c.nombre);
+    for (const i of r?.incidencias || []) if (i?.tipo) incidencias.add(i.tipo);
+  }
+  const rellenar = (sel, valores, etiquetaTodos) => {
+    const previo = sel.value;
+    sel.innerHTML = `<option value="">${etiquetaTodos}</option>`
+      + [...valores].sort((a, b) => a.localeCompare(b, "es")).map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+    // Si el valor elegido ya no existe en los datos, el filtro se cae solo en vez de dejar la
+    // pantalla vacía sin explicación.
+    sel.value = [...valores].includes(previo) ? previo : "";
+  };
+  rellenar($("fPersona"), personas, "Todas");
+  rellenar($("fIncidencia"), incidencias, "Todas");
+}
+
+// ---------------------------------------------------------------------------
+// ¿QUÉ TURNO YA DEBERÍA HABER INFORMADO?
+// Deliberadamente conservador. Un turno se cuenta como faltante recién cuando ya terminó: el de
+// la mañana a partir de las 16, el de la tarde recién al día siguiente. Marcar como "falta" un
+// turno que todavía está en curso convierte la alerta en ruido, y una alerta ruidosa se ignora
+// —es exactamente lo que pasó con el contador de ítems en el módulo de costeo—.
+// ---------------------------------------------------------------------------
+function yaTermino(fecha, turno) {
+  const hoy = hoyISO();
+  if (fecha < hoy) return true;
+  if (fecha > hoy) return false;
+  return turno === "M" && new Date().getHours() >= 16;
+}
+
+function faltantes() {
+  const f = filtros();
+  const out = [];
+  if (!f.desde || !f.hasta || f.desde > f.hasta) return out;
+  for (let d = f.desde; d <= f.hasta; d = sumarDias(d, 1)) {
+    for (const [loc, turno] of SLOTS) {
+      if (f.loc && loc !== f.loc) continue;
+      if (f.turno && turno !== f.turno) continue;
+      if (!yaTermino(d, turno)) continue;
+      if (!registros[`${d}_${loc}_${turno}`]) out.push({ fecha: d, loc, turno });
+    }
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// RENDER
+// ---------------------------------------------------------------------------
+function render() {
+  refrescarOpcionesFiltro();
+  const lista = aplicarFiltros(informesEnRango());
+  renderKpis(lista);
+  renderSemana();
+  renderResumenIncidencias(lista);
+  renderResumenPersonas(lista);
+  renderLista(lista);
+}
+
+function renderKpis(lista) {
+  const conIncidencias = lista.filter(r => (r.incidencias || []).length).length;
+  const falt = faltantes().length;
+  $("kpis").innerHTML = `
+    <div class="kpi"><b>${lista.length}</b><span>Informes</span></div>
+    <div class="kpi"><b style="color:${conIncidencias ? "var(--crit)" : "inherit"}">${conIncidencias}</b><span>Con incidencias</span></div>
+    <div class="kpi"><b style="color:${falt ? "var(--warn)" : "inherit"}">${falt}</b><span>Sin informar</span></div>`;
+
+  const cont = $("alertaFaltantes");
+  if (!falt) {
+    cont.innerHTML = `<div class="alert ok"><span>✓</span> Todos los turnos del período informaron.</div>`;
+    return;
+  }
+  const lst = faltantes().slice(0, 8).map(f =>
+    `<li>${fmtFechaLarga(f.fecha)} · ${LOCALES[f.loc]} · ${TURNOS[f.turno]}</li>`).join("");
+  cont.innerHTML = `<div class="alert ${falt > 3 ? "crit" : "warn"}"><span class="dot"></span><div>
+    <b>${falt} turno(s) sin informe.</b>
+    <ul style="margin:6px 0 0;padding-left:17px">${lst}</ul>
+    ${falt > 8 ? `<div style="margin-top:5px;opacity:.8">…y ${falt - 8} más.</div>` : ""}
+  </div></div>`;
+}
+
+// Semana de la fecha "hasta": es la que Gerencia mira para saber cómo viene la cosa ahora.
+function renderSemana() {
+  const lunes = lunesDe($("fHasta").value || hoyISO());
+  const dias = Array.from({ length: 7 }, (_, i) => sumarDias(lunes, i));
+  const celda = (fecha, loc, turno) => {
+    const r = registros[`${fecha}_${loc}_${turno}`];
+    if (r) {
+      const conNovedad = (r.incidencias || []).length || (r.checklist || []).some(c => !c.cumplio) || (r.reclamos || "").trim();
+      return `<div class="est ${conNovedad ? "novedad" : "ok"}" data-ir="${esc(fecha + "_" + loc + "_" + turno)}" title="${esc(r.experto || "")}">${conNovedad ? "!" : "✓"}</div>`;
+    }
+    if (!yaTermino(fecha, turno)) return `<div class="est futuro">·</div>`;
+    return `<div class="est falta">falta</div>`;
+  };
+  $("semana").innerHTML = `<table class="sem-tbl">
+    <thead><tr><th>Turno</th>${dias.map((d, i) => `<th>${DIAS[i]}<br><span style="font-weight:400;opacity:.7">${fmtFecha(d)}</span></th>`).join("")}</tr></thead>
+    <tbody>${SLOTS.map(([loc, turno]) => `<tr>
+      <td>${LOCALES[loc]} · ${TURNOS[turno]}</td>
+      ${dias.map(d => `<td>${celda(d, loc, turno)}</td>`).join("")}
+    </tr>`).join("")}</tbody>
+  </table>
+  <div class="footer-note" style="text-align:left;margin-top:10px">✓ informado sin novedades · <b style="color:var(--warn)">!</b> informado con algo para mirar · <b style="color:var(--crit)">falta</b> el turno terminó y no informó · · turno que todavía no terminó</div>`;
+
+  $("semana").querySelectorAll(".est[data-ir]").forEach(el => el.addEventListener("click", () => {
+    abiertos.add(el.dataset.ir);
+    render();
+    document.querySelector(`.inf[data-id="${CSS.escape(el.dataset.ir)}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }));
+}
+
+function barras(cont, pares, vacio) {
+  if (!pares.length) { cont.innerHTML = `<div class="empty">${vacio}</div>`; return; }
+  const max = Math.max(...pares.map(p => p[1]));
+  cont.innerHTML = pares.map(([lbl, n]) =>
+    `<div class="bar-row"><span class="lbl" title="${esc(lbl)}">${esc(lbl)}</span><span class="bar"><i style="width:${Math.round(n / max * 100)}%"></i></span><span class="n">${n}</span></div>`).join("");
+}
+
+function renderResumenIncidencias(lista) {
+  const cuenta = new Map();
+  for (const r of lista) for (const i of r.incidencias || []) {
+    if (!i?.tipo) continue;
+    cuenta.set(i.tipo, (cuenta.get(i.tipo) || 0) + 1);
+  }
+  barras($("resumenIncidencias"), [...cuenta.entries()].sort((a, b) => b[1] - a[1]),
+    "Ninguna incidencia registrada en el período. 🎉");
+}
+
+function renderResumenPersonas(lista) {
+  const cuenta = new Map();
+  for (const r of lista) for (const c of r.checklist || []) {
+    if (!c?.nombre || c.cumplio) continue;
+    cuenta.set(c.nombre, (cuenta.get(c.nombre) || 0) + 1);
+  }
+  barras($("resumenPersonas"), [...cuenta.entries()].sort((a, b) => b[1] - a[1]),
+    "Nadie con incumplimientos registrados en el período.");
+}
+
+function renderLista(lista) {
+  $("subInformes").textContent = lista.length
+    ? `${lista.length} informe(s), del más reciente al más viejo.`
+    : "No hay informes que coincidan con los filtros.";
+  if (!lista.length) { $("lista").innerHTML = `<div class="empty">Sin informes para mostrar.</div>`; return; }
+  $("lista").innerHTML = lista.map(r => infHtml(r)).join("");
+  $("lista").querySelectorAll(".inf-head").forEach(h => h.addEventListener("click", () => {
+    const id = h.closest(".inf").dataset.id;
+    if (abiertos.has(id)) abiertos.delete(id); else abiertos.add(id);
+    render();
+  }));
+}
+
+function infHtml(r) {
+  const incidencias = r.incidencias || [];
+  const incumplen = (r.checklist || []).filter(c => !c.cumplio);
+  const comps = r.compensaciones || [];
+  const chips = [
+    `<span class="pill loc">${esc(LOCALES[r.loc] || r.loc)}</span>`,
+    `<span class="pill turno">${esc(TURNOS[r.turno] || r.turno)}</span>`,
+    r.sinNovedades && !incidencias.length && !incumplen.length ? `<span class="pill sn">Sin novedades</span>` : "",
+    incidencias.length ? `<span class="pill inc">${incidencias.length} incidencia(s)</span>` : "",
+    incumplen.length ? `<span class="pill inc">${incumplen.length} no cumplió</span>` : ""
+  ].filter(Boolean).join(" ");
+
+  const bloque = (titulo, html) => html ? `<div class="bloque"><h4>${titulo}</h4>${html}</div>` : "";
+
+  const cuerpo = `
+    ${bloque("Checklist", (r.checklist || []).length
+      ? `<ul>${r.checklist.map(c => `<li>${esc(c.nombre)} <span style="opacity:.6">· ${esc(c.rolLabel || c.rol || "")}</span> — ${c.cumplio ? "cumplió" : `<span class="no-cumplio">no cumplió${c.motivo ? ": " + esc(c.motivo) : ""}</span>`}</li>`).join("")}</ul>`
+      : `<div class="empty">Sin checklist cargado.</div>`)}
+    ${bloque("Incidencias", incidencias.length
+      ? `<ul>${incidencias.map(i => `<li>${esc(i.tipo)}${i.detalle ? ": " + esc(i.detalle) : ""}</li>`).join("")}</ul>` : "")}
+    ${bloque("Reclamos que escalaron", (r.reclamos || "").trim() ? `<div class="texto">${esc(r.reclamos)}</div>` : "")}
+    ${bloque("Compensaciones", comps.length
+      ? `<ul>${comps.map(c => `<li>${esc(c.tipo)}${c.detalle ? " — " + esc(c.detalle) : ""}${c.monto != null ? ` <b>($${Number(c.monto).toLocaleString("es-AR")})</b>` : ""}</li>`).join("")}</ul>` : "")}
+    ${bloque("Para el turno siguiente", (r.paraElSiguiente || "").trim() ? `<div class="texto">${esc(r.paraElSiguiente)}</div>` : "")}
+    <div class="footer-note" style="text-align:left;margin-top:12px">Enviado ${r.enviadoEn ? new Date(r.enviadoEn).toLocaleString("es-AR", { dateStyle: "medium", timeStyle: "short" }) : "—"}</div>`;
+
+  return `<div class="inf ${abiertos.has(r.id) ? "open" : ""}" data-id="${esc(r.id)}">
+    <div class="inf-head">
+      <span class="fecha">${esc(fmtFechaLarga(r.fecha))}</span>
+      ${chips}
+      <span class="quien">⭐ ${esc(r.experto || "—")}</span>
+      <span class="flechita">▾</span>
+    </div>
+    <div class="inf-body">${cuerpo}</div>
+  </div>`;
+}
+
+if (sessionStorage.getItem(AUTH_KEY) === "ok") showApp();
+render();
+</script>
+</body>
+</html>

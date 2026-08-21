@@ -409,13 +409,13 @@
 
       <section class="card">
         <div class="card-body" style="padding-bottom:16px">
-          <span class="eyebrow">Experto Candela</span>
+          <span class="eyebrow">Experto del Turno</span>
           <p class="sub" style="padding:4px 0 0">Se destaca con ⭐ dondequiera que esa persona aparezca asignada en la grilla, y también al imprimir.</p>
           <div class="field">
             <label for="expertoPerson">Persona</label>
             <select id="expertoPerson"></select>
           </div>
-          <button class="btn" id="btnAddExperto" style="margin-top:9px;width:100%">⭐ Marcar como Experto Candela</button>
+          <button class="btn" id="btnAddExperto" style="margin-top:9px;width:100%">⭐ Marcar como Experto del Turno</button>
           <div class="mini-list" id="expertoList"></div>
         </div>
       </section>
@@ -1221,7 +1221,7 @@ function isDoubleShift(name,d){
 // "X no puede trabajar con Y": se compara el mismo turno (día+mañana/tarde) Y el mismo local — si
 // están en el mismo horario pero en San Luis y SLA respectivamente, no cuenta como choque.
 function sonIncompatibles(a,b){return state.incompat.some(r=>(r.a===a&&r.b===b)||(r.a===b&&r.b===a));}
-// "Experto Candela": marca permanente sobre la persona (no cambia semana a semana), para que se
+// "Experto del Turno": marca permanente sobre la persona (no cambia semana a semana), para que se
 // destaque dondequiera que aparezca asignada en la grilla y al imprimir.
 function esExperto(name){return state.expertos.includes(name);}
 function nombreDestacado(name){return esExperto(name)?"⭐ "+name:name;}
@@ -1960,10 +1960,10 @@ function initControls(){
   document.getElementById("btnAddExperto").addEventListener("click",()=>{
     const n=document.getElementById("expertoPerson").value;
     if(!n)return toast("Elegí una persona");
-    if(esExperto(n))return toast(`${n} ya está marcado como Experto Candela`);
+    if(esExperto(n))return toast(`${n} ya está marcado como Experto del Turno`);
     state.expertos.push(n);
     fillPersonSelects();renderMini();render();persist();
-    toast(`${n} marcado como Experto Candela ⭐`);
+    toast(`${n} marcado como Experto del Turno ⭐`);
   });
   document.getElementById("btnAuto").addEventListener("click",autocomplete);
   document.getElementById("weekStart").addEventListener("change",e=>{

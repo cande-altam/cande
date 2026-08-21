@@ -126,6 +126,69 @@ Presupuestos no necesita que el sitio de Pedidos de Clientes esté desplegado pa
 
 ---
 
+## Módulo: Informes de Turno
+
+Al terminar su turno, el **Experto del Turno** deja un informe. Son hasta 4 por día (2 turnos × 2 locales: SLA 5.0 y San Luis) y **no se consolidan**: cada turno es su propio registro.
+
+Son dos páginas separadas, siguiendo el patrón de `vacaciones/` (`pedido.html` para quien carga, `index.html` para quien lee):
+
+| Archivo | Para quién | Acceso |
+|---|---|---|
+| `informes/carga.html` | El Experto, al cerrar el turno | Sin clave |
+| `informes/index.html` | Gerencia | Clave propia (`7025`), distinta de la de Cronogramas/Vacaciones |
+
+### La página de carga
+
+La restricción de diseño que manda es el **tiempo**: un informe que lleva más de cinco minutos desde el celular se deja de hacer, y ahí se pierde el sistema entero. Todo lo demás sale de ahí:
+
+- **Un botón grande de "Sin novedades"**, arriba de todo. Es la respuesta más frecuente y cuesta un toque: manda el informe con el equipo en "cumplió" y sin incidencias. Está **antes** del formulario largo a propósito — si hay que scrollear todo para encontrarlo, deja de ser un atajo.
+- **Todo arranca en el estado normal.** Cada persona del checklist viene marcada como que cumplió; solo se toca a quien no. Marcar "No" abre el campo del motivo.
+- **Los nombres vienen del cronograma** (ver abajo), así no hay que escribirlos.
+- Las incidencias son las 8 del manual, como casillas, más un campo libre.
+
+### Integración con Cronogramas
+
+Se lee `cronogramas/state` una sola vez al abrir:
+
+- **Quién fue el Experto**: `state.expertos` es la lista de gente marcada con ⭐. Ojo con la semántica — es una marca **permanente sobre la persona**, no "quién fue el Experto de este turno". Por eso el desplegable la cruza con quiénes están asignados a ese día/local/turno en `state.assign` y los muestra primero como "⭐ Expertos en este turno"; si hay uno solo, se elige solo.
+- **El equipo del checklist**: sale de `state.assign` (clave `dia|local|turno|rol|indice`) más los sumados sueltos de `state.ex`. Los roles del manual no son los del cronograma: "Vendedor / Mozo" es `atencion`, "Ayudante de cocina" junta `cocina` y `ayudante`, y **Limpieza no existe en el cronograma** — esa fila va siempre a mano.
+
+**Nada de esto es obligatorio.** Si el cronograma no está, falla la lectura o es de otra semana, el formulario avisa y sigue siendo completamente usable a mano. Un informe que no se puede cargar porque falla otro módulo es un informe que no se carga; está cubierto por un test que corre la página con la lectura del cronograma rota y envía igual.
+
+### Un turno, un informe
+
+El id del registro es determinístico: `{fecha}_{local}_{turno}`. Eso hace imposible que existan dos informes del mismo turno y convierte "qué turnos faltan" en una pregunta con respuesta exacta. Si se carga un informe donde ya había uno, se avisa **antes** de completar el formulario (enterarse al apretar Enviar es la forma de que el trabajo se haga dos veces) y el anterior se conserva en `informes/history/{id}/{ts}` — un informe es el registro de lo que pasó en un turno, pisarlo sin dejar rastro sería borrar información.
+
+### La página de Gerencia
+
+Lo que hace falta no es leer informes sueltos, es **ver si algo se repite**:
+
+- **La semana de un vistazo**: los 4 turnos × 7 días, con ✓ (informó sin novedades), **!** (informó y hay algo para mirar), **falta** y · (todavía no terminó). Tocar un turno informado lo abre.
+- **Incidencias que se repiten**, por tipo y por persona, en el rango elegido.
+- **Filtros** por local, turno, persona (busca también dentro del checklist, no solo el Experto) y tipo de incidencia.
+- **Alerta de informes faltantes**, deliberadamente conservadora: un turno se cuenta como faltante recién cuando **ya terminó** — el de la mañana a partir de las 16, el de la tarde al día siguiente. Marcar como faltante un turno en curso convierte la alerta en ruido, y una alerta ruidosa se ignora. Es la misma lección que dejó el contador de ítems en el módulo de costeo.
+
+### ⚠️ Sobre la confidencialidad de los informes
+
+Hay que decirlo con todas las letras: **la clave de Gerencia no impide que otro lea los informes.** Es la misma limitación que ya tienen Cronogramas y Vacaciones, pero acá importa más porque el requisito del negocio es que solo Gerencia los lea.
+
+La clave está en el código de la página, que cualquiera puede ver desde el navegador, y —más importante— la base de Firebase se lee directo por HTTP con la config que está en todas las páginas del sitio. Alguien con esa URL puede leer `informes/registros` sin pasar nunca por la pantalla de contraseña.
+
+Para que la restricción sea real hacen falta **reglas de seguridad en Firebase** sobre la rama `informes/`: que `informes/registros` acepte escritura pero **niegue lectura** salvo a un usuario autenticado de Gerencia (Firebase Auth). Mientras eso no esté, la clave sirve para que nadie entre sin querer, no para impedir que alguien entre queriendo.
+
+### Datos en Firebase
+
+Mismo proyecto (`pedidos-de-produccion-ee3cb`), rama `informes/`:
+
+- `informes/registros/{fecha}_{local}_{turno}` — el informe.
+- `informes/history/{id}/{ts}` — versiones reemplazadas.
+
+### Nombre del rol
+
+El cronograma lo llamaba *"Experto Candela"* y el manual *"Experto del Turno"*. Quedó unificado en **"Experto del Turno"**, incluidos los textos de `cronogramas/index.html`. La clave de datos sigue siendo `state.expertos` — renombrarla habría roto lo ya cargado sin ganar nada.
+
+---
+
 ## Desplegar en Netlify
 
 1. [app.netlify.com](https://app.netlify.com/) → **Add new site → Import an existing project → GitHub**.
@@ -141,11 +204,19 @@ La raíz del sitio (`/`) muestra una página simple con links a las dos apps.
 ## Estructura de archivos
 
 ```
-├── index.html                — Página de inicio (links a las dos apps)
+├── index.html                — Página de inicio (links a los módulos)
 ├── costeo-proveedores/
 │   └── index.html          — App de Costeo & Proveedores (HTML+CSS+JS autocontenido)
 ├── presupuestos/
 │   └── index.html          — App de Presupuestos (HTML+CSS+JS autocontenido)
+├── cronogramas/
+│   └── index.html          — Turnos semanales (define quién es Experto del Turno)
+├── vacaciones/
+│   ├── index.html          — Balance y calendario de vacaciones
+│   └── pedido.html         — Formulario público de pedido
+├── informes/
+│   ├── carga.html          — Informe de turno: lo carga el Experto (sin clave)
+│   └── index.html          — Informes de turno: lectura de Gerencia (clave propia)
 ├── netlify/
 │   └── functions/
 │       ├── extraer-factura.js       — Función serverless: escaneo de facturas por IA
