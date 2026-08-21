@@ -248,7 +248,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-20 20:32";
+const APP_VERSION = "2026-08-20 21:05";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -2037,6 +2037,68 @@ window.verFotoFactura = async function(id) {
   w.document.close();
 };
 
+// Borra una factura Y DESHACE lo que dejó en los costos.
+// Es imprescindible que haga las dos cosas: una factura mal leída (una cantidad interpretada como
+// miles, un precio por bulto tomado como precio por kilo) no solo queda fea en el listado — mete
+// una compra carísima en el historial del insumo, y como el costeo usa el MÁXIMO de los últimos 60
+// días, ese error se lleva puesto el costo de todos los productos que lo usan durante dos meses.
+// Sin esto, la única salida era editar la base a mano.
+window.eliminarFactura = async function(id) {
+  const f = state.facturas[id];
+  if (!f) return;
+  const items = (Array.isArray(f.items) ? f.items : []).filter(it => it.insumoId && state.insumos[it.insumoId]);
+  const detalle = items.length
+    ? `\n\nTambién se borran las ${items.length} compra(s) que esta factura registró en el historial de los insumos, y los costos se recalculan sin ella.`
+    : "";
+  if (!confirm(`¿Borrar la factura ${f.numeroFactura || "(sin número)"} de ${f.proveedorNombre || "(sin proveedor)"} por ${fmtMoney(f.montoTotal)}?${detalle}\n\nEsto no se puede deshacer.`)) return;
+
+  // Un insumo puede aparecer en más de una línea de la misma factura: se agrupa para tocarlo una
+  // sola vez y no pisar la escritura anterior con un estado viejo.
+  const insumoIds = [...new Set(items.map(it => it.insumoId))];
+  for (const insumoId of insumoIds) {
+    const insumo = state.insumos[insumoId];
+    if (!insumo) continue;
+
+    const historial = Object.fromEntries(
+      Object.entries(insumo.historial || {}).filter(([, h]) => h.facturaId !== id));
+
+    // Las líneas proveedor+marca que quedaron con el precio de esta factura vuelven al último
+    // precio que sí sobrevive en el historial de esa misma línea. Si no sobrevive ninguno, la
+    // línea se borra: quedó sin ninguna compra que la respalde.
+    const precios = {};
+    for (const [key, linea] of Object.entries(insumo.precios || {})) {
+      const restantes = Object.values(historial)
+        .filter(h => comboKeyPrecio(h.proveedorId, h.marca) === key)
+        .sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")));
+      if (restantes.length) {
+        precios[key] = { ...linea, precio: restantes[0].precio, fechaUltimo: restantes[0].fecha, actualizadoTs: Date.now() };
+      } else if (linea.origen === "lista") {
+        precios[key] = linea;  // una cotización de lista no depende de esta factura
+      }
+      // si no hay historial ni es de lista, la línea desaparece
+    }
+
+    // precioActual va en 0 A PROPÓSITO antes de recalcular: cuando un insumo se queda sin historial
+    // y sin líneas, precioComprasInsumo cae como último recurso en el propio precioActual — así que
+    // dejarlo puesto hacía que el precio que se está borrando se resucitara a sí mismo.
+    const insumoSinFactura = { ...insumo, historial, precios, precioActual: 0 };
+    const precioActual = precioCosteoInsumo(insumoSinFactura);
+    const updates = { historial, precios, precioActual, actualizadoTs: Date.now() };
+    await update(ref(db, `costeo/insumos/${insumoId}`), updates);
+    state.insumos[insumoId] = { ...insumo, ...updates };
+  }
+
+  try { await remove(ref(db, `costeo/facturasFotos/${id}`)); } catch {}
+  await remove(ref(db, `costeo/facturas/${id}`));
+  delete state.facturas[id];
+  if (state.facturaDetalleId === id) state.facturaDetalleId = null;
+  invalidarCacheCosteo();
+  showToast(insumoIds.length
+    ? `🗑️ Factura borrada. Se recalcularon los costos de ${insumoIds.length} insumo(s) sin ella.`
+    : "🗑️ Factura borrada.", "success");
+  render();
+};
+
 window.toggleFacturaEstado = async function(id) {
   const f = state.facturas[id];
   if (!f) return;
@@ -2140,7 +2202,9 @@ function renderFacturasView(container) {
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
         <button class="btn btn-primary btn-sm" onclick="copiarDiagnosticoFactura('${id}')">📋 Copiar diagnóstico</button>
         ${(f.foto || f.tieneFoto) ? `<button class="btn btn-ghost btn-sm" onclick="verFotoFactura('${id}')">🖼️ Ver la foto original</button>` : ""}
+        <button class="btn btn-danger btn-sm" onclick="eliminarFactura('${id}')" title="Borra la factura y deshace las compras que registró en los insumos">🗑️ Borrar y deshacer</button>
       </div>
+      <div class="text-muted" style="font-size:11px;margin-bottom:8px">Si esta factura se cargó mal, borrala acá: además de sacarla del listado, se borran las compras que dejó en el historial de los insumos y los costos se recalculan sin ella. Después se puede volver a cargar la foto desde cero.</div>
       <pre style="margin:0;white-space:pre-wrap;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.5">${escapeHtml(diagnosticoFacturaTexto(id))}</pre>
     </td></tr>` : ""}`).join("");
 
