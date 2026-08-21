@@ -848,7 +848,7 @@ for i in range(NINS):
         FCALC, None, NUM, hor='center')
     put(ws, r, 11, '=IF($J%d="","",$G%d-$J%d)' % (r, r, r), FCALC, None, NUM, hor='center')
     put(ws, r, 12, '=IF(OR($J%d="",$J%d=0),"",$K%d/$J%d)' % (r, r, r, r), fnt(10, True), None, PCT, hor='center')
-    put(ws, r, 13, '=Insumos!$H%d' % r, FLINK, None, MON, hor='center')
+    put(ws, r, 13, '=IF(Insumos!$H%d="","",Insumos!$H%d)' % (r, r), FLINK, None, MON, hor='center')
     put(ws, r, 14, '=IF($M%d="","",$G%d*$M%d)' % (r, r, r), FCALC, None, MON, hor='center')
     put(ws, r, 15, '=IF(OR($M%d="",$K%d=""),"",$K%d*$M%d)' % (r, r, r, r), fnt(10, True), None, MON, hor='center')
     put(ws, r, 16, ('=IF(AND(\'1 Inv Inicial\'!$E{r}="",\'1 Inv Inicial\'!$F{r}=""),"Falta inventario inicial",'
@@ -913,8 +913,10 @@ for a in AREAS:
         r = BR + len(BCROW)
         src = pr0 + j
         put(ws, r, 1, ALAB[k], fnt(9))
-        put(ws, r, 2, "='%s'!$A%d" % (sn, src), Font(name=F, size=10, color='008000'))
-        put(ws, r, 3, "='%s'!$B%d" % (sn, src), FLINK, hor='center')
+        put(ws, r, 2, "=IF('%s'!$A%d=\"\",\"\",'%s'!$A%d)" % (sn, src, sn, src),
+            Font(name=F, size=10, color='008000'))
+        put(ws, r, 3, "=IF('%s'!$B%d=\"\",\"\",'%s'!$B%d)" % (sn, src, sn, src),
+            FLINK, hor='center')
         put(ws, r, 4, "='%s'!$Q%d" % (sn, src), FLINK, None, NUM0, hor='center')
         put(ws, r, 5, '=IF($B%d="","",SUMIFS(%s,%s,$B%d,%s,$A%d))' % (r, R_FV_CANT, R_FV_PR, r, R_FV_AR, r),
             FCALC, None, NUM0, hor='center')

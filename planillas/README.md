@@ -25,6 +25,13 @@ python3 generar_planillas.py            # lee ../index.html y escribe el .xlsx
 > Regenerar **pisa** el archivo `.xlsx`. Si ya hay datos cargados de una semana,
 > guardar una copia antes.
 
+## Al abrirlo por primera vez
+
+El libro se entrega con las fórmulas escritas pero **sin valores en caché**: se calculan
+solos al abrirlo en Excel, LibreOffice o Google Sheets. Un visor rápido (la vista previa
+de Drive, Quick Look, el adjunto de WhatsApp) puede mostrar celdas en blanco donde hay
+fórmulas — hay que abrirlo con una planilla de cálculo de verdad.
+
 ## Estructura del libro (24 hojas)
 
 **Preparación**
