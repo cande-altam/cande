@@ -210,7 +210,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const APP_VERSION = "2026-08-20 informes-1";
+const APP_VERSION = "2026-08-20 informes-2";
 document.getElementById("appVersion").textContent = "v" + APP_VERSION;
 
 // ---------------------------------------------------------------------------
@@ -461,6 +461,12 @@ function avisoCronograma() {
 
 // Un turno = un informe. Si ya hay uno cargado, avisarlo ANTES de que la persona complete todo:
 // enterarse al apretar Enviar es la forma de que el trabajo se haga dos veces.
+//
+// El chequeo mira el ÍNDICE (informes/indice), no el informe en sí. El contenido de los informes
+// lo lee solamente Gerencia —esa es la regla del negocio y, con las reglas de Firebase puestas,
+// esta página ni siquiera tiene permiso para leerlo—. El índice guarda solo quién lo mandó y
+// cuándo: lo justo para no pisar el trabajo de un compañero sin enterarse, sin exponer nada de
+// lo que dice adentro.
 let informeExistente = null;
 async function chequearExistente() {
   const cont = $("avisoExiste");
@@ -469,7 +475,7 @@ async function chequearExistente() {
   const id = idInforme();
   if (!id) return;
   try {
-    const snap = await get(ref(db, "informes/registros/" + id));
+    const snap = await get(ref(db, "informes/indice/" + id));
     const prev = snap.val();
     if (!prev) return;
     informeExistente = prev;
@@ -570,12 +576,20 @@ async function enviar({ sinNovedades }) {
 
   try {
     const id = idInforme();
-    // Si se reemplaza un informe, el anterior no se pierde: queda en el historial. Un informe es
-    // un registro de lo que pasó en un turno — pisarlo sin dejar rastro sería borrar información.
-    if (informeExistente) {
-      await set(ref(db, `informes/history/${id}/${Date.now()}`), informeExistente);
-    }
-    await set(ref(db, "informes/registros/" + id), informe);
+    // Los envíos son APPEND-ONLY: cada uno va a su propia clave por timestamp y nunca se pisa
+    // nada. Un informe es el registro de lo que pasó en un turno; sobrescribirlo sería borrar
+    // información. Además así esta página nunca necesita LEER un informe para conservarlo — que
+    // es justo lo que las reglas de Firebase le prohíben, porque el contenido lo lee solo
+    // Gerencia. El informe vigente de un turno es, simplemente, el envío más reciente de ese id.
+    await set(ref(db, `informes/envios/${id}/${Date.now()}`), informe);
+    // Índice público: lo mínimo para que el próximo Experto sepa que este turno ya informó, sin
+    // exponer nada de lo que dice adentro. Va DESPUÉS del envío: si algo falla, es preferible un
+    // informe sin índice (se avisa de menos) que un índice sin informe (se avisa de algo que no
+    // existe y se manda a alguien a "reemplazar" la nada).
+    await set(ref(db, "informes/indice/" + id), {
+      fecha: informe.fecha, loc: informe.loc, turno: informe.turno,
+      experto: informe.experto, enviadoEn: informe.enviadoEn
+    });
     $("formWrap").style.display = "none";
     $("okCard").classList.add("show");
     $("okDetalle").textContent = `${LOCALES[loc]} · ${TURNOS[turno]} · ${fecha}`;

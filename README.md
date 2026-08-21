@@ -135,7 +135,7 @@ Son dos páginas separadas, siguiendo el patrón de `vacaciones/` (`pedido.html`
 | Archivo | Para quién | Acceso |
 |---|---|---|
 | `informes/carga.html` | El Experto, al cerrar el turno | Sin clave |
-| `informes/index.html` | Gerencia | Clave propia (`7025`), distinta de la de Cronogramas/Vacaciones |
+| `informes/index.html` | Gerencia | Cuenta de Firebase Auth (ver abajo) |
 
 ### La página de carga
 
@@ -168,20 +168,86 @@ Lo que hace falta no es leer informes sueltos, es **ver si algo se repite**:
 - **Filtros** por local, turno, persona (busca también dentro del checklist, no solo el Experto) y tipo de incidencia.
 - **Alerta de informes faltantes**, deliberadamente conservadora: un turno se cuenta como faltante recién cuando **ya terminó** — el de la mañana a partir de las 16, el de la tarde al día siguiente. Marcar como faltante un turno en curso convierte la alerta en ruido, y una alerta ruidosa se ignora. Es la misma lección que dejó el contador de ítems en el módulo de costeo.
 
-### ⚠️ Sobre la confidencialidad de los informes
+### Confidencialidad: cómo se hace cumplir de verdad
 
-Hay que decirlo con todas las letras: **la clave de Gerencia no impide que otro lea los informes.** Es la misma limitación que ya tienen Cronogramas y Vacaciones, pero acá importa más porque el requisito del negocio es que solo Gerencia los lea.
+El requisito es que **solo Gerencia lea los informes**. Una contraseña escrita en la página no alcanza para eso, y conviene entender por qué: la clave se ve desde el navegador, y —más importante— la base de Firebase se lee **directo por HTTP** con la config que está en todas las páginas del sitio. Cualquiera con esa URL podía leer la rama entera sin pasar nunca por la pantalla de contraseña.
 
-La clave está en el código de la página, que cualquiera puede ver desde el navegador, y —más importante— la base de Firebase se lee directo por HTTP con la config que está en todas las páginas del sitio. Alguien con esa URL puede leer `informes/registros` sin pasar nunca por la pantalla de contraseña.
+Por eso el acceso de Gerencia es una **cuenta real de Firebase Auth** y la restricción la aplica el **servidor**, con reglas de seguridad. La página ya está preparada; falta hacer los dos pasos en la consola de Firebase.
 
-Para que la restricción sea real hacen falta **reglas de seguridad en Firebase** sobre la rama `informes/`: que `informes/registros` acepte escritura pero **niegue lectura** salvo a un usuario autenticado de Gerencia (Firebase Auth). Mientras eso no esté, la clave sirve para que nadie entre sin querer, no para impedir que alguien entre queriendo.
+> **Orden importante.** Hacé los pasos 1 y 2 **antes** del 3. Si ponés las reglas primero, Gerencia queda afuera hasta que exista la cuenta.
+
+#### Paso 1 — Habilitar el acceso por email y contraseña
+
+1. [console.firebase.google.com](https://console.firebase.google.com/) → proyecto **pedidos-de-produccion-ee3cb**.
+2. Menú izquierdo → **Authentication** → **Get started** (si es la primera vez).
+3. Pestaña **Sign-in method** → **Email/Password** → **Habilitar** → **Guardar**.
+
+#### Paso 2 — Crear la cuenta de Gerencia
+
+1. Pestaña **Users** → **Add user**.
+2. Email: `gerencia@candela-app.com` · Contraseña: la que elijas (que no sea una que uses en otro lado).
+3. **Add user**.
+
+Ese mail no recibe correo, es solo el identificador de la cuenta. Si preferís usar uno real —para poder recuperar la contraseña por mail—, creá la cuenta con ese y cambiá la constante `GERENCIA_EMAIL` arriba de todo del `<script>` de `informes/index.html`. Para cambiar la contraseña, alcanza con **Users → ⋮ → Reset password**.
+
+#### Paso 3 — Las reglas de seguridad
+
+**Realtime Database** → pestaña **Rules** → reemplazar todo por esto → **Publicar**:
+
+```json
+{
+  "rules": {
+    "costeo":       { ".read": true, ".write": true },
+    "presupuestos": { ".read": true, ".write": true },
+    "cronogramas":  { ".read": true, ".write": true },
+    "vacaciones":   { ".read": true, ".write": true },
+
+    "informes": {
+      "envios": {
+        ".read": "auth != null",
+        "$turno": {
+          "$ts": {
+            ".write": "!data.exists() && newData.exists()",
+            ".validate": "newData.hasChildren(['fecha','loc','turno','experto','enviadoEn'])"
+          }
+        }
+      },
+      "indice": {
+        ".read": true,
+        "$turno": {
+          ".write": "newData.exists()",
+          ".validate": "newData.hasChildren(['fecha','loc','turno','experto','enviadoEn'])"
+        }
+      }
+    }
+  }
+}
+```
+
+**El detalle que hace que esto funcione o no:** en Realtime Database las reglas **cascadean hacia abajo y no se pueden revocar**. Si dejás un `".read": true` en la raíz, todo lo que cuelgue de ahí queda legible y las reglas de `informes` **no hacen absolutamente nada**. Por eso el permiso abierto se baja rama por rama en vez de estar arriba de todo. Si tenés reglas propias que no figuran acá, agregalas al mismo nivel que las otras cuatro — nunca en la raíz.
+
+Qué queda garantizado por el servidor:
+
+- **`informes/envios` solo lo lee una sesión autenticada.** Sin cuenta, la lectura se rechaza.
+- **Los informes se escriben pero no se pisan ni se borran:** `!data.exists()` hace que cada envío sea de una sola escritura. Reemplazar un informe agrega una versión nueva; nadie puede borrar lo que otro escribió.
+- **`informes/indice` es público a propósito**, pero guarda solo fecha, local, turno, quién lo mandó y cuándo — nada del contenido. Es lo que permite avisarle al Experto que ese turno ya informó sin dejar que lea lo que dice adentro.
+
+#### Cómo verificar que quedó bien
+
+1. Entrá a `informes/index.html` en una **ventana privada**. Debe pedir la contraseña y, con la correcta, mostrar los informes.
+2. En esa misma ventana privada, abrí:
+   `https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com/informes/envios.json`
+   Tiene que devolver **`Permission denied`**. Si devuelve los informes, las reglas no se aplicaron (revisá que no haya quedado un `.read` en la raíz).
+3. Probá `.../informes/indice.json`: eso **sí** tiene que responder, y solo con metadatos.
 
 ### Datos en Firebase
 
 Mismo proyecto (`pedidos-de-produccion-ee3cb`), rama `informes/`:
 
-- `informes/registros/{fecha}_{local}_{turno}` — el informe.
-- `informes/history/{id}/{ts}` — versiones reemplazadas.
+- `informes/envios/{fecha}_{local}_{turno}/{ts}` — cada envío, **append-only**. El informe vigente de un turno es el envío con el timestamp más alto; los anteriores quedan como historial y se muestran en el detalle ("reemplazó a N versiones"). Nunca se sobrescribe nada: un informe es el registro de lo que pasó en un turno.
+- `informes/indice/{fecha}_{local}_{turno}` — metadatos públicos (quién informó y cuándo), para el aviso de duplicado en la página de carga.
+
+Este diseño append-only no es solo prolijidad: hace que la página de carga **nunca necesite leer un informe** para conservarlo al reemplazarlo — que es justo lo que las reglas le prohíben.
 
 ### Nombre del rol
 

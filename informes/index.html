@@ -242,6 +242,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
@@ -254,8 +255,9 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const auth = getAuth(app);
 
-const APP_VERSION = "2026-08-20 informes-1";
+const APP_VERSION = "2026-08-20 informes-2";
 document.getElementById("appVersion").textContent = "v" + APP_VERSION;
 
 const LOCALES = { SLA: "SLA 5.0", SL: "San Luis" };
@@ -264,24 +266,65 @@ const TURNOS = { M: "Mañana", T: "Tarde" };
 const SLOTS = [["SLA", "M"], ["SLA", "T"], ["SL", "M"], ["SL", "T"]];
 const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
-// La clave es DISTINTA de la de Cronogramas y Vacaciones (1412) a propósito: el rol de Experto
-// pierde sentido si los informes circulan entre pares. Ver la nota de seguridad en el README.
-const AUTH_KEY = "candela_informes_auth";
-const AUTH_PASS = "7025";
+// Acceso: cuenta REAL de Firebase Auth, no una contraseña escrita en esta página.
+//
+// Es la única forma de que "solo Gerencia lee los informes" sea cierto. Una constante acá adentro
+// la ve cualquiera desde el navegador, y peor todavía: la base se lee por HTTP con la config que
+// está en todas las páginas del sitio, así que se podía leer informes/ sin pasar nunca por la
+// pantalla de contraseña. Con las reglas de Firebase puestas (ver README), el servidor niega la
+// lectura salvo a esta cuenta.
+//
+// El mail es el de la cuenta creada en Firebase → Authentication. Si se usa otro, cambiarlo acá.
+const GERENCIA_EMAIL = "gerencia@candela-app.com";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const toast = (msg) => { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1900); };
 
 function showApp() { $("authGate").style.display = "none"; $("appWrap").style.display = ""; }
-function attemptAuth() {
-  const input = $("authPass"), err = $("authErr");
-  if (input.value === AUTH_PASS) { sessionStorage.setItem(AUTH_KEY, "ok"); err.style.display = "none"; input.value = ""; showApp(); }
-  else err.style.display = "block";
+function hideApp() { $("authGate").style.display = ""; $("appWrap").style.display = "none"; }
+
+// Los errores de Firebase Auth se traducen a algo accionable. "Contraseña incorrecta" a secas
+// tapaba tres problemas muy distintos que se arreglan en lugares distintos —y ya sabemos cómo
+// termina eso: horas de diagnóstico a ciegas—.
+function mensajeDeError(code) {
+  if (code === "auth/operation-not-allowed")
+    return "Falta habilitar el acceso por email y contraseña en Firebase → Authentication → Sign-in method.";
+  if (code === "auth/user-not-found" || code === "auth/invalid-credential" || code === "auth/wrong-password")
+    return `Contraseña incorrecta, o todavía no se creó la cuenta ${GERENCIA_EMAIL} en Firebase → Authentication → Users.`;
+  if (code === "auth/too-many-requests")
+    return "Demasiados intentos fallidos. Esperá unos minutos y volvé a probar.";
+  if (code === "auth/network-request-failed")
+    return "Sin conexión con Firebase. Revisá la red.";
+  return "No se pudo ingresar (" + code + ").";
+}
+
+async function attemptAuth() {
+  const input = $("authPass"), err = $("authErr"), btn = $("authBtn");
+  err.style.display = "none";
+  btn.disabled = true; btn.textContent = "Ingresando…";
+  try {
+    await signInWithEmailAndPassword(auth, GERENCIA_EMAIL, input.value);
+    input.value = "";
+  } catch (e) {
+    console.error("auth:", e);
+    err.textContent = mensajeDeError(e.code || "");
+    err.style.display = "block";
+  } finally {
+    btn.disabled = false; btn.textContent = "Ingresar";
+  }
 }
 $("authBtn").addEventListener("click", attemptAuth);
 $("authPass").addEventListener("keydown", e => { if (e.key === "Enter") attemptAuth(); });
-$("btnLogout").addEventListener("click", () => { sessionStorage.removeItem(AUTH_KEY); location.reload(); });
+$("btnLogout").addEventListener("click", async () => { await signOut(auth); location.reload(); });
+
+// La sesión la maneja Firebase (sobrevive a cerrar la pestaña). La suscripción a los datos se
+// engancha recién cuando hay sesión: sin ella la lectura la rechaza el servidor.
+let suscripto = false;
+onAuthStateChanged(auth, (user) => {
+  if (user) { showApp(); if (!suscripto) { suscripto = true; escucharInformes(); } }
+  else hideApp();
+});
 $("btnTheme").addEventListener("click", () => {
   const cur = document.documentElement.getAttribute("data-theme");
   const next = cur === "dark" ? "light" : "dark";
@@ -327,17 +370,40 @@ const fmtFechaLarga = (iso) => {
 $("fHasta").value = hoyISO();
 $("fDesde").value = sumarDias(hoyISO(), -13);
 
-onValue(ref(db, "informes/registros"), (snap) => {
-  registros = snap.val() || {};
-  $("syncStatus").textContent = "☁️";
-  $("syncStatus").title = "Datos actualizados";
-  render();
-}, (err) => {
-  console.error("informes onValue:", err);
-  $("syncStatus").textContent = "⚠️";
-  $("syncStatus").title = "No se pudieron leer los informes: " + (err.message || err.code);
-  toast("No se pudieron leer los informes.");
-});
+// Los envíos son append-only: informes/envios/{id}/{ts}. El informe VIGENTE de un turno es el
+// envío con el timestamp más alto; los otros son las versiones anteriores, que se conservan
+// porque un informe es el registro de lo que pasó en un turno y no se pisa.
+function aplanarEnvios(porTurno) {
+  const out = {};
+  for (const [id, envios] of Object.entries(porTurno || {})) {
+    const claves = Object.keys(envios || {}).sort((a, b) => Number(a) - Number(b));
+    if (!claves.length) continue;
+    const vigente = envios[claves[claves.length - 1]];
+    if (!vigente) continue;
+    out[id] = {
+      ...vigente,
+      versiones: claves.length,
+      anteriores: claves.slice(0, -1).map(k => envios[k]).filter(Boolean)
+    };
+  }
+  return out;
+}
+
+function escucharInformes() {
+  onValue(ref(db, "informes/envios"), (snap) => {
+    registros = aplanarEnvios(snap.val());
+    $("syncStatus").textContent = "☁️";
+    $("syncStatus").title = "Datos actualizados";
+    render();
+  }, (err) => {
+    console.error("informes onValue:", err);
+    $("syncStatus").textContent = "⚠️";
+    $("syncStatus").title = "No se pudieron leer los informes: " + (err.message || err.code);
+    toast(err.code === "PERMISSION_DENIED"
+      ? "Firebase rechazó la lectura: revisá las reglas de la rama informes/."
+      : "No se pudieron leer los informes.");
+  });
+}
 
 // ---------------------------------------------------------------------------
 // FILTROS
@@ -557,7 +623,9 @@ function infHtml(r) {
     ${bloque("Compensaciones", comps.length
       ? `<ul>${comps.map(c => `<li>${esc(c.tipo)}${c.detalle ? " — " + esc(c.detalle) : ""}${c.monto != null ? ` <b>($${Number(c.monto).toLocaleString("es-AR")})</b>` : ""}</li>`).join("")}</ul>` : "")}
     ${bloque("Para el turno siguiente", (r.paraElSiguiente || "").trim() ? `<div class="texto">${esc(r.paraElSiguiente)}</div>` : "")}
-    <div class="footer-note" style="text-align:left;margin-top:12px">Enviado ${r.enviadoEn ? new Date(r.enviadoEn).toLocaleString("es-AR", { dateStyle: "medium", timeStyle: "short" }) : "—"}</div>`;
+    <div class="footer-note" style="text-align:left;margin-top:12px">Enviado ${r.enviadoEn ? new Date(r.enviadoEn).toLocaleString("es-AR", { dateStyle: "medium", timeStyle: "short" }) : "—"}${
+      r.versiones > 1 ? ` · <b>reemplazó a ${r.versiones - 1} versión(es) anterior(es)</b>: ${(r.anteriores || []).map(a => `${esc(a.experto || "—")} el ${a.enviadoEn ? new Date(a.enviadoEn).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" }) : "—"}`).join(", ")}` : ""
+    }</div>`;
 
   return `<div class="inf ${abiertos.has(r.id) ? "open" : ""}" data-id="${esc(r.id)}">
     <div class="inf-head">
@@ -570,7 +638,8 @@ function infHtml(r) {
   </div>`;
 }
 
-if (sessionStorage.getItem(AUTH_KEY) === "ok") showApp();
+// Se dibuja el esqueleto vacío desde el arranque: onAuthStateChanged decide si se muestra, y los
+// datos llegan cuando la sesión está lista.
 render();
 </script>
 </body>
