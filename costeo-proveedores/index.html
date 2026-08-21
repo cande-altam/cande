@@ -161,6 +161,9 @@ textarea.form-input{resize:vertical;min-height:60px;}
 .item-row-wrap{overflow-x:auto;}
 @media(max-width:900px){.item-row,.item-row-header{grid-template-columns:repeat(6,150px);min-width:920px;}}
 .recipe-row{display:grid;grid-template-columns:2fr 1fr 32px;gap:8px;align-items:center;padding:6px 0;}
+.receta-buscador-wrap{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.receta-buscador{max-width:320px;}
+.receta-buscador-cuenta{font-size:11px;white-space:nowrap;}
 
 /* INSUMO SEARCH PICKER */
 .insumo-picker{position:relative;}
@@ -248,7 +251,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-20 21:40";
+const APP_VERSION = "2026-08-20 22:30";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -317,6 +320,7 @@ const state = {
   recetasBasesBusqueda: "",
   recetasBasesTab: "recetas",
   recetasBasesAbiertaId: null,
+  nuevaBaseAbierta: false,
   analisisPeriodo: 6,
   editingProveedorId: null,
   editingInsumoId: null,
@@ -3146,8 +3150,9 @@ function renderInsumosView(container) {
       </div>
       <div class="section-header" style="margin-top:10px">
         <div class="section-title">🧪 Receta (opcional — solo si es una base/preparación elaborada, ej. crema chantilly, bizcochuelo)</div>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="addInsumoRecipeRow()">+ Agregar insumo</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addInsumoRecipeRow()">+ Agregar insumo o base</button>
       </div>
+      ${buscadorRecetaHtml("insumo-recipe-container", editing && editing !== "new" ? editing : null)}
       <div id="insumo-recipe-container">${insumoRecetaRows}</div>
       <div style="margin:8px 0 14px;font-size:13px">Costo calculado: <strong id="costo-insumo-preview">${fmtMoney(recalcCostoInsumoSilencioso(editingData.receta))}</strong></div>
       <div class="text-muted" style="margin-bottom:10px">Si le cargás una receta, el precio de este insumo pasa a calcularse solo a partir de esos ingredientes (no del precio por proveedor) — así cualquier producto que lo use ve el costo al día.</div>
@@ -3334,18 +3339,82 @@ function renderInsumosView(container) {
 // =============================================================
 // PRODUCTOS Y RECETAS (costeo automático)
 // =============================================================
+// Una BASE es un insumo con receta propia (crema chantilly, bizcochuelo, almíbar): se compra por
+// partes y se arma acá, así que su costo sale de sus ingredientes y no de una factura. `esBase`
+// existe para poder crear una base ANTES de cargarle ingredientes — si no, una base recién creada
+// no sería base hasta tener el primer ingrediente, y no habría dónde cargárselo.
+function esBaseInsumo(ins) {
+  return !!(ins && (ins.esBase || (ins.receta && Object.keys(ins.receta).length > 0)));
+}
+
 // La lista de insumos del desplegable es idéntica en todas las filas de receta, pero se rearmaba
 // entera en cada una: ordenar 230 insumos, calcular su costo y escapar su nombre, por fila. Se
 // arma una sola vez y después solo se marca cuál está seleccionado, que es lo único que cambia.
+// El cache es solo para la lista COMPLETA — que es la que se pinta en cada render. Las listas
+// filtradas por el buscador se arman al vuelo: son pocas opciones y cambian en cada tecla.
 let _cacheOpcionesReceta = new Map();
-function opcionesInsumosReceta(excludeId) {
-  const clave = excludeId || "";
-  if (_cacheOpcionesReceta.has(clave)) return _cacheOpcionesReceta.get(clave);
-  const html = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
-    .filter(([id]) => id !== excludeId)
-    .map(([id, ins]) => `<option value="${id}">${escapeHtml(ins.nombre)}${ins.unidad ? " (" + escapeHtml(ins.unidad) + ")" : ""} — ${fmtMoney(precioEfectivoInsumo(id))}</option>`).join("");
-  _cacheOpcionesReceta.set(clave, html);
-  return html;
+function opcionRecetaHtml(id, ins) {
+  return `<option value="${id}">${esBaseInsumo(ins) ? "🧪 " : ""}${escapeHtml(ins.nombre)}${ins.unidad ? " (" + escapeHtml(ins.unidad) + ")" : ""} — ${fmtMoney(precioEfectivoInsumo(id))}</option>`;
+}
+function entradasRecetaOrdenadas(excludeId) {
+  return objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .filter(([id]) => id !== excludeId);
+}
+// `forzarId` es el insumo que la fila ya tiene elegido: SIEMPRE se incluye, matchee o no la
+// búsqueda. Si se filtrara también él, escribir en el buscador cambiaría en silencio el
+// ingrediente de las filas ya cargadas — un buscador no puede editar la receta.
+function opcionesInsumosReceta(excludeId, query = "", forzarId = "") {
+  const q = stripAccentsCosteo(String(query || "").trim()).toLowerCase();
+  if (!q) {
+    const clave = excludeId || "";
+    if (_cacheOpcionesReceta.has(clave)) return _cacheOpcionesReceta.get(clave);
+    const html = entradasRecetaOrdenadas(excludeId).map(([id, ins]) => opcionRecetaHtml(id, ins)).join("");
+    _cacheOpcionesReceta.set(clave, html);
+    return html;
+  }
+  return entradasRecetaOrdenadas(excludeId)
+    .filter(([id, ins]) => id === forzarId || stripAccentsCosteo(ins.nombre).toLowerCase().includes(q))
+    .map(([id, ins]) => opcionRecetaHtml(id, ins)).join("");
+}
+function contarInsumosReceta(excludeId, query = "") {
+  const q = stripAccentsCosteo(String(query || "").trim()).toLowerCase();
+  const todos = entradasRecetaOrdenadas(excludeId);
+  if (!q) return { visibles: todos.length, total: todos.length };
+  return { visibles: todos.filter(([, ins]) => stripAccentsCosteo(ins.nombre).toLowerCase().includes(q)).length, total: todos.length };
+}
+
+// Buscador del editor de recetas. No agrega ni saca filas: reduce las opciones de TODOS los
+// desplegables del panel, que con 230 insumos es lo que hacía imposible encontrar una base.
+function buscadorRecetaHtml(scopeId, excludeId) {
+  return `<div class="receta-buscador-wrap">
+    <input type="text" class="form-input receta-buscador" placeholder="🔎 Buscar insumo o base…" autocomplete="off"
+      data-scope="${scopeId}" data-exclude="${escapeHtml(excludeId || "")}" oninput="filtrarOpcionesReceta(this)">
+    <span class="text-muted receta-buscador-cuenta" id="${scopeId}-cuenta"></span>
+  </div>`;
+}
+
+window.filtrarOpcionesReceta = function(input) {
+  const cont = document.getElementById(input.dataset.scope);
+  if (!cont) return;
+  const query = input.value;
+  const excludeId = input.dataset.exclude || null;
+  // Los dos nombres de clase que usan las filas de receta: las de producto/base y las del
+  // formulario de insumo, que tiene su propio prefijo.
+  for (const sel of cont.querySelectorAll("select.recipe-insumo, select.insumo-recipe-insumo")) {
+    const elegido = sel.value;
+    sel.innerHTML = `<option value="">— Insumo o base —</option>` + opcionesInsumosReceta(excludeId, query, elegido);
+    sel.value = elegido;
+  }
+  const { visibles, total } = contarInsumosReceta(excludeId, query);
+  const cuenta = document.getElementById(input.dataset.scope + "-cuenta");
+  if (cuenta) cuenta.textContent = query.trim() ? `${visibles} de ${total}` : "";
+};
+
+// Una fila agregada con el buscador activo nace con la lista completa: hay que volver a aplicarle
+// el filtro, o el buscador "deja de funcionar" justo en la fila que se está por completar.
+function reaplicarFiltroReceta(scopeId) {
+  const input = document.querySelector(`.receta-buscador[data-scope="${scopeId}"]`);
+  if (input && input.value.trim()) window.filtrarOpcionesReceta(input);
 }
 
 function recipeRowHtml({ insumoId = "", cantidad = "" } = {}, opts = {}) {
@@ -3356,7 +3425,7 @@ function recipeRowHtml({ insumoId = "", cantidad = "" } = {}, opts = {}) {
   return `
     <div class="${containerClass}">
       <select class="form-select ${selectClass}" onchange="${onchange}">
-        <option value="">— Insumo —</option>
+        <option value="">— Insumo o base —</option>
         ${options}
       </select>
       <input type="number" step="0.001" min="0" class="form-input ${cantidadClass}" placeholder="Cantidad usada" value="${cantidad ?? ""}" oninput="${onchange}">
@@ -3365,6 +3434,7 @@ function recipeRowHtml({ insumoId = "", cantidad = "" } = {}, opts = {}) {
 }
 window.addRecipeRow = function() {
   document.getElementById("recipe-container").insertAdjacentHTML("beforeend", recipeRowHtml());
+  reaplicarFiltroReceta("recipe-container");
 };
 
 // Misma fila de receta que usan los productos, pero para la receta opcional de un insumo
@@ -3374,6 +3444,7 @@ function insumoRecipeRowOpts(excludeId) {
 }
 window.addInsumoRecipeRow = function() {
   document.getElementById("insumo-recipe-container").insertAdjacentHTML("beforeend", recipeRowHtml({}, insumoRecipeRowOpts(state.editingInsumoId)));
+  reaplicarFiltroReceta("insumo-recipe-container");
 };
 window.recalcCostoInsumo = function() {
   const rows = Array.from(document.querySelectorAll("#insumo-recipe-container .insumo-recipe-row"));
@@ -3691,8 +3762,9 @@ function renderProductosView(container) {
       </div>
       <div class="section-header" style="margin-top:10px">
         <div class="section-title">🧾 Receta (insumos que lleva)</div>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="addRecipeRow()">+ Agregar insumo</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addRecipeRow()">+ Agregar insumo o base</button>
       </div>
+      ${buscadorRecetaHtml("recipe-container", null)}
       <div id="recipe-container">${recetaRows}</div>
       <div style="margin-top:14px;font-size:13px">Costo estimado: <strong id="costo-preview">$0,00</strong></div>
       <div class="form-row" style="margin-top:14px">
@@ -3998,8 +4070,9 @@ function recetaPanelContenido(id, p) {
     : recipeRowHtml({}, { onchange: `recalcRecetaPanel('${id}')` });
   const costo = calcCostoProducto(p);
   return `
+    ${buscadorRecetaHtml(`receta-panel-container-${id}`, null)}
     <div id="receta-panel-container-${id}">${rows}</div>
-    <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addRecetaPanelRow('${id}')">+ Agregar insumo</button>
+    <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addRecetaPanelRow('${id}')">+ Agregar insumo o base</button>
     <div style="margin:10px 0;font-size:13px">Costo total: <strong id="receta-panel-total-${id}">${fmtMoney(costo)}</strong></div>
     <button class="btn btn-primary btn-sm" onclick="guardarRecetaPanel('${id}')">💾 Guardar receta</button>
     <button class="btn btn-danger btn-sm" onclick="vaciarRecetaPanel('${id}')">🗑️ Vaciar receta</button>`;
@@ -4022,7 +4095,9 @@ window.toggleRecetaProducto = function(id) {
 };
 window.addRecetaPanelRow = function(id) {
   const container = document.getElementById(`receta-panel-container-${id}`);
-  if (container) container.insertAdjacentHTML("beforeend", recipeRowHtml({}, { onchange: `recalcRecetaPanel('${id}')` }));
+  if (!container) return;
+  container.insertAdjacentHTML("beforeend", recipeRowHtml({}, { onchange: `recalcRecetaPanel('${id}')` }));
+  reaplicarFiltroReceta(`receta-panel-container-${id}`);
 };
 window.recalcRecetaPanel = function(id) {
   const container = document.getElementById(`receta-panel-container-${id}`);
@@ -4068,15 +4143,18 @@ function baseCardContenido(id, ins) {
     : recipeRowHtml({}, { onchange: `recalcBaseCard('${id}')`, excludeId: id });
   const costo = precioEfectivoInsumo(id);
   return `
+    ${buscadorRecetaHtml(`base-card-container-${id}`, id)}
     <div id="base-card-container-${id}">${rows}</div>
-    <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addBaseCardRow('${id}')">+ Agregar insumo</button>
+    <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addBaseCardRow('${id}')">+ Agregar insumo o base</button>
     <div style="margin:10px 0;font-size:13px">Costo actual: <strong id="base-card-total-${id}">${fmtMoney(costo)}</strong></div>
     <button class="btn btn-primary btn-sm" onclick="guardarBaseCard('${id}')">💾 Guardar receta</button>
     <button class="btn btn-danger btn-sm" onclick="vaciarBaseCard('${id}')">🗑️ Vaciar receta</button>`;
 }
 window.addBaseCardRow = function(id) {
   const container = document.getElementById(`base-card-container-${id}`);
-  if (container) container.insertAdjacentHTML("beforeend", recipeRowHtml({}, { onchange: `recalcBaseCard('${id}')`, excludeId: id }));
+  if (!container) return;
+  container.insertAdjacentHTML("beforeend", recipeRowHtml({}, { onchange: `recalcBaseCard('${id}')`, excludeId: id }));
+  reaplicarFiltroReceta(`base-card-container-${id}`);
 };
 window.recalcBaseCard = function(id) {
   const container = document.getElementById(`base-card-container-${id}`);
@@ -4130,7 +4208,7 @@ function renderRecetasBasesView(container) {
     .filter(([, p]) => clasificarProducto(p) === "elaborado" || clasificarProducto(p) === "preparacion")
     .filter(([, p]) => !busquedaRB || p.nombre.toLowerCase().includes(busquedaRB));
   const basesInsumos = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
-    .filter(([, ins]) => ins.receta && Object.keys(ins.receta).length > 0)
+    .filter(([, ins]) => esBaseInsumo(ins))
     .filter(([, ins]) => !busquedaRB || ins.nombre.toLowerCase().includes(busquedaRB));
 
   // Las cards vienen colapsadas y se abre una por vez. Antes se renderizaba el formulario editable
@@ -4183,10 +4261,84 @@ function renderRecetasBasesView(container) {
       <div class="text-muted" style="margin-bottom:14px">Productos de panadería/pastelería/especialidades/facturería/sandwiches y preparaciones (cafetería, rellenos, etc.) con receta. Para cargar uno nuevo, andá a <a href="#" onclick="navigate('productos');abrirFormProducto();return false;">Productos → Nuevo producto</a>.</div>
       ${productosElaborados.length ? `<div class="receta-card-grid">${recetasCards}</div>` : `<div class="empty-state">${busquedaRB ? "Ninguna receta coincide con la búsqueda." : "Todavía no hay productos elaborados/preparaciones cargados."}</div>`}
     ` : `
-      <div class="text-muted" style="margin-bottom:14px">Bases/preparaciones con receta propia (crema chantilly, bizcochuelo, almíbares, etc.) — su costo se recalcula solo a partir de sus ingredientes. Para cargar una nueva, andá a <a href="#" onclick="navigate('insumos');abrirFormInsumo();return false;">Insumos → Nuevo insumo</a> y armale una receta.</div>
-      ${basesInsumos.length ? `<div class="receta-card-grid">${basesCards}</div>` : `<div class="empty-state">${busquedaRB ? "Ninguna base coincide con la búsqueda." : "Todavía no hay bases con receta cargada."}</div>`}
+      <div class="text-muted" style="margin-bottom:14px">Bases/preparaciones con receta propia (crema chantilly, bizcochuelo, almíbares, etc.) — su costo se recalcula solo a partir de sus ingredientes, y quedan disponibles como ingrediente de cualquier otra receta.</div>
+      ${formNuevaBaseHtml()}
+      ${basesInsumos.length ? `<div class="receta-card-grid">${basesCards}</div>` : `<div class="empty-state">${busquedaRB ? "Ninguna base coincide con la búsqueda." : "Todavía no hay bases cargadas. Creá la primera con el botón de arriba."}</div>`}
     `}`;
 }
+// Crear una base sin salir de esta pantalla. Antes había que ir a Insumos → Nuevo insumo y
+// acordarse de armarle una receta para que apareciera acá: la base no existía hasta tener su
+// primer ingrediente, así que no había dónde cargárselo. Ahora se crea vacía (marcada `esBase`)
+// y se abre su card para llenarla en el momento.
+function formNuevaBaseHtml() {
+  if (!state.nuevaBaseAbierta) {
+    return `<button class="btn btn-primary btn-sm" style="margin-bottom:14px" onclick="abrirFormNuevaBase()">➕ Nueva base</button>`;
+  }
+  return `<div class="section-block" style="border-color:var(--terra);margin-bottom:16px">
+    <div class="section-title" style="margin-bottom:10px">🧪 Nueva base</div>
+    <div class="form-row" style="align-items:flex-end">
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input class="form-input" id="nueva-base-nombre" placeholder="Ej. Crema chantilly" autocomplete="off"
+          onkeydown="if(event.key==='Enter')crearBase()">
+      </div>
+      <div class="form-group" style="max-width:160px">
+        <label class="form-label">Unidad de medida</label>
+        <input class="form-input" id="nueva-base-unidad" placeholder="kg, l, unidad…" autocomplete="off"
+          onkeydown="if(event.key==='Enter')crearBase()">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="crearBase()">Crear y armar receta</button>
+      <button class="btn btn-ghost btn-sm" onclick="cerrarFormNuevaBase()">Cancelar</button>
+    </div>
+    <div class="text-muted" style="font-size:12px;margin-top:8px">La unidad es la que vas a usar al ponerla como ingrediente de otra receta (si la chantilly se mide en kg, poné kg). El costo se calcula solo con los ingredientes que le cargues.</div>
+  </div>`;
+}
+
+window.abrirFormNuevaBase = function() {
+  state.nuevaBaseAbierta = true;
+  render();
+  document.getElementById("nueva-base-nombre")?.focus();
+};
+window.cerrarFormNuevaBase = function() {
+  state.nuevaBaseAbierta = false;
+  render();
+};
+window.crearBase = async function() {
+  const nombre = document.getElementById("nueva-base-nombre")?.value.trim();
+  const unidad = document.getElementById("nueva-base-unidad")?.value.trim() || "";
+  if (!nombre) { showToast("⚠️ Escribí el nombre de la base.", "warn"); return; }
+  // Una base es un insumo: si ya existe uno con ese nombre, se lo marca como base en vez de crear
+  // un duplicado — dos insumos con el mismo nombre es justamente lo que después hay que fusionar.
+  const existente = Object.entries(state.insumos).find(([, ins]) =>
+    stripAccentsCosteo(ins.nombre || "").toLowerCase() === stripAccentsCosteo(nombre).toLowerCase());
+  if (existente) {
+    const [id, ins] = existente;
+    if (!esBaseInsumo(ins)) {
+      await update(ref(db, `costeo/insumos/${id}`), { esBase: true });
+      state.insumos[id] = { ...ins, esBase: true };
+      showToast(`🧪 "${ins.nombre}" ya existía como insumo — ahora también figura como base.`, "success");
+    } else {
+      showToast(`ℹ️ "${ins.nombre}" ya estaba cargada como base.`, "warn");
+    }
+    state.nuevaBaseAbierta = false;
+    state.recetasBasesAbiertaId = `b:${id}`;
+    invalidarCacheCosteo();
+    render();
+    return;
+  }
+  const nuevaRef = push(ref(db, "costeo/insumos"));
+  const base = { nombre, unidad, esBase: true, creadoTs: Date.now() };
+  await set(nuevaRef, base);
+  state.insumos[nuevaRef.key] = base;
+  state.nuevaBaseAbierta = false;
+  // Se abre la card de la base recién creada: el paso siguiente es cargarle los ingredientes, y
+  // dejarla cerrada obligaría a buscarla en la lista para hacer lo obvio.
+  state.recetasBasesAbiertaId = `b:${nuevaRef.key}`;
+  invalidarCacheCosteo();
+  showToast(`🧪 Base "${nombre}" creada. Cargale los ingredientes.`, "success");
+  render();
+};
+
 window.toggleRecetaBase = function(clave) {
   state.recetasBasesAbiertaId = state.recetasBasesAbiertaId === clave ? null : clave;
   state.formOpen = !!state.recetasBasesAbiertaId;
