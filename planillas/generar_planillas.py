@@ -237,7 +237,7 @@ wb.remove(wb.active)
 # =========================================================================
 # Creacion de hojas en orden de pestanas
 # =========================================================================
-NOMS = ['Instructivo','Config','Insumos','Productos','1 Inv Inicial','2 Ingresos',
+NOMS = ['Instructivo','Guia Sheets','Config','Insumos','Productos','1 Inv Inicial','2 Ingresos',
         '3 Conteo Diario']
 PRODSH = {}
 for a in AREAS:
@@ -1241,6 +1241,92 @@ for tipo, txt in GUIA:
             ws.merge_cells(start_row=r, start_column=2 + i * 2, end_row=r, end_column=3 + i * 2)
             put(ws, r, 3 + i * 2, None)
         ws.row_dimensions[r].height = 30
+        r += 1
+ws.freeze_panes = 'A5'
+imprimir(ws, 7, r - 1, landscape=False, repeat='1:3')
+
+
+# =========================================================================
+# Hoja GUIA SHEETS — como usar el libro en Google Sheets con captura en papel
+# =========================================================================
+ws = SH['Guia Sheets']
+anchos(ws, [3, 30, 22, 22, 22, 22, 18, 3])
+titulo(ws, 8, 'USARLO EN GOOGLE SHEETS (con registro en papel)',
+       'El papel se llena en el piso; una sola persona pasa los datos a Sheets al cierre del dia.',
+       'Las formulas, los desplegables, los colores y los filtros pasan bien. Lo unico que Sheets NO importa es la configuracion de impresion.')
+
+GS = [
+ ('h', '1 · COMO PASARLO A GOOGLE SHEETS'),
+ ('li', 'En Drive: Nuevo -> Subir archivo -> elegir Control_Stock_Semanal_Candela.xlsx'),
+ ('li', 'Doble clic en el archivo subido. Se abre en modo Excel.'),
+ ('li', 'Archivo -> Guardar como Hoja de calculo de Google. Este paso importa: si queda como .xlsx dentro '
+        'de Drive, la edicion simultanea y los desplegables funcionan a medias.'),
+ ('li', 'Boton Compartir -> agregar a los 6 jefes de area como Editor, y a quien haga el analisis.'),
+ ('h', '2 · LO UNICO QUE SE PIERDE: LA CONFIGURACION DE IMPRESION'),
+ ('p', 'Sheets no importa las areas de impresion ni la repeticion de encabezados de Excel. Hay que fijarlas '
+       'una vez al imprimir cada planilla (Archivo -> Imprimir). Se imprimen en blanco al arrancar la semana, '
+       'asi que es un solo trabajo.'),
+ ('t', ['PLANILLA', 'ORIENTACION Y AJUSTE', 'FILAS A REPETIR']),
+ ('r', ['1 Inv Inicial  /  6 Inv Final', 'Horizontal · Ajustar al ancho', 'Filas congeladas (1 a 4)']),
+ ('r', ['2 Ingresos  ·  5 Descartes  ·  7 Facturas', 'Horizontal · Ajustar al ancho', 'Filas congeladas (1 a 4)']),
+ ('r', ['3 Conteo Diario  ·  4 Prod (cada area)', 'Horizontal · Ajustar al ancho', 'Filas congeladas (1 a 5)']),
+ ('p', 'Para imprimir UNA sola area: usar el filtro de la columna AREA, seleccionar las filas visibles '
+       'y en Imprimir elegir "Celdas seleccionadas".'),
+ ('h', '3 · PROTEGER LAS FORMULAS ANTES DE COMPARTIR'),
+ ('warn', 'Con 6 personas editando el mismo archivo, tarde o temprano alguien pisa una formula y no se entera '
+          'nadie hasta el analisis final. Cinco minutos de proteccion evitan perder la semana entera.'),
+ ('li', 'Datos -> Proteger hojas y rangos.'),
+ ('li', 'Hojas A, B, C, Tablero, Insumos, Productos y Listas: proteger la hoja COMPLETA (solo lectura para todos).'),
+ ('li', 'Planillas de carga (1 a 7): proteger la hoja con excepciones, y dejar editables solo las columnas amarillas.'),
+ ('li', 'El historial de versiones de Sheets (Archivo -> Historial de versiones) permite volver atras si igual pasa algo.'),
+ ('h', '4 · LA RUTINA DIARIA'),
+ ('li', 'Durante el dia: cada jefe de area llena SU planilla en papel. Nadie toca el archivo.'),
+ ('li', 'Al cierre: UNA sola persona pasa todo a Sheets. Son 15 a 20 minutos.'),
+ ('li', 'Que cargue una sola persona no es solo comodidad: es quien detecta el dato raro en el momento, '
+        'cuando todavia se le puede preguntar al jefe de area que paso.'),
+ ('warn', 'Cargar el mismo dia. Al tercer dia ya nadie se acuerda de por que se tiraron 18 medialunas, '
+          'y un descarte sin motivo se lee despues como faltante.'),
+ ('h', '5 · DESPUES DE IMPORTAR, VERIFICAR ESTAS 4 COSAS'),
+ ('li', 'Que el Tablero no muestre ningun #NAME? ni #REF!'),
+ ('li', 'Que los desplegables de AREA e INSUMO abran (se alimentan de la hoja Listas, que esta oculta: '
+        'no borrarla ni renombrarla).'),
+ ('li', 'Que al escribir bultos y parcial en el inventario, la columna TOTAL calcule sola.'),
+ ('li', 'Que la columna % DESVIO se pinte de rojo cuando el desvio supera la tolerancia de Config.'),
+ ('h', 'REGLA DE ORO (igual que en Excel)'),
+ ('p', 'Solo se escribe en las celdas AMARILLAS.'),
+]
+
+r = 5
+for tipo, txt in GS:
+    if tipo == 'h':
+        ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=7)
+        c = ws.cell(row=r, column=2, value=txt)
+        c.font = fnt(11, True, 'FFFFFF'); c.fill = SUBFILL
+        c.alignment = Alignment(horizontal='left', vertical='center', indent=1)
+        ws.row_dimensions[r].height = 22
+        r += 1
+    elif tipo in ('p', 'li', 'warn'):
+        ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=7)
+        c = ws.cell(row=r, column=2, value=('•  ' + txt) if tipo == 'li' else txt)
+        c.font = fnt(10, tipo == 'warn', 'C0392B' if tipo == 'warn' else TXT)
+        if tipo == 'warn':
+            c.fill = PatternFill('solid', fgColor=DANGBG)
+        c.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True, indent=1)
+        ws.row_dimensions[r].height = max(15, 13 * (len(txt) // 118 + 1))
+        r += 1
+    elif tipo == 't':
+        for i, h in enumerate(txt):
+            put(ws, r, 2 + i * 2, h, fnt(9, True, 'FFFFFF'), SUBFILL, hor='center', wrap=True)
+            ws.merge_cells(start_row=r, start_column=2 + i * 2, end_row=r, end_column=3 + i * 2)
+            put(ws, r, 3 + i * 2, None, fill=SUBFILL)
+        ws.row_dimensions[r].height = 24
+        r += 1
+    elif tipo == 'r':
+        for i, v in enumerate(txt):
+            put(ws, r, 2 + i * 2, v, fnt(9), None, None, wrap=True, ver='top')
+            ws.merge_cells(start_row=r, start_column=2 + i * 2, end_row=r, end_column=3 + i * 2)
+            put(ws, r, 3 + i * 2, None)
+        ws.row_dimensions[r].height = 26
         r += 1
 ws.freeze_panes = 'A5'
 imprimir(ws, 7, r - 1, landscape=False, repeat='1:3')

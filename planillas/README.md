@@ -32,10 +32,11 @@ solos al abrirlo en Excel, LibreOffice o Google Sheets. Un visor rápido (la vis
 de Drive, Quick Look, el adjunto de WhatsApp) puede mostrar celdas en blanco donde hay
 fórmulas — hay que abrirlo con una planilla de cálculo de verdad.
 
-## Estructura del libro (24 hojas)
+## Estructura del libro (25 hojas)
 
 **Preparación**
 - `Instructivo` — cómo se usa, día por día, y cómo leer cada señal.
+- `Guia Sheets` — cómo pasarlo a Google Sheets, qué ajustar al imprimir y cómo proteger las fórmulas.
 - `Config` — fecha de la semana, responsables por área, motivos de descarte, límites de tolerancia.
 - `Insumos` / `Productos` — maestros traídos del catálogo (159 insumos, 141 productos).
 
@@ -63,6 +64,15 @@ fórmulas — hay que abrirlo con una planilla de cálculo de verdad.
 - **Letra negra** → fórmula.
 - **Letra verde** → trae el dato de otra hoja.
 - **Fondo rojo claro** → alerta: el desvío supera la tolerancia definida en `Config`.
+
+## Usarlo en Google Sheets
+
+El libro funciona en Google Sheets: las 21 funciones que usa son todas compatibles, y los
+desplegables, el formato condicional y los filtros sobreviven a la importación. **Lo único
+que Sheets no importa es la configuración de impresión** (áreas de impresión, repetición de
+encabezados, orientación); hay que fijarla una vez al imprimir cada planilla.
+
+Los pasos y los ajustes concretos están en la hoja `Guia Sheets` del propio libro.
 
 ## Límites del método
 
