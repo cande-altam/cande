@@ -437,13 +437,13 @@
 
       <section class="card">
         <div class="card-body" style="padding-bottom:16px">
-          <span class="eyebrow">Experto del Turno</span>
+          <span class="eyebrow">Experto Candela</span>
           <p class="sub" style="padding:4px 0 0">Se destaca con ⭐ dondequiera que esa persona aparezca asignada en la grilla, y también al imprimir.</p>
           <div class="field">
             <label for="expertoPerson">Persona</label>
             <select id="expertoPerson"></select>
           </div>
-          <button class="btn" id="btnAddExperto" style="margin-top:9px;width:100%">⭐ Marcar como Experto del Turno</button>
+          <button class="btn" id="btnAddExperto" style="margin-top:9px;width:100%">⭐ Marcar como Experto Candela</button>
           <div class="mini-list" id="expertoList"></div>
         </div>
       </section>
@@ -690,7 +690,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-21 turnos-cortados-mover-notas";
+const APP_VERSION="2026-08-21 experto-candela-unificado";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -1341,7 +1341,7 @@ function isDoubleShift(name,d){
 // "X no puede trabajar con Y": se compara el mismo turno (día+mañana/tarde) Y el mismo local — si
 // están en el mismo horario pero en San Luis y SLA respectivamente, no cuenta como choque.
 function sonIncompatibles(a,b){return state.incompat.some(r=>(r.a===a&&r.b===b)||(r.a===b&&r.b===a));}
-// "Experto del Turno": marca permanente sobre la persona (no cambia semana a semana), para que se
+// "Experto Candela": marca permanente sobre la persona (no cambia semana a semana), para que se
 // destaque dondequiera que aparezca asignada en la grilla y al imprimir.
 function esExperto(name){return state.expertos.includes(name);}
 function nombreDestacado(name){return esExperto(name)?"⭐ "+name:name;}
@@ -2089,10 +2089,10 @@ function initControls(){
   document.getElementById("btnAddExperto").addEventListener("click",()=>{
     const n=document.getElementById("expertoPerson").value;
     if(!n)return toast("Elegí una persona");
-    if(esExperto(n))return toast(`${n} ya está marcado como Experto del Turno`);
+    if(esExperto(n))return toast(`${n} ya está marcado como Experto Candela`);
     state.expertos.push(n);
     fillPersonSelects();renderMini();render();persist();
-    toast(`${n} marcado como Experto del Turno ⭐`);
+    toast(`${n} marcado como Experto Candela ⭐`);
   });
   const addSticky=()=>{
     const inp=document.getElementById("stickyText");

@@ -131,7 +131,7 @@ Presupuestos no necesita que el sitio de Pedidos de Clientes esté desplegado pa
 
 ## Módulo: Informes de Turno
 
-Al terminar su turno, el **Experto del Turno** deja un informe. Son hasta 4 por día (2 turnos × 2 locales: SLA 5.0 y San Luis) y **no se consolidan**: cada turno es su propio registro.
+Al terminar su turno, el **Experto Candela** deja un informe. Son hasta 4 por día (2 turnos × 2 locales: SLA 5.0 y San Luis) y **no se consolidan**: cada turno es su propio registro.
 
 Son dos páginas separadas, siguiendo el patrón de `vacaciones/` (`pedido.html` para quien carga, `index.html` para quien lee):
 
@@ -254,7 +254,7 @@ Este diseño append-only no es solo prolijidad: hace que la página de carga **n
 
 ### Nombre del rol
 
-El cronograma lo llamaba *"Experto Candela"* y el manual *"Experto del Turno"*. Quedó unificado en **"Experto del Turno"**, incluidos los textos de `cronogramas/index.html`. La clave de datos sigue siendo `state.expertos` — renombrarla habría roto lo ya cargado sin ganar nada.
+El nombre oficial del rol es **"Experto Candela"** — así aparece en `cronogramas/index.html`, en el manual de carga y en Gerencia. (Hubo una sesión intermedia que probó unificarlo como "Experto del Turno" en los tres lugares; se revirtió a pedido explícito.) La clave de datos sigue siendo `state.expertos` — renombrarla habría roto lo ya cargado sin ganar nada.
 
 ---
 
@@ -279,7 +279,7 @@ La raíz del sitio (`/`) muestra una página simple con links a las dos apps.
 ├── presupuestos/
 │   └── index.html          — App de Presupuestos (HTML+CSS+JS autocontenido)
 ├── cronogramas/
-│   └── index.html          — Turnos semanales (define quién es Experto del Turno)
+│   └── index.html          — Turnos semanales (define quién es Experto Candela)
 ├── vacaciones/
 │   ├── index.html          — Balance y calendario de vacaciones
 │   └── pedido.html         — Formulario público de pedido
