@@ -175,12 +175,39 @@
   td.cell.extra .cellsel.filled.dupe{box-shadow:none}
   .excell{position:relative;display:flex;align-items:center}
   .excell .cellsel{flex:1}
-  .halfbadge{position:absolute;right:3px;top:2px;font-size:9px;font-weight:800;color:var(--accent-ink);background:var(--crema);border-radius:5px;padding:0 4px;line-height:1.4;pointer-events:none}
-  :root[data-theme="dark"] .halfbadge{background:#3a2f22}
-  @media (prefers-color-scheme:dark){.halfbadge{background:#3a2f22}}
+  .halfbadge{position:absolute;right:2px;top:2px;font-size:9px;font-weight:800;line-height:1.4;padding:0 4px;border-radius:5px;border:1px solid transparent;cursor:pointer;font-family:inherit}
+  .halfbadge.on{color:var(--accent-ink);background:var(--crema)}
+  :root[data-theme="dark"] .halfbadge.on{background:#3a2f22}
+  @media (prefers-color-scheme:dark){.halfbadge.on{background:#3a2f22}}
+  .halfbadge.off{color:var(--line-strong);background:transparent;border-color:var(--line-strong);opacity:.55;transition:opacity .12s}
+  .excell:hover .halfbadge.off,.halfbadge.off:focus-visible{opacity:1}
+
+  /* modo "mover personas": un botón invisible tapa todo el casillero (funciona igual con mouse
+     que con el dedo, a diferencia de arrastrar-y-soltar nativo, que en el celular no anda bien
+     sobre un <select>). Toca uno para levantarlo, toca otro para soltarlo ahí (o intercambian). */
+  .moveOverlay{display:none;position:absolute;inset:0;border:none;background:transparent;cursor:pointer;z-index:5;border-radius:4px}
+  body.moving .moveOverlay{display:block}
+  body.moving .cellsel,body.moving .noteBtn,body.moving .halfbadge{pointer-events:none;opacity:.55}
+  body.moving .moveOverlay:hover,body.moving .moveOverlay:focus-visible{background:color-mix(in srgb,var(--accent) 14%,transparent);outline:2px dashed var(--accent);outline-offset:-2px}
+  .moveOverlay.picked{background:color-mix(in srgb,var(--accent) 22%,transparent);outline:2px solid var(--accent);outline-offset:-2px}
+  #btnMover.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  #moveHint{display:none;align-items:center;gap:10px;background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:11px;padding:10px 14px;font-size:12.5px;font-weight:600;margin-bottom:14px}
+  #moveHint.show{display:flex}
+  #moveHint button{margin-left:auto;border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);background:transparent;color:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:5px 10px;border-radius:8px}
   .notebanner{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
   .notebanner:empty{display:none}
   .notebanner .nb{background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:600}
+  .stickyAdd{display:flex;gap:8px;margin-top:4px}
+  .stickyAdd input{flex:1;background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 11px;font-size:12.5px;color:var(--ink)}
+  .stickyNotes{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .stickyNotes:empty{margin-top:0}
+  .sticky{background:#fdf3c7;color:#5c4a10;border:1px solid #e6d488;border-radius:2px 10px 10px 10px;padding:9px 11px;font-size:12.5px;font-weight:600;max-width:220px;box-shadow:0 3px 8px rgba(0,0,0,.08);position:relative;transform:rotate(-1deg)}
+  .sticky:nth-child(even){transform:rotate(1deg)}
+  :root[data-theme="dark"] .sticky{background:#4a3f14;color:#f0dd8a;border-color:#6b5a1e}
+  @media (prefers-color-scheme:dark){.sticky{background:#4a3f14;color:#f0dd8a;border-color:#6b5a1e}}
+  .sticky .x{position:absolute;top:2px;right:5px;border:none;background:none;color:inherit;opacity:.55;cursor:pointer;font-size:13px;line-height:1;padding:2px}
+  .sticky .x:hover{opacity:1}
+  .sticky p{margin:0;padding-right:12px;word-break:break-word}
 
   /* alerts */
   .alerts .card-body{padding-top:6px}
@@ -308,6 +335,7 @@
     <button class="btn ghost icon-btn" id="btnRedo" title="Rehacer" disabled>↪️</button>
     <button class="btn ghost icon-btn" id="btnHistory" title="Ver versiones anteriores guardadas en la nube">🕐</button>
     <button class="btn ghost" id="btnNew" title="Arranca una semana nueva copiando ésta como base">↻ Nueva semana</button>
+    <button class="btn ghost icon-btn" id="btnMover" title="Mover personas de un casillero a otro tocando origen y destino">✥</button>
     <button class="btn ghost icon-btn" id="btnPrint" title="Ver imagen del cronograma para guardar">⬇️</button>
     <button class="btn ghost icon-btn" id="btnExport" title="Exportar datos para pasar a otro dispositivo">📤</button>
     <button class="btn ghost icon-btn" id="btnImport" title="Importar datos desde otro dispositivo">📥</button>
@@ -519,10 +547,21 @@
         <span id="syncBannerMsg">⚠️ No se pudo conectar con la sincronización en la nube. Tus cambios se guardan en este dispositivo, pero no van a verse en otros hasta que vuelva la conexión.</span>
         <button type="button" id="syncBannerClose" title="Cerrar">✕</button>
       </div>
+      <div id="moveHint" class="no-print">
+        <span id="moveHintMsg">✥ Modo mover activado: tocá a alguien para levantarlo, después tocá el casillero donde lo querés poner.</span>
+        <button type="button" id="moveHintCancel">Salir</button>
+      </div>
       <section class="card alerts no-print" style="margin-bottom:18px">
         <h2>Auditoría en vivo</h2>
         <div class="counts" id="counts"></div>
         <div class="card-body" id="alertList"></div>
+        <div class="card-body" style="padding-top:0">
+          <div class="stickyAdd">
+            <input type="text" id="stickyText" placeholder="Agregar un recordatorio…" maxlength="140">
+            <button class="btn sm" id="btnAddSticky">📌 Agregar</button>
+          </div>
+          <div class="stickyNotes" id="stickyNotes"></div>
+        </div>
       </section>
 
       <div class="notebanner" id="noteBanner"></div>
@@ -647,7 +686,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-11 feriados-experto-candela";
+const APP_VERSION="2026-08-21 turnos-cortados-mover-notas";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -749,12 +788,12 @@ function rowsFor(loc,shift){
   if(loc==="SL"&&shift==="M")return[
     {role:"cajero",idx:0,label:"Cajero"},{role:"barista",idx:0,label:"Barista"},
     {role:"atencion",idx:0,label:"Vendedor 1"},{role:"atencion",idx:1,label:"Vendedor 2"},
-    {role:"atencion",idx:2,label:"Mozo 1",wk:true},
+    {role:"atencion",idx:2,label:"Vendedor 2",wk:true},
     {role:"cocina",idx:0,label:"Cocina"},{role:"compras",idx:0,label:"Compras"},
     {role:"ayudante",idx:0,label:"Bacha/Envíos"}];
   if(loc==="SL"&&shift==="T")return[
     {role:"cajero",idx:0,label:"Cajero"},{role:"barista",idx:0,label:"Barista"},
-    {role:"atencion",idx:0,label:"Vendedor 1"},{role:"atencion",idx:1,label:"Vendedor 2"},{role:"atencion",idx:2,label:"Mozo 1"},
+    {role:"atencion",idx:0,label:"Vendedor 1"},{role:"atencion",idx:1,label:"Vendedor 2"},{role:"atencion",idx:2,label:"Vendedor 2"},
     {role:"cocina",idx:0,label:"Cocina"},{role:"ayudante",idx:0,label:"Envíos"}];
   if(loc==="SLA"&&shift==="M")return[
     {role:"barista",idx:0,label:"Barista"},{role:"atencion",idx:0,label:"Mozo 1"},
@@ -785,7 +824,7 @@ function peopleFor(role,loc){
 }
 
 /* ---------------- STATE ---------------- */
-function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{},expertos:[]};}
+function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{},expertos:[],stickyNotes:[]};}
 // las reglas "semilla" (seedFixedRules, seedCocinaComprasCajero) se cargan una sola vez por tag.
 // Antes se detectaba "ya cargada" mirando si quedaba algún turno fijo con ese tag — pero si borrabas
 // el grupo ENTERO, no quedaba ninguno, y el sistema lo tomaba como "todavía no cargada" y lo volvía a
@@ -955,6 +994,73 @@ function quitarRefuerzoAuto(exEntry){
   if(!f.days.length)state.fixed=state.fixed.filter(x=>x.id!==f.id);
   regenerateFixedHalfExtras();
   return true;
+}
+
+/* ---------------- MODO MOVER (tocar origen, tocar destino) ----------------
+   Arrastrar y soltar de verdad (HTML5 drag&drop) no es confiable en el celular sobre un <select>,
+   así que en vez de eso: un botón invisible tapa todo el casillero mientras el modo está activo.
+   Tocás uno para "levantarlo" y otro para "soltarlo" — se mueve, o si el destino ya tenía a alguien,
+   los dos intercambian de lugar. Direcciones posibles: "k" (casillero base), "ex" (refuerzo ya
+   cargado) o "newex" (casillero de refuerzo todavía vacío). */
+let movingMode=false,movingFrom=null;
+function moveGetName(kind,ref){
+  if(kind==="k")return state.assign[ref]||"";
+  if(kind==="ex"){const e=state.ex.find(x=>String(x.id)===ref);return e?e.n:"";}
+  return "";
+}
+function moveSetName(kind,ref,name){
+  if(kind==="k"){if(name)state.assign[ref]=name;else delete state.assign[ref];return;}
+  if(kind==="ex"){
+    const idx=state.ex.findIndex(x=>String(x.id)===ref);if(idx<0)return;
+    if(name)state.ex[idx].n=name;
+    else{delete state.comments["ex:"+state.ex[idx].id];if(!quitarRefuerzoAuto(state.ex[idx]))state.ex.splice(idx,1);}
+    return;
+  }
+  if(kind==="newex"){
+    if(!name)return;
+    const[d,loc,shift,role]=ref.split("|");
+    state.ex.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),n:name,day:+d,shift,loc,role});
+  }
+}
+function toggleMovingMode(on){
+  movingMode=on!=null?on:!movingMode;
+  movingFrom=null;
+  document.body.classList.toggle("moving",movingMode);
+  document.getElementById("btnMover").classList.toggle("active",movingMode);
+  document.getElementById("moveHint").classList.toggle("show",movingMode);
+}
+function handleMoveOverlayClick(btn){
+  let kind,ref;
+  if(btn.dataset.movek!=null){kind="k";ref=btn.dataset.movek;}
+  else if(btn.dataset.moveex!=null){kind="ex";ref=btn.dataset.moveex;}
+  else{kind="newex";ref=btn.dataset.movenewex;}
+  if(!movingFrom){
+    const name=moveGetName(kind,ref);
+    if(!name)return; // no hay a quién levantar de un casillero vacío
+    if(kind==="ex"){
+      const e=state.ex.find(x=>String(x.id)===ref);
+      if(e&&e.auto)return toast("Ese refuerzo sale solo de un turno fijo permanente — para moverlo, editá la regla en \"Turno fijo\"");
+    }
+    movingFrom={kind,ref,name};
+    document.querySelectorAll(".moveOverlay.picked").forEach(el=>el.classList.remove("picked"));
+    btn.classList.add("picked");
+    document.getElementById("moveHintMsg").textContent=`✥ Moviendo a ${name}: tocá el casillero destino (o tocalo de nuevo para cancelar).`;
+    return;
+  }
+  if(movingFrom.kind===kind&&movingFrom.ref===ref){ // tocaste el mismo: cancelar
+    btn.classList.remove("picked");
+    movingFrom=null;
+    document.getElementById("moveHintMsg").textContent="✥ Modo mover activado: tocá a alguien para levantarlo, después tocá el casillero donde lo querés poner.";
+    return;
+  }
+  const {kind:srcKind,ref:srcRef,name:srcName}=movingFrom;
+  const destName=moveGetName(kind,ref);
+  moveSetName(kind,ref,srcName);
+  moveSetName(srcKind,srcRef,destName);
+  movingFrom=null;
+  renderMini();render();persist();
+  toast(destName?`${srcName} y ${destName} intercambiaron de lugar`:`${srcName} se movió`);
+  document.getElementById("moveHintMsg").textContent="✥ Modo mover activado: tocá a alguien para levantarlo, después tocá el casillero donde lo querés poner.";
 }
 
 /* ---------------- AUTOCOMPLETE ---------------- */
@@ -1148,6 +1254,7 @@ function render(){
   const v=validate();
   renderCounts(v,empty);
   renderAlerts(v,empty);
+  renderStickyNotes();
   renderNotes();
   renderSched(v.worked,empty);
   renderTeam(v);
@@ -1180,6 +1287,19 @@ function renderAlerts(v,empty){
   const sorted=v.alerts.slice().sort((a,b)=>order[a.t]-order[b.t]);
   el.innerHTML=sorted.map(a=>`<div class="alert ${a.t}"><span class="dot"></span><div><b>${a.h}</b> ${a.m}</div></div>`).join("");
 }
+// notas tipo "post-it" para recordatorios generales — a diferencia de las notas de "Reglas
+// especiales" (que van atadas a un día puntual y viven en el banner de arriba), estas son de
+// alcance libre y persisten semana a semana, visibles directo en la Auditoría en vivo.
+function renderStickyNotes(){
+  const el=document.getElementById("stickyNotes");if(!el)return;
+  el.innerHTML=state.stickyNotes.map(n=>
+    `<div class="sticky"><button type="button" class="x" data-i="${n.id}" title="Borrar">×</button><p>${escAttr(n.text)}</p></div>`
+  ).join("");
+  el.querySelectorAll(".x").forEach(b=>b.addEventListener("click",()=>{
+    state.stickyNotes=state.stickyNotes.filter(n=>String(n.id)!==b.dataset.i);
+    renderStickyNotes();persist();
+  }));
+}
 
 function escAttr(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
 function noteBtnHTML(ck,label){
@@ -1202,7 +1322,7 @@ function selHTML(d,loc,shift,role,idx,active,closed){
   const cls=`cellsel ${cur?"filled":"empty"} ${errMsg?"dupe":""} ${he?"he":""} ${cur&&esExperto(cur)?"expert":""}`;
   const errAttr=errMsg?` data-err="${errMsg}"`:"";
   const label=(cur?cur+" · ":"")+DAYS[d][1]+" "+(shift==="M"?"mañana":"tarde");
-  return `<td class="cell ${isWknd(d)?"wknd":""}"><select class="${cls}" data-k="${k}"${errAttr}><option value="">—</option>${opts}</select>${noteBtnHTML(k,label)}</td>`;
+  return `<td class="cell ${isWknd(d)?"wknd":""}"><select class="${cls}" data-k="${k}"${errAttr}><option value="">—</option>${opts}</select>${noteBtnHTML(k,label)}<button type="button" class="moveOverlay" data-movek="${k}" aria-label="Mover a ${cur||"este casillero"}"></button></td>`;
 }
 // mensaje de la burbuja de error: mismo texto que usa la auditoría para "está en dos lugares a la vez"
 function dupeMsg(name,d,shift){
@@ -1244,18 +1364,19 @@ function extraCellHTML(e){
   Object.keys(state.assign).forEach(kk=>{const[dd,,sh]=kk.split("|");if(+dd===e.day&&sh===e.shift&&state.assign[kk]===e.n)dupe=true;});
   state.ex.forEach(o=>{if(o!==e&&o.n===e.n&&o.day===e.day&&o.shift===e.shift)dupe=true;});
   const he=isDoubleShift(e.n,e.day);
-  const badge=e.half?`<span class="halfbadge">½</span>`:"";
+  const badge=`<button type="button" class="halfbadge ${e.half?"on":"off"}" data-halftoggle="${e.id}" title="${e.half?"Es medio turno / turno cortado — tocá para sacarlo":"Marcar como medio turno / turno cortado"}">½</button>`;
   const errMsg=dupe?dupeMsg(e.n,e.day,e.shift):incompatMsgFor(e.n,e.day,e.loc,e.shift);
   const errAttr=errMsg?` data-err="${errMsg}"`:"";
   const ck="ex:"+e.id;
   const label=(e.n?e.n+" · ":"")+DAYS[e.day][1]+" "+(e.shift==="M"?"mañana":"tarde");
-  return `<td class="cell extra ${isWknd(e.day)?"wknd":""}"><div class="excell"><select class="cellsel filled ${errMsg?"dupe":""} ${he?"he":""} ${esExperto(e.n)?"expert":""}" data-ex="${e.id}"${errAttr}><option value="">— quitar</option>${opts}</select>${badge}${noteBtnHTML(ck,label)}</div></td>`;
+  return `<td class="cell extra ${isWknd(e.day)?"wknd":""}"><div class="excell"><select class="cellsel filled ${errMsg?"dupe":""} ${he?"he":""} ${esExperto(e.n)?"expert":""}" data-ex="${e.id}"${errAttr}><option value="">— quitar</option>${opts}</select>${badge}${noteBtnHTML(ck,label)}</div><button type="button" class="moveOverlay" data-moveex="${e.id}" aria-label="Mover a ${e.n}"></button></td>`;
 }
 // nombre a mostrar para la fila de refuerzo de un puesto: en San Luis los refuerzos de atención se
 // llaman "Mozo 2" (ni "Vendedor 1/2" ni "Mozo 1", que ya son las filas base) — en el resto de los
 // casos se usa el nombre de la primera fila base de ese puesto.
-function extraLabelFor(loc,role,defaultLabel){
-  if(loc==="SL"&&role==="atencion")return"Mozo 2";
+function extraLabelFor(loc,role,shift,defaultLabel){
+  if(loc==="SL"&&role==="atencion")return shift==="M"?"Mozo 1":"Mozo 2";
+  if(loc==="SLA"&&role==="atencion"&&shift==="T")return"Mozo 2";
   return defaultLabel;
 }
 function locTable(loc,title,worked){
@@ -1274,43 +1395,40 @@ function locTable(loc,title,worked){
         h+=`</tr>`;
       });
       const cap=MAX_TURNO[role]!=null?Math.max(0,MAX_TURNO[role]-brows.length):undefined;
-      h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,brows[0].label),cap);
+      h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,shift,brows[0].label),cap);
     });
     // refuerzos con un puesto que este local no tiene como fila base (ej: Bacha/Envíos en SLA):
     // sin esto, "Personas extra" los guardaba pero no aparecían en ningún lado.
     const extraOnlyRoles=[...new Set(state.ex.filter(e=>e.loc===loc&&e.shift===shift&&!roles.includes(e.role)).map(e=>e.role))];
-    extraOnlyRoles.forEach(role=>{h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,ROLE_LABEL[role]||role),MAX_TURNO[role]);});
+    extraOnlyRoles.forEach(role=>{h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,shift,ROLE_LABEL[role]||role),MAX_TURNO[role]);});
   });
   h+=restRows(loc,worked);
   h+=`</tbody></table></div></section>`;
   return h;
 }
 function extraRowsHTML(loc,shift,role,label,cap){
-  let h="";
+  // Una fila por cada "lugar" de refuerzo. Sin tope, siempre hay una fila más de margen al final
+  // (maxE+1) para el día más cargado; con tope, como mucho `cap` filas en total. En cualquier caso,
+  // el "+ agregar" de cada casillero solo aparece en la fila que le toca a ESE día puntual (la
+  // primera libre para ese día) — así nunca se repite la opción de agregar en dos filas distintas
+  // para el mismo día, que era lo que se veía como filas duplicadas/confusas.
   const maxE=Math.max(0,...DAYS.map((_,d)=>exAt(d,loc,shift,role).length));
-  if(cap===undefined){
-    // sin tope: todas las filas con datos existentes, más una fila siempre disponible al final
-    // para sumar un refuerzo eligiendo directamente a la persona en el casillero del día que haga
-    // falta — sin tener que ir al panel lateral y completar 5 campos.
-    for(let r=0;r<maxE;r++)h+=filaRefuerzo(loc,shift,role,label,r,false);
-    h+=filaRefuerzo(loc,shift,role,label,maxE,true);
-    return h;
+  const totalRows=cap!==undefined?Math.max(cap,maxE):maxE+1;
+  let h="";
+  for(let r=0;r<totalRows;r++){
+    const capOk=cap===undefined||r<cap;
+    h+=filaRefuerzo(loc,shift,role,label,r,capOk);
   }
-  // con tope: una sola fila por cada "lugar" de refuerzo posible (cap en total), y cada casillero
-  // vacío de esas filas ya sirve para agregar — no hace falta una fila aparte para eso. Si hay datos
-  // viejos que superan el tope (cargados antes de fijarlo) igual se muestran, nunca se esconden,
-  // pero esas filas de más no ofrecen agregar a nadie nuevo.
-  const totalRows=Math.max(cap,maxE);
-  for(let r=0;r<totalRows;r++)h+=filaRefuerzo(loc,shift,role,label,r,r<cap);
   return h;
 }
-function filaRefuerzo(loc,shift,role,label,r,permiteAgregar){
+function filaRefuerzo(loc,shift,role,label,r,capOk){
   let h=`<tr><td class="puesto extra">${label} +</td>`;
   for(let d=0;d<7;d++){
-    const e=exAt(d,loc,shift,role)[r];
+    const entradas=exAt(d,loc,shift,role);
+    const e=entradas[r];
     if(isClosed(d,loc,shift))h+=`<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
     else if(e)h+=extraCellHTML(e);
-    else if(permiteAgregar)h+=newExtraCellHTML(d,loc,shift,role);
+    else if(capOk&&r===entradas.length)h+=newExtraCellHTML(d,loc,shift,role);
     else h+=`<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
   }
   h+=`</tr>`;
@@ -1318,7 +1436,7 @@ function filaRefuerzo(loc,shift,role,label,r,permiteAgregar){
 }
 function newExtraCellHTML(d,loc,shift,role){
   const opts=PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)}${roleFor(p.n)!==role?" ⤵":""}</option>`).join("");
-  return `<td class="cell extra ${isWknd(d)?"wknd":""}"><div class="excell"><select class="cellsel empty" data-newex="${d}|${loc}|${shift}|${role}"><option value="">+ agregar</option>${opts}</select></div></td>`;
+  return `<td class="cell extra ${isWknd(d)?"wknd":""}"><div class="excell"><select class="cellsel empty" data-newex="${d}|${loc}|${shift}|${role}"><option value="">+ agregar</option>${opts}</select></div><button type="button" class="moveOverlay" data-movenewex="${d}|${loc}|${shift}|${role}" aria-label="Mover acá"></button></td>`;
 }
 function restRows(loc,worked){
   const roster=PEOPLE.filter(p=>p.loc===loc||p.loc==="both");
@@ -1378,6 +1496,17 @@ function renderSched(worked,empty){
       renderMini();render();persist();
       toast(`${val} agregado como refuerzo`);
     });
+  });
+  document.querySelectorAll("[data-halftoggle]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const ex=state.ex.find(x=>String(x.id)===b.dataset.halftoggle);if(!ex)return;
+      ex.half=!ex.half;
+      render();persist();
+      toast(ex.half?`${ex.n} marcado como turno cortado ½`:`${ex.n} vuelve a ser turno completo`);
+    });
+  });
+  document.querySelectorAll(".moveOverlay").forEach(b=>{
+    b.addEventListener("click",()=>handleMoveOverlayClick(b));
   });
   document.querySelectorAll("[data-err]").forEach(el=>{
     el.addEventListener("mouseenter",()=>showCellTooltip(el,el.dataset.err));
@@ -1520,7 +1649,7 @@ function buildScheduleRows(loc,worked){
           const filled=e&&!isClosed(d,loc,shift);
           return{text:filled?(esExperto(e.n)?"⭐ ":"")+e.n+(e.half?" ½":""):"",extra:true,expert:filled&&esExperto(e.n)};
         });
-        rows.push({label:`${brows[0].label} +`,cells,extra:true});
+        rows.push({label:`${extraLabelFor(loc,role,shift,brows[0].label)} +`,cells,extra:true});
       }
     });
   });
@@ -1961,6 +2090,16 @@ function initControls(){
     fillPersonSelects();renderMini();render();persist();
     toast(`${n} marcado como Experto Candela ⭐`);
   });
+  const addSticky=()=>{
+    const inp=document.getElementById("stickyText");
+    const text=inp.value.trim();
+    if(!text)return toast("Escribí el recordatorio primero");
+    state.stickyNotes.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),text});
+    inp.value="";
+    renderStickyNotes();persist();
+  };
+  document.getElementById("btnAddSticky").addEventListener("click",addSticky);
+  document.getElementById("stickyText").addEventListener("keydown",e=>{if(e.key==="Enter")addSticky();});
   document.getElementById("btnAuto").addEventListener("click",autocomplete);
   document.getElementById("weekStart").addEventListener("change",e=>{
     state.weekStart=e.target.value;
@@ -2054,6 +2193,8 @@ function initControls(){
     renderMini();render();persist();
     toast(newDays.length<days.length?`Regla de ${n} agregada (algunos días ya estaban cubiertos)`:`Regla fija de ${n} agregada`);
   });
+  document.getElementById("btnMover").addEventListener("click",()=>toggleMovingMode());
+  document.getElementById("moveHintCancel").addEventListener("click",()=>toggleMovingMode(false));
   document.getElementById("btnPrint").addEventListener("click",openPrintView);
   document.getElementById("btnExport").addEventListener("click",openExportView);
   document.getElementById("btnImport").addEventListener("click",openImportView);
