@@ -248,7 +248,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-20 21:05";
+const APP_VERSION = "2026-08-20 21:40";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -305,6 +305,7 @@ const state = {
   facturasFiltro: "todas",
   facturasBusqueda: "",
   facturaDetalleId: null,
+  editandoFacturaId: null,
   pagosFiltro: "no_pagado",
   pagosBusqueda: "",
   productosFiltro: "",
@@ -475,6 +476,9 @@ window.handleLogout = function() {
 // anterior y no pelee con este scroll.
 let _resetScrollEnProximoRender = false;
 window.navigate = function(view) {
+  // Salir de la vista del formulario cancela cualquier edición en curso: si no, entrar a "Nueva
+  // factura" desde la barra reabriría la factura que se estaba corrigiendo, ya llena.
+  if (state.view === "nueva-factura" && view !== "nueva-factura") state.editandoFacturaId = null;
   state.view = view;
   state.formOpen = false;
   state.mobileNavOpen = false;
@@ -807,13 +811,22 @@ function matchInsumoId(nombre) {
 
 function renderNuevaFacturaView(container) {
   state.formOpen = true;
-  state._facturaProveedorId = "";
+  // La misma vista sirve para cargar una factura nueva y para corregir una ya guardada: el
+  // formulario es idéntico, lo único que cambia es que arranca lleno y que al guardar se reescribe
+  // sobre el mismo id en vez de crear otra.
+  const editando = state.editandoFacturaId ? state.facturas[state.editandoFacturaId] : null;
+  if (state.editandoFacturaId && !editando) state.editandoFacturaId = null;
+  state._facturaProveedorId = editando?.proveedorId || "";
   const proveedorOptions = objToSortedEntries(state.proveedores, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
     .map(([id, p]) => `<option value="${id}">${escapeHtml(p.nombre)}${p.contacto ? " — " + escapeHtml(p.contacto) : ""}</option>`).join("");
 
   container.innerHTML = `
-    <div class="page-title">Nueva factura de proveedor</div>
-    <div class="page-sub">Subí una foto de la factura (de la cámara o de tu galería) y la IA completa los datos sola. Siempre podés revisar y corregir antes de guardar.</div>
+    <div class="page-title">${editando ? "Editar factura" : "Nueva factura de proveedor"}</div>
+    <div class="page-sub">${editando
+      ? `Corregí lo que haga falta y guardá. Las compras que esta factura había registrado en los insumos se rehacen con los valores nuevos, así que el costeo queda como si se hubiera cargado bien de entrada.`
+      : `Subí una foto de la factura (de la cámara o de tu galería) y la IA completa los datos sola. Siempre podés revisar y corregir antes de guardar.`}</div>
+    ${editando ? `<div class="item-note" style="margin-bottom:12px">✏️ Estás editando <strong>${escapeHtml(editando.numeroFactura || "(sin número)")}</strong> de ${escapeHtml(editando.proveedorNombre || "—")} · ${fmtDate(editando.fecha)} · ${fmtMoney(editando.montoTotal)}
+      <button type="button" class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="cancelarEdicionFactura()">Cancelar edición</button></div>` : ""}
     <div id="nueva-factura-form" class="section-block">
       <div class="form-row" style="align-items:flex-start">
         <div class="form-group" style="flex:0 0 auto;min-width:auto">
@@ -902,9 +915,63 @@ function renderNuevaFacturaView(container) {
         <div id="items-container">${itemRowHtml()}</div>
       </div>
 
-      <button class="btn btn-primary" style="margin-top:20px" onclick="guardarFactura()" id="guardar-factura-btn">💾 Guardar factura</button>
+      <button class="btn btn-primary" style="margin-top:20px" onclick="guardarFactura()" id="guardar-factura-btn">${editando ? "💾 Guardar cambios" : "💾 Guardar factura"}</button>
     </div>`;
+
+  if (editando) precargarFacturaEnFormulario(editando);
 }
+
+// Vuelca una factura guardada en el formulario. Se hace después del innerHTML porque los valores
+// de los <input> se asignan por propiedad, no por atributo.
+function precargarFacturaEnFormulario(f) {
+  const poner = (id, v) => { const el = document.getElementById(id); if (el && v != null && v !== "") el.value = v; };
+  const sel = document.getElementById("f-proveedor");
+  if (sel && f.proveedorId && state.proveedores[f.proveedorId]) {
+    sel.value = f.proveedorId;
+    window.onFacturaProveedorChange(sel);
+  }
+  poner("f-cuit", f.cuit);
+  poner("f-fecha", f.fecha);
+  poner("f-numero", f.numeroFactura);
+  poner("f-monto", f.montoTotal);
+  poner("f-iva-monto", f.iva);
+  poner("f-cargos", f.cargosAdicionales);
+
+  const estadoBtn = document.getElementById("f-estado-toggle");
+  if (estadoBtn && (f.estado === "pagado") !== estadoBtn.classList.contains("on")) window.toggleEstadoFactura(estadoBtn);
+  const ivaBtn = document.getElementById("f-iva-toggle");
+  if (ivaBtn && !!f.preciosConIva !== ivaBtn.classList.contains("on")) window.toggleIvaFactura(ivaBtn);
+
+  const items = Array.isArray(f.items) ? f.items : [];
+  if (items.length) {
+    // El campo del formulario es el PRECIO DE LÍNEA (el del bulto, tal como venía en la factura);
+    // precioUnitario es el que se derivó dividiendo por el contenido. Precargar el derivado haría
+    // que cada edición volviera a dividir y el precio se hundiera sola vez tras vez.
+    document.getElementById("items-container").innerHTML = items.map(it => itemRowHtml({
+      insumoId: it.insumoId && state.insumos[it.insumoId] ? it.insumoId : "",
+      nombre: it.nombre || "",
+      precioUnitario: it.precioLinea ?? it.precioUnitario ?? "",
+      cantidad: it.cantidad ?? "",
+      marca: it.marca ?? "",
+      contenidoPorUnidad: it.contenidoPorUnidad ?? ""
+    })).join("");
+  }
+}
+
+window.editarFactura = function(id) {
+  if (!state.facturas[id]) return;
+  state.editandoFacturaId = id;
+  // La foto vieja se conserva en la base; el formulario arranca sin foto nueva cargada.
+  state._facturaFotoDataUrl = null;
+  state._facturaFotoFile = null;
+  state._releidoPorFaltantes = false;
+  navigate("nueva-factura");
+};
+
+window.cancelarEdicionFactura = function() {
+  state.editandoFacturaId = null;
+  navigate("facturas");
+};
 
 window.toggleEstadoFactura = function(btn) {
   btn.classList.toggle("on");
@@ -1904,7 +1971,10 @@ window.guardarFactura = async function() {
   // Antes de escribir nada: avisar si esta factura ya parece estar cargada. Se considera la
   // misma si coincide proveedor + N° de comprobante, o (cuando no hay número) proveedor + fecha
   // + monto, que en la práctica no se repite.
-  const duplicada = detectarFacturaDuplicada({ proveedorId: proveedorSel, numero, fecha, monto });
+  // Al editar, la factura que se está corrigiendo se excluye del control: si no, se detectaría a
+  // sí misma como duplicada en cada guardado.
+  const editandoId = state.editandoFacturaId && state.facturas[state.editandoFacturaId] ? state.editandoFacturaId : null;
+  const duplicada = detectarFacturaDuplicada({ proveedorId: proveedorSel, numero, fecha, monto, excluirId: editandoId });
   if (duplicada) {
     const encabezado = duplicada.certeza === "alta"
       ? "⚠️ Esta factura YA ESTÁ CARGADA:"
@@ -1929,8 +1999,13 @@ window.guardarFactura = async function() {
 
     // El id de la factura se reserva antes del loop para que cada compra quede enlazada a ella
     // en el historial del insumo (push() genera la clave sin escribir todavía).
-    const facturaRef = push(ref(db, "costeo/facturas"));
-    const facturaId = facturaRef.key;
+    // Editando se reusa el id original y, ANTES de volver a aplicar nada, se deshace lo que la
+    // versión vieja había dejado en los insumos. Sin ese paso las dos versiones convivirían en el
+    // historial y el costeo —que toma el máximo— se quedaría con la equivocada.
+    const facturaRef = editandoId ? ref(db, `costeo/facturas/${editandoId}`) : push(ref(db, "costeo/facturas"));
+    const facturaId = editandoId || facturaRef.key;
+    const facturaOriginal = editandoId ? state.facturas[editandoId] : null;
+    if (editandoId) await revertirEfectoFactura(editandoId);
 
     const itemRows = Array.from(document.querySelectorAll("#items-container .item-row"));
     const items = [];
@@ -1979,12 +2054,18 @@ window.guardarFactura = async function() {
     if (state._facturaFotoDataUrl) {
       await set(ref(db, `costeo/facturasFotos/${facturaId}`), state._facturaFotoDataUrl);
     }
-    await set(facturaRef, {
+    const facturaGuardada = {
       proveedorId, proveedorNombre, cuit, fecha, numeroFactura: numero,
       montoTotal: monto, iva, cargosAdicionales, preciosConIva,
       estado: pagado ? "pagado" : "no_pagado",
-      tieneFoto: !!state._facturaFotoDataUrl, items, creadoTs: Date.now()
-    });
+      // Editando sin subir una foto nueva, la que ya estaba en la base se conserva.
+      tieneFoto: !!state._facturaFotoDataUrl || !!(facturaOriginal?.tieneFoto || facturaOriginal?.foto),
+      items,
+      creadoTs: facturaOriginal?.creadoTs || Date.now()
+    };
+    await set(facturaRef, facturaGuardada);
+    state.facturas[facturaId] = facturaGuardada;
+    invalidarCacheCosteo();
 
     if (sinActualizarReferencia.length) {
       // No dejar esto como una sorpresa silenciosa (fue justo el problema reportado): un precio
@@ -1993,13 +2074,14 @@ window.guardarFactura = async function() {
       const detalle = sinActualizarReferencia.map(x => `• ${x.nombre}${x.marca ? ` (${x.marca})` : ""}: se guardó a ${fmtMoney(x.precioUnitario)}, pero el costo de referencia sigue en ${fmtMoney(x.precioReferencia)} (un precio menor no reemplaza solo al que ya se estaba usando).`).join("\n");
       alert(`ℹ️ Factura guardada. ${sinActualizarReferencia.length} precio(s) NO actualizaron el costo de los productos:\n\n${detalle}\n\nSi te parece que en realidad debería haber subido (por ejemplo, un error de escaneo en la cantidad), corregilo desde Insumos.`);
     }
-    showToast("✅ Factura guardada correctamente.", "success");
+    showToast(editandoId ? "✅ Factura corregida — los costos se recalcularon." : "✅ Factura guardada correctamente.", "success");
     state._facturaFotoDataUrl = null;
+    state.editandoFacturaId = null;
     navigate("facturas");
   } catch (err) {
     console.error(err);
     showToast("❌ Error al guardar la factura. Reintentá.", "danger");
-    saveBtn.disabled = false; saveBtn.textContent = "💾 Guardar factura";
+    saveBtn.disabled = false; saveBtn.textContent = editandoId ? "💾 Guardar cambios" : "💾 Guardar factura";
   }
 };
 
@@ -2043,15 +2125,14 @@ window.verFotoFactura = async function(id) {
 // una compra carísima en el historial del insumo, y como el costeo usa el MÁXIMO de los últimos 60
 // días, ese error se lleva puesto el costo de todos los productos que lo usan durante dos meses.
 // Sin esto, la única salida era editar la base a mano.
-window.eliminarFactura = async function(id) {
+// Deshace TODO lo que una factura dejó en los insumos, sin borrar la factura en sí.
+// La usan las dos operaciones que necesitan volver el costeo a como estaba: borrar una factura y
+// editarla (editar = revertir lo viejo y volver a aplicar lo nuevo sobre el mismo id).
+// Devuelve cuántos insumos tocó.
+async function revertirEfectoFactura(id) {
   const f = state.facturas[id];
-  if (!f) return;
+  if (!f) return 0;
   const items = (Array.isArray(f.items) ? f.items : []).filter(it => it.insumoId && state.insumos[it.insumoId]);
-  const detalle = items.length
-    ? `\n\nTambién se borran las ${items.length} compra(s) que esta factura registró en el historial de los insumos, y los costos se recalculan sin ella.`
-    : "";
-  if (!confirm(`¿Borrar la factura ${f.numeroFactura || "(sin número)"} de ${f.proveedorNombre || "(sin proveedor)"} por ${fmtMoney(f.montoTotal)}?${detalle}\n\nEsto no se puede deshacer.`)) return;
-
   // Un insumo puede aparecer en más de una línea de la misma factura: se agrupa para tocarlo una
   // sola vez y no pisar la escritura anterior con un estado viejo.
   const insumoIds = [...new Set(items.map(it => it.insumoId))];
@@ -2087,14 +2168,28 @@ window.eliminarFactura = async function(id) {
     await update(ref(db, `costeo/insumos/${insumoId}`), updates);
     state.insumos[insumoId] = { ...insumo, ...updates };
   }
+  invalidarCacheCosteo();
+  return insumoIds.length;
+}
+
+window.eliminarFactura = async function(id) {
+  const f = state.facturas[id];
+  if (!f) return;
+  const items = (Array.isArray(f.items) ? f.items : []).filter(it => it.insumoId && state.insumos[it.insumoId]);
+  const detalle = items.length
+    ? `\n\nTambién se borran las ${items.length} compra(s) que esta factura registró en el historial de los insumos, y los costos se recalculan sin ella.`
+    : "";
+  if (!confirm(`¿Borrar la factura ${f.numeroFactura || "(sin número)"} de ${f.proveedorNombre || "(sin proveedor)"} por ${fmtMoney(f.montoTotal)}?${detalle}\n\nEsto no se puede deshacer.`)) return;
+
+  const insumosTocados = await revertirEfectoFactura(id);
 
   try { await remove(ref(db, `costeo/facturasFotos/${id}`)); } catch {}
   await remove(ref(db, `costeo/facturas/${id}`));
   delete state.facturas[id];
   if (state.facturaDetalleId === id) state.facturaDetalleId = null;
   invalidarCacheCosteo();
-  showToast(insumoIds.length
-    ? `🗑️ Factura borrada. Se recalcularon los costos de ${insumoIds.length} insumo(s) sin ella.`
+  showToast(insumosTocados
+    ? `🗑️ Factura borrada. Se recalcularon los costos de ${insumosTocados} insumo(s) sin ella.`
     : "🗑️ Factura borrada.", "success");
   render();
 };
@@ -2200,11 +2295,12 @@ function renderFacturasView(container) {
     </tr>
     ${state.facturaDetalleId === id ? `<tr><td colspan="9" style="background:var(--cream);padding:12px">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <button class="btn btn-primary btn-sm" onclick="copiarDiagnosticoFactura('${id}')">📋 Copiar diagnóstico</button>
+        <button class="btn btn-primary btn-sm" onclick="editarFactura('${id}')">✏️ Corregir esta factura</button>
+        <button class="btn btn-ghost btn-sm" onclick="copiarDiagnosticoFactura('${id}')">📋 Copiar diagnóstico</button>
         ${(f.foto || f.tieneFoto) ? `<button class="btn btn-ghost btn-sm" onclick="verFotoFactura('${id}')">🖼️ Ver la foto original</button>` : ""}
         <button class="btn btn-danger btn-sm" onclick="eliminarFactura('${id}')" title="Borra la factura y deshace las compras que registró en los insumos">🗑️ Borrar y deshacer</button>
       </div>
-      <div class="text-muted" style="font-size:11px;margin-bottom:8px">Si esta factura se cargó mal, borrala acá: además de sacarla del listado, se borran las compras que dejó en el historial de los insumos y los costos se recalculan sin ella. Después se puede volver a cargar la foto desde cero.</div>
+      <div class="text-muted" style="font-size:11px;margin-bottom:8px">Si esta factura se cargó mal: <strong>corregila</strong> para arreglar una cantidad o un precio puntual (se rehacen las compras que dejó en los insumos con los valores nuevos), o <strong>borrala</strong> para sacarla del todo y volver a cargar la foto desde cero. En los dos casos los costos se recalculan.</div>
       <pre style="margin:0;white-space:pre-wrap;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.5">${escapeHtml(diagnosticoFacturaTexto(id))}</pre>
     </td></tr>` : ""}`).join("");
 
