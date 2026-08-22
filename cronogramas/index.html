@@ -164,6 +164,7 @@
   .cellsel.he{box-shadow:inset 0 0 0 1.5px var(--teal)}
   .cellsel.expert{background:var(--warn-soft);color:var(--warn);font-weight:700;box-shadow:inset 0 0 0 1.5px var(--warn)}
   .cellsel.expert.he{box-shadow:inset 0 0 0 1.5px var(--warn),inset 0 0 0 3px var(--teal)}
+  .cellsel.expert-alt{box-shadow:inset 0 0 0 1.5px var(--warn);opacity:.7}
   td.cell.closed{background:repeating-linear-gradient(45deg,var(--chip),var(--chip) 5px,transparent 5px,transparent 10px)}
   td.cell.inactive{background:var(--panel-2)}
   .celloff{display:block;text-align:center;padding:8px 5px;font-size:11px;color:var(--line-strong);user-select:none}
@@ -172,6 +173,7 @@
   td.cell.extra .cellsel.filled{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent)}
   td.cell.extra .cellsel.filled.he{box-shadow:inset 0 0 0 1.5px var(--teal)}
   td.cell.extra .cellsel.filled.expert{box-shadow:inset 0 0 0 1.5px var(--warn)}
+  td.cell.extra .cellsel.filled.expert-alt{box-shadow:inset 0 0 0 1.5px var(--warn);opacity:.7}
   td.cell.extra .cellsel.filled.dupe{box-shadow:none}
   .excell{position:relative;display:flex;align-items:center}
   .excell .cellsel{flex:1}
@@ -181,6 +183,11 @@
   @media (prefers-color-scheme:dark){.halfbadge.on{background:#3a2f22}}
   .halfbadge.off{color:var(--line-strong);background:transparent;border-color:var(--line-strong);opacity:.55;transition:opacity .12s}
   .excell:hover .halfbadge.off,.halfbadge.off:focus-visible{opacity:1}
+  /* aparece sobre un experto que "perdió" la ⭐ este turno por chocar con otro experto — tocarlo lo
+     elige a él en vez del que la tiene por defecto */
+  .expertPick{position:absolute;left:1px;bottom:1px;width:16px;height:14px;line-height:14px;font-size:8.5px;text-align:center;border:none;background:var(--warn-soft);color:var(--warn);cursor:pointer;padding:0;border-radius:4px;font-weight:800;z-index:2}
+  .expertPick:hover{filter:brightness(1.1)}
+  .excell .expertPick{position:static;margin-left:2px;flex:none;width:auto;padding:0 4px}
 
   /* modo "mover personas": un botón invisible tapa todo el casillero (funciona igual con mouse
      que con el dedo, a diferencia de arrastrar-y-soltar nativo, que en el celular no anda bien
@@ -438,7 +445,7 @@
       <section class="card">
         <div class="card-body" style="padding-bottom:16px">
           <span class="eyebrow">Experto Candela</span>
-          <p class="sub" style="padding:4px 0 0">Se destaca con ⭐ dondequiera que esa persona aparezca asignada en la grilla, y también al imprimir.</p>
+          <p class="sub" style="padding:4px 0 0">Se destaca con ⭐ dondequiera que esa persona aparezca asignada en la grilla, y también al imprimir. Si un turno tiene dos expertos a la vez, gana uno por defecto — tocá el botón "⭐?" que aparece junto al otro para elegirlo a él en su lugar.</p>
           <div class="field">
             <label for="expertoPerson">Persona</label>
             <select id="expertoPerson"></select>
@@ -792,12 +799,12 @@ function rowsFor(loc,shift){
   if(loc==="SL"&&shift==="M")return[
     {role:"cajero",idx:0,label:"Cajero"},{role:"barista",idx:0,label:"Barista"},
     {role:"atencion",idx:0,label:"Vendedor 1"},{role:"atencion",idx:1,label:"Vendedor 2"},
-    {role:"atencion",idx:2,label:"Vendedor 2",wk:true},
+    {role:"atencion",idx:2,label:"Mozo 1",wk:true},
     {role:"cocina",idx:0,label:"Cocina"},{role:"compras",idx:0,label:"Compras"},
     {role:"ayudante",idx:0,label:"Bacha/Envíos"}];
   if(loc==="SL"&&shift==="T")return[
     {role:"cajero",idx:0,label:"Cajero"},{role:"barista",idx:0,label:"Barista"},
-    {role:"atencion",idx:0,label:"Vendedor 1"},{role:"atencion",idx:1,label:"Vendedor 2"},{role:"atencion",idx:2,label:"Vendedor 2"},
+    {role:"atencion",idx:0,label:"Vendedor 1"},{role:"atencion",idx:1,label:"Vendedor 2"},{role:"atencion",idx:2,label:"Mozo 2"},
     {role:"cocina",idx:0,label:"Cocina"},{role:"ayudante",idx:0,label:"Envíos"}];
   if(loc==="SLA"&&shift==="M")return[
     {role:"barista",idx:0,label:"Barista"},{role:"atencion",idx:0,label:"Mozo 1"},
@@ -828,7 +835,7 @@ function peopleFor(role,loc){
 }
 
 /* ---------------- STATE ---------------- */
-function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{},expertos:[],stickyNotes:[]};}
+function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{},expertos:[],expertoTurno:{},stickyNotes:[]};}
 // las reglas "semilla" (seedFixedRules, seedCocinaComprasCajero) se cargan una sola vez por tag.
 // Antes se detectaba "ya cargada" mirando si quedaba algún turno fijo con ese tag — pero si borrabas
 // el grupo ENTERO, no quedaba ninguno, y el sistema lo tomaba como "todavía no cargada" y lo volvía a
@@ -1315,7 +1322,8 @@ function selHTML(d,loc,shift,role,idx,active,closed){
   const cur=state.assign[k]||"";
   if(!active)return `<td class="cell ${isWknd(d)?"wknd":""} ${closed?"closed":"inactive"}"><span class="celloff">${closed?"Cerrado":"·"}</span></td>`;
   const opts=peopleFor(role,loc).map(p=>{
-    return `<option value="${p.n}" ${p.n===cur?"selected":""}>${nombreDestacado(p.n)}${roleFor(p.n)!==role?" ⤵":""}</option>`;
+    const nm=p.n===cur?nombreDestacadoEnTurno(p.n,d,loc,shift):nombreDestacado(p.n);
+    return `<option value="${p.n}" ${p.n===cur?"selected":""}>${nm}${roleFor(p.n)!==role?" ⤵":""}</option>`;
   }).join("");
   // dupe detection for this cell
   let dupe=false;
@@ -1323,10 +1331,10 @@ function selHTML(d,loc,shift,role,idx,active,closed){
     state.ex.forEach(e=>{if(e.n===cur&&e.day===d&&e.shift===shift)dupe=true;});}
   const he=cur&&isDoubleShift(cur,d);
   const errMsg=dupe?dupeMsg(cur,d,shift):incompatMsgFor(cur,d,loc,shift);
-  const cls=`cellsel ${cur?"filled":"empty"} ${errMsg?"dupe":""} ${he?"he":""} ${cur&&esExperto(cur)?"expert":""}`;
+  const cls=`cellsel ${cur?"filled":"empty"} ${errMsg?"dupe":""} ${he?"he":""} ${cur&&esExpertoActivo(cur,d,loc,shift)?"expert":cur&&esExperto(cur)?"expert-alt":""}`;
   const errAttr=errMsg?` data-err="${errMsg}"`:"";
   const label=(cur?cur+" · ":"")+DAYS[d][1]+" "+(shift==="M"?"mañana":"tarde");
-  return `<td class="cell ${isWknd(d)?"wknd":""}"><select class="${cls}" data-k="${k}"${errAttr}><option value="">—</option>${opts}</select>${noteBtnHTML(k,label)}<button type="button" class="moveOverlay" data-movek="${k}" aria-label="Mover a ${cur||"este casillero"}"></button></td>`;
+  return `<td class="cell ${isWknd(d)?"wknd":""}"><select class="${cls}" data-k="${k}"${errAttr}><option value="">—</option>${opts}</select>${expertPickBtn(cur,d,loc,shift)}${noteBtnHTML(k,label)}<button type="button" class="moveOverlay" data-movek="${k}" aria-label="Mover a ${cur||"este casillero"}"></button></td>`;
 }
 // mensaje de la burbuja de error: mismo texto que usa la auditoría para "está en dos lugares a la vez"
 function dupeMsg(name,d,shift){
@@ -1345,6 +1353,7 @@ function sonIncompatibles(a,b){return state.incompat.some(r=>(r.a===a&&r.b===b)|
 // destaque dondequiera que aparezca asignada en la grilla y al imprimir.
 function esExperto(name){return state.expertos.includes(name);}
 function nombreDestacado(name){return esExperto(name)?"⭐ "+name:name;}
+function nombreDestacadoEnTurno(name,d,loc,shift){return esExpertoActivo(name,d,loc,shift)?"⭐ "+name:name;}
 // "no pueden trabajar juntos" es por local: si están en el mismo turno pero en San Luis y SLA
 // respectivamente, no cuenta como choque — solo importa si coinciden en el mismo local.
 function quienesEnTurno(d,loc,shift){
@@ -1359,11 +1368,35 @@ function incompatMsgFor(name,d,loc,shift){
   const choque=otros.find(o=>sonIncompatibles(name,o));
   return choque?`🚫 ${name} no puede trabajar con ${choque} — los dos están el ${DAYS[d][1].toLowerCase()} a la ${shift==="M"?"mañana":"tarde"} en ${loc==="SL"?"San Luis":"SLA"}.`:null;
 }
+// cuando coinciden dos o más "Experto Candela" en el mismo turno, solo uno de ellos queda destacado
+// con ⭐ ese turno puntual (el resto sigue trabajando ahí, pero sin la estrella) — se elige a mano
+// con el selector que aparece en la grilla; sin elección, gana por defecto el primero que aparece.
+function turnoKey(d,loc,shift){return `${d}|${loc}|${shift}`;}
+function expertosEnTurno(d,loc,shift){return [...quienesEnTurno(d,loc,shift)].filter(esExperto);}
+function expertoActivoEnTurno(d,loc,shift){
+  const exs=expertosEnTurno(d,loc,shift);
+  if(exs.length<=1)return exs[0]||null;
+  const elegido=state.expertoTurno[turnoKey(d,loc,shift)];
+  return elegido&&exs.includes(elegido)?elegido:exs[0];
+}
+function esExpertoActivo(name,d,loc,shift){
+  if(!name||!esExperto(name))return false;
+  return expertosEnTurno(d,loc,shift).length<=1||name===expertoActivoEnTurno(d,loc,shift);
+}
+// botón que aparece junto a un experto que "perdió" la estrella este turno por chocar con otro
+// experto, para poder elegirlo a él en vez del que ganó por defecto.
+function expertPickBtn(name,d,loc,shift){
+  if(!name||!esExperto(name)||esExpertoActivo(name,d,loc,shift))return"";
+  return `<button type="button" class="expertPick" data-expick="${d}|${loc}|${shift}|${escAttr(name)}" title="Hay más de un Experto Candela en este turno — tocá para que ${name} sea el destacado ⭐ acá">⭐?</button>`;
+}
 function exAt(d,loc,shift,role){return state.ex.filter(e=>e.day===d&&e.loc===loc&&e.shift===shift&&e.role===role);}
 function extraCellHTML(e){
   // a diferencia de la grilla base, "Personas extra" es refuerzo libre: cualquiera puede cubrir
   // cualquier puesto puntual, no solo quienes ya tienen ese rol como principal o de respaldo.
-  const opts=PEOPLE.map(p=>`<option value="${p.n}" ${p.n===e.n?"selected":""}>${nombreDestacado(p.n)}${roleFor(p.n)!==e.role?" ⤵":""}</option>`).join("");
+  const opts=PEOPLE.map(p=>{
+    const nm=p.n===e.n?nombreDestacadoEnTurno(p.n,e.day,e.loc,e.shift):nombreDestacado(p.n);
+    return `<option value="${p.n}" ${p.n===e.n?"selected":""}>${nm}${roleFor(p.n)!==e.role?" ⤵":""}</option>`;
+  }).join("");
   let dupe=false;
   Object.keys(state.assign).forEach(kk=>{const[dd,,sh]=kk.split("|");if(+dd===e.day&&sh===e.shift&&state.assign[kk]===e.n)dupe=true;});
   state.ex.forEach(o=>{if(o!==e&&o.n===e.n&&o.day===e.day&&o.shift===e.shift)dupe=true;});
@@ -1373,14 +1406,17 @@ function extraCellHTML(e){
   const errAttr=errMsg?` data-err="${errMsg}"`:"";
   const ck="ex:"+e.id;
   const label=(e.n?e.n+" · ":"")+DAYS[e.day][1]+" "+(e.shift==="M"?"mañana":"tarde");
-  return `<td class="cell extra ${isWknd(e.day)?"wknd":""}"><div class="excell"><select class="cellsel filled ${errMsg?"dupe":""} ${he?"he":""} ${esExperto(e.n)?"expert":""}" data-ex="${e.id}"${errAttr}><option value="">— quitar</option>${opts}</select>${badge}${noteBtnHTML(ck,label)}</div><button type="button" class="moveOverlay" data-moveex="${e.id}" aria-label="Mover a ${e.n}"></button></td>`;
+  const expCls=e.n&&esExpertoActivo(e.n,e.day,e.loc,e.shift)?"expert":e.n&&esExperto(e.n)?"expert-alt":"";
+  return `<td class="cell extra ${isWknd(e.day)?"wknd":""}"><div class="excell"><select class="cellsel filled ${errMsg?"dupe":""} ${he?"he":""} ${expCls}" data-ex="${e.id}"${errAttr}><option value="">— quitar</option>${opts}</select>${expertPickBtn(e.n,e.day,e.loc,e.shift)}${badge}${noteBtnHTML(ck,label)}</div><button type="button" class="moveOverlay" data-moveex="${e.id}" aria-label="Mover a ${e.n}"></button></td>`;
 }
 // nombre a mostrar para la fila de refuerzo de un puesto: en San Luis los refuerzos de atención se
-// llaman "Mozo 2" (ni "Vendedor 1/2" ni "Mozo 1", que ya son las filas base) — en el resto de los
-// casos se usa el nombre de la primera fila base de ese puesto.
+// llaman "Mozo 1"/"Mozo 2" (el nombre de la fila base de refuerzo de ese turno) — en SLA turno tarde,
+// como "Mozo 1" y "Mozo 2" ya son las dos filas base fijas, el refuerzo extra se llama "Mozo 3" para
+// no duplicar el nombre de una fila que ya existe — en el resto de los casos se usa el nombre de la
+// primera fila base de ese puesto.
 function extraLabelFor(loc,role,shift,defaultLabel){
   if(loc==="SL"&&role==="atencion")return shift==="M"?"Mozo 1":"Mozo 2";
-  if(loc==="SLA"&&role==="atencion"&&shift==="T")return"Mozo 2";
+  if(loc==="SLA"&&role==="atencion"&&shift==="T")return"Mozo 3";
   return defaultLabel;
 }
 function locTable(loc,title,worked){
@@ -1507,6 +1543,14 @@ function renderSched(worked,empty){
       ex.half=!ex.half;
       render();persist();
       toast(ex.half?`${ex.n} marcado como turno cortado ½`:`${ex.n} vuelve a ser turno completo`);
+    });
+  });
+  document.querySelectorAll("[data-expick]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const[d,loc,shift,name]=b.dataset.expick.split("|");
+      state.expertoTurno[turnoKey(+d,loc,shift)]=name;
+      render();persist();
+      toast(`${name} queda como el Experto Candela destacado ⭐ en este turno`);
     });
   });
   document.querySelectorAll(".moveOverlay").forEach(b=>{
@@ -1642,7 +1686,7 @@ function buildScheduleRows(loc,worked){
         const cells=DAYS.map((_,d)=>{
           if(!sellable(d,loc,shift))return{text:"Cerrado",muted:true};
           const v=state.assign[key(d,loc,shift,row.role,row.idx)];
-          return{text:v?(esExperto(v)?"⭐ ":"")+v:"—",muted:!v,expert:v&&esExperto(v)};
+          return{text:v?(esExpertoActivo(v,d,loc,shift)?"⭐ ":"")+v:"—",muted:!v,expert:v&&esExpertoActivo(v,d,loc,shift)};
         });
         rows.push({label:row.label,cells});
       });
@@ -1651,7 +1695,8 @@ function buildScheduleRows(loc,worked){
         const cells=DAYS.map((_,d)=>{
           const e=exAt(d,loc,shift,role)[r];
           const filled=e&&!isClosed(d,loc,shift);
-          return{text:filled?(esExperto(e.n)?"⭐ ":"")+e.n+(e.half?" ½":""):"",extra:true,expert:filled&&esExperto(e.n)};
+          const activo=filled&&esExpertoActivo(e.n,d,loc,shift);
+          return{text:filled?(activo?"⭐ ":"")+e.n+(e.half?" ½":""):"",extra:true,expert:activo};
         });
         rows.push({label:`${extraLabelFor(loc,role,shift,brows[0].label)} +`,cells,extra:true});
       }
@@ -2336,6 +2381,8 @@ function limpiarPersonasDadasDeBaja(){
   Object.keys(state.ausObviada).forEach(k=>{if(!BY_NAME[k.split("|")[0]])delete state.ausObviada[k];});
   if(!state.expertos)state.expertos=[];
   state.expertos=state.expertos.filter(n=>BY_NAME[n]);
+  if(!state.expertoTurno)state.expertoTurno={};
+  Object.keys(state.expertoTurno).forEach(k=>{if(!BY_NAME[state.expertoTurno[k]])delete state.expertoTurno[k];});
 }
 // Leandro (el barista, SLA) pasa a llamarse "Leandro Villagra" para no confundirlo con Leandro
 // Tolaba (persona aparte, solo en el módulo de Vacaciones — producción/Cuadra). Migra cualquier
