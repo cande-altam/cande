@@ -251,7 +251,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-20 23:15";
+const APP_VERSION = "2026-08-21 21:10";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -784,6 +784,10 @@ window.handleInsumoSearchInput = function(input) {
   resultsEl.innerHTML = items + createOption;
   resultsEl.style.display = (items || createOption) ? "block" : "none";
   picker.querySelector(".item-insumo-id").value = "";
+  // Al reescribir el nombre, la línea vuelve a estar sin resolver: el texto cambió, así que hay
+  // que volver a analizarlo en vez de arrastrar un "ya dije que es nuevo" de otro texto.
+  const rowEdit = picker.closest(".item-row");
+  if (rowEdit) delete rowEdit.dataset.crearNuevo;
 };
 
 window.selectInsumoPicker = function(el) {
@@ -792,6 +796,13 @@ window.selectInsumoPicker = function(el) {
   picker.querySelector(".item-insumo-search").value = el.dataset.nombre || "";
   picker.querySelector(".insumo-picker-results").style.display = "none";
   const row = picker.closest(".item-row");
+  // Elegir "➕ Crear insumo «X»" acá YA es la decisión explícita: no tiene sentido que el panel de
+  // confirmación la vuelva a preguntar al guardar. Si en cambio se eligió uno existente, la fila
+  // deja de estar pendiente sola.
+  if (row) {
+    if (el.dataset.id) delete row.dataset.crearNuevo;
+    else row.dataset.crearNuevo = "1";
+  }
   const precioInput = row.querySelector(".item-precio");
   if (precioInput) window.actualizarItemHint(precioInput);
 };
@@ -2125,42 +2136,78 @@ function descripcionFacturaDuplicada(dup) {
 // ANTES DE CREAR UN INSUMO NUEVO: PREGUNTAR
 // =============================================================
 // Guardar una factura creaba en silencio un insumo por cada línea que no matcheaba. Ahí nacían
-// los repetidos —"Crema de leche" y "CREMA DE LECHE LA SERENISIMA X1L"— y la única salida era
-// fusionarlos a mano, factura tras factura. Ahora, si la línea se parece a algo ya cargado, se
-// muestra antes de guardar y se decide una vez: si es el mismo, se aprende el alias y no vuelve a
-// preguntar nunca más por ese texto.
-function filasSinInsumoConCandidatos() {
+// los repetidos y la única salida era fusionarlos a mano, factura tras factura.
+//
+// El recorrido ahora es: analizar cada línea → buscar coincidencias → PREGUNTAR → y recién si no
+// existe, crear. Crear un insumo pasó a ser el último paso y siempre una decisión explícita: se
+// pregunta por TODA línea que fuera a crear uno, tenga candidatos parecidos o no. Con el catálogo
+// ya sin duplicados eso es lo que corresponde — cada alta nueva ensucia un catálogo limpio, y
+// revisarla cuesta un toque contra las horas que cuesta fusionar después.
+//
+// Lo que sí se resuelve solo y no molesta a nadie: las líneas que matchean por alias aprendido o
+// por coincidencia alta. Esas se muestran aparte, como resumen, para poder corregirlas si hiciera
+// falta.
+function filasQueCrearianInsumo() {
   const pendientes = [];
   for (const row of document.querySelectorAll("#items-container .item-row")) {
     if ((row.querySelector(".item-insumo-id")?.value || "").trim()) continue;
     const texto = (row.querySelector(".item-insumo-search")?.value || "").trim();
     const precio = parseFloat(row.querySelector(".item-precio")?.value);
     if (!texto || !(precio > 0)) continue;          // esas líneas no se guardan igual
-    if (row.dataset.crearNuevo === "1") continue;   // el usuario ya dijo que es nuevo
-    const r = buscarInsumoParaTexto(texto);
-    if (r.candidatos.length) pendientes.push({ row, texto, candidatos: r.candidatos });
+    if (row.dataset.crearNuevo === "1") continue;   // el usuario ya confirmó que es nuevo
+    pendientes.push({ row, texto, candidatos: buscarInsumoParaTexto(texto).candidatos });
   }
   return pendientes;
+}
+
+// Las que el sistema resolvió por su cuenta. Se listan para que el análisis sea visible: si
+// reconoció mal, se ve acá y no tres semanas después en un costo raro.
+function filasReconocidas() {
+  const out = [];
+  for (const row of document.querySelectorAll("#items-container .item-row")) {
+    const id = (row.querySelector(".item-insumo-id")?.value || "").trim();
+    if (!id || !state.insumos[id]) continue;
+    const texto = (row.dataset.textoOriginal || "").trim();
+    out.push({ id, nombre: state.insumos[id].nombre, texto });
+  }
+  return out;
 }
 
 function mostrarConfirmacionInsumosNuevos(pendientes) {
   const cont = document.getElementById("escaneo-pendientes");
   if (!cont) return;
+  const opcionesTodos = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .map(([id, ins]) => `<option value="${id}">${escapeHtml(ins.nombre)}${ins.unidad ? " (" + escapeHtml(ins.unidad) + ")" : ""}</option>`).join("");
+
   const bloques = pendientes.map((p, i) => {
-    const opciones = p.candidatos.map(c =>
+    const sugerencias = p.candidatos.map(c =>
       `<button type="button" class="btn btn-turq btn-sm" onclick="resolverInsumoNuevo(${i}, '${c.id}')">Es «${escapeHtml(state.insumos[c.id]?.nombre || "")}»</button>`).join(" ");
-    return `<div class="item-warn" style="margin:0 0 8px">
-      📦 En la factura dice <strong>«${escapeHtml(p.texto)}»</strong>. ¿Es un insumo que ya tenés?
-      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
-        ${opciones}
-        <button type="button" class="btn btn-ghost btn-sm" onclick="resolverInsumoNuevo(${i}, '')">No, es uno nuevo</button>
+    const encabezado = p.candidatos.length
+      ? `📦 En la factura dice <strong>«${escapeHtml(p.texto)}»</strong>. Se parece a ${p.candidatos.length === 1 ? "un insumo que ya tenés" : "estos que ya tenés"}:`
+      : `🆕 En la factura dice <strong>«${escapeHtml(p.texto)}»</strong>. No coincide con ningún insumo cargado.`;
+    return `<div class="${p.candidatos.length ? "item-warn" : "item-note"}" style="margin:0 0 10px">
+      ${encabezado}
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        ${sugerencias}
+        <select class="form-select" style="max-width:230px" onchange="if(this.value)resolverInsumoNuevo(${i}, this.value)">
+          <option value="">${p.candidatos.length ? "…o buscalo en la lista" : "Elegilo de la lista"}</option>
+          ${opcionesTodos}
+        </select>
+        <button type="button" class="btn ${p.candidatos.length ? "btn-ghost" : "btn-primary"} btn-sm" onclick="resolverInsumoNuevo(${i}, '')">➕ Crear «${escapeHtml(p.texto)}»</button>
       </div>
     </div>`;
   }).join("");
+
+  const reconocidas = filasReconocidas();
+  const resumen = reconocidas.length
+    ? `<div class="item-note" style="margin:0 0 10px">✅ <strong>${reconocidas.length} línea(s) reconocidas solas:</strong> ${reconocidas.map(r => escapeHtml(r.nombre)).join(", ")}.<div class="text-muted" style="font-size:11px;margin-top:3px">Si alguna quedó mal, corregila en su fila de abajo antes de guardar.</div></div>`
+    : "";
+
   cont.innerHTML = `<div class="section-block" style="border-color:var(--terra);margin-bottom:14px">
-    <div class="section-title" style="margin-bottom:10px">🧐 Antes de guardar: ${pendientes.length} línea(s) crearían un insumo nuevo</div>
+    <div class="section-title" style="margin-bottom:10px">🧐 Antes de guardar: ${pendientes.length} línea(s) sin insumo asignado</div>
+    ${resumen}
     ${bloques}
-    <div class="text-muted" style="font-size:11px">Si elegís uno que ya tenés, el sistema se acuerda de este texto: la próxima factura de este proveedor lo va a reconocer solo, sin volver a preguntar ni crear un repetido.</div>
+    <div class="text-muted" style="font-size:11px">Elegir un insumo que ya existe hace que el sistema se acuerde de este texto: la próxima factura de este proveedor lo reconoce solo, sin volver a preguntar ni crear un repetido. Crear uno nuevo es la última opción — el catálogo está limpio y conviene que siga así.</div>
   </div>`;
   try { cont.scrollIntoView({ behavior: "smooth", block: "center" }); } catch {}
 }
@@ -2179,11 +2226,11 @@ window.resolverInsumoNuevo = function(indice, insumoId) {
   } else {
     p.row.dataset.crearNuevo = "1";
   }
-  _pendientesInsumosNuevos = filasSinInsumoConCandidatos();
+  _pendientesInsumosNuevos = filasQueCrearianInsumo();
   if (_pendientesInsumosNuevos.length) mostrarConfirmacionInsumosNuevos(_pendientesInsumosNuevos);
   else {
     document.getElementById("escaneo-pendientes").innerHTML = "";
-    showToast("✅ Listo. Ya podés guardar la factura.", "success");
+    showToast("✅ Todas las líneas tienen insumo. Ya podés guardar.", "success");
   }
 };
 
@@ -2220,13 +2267,15 @@ window.guardarFactura = async function() {
     if (!confirm(`${encabezado}\n\n${descripcionFacturaDuplicada(duplicada)}\nCoincide por: ${duplicada.motivo}.\n\n¿Guardarla igual? (si de verdad es otra factura distinta, confirmá)`)) return;
   }
 
-  // Puerta contra los insumos repetidos: si alguna línea va a crear un insumo nuevo y se parece a
-  // uno que ya existe, se pregunta ANTES de escribir nada. Solo se interrumpe cuando hay algo
-  // parecido que mirar — una línea genuinamente nueva no molesta a nadie.
-  _pendientesInsumosNuevos = filasSinInsumoConCandidatos();
+  // Puerta contra los insumos repetidos: ninguna línea crea un insumo sin que se haya decidido
+  // explícitamente. Se pregunta ANTES de escribir nada, tenga candidatos parecidos o no.
+  _pendientesInsumosNuevos = filasQueCrearianInsumo();
   if (_pendientesInsumosNuevos.length) {
     mostrarConfirmacionInsumosNuevos(_pendientesInsumosNuevos);
-    showToast(`🧐 ${_pendientesInsumosNuevos.length} línea(s) se parecen a insumos que ya tenés — revisalas y guardá de nuevo.`, "warn");
+    const conCandidatos = _pendientesInsumosNuevos.filter(p => p.candidatos.length).length;
+    showToast(conCandidatos
+      ? `🧐 ${_pendientesInsumosNuevos.length} línea(s) sin insumo — ${conCandidatos} se parecen a insumos que ya tenés. Revisalas y guardá de nuevo.`
+      : `🧐 ${_pendientesInsumosNuevos.length} línea(s) crearían un insumo nuevo. Confirmalas y guardá de nuevo.`, "warn");
     return;
   }
 
