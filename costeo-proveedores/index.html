@@ -251,7 +251,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-21 21:10";
+const APP_VERSION = "2026-08-21 22:40";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -305,6 +305,7 @@ const state = {
   _escaneoPorPartes: false,
   _escaneoModoPreciso: false,
   _releidoPorFaltantes: false,
+  _ultimaNormalizacionEscaneo: null,
   facturasFiltro: "todas",
   facturasBusqueda: "",
   facturaDetalleId: null,
@@ -1239,6 +1240,7 @@ function recortarFotoEscaneo(file, parte, total, maxDim, calidad) {
 // corta por longitud: es más lenta, así que no conviene por defecto.
 window.escanearFacturaPorPartes = async function(partes) {
   if (!state._facturaFotoFile) { showToast("⚠️ Subí primero una foto de la factura.", "warn"); return; }
+  state._ultimaNormalizacionEscaneo = null;
   const total = partes || 2;
   const btn = document.getElementById("scan-btn");
   if (btn) { btn.disabled = true; btn.textContent = "🤖 Leyendo por partes..."; }
@@ -1363,6 +1365,7 @@ function catalogoParaEscaneo() {
 
 window.escanearFactura = async function() {
   if (!state._facturaFotoDataUrl) return;
+  state._ultimaNormalizacionEscaneo = null;
   const btn = document.getElementById("scan-btn");
   btn.disabled = true; btn.textContent = "🤖 Escaneando...";
   try {
@@ -1620,6 +1623,14 @@ function mostrarPendientesDelEscaneo(data, opts) {
   const preguntas = [];
   const avisos = [];
 
+  // Qué se ordenó del detalle leído. Va primero porque cambia lo que se ve en las filas de abajo,
+  // y un cambio que no se anuncia es un cambio que nadie revisa.
+  const norm = state._ultimaNormalizacionEscaneo;
+  if (norm) {
+    const html = avisoNormalizacionHtml(norm.cambios, norm.descuentos);
+    if (html) avisos.push(html);
+  }
+
   if (errorEscaneo) {
     avisos.push(`<div class="item-warn" style="margin:0 0 8px">🤖 <strong>No se pudo leer la factura automáticamente.</strong> ${escapeHtml(errorEscaneo)}</div>`);
   } else if (escaneoVacio) {
@@ -1688,9 +1699,10 @@ function mostrarPendientesDelEscaneo(data, opts) {
     .map(([id, p]) => `<option value="${id}">${escapeHtml(p.nombre)}${p.cuit ? " — " + escapeHtml(p.cuit) : ""}</option>`).join("");
 
   cont.innerHTML = dupHtml + `<div class="section-block" style="border-color:var(--terra);margin-bottom:14px">
-    <div class="section-title" style="margin-bottom:10px">🤔 Necesito algunos datos para identificar esta factura</div>
+    <div class="section-title" style="margin-bottom:10px">${preguntas.length ? "🤔 Necesito algunos datos para identificar esta factura" : "🧾 Revisá esto antes de guardar"}</div>
     ${avisos.join("")}
     ${preguntas.length ? `<ul style="margin:0 0 12px 18px;padding:0;line-height:1.7">${preguntas.map(p => `<li>${p}</li>`).join("")}</ul>` : ""}
+    ${!preguntas.length ? "" : `
     <div class="form-row" style="align-items:flex-end;margin-bottom:8px">
       <div class="form-group" style="max-width:240px">
         <label class="form-label">Proveedor</label>
@@ -1709,11 +1721,12 @@ function mostrarPendientesDelEscaneo(data, opts) {
       </div>
       <button type="button" class="btn btn-primary btn-sm" onclick="responderPendientesDelEscaneo()">🤖 Reintentar con estos datos</button>
     </div>
-    <div class="text-muted" style="font-size:11px">Con lo que completes acá, se vuelve a leer la misma foto — normalmente alcanza para reconocer los ítems. Si preferís, también podés cargar todo a mano abajo y guardar igual.</div>
+    <div class="text-muted" style="font-size:11px">Con lo que completes acá, se vuelve a leer la misma foto — normalmente alcanza para reconocer los ítems. Si preferís, también podés cargar todo a mano abajo y guardar igual.</div>`}
   </div>`;
   showToast(errorEscaneo || escaneoVacio
     ? "🤔 No se pudo identificar la factura — mirá el aviso de arriba."
-    : "⚠️ El escaneo quedó incompleto — revisá los avisos.", "warn");
+    : (preguntas.length ? "⚠️ El escaneo quedó incompleto — revisá los avisos." : "✅ Factura escaneada. Mirá lo que se ordenó del detalle y revisá antes de guardar."),
+    preguntas.length || errorEscaneo || escaneoVacio ? "warn" : "success");
   // Llevar la pantalla al aviso: en el celular, aunque ahora esté arriba, puede quedar fuera de
   // vista si se scrolleó el formulario.
   try { cont.scrollIntoView({ behavior: "smooth", block: "center" }); } catch {}
@@ -1750,6 +1763,132 @@ window.responderPendientesDelEscaneo = async function() {
   await window.escanearFactura();
   state._escaneoPistas = null;
 };
+
+// =============================================================
+// NORMALIZAR LO QUE DEVUELVE EL ESCANEO
+// =============================================================
+// Todo esto estaba pedido en el prompt y nada más que en el prompt: si el modelo no obedecía, la
+// factura entraba mal y no había red que la atajara. Ahora se verifica en código, que es
+// determinístico — el prompt sigue, pero como ayuda, no como garantía.
+//
+// Los tres problemas reales de un ticket de mayorista, con la factura de VIDT como ejemplo:
+//
+//   5.950 x $ 11191.40                              ← renglón 1: cantidad y precio
+//   JAMON COCIDO PALADINI GRANDE      $ 66588.86    ← renglón 2: descripción e importe
+//   1 H                                             ← renglón 3: cuántas piezas
+//   ...
+//   OFS JAMON COCID (21%)             -$ 3649.07    ← y más abajo, el descuento
+//
+// Un solo jamón que se puede leer como tres o cuatro ítems distintos.
+
+// Renglón que no nombra ningún producto: el contador de piezas ("1 H", "4 H", "2 HORMA") o el
+// renglón de cantidad y precio ("5.950 x $ 11191.40"). Los dos son partes del mismo ítem.
+//
+// La regla no es una lista de formas —siempre aparece una nueva— sino: si sacando números,
+// medidas y palabras de envase no queda NINGUNA palabra con significado, no hay producto ahí.
+// El "y además tiene algún dígito" es la salvaguarda: un insumo que de verdad se llame "Bolsas" o
+// "Cajas" tampoco deja palabras significativas, pero no trae números y sí es algo que se compra.
+function esFragmentoDeLinea(nombre) {
+  const n = String(nombre || "").trim();
+  if (!n) return true;
+  return tokensInsumo(n).length === 0 && /\d/.test(n);
+}
+
+// Línea de descuento/oferta: no es algo comprado, es plata que se resta.
+const RE_LINEA_DESCUENTO = /^\s*(ofs|of|dto|dcto|desc|descuento|descuentos|bonif|bonificacion|ahorro|promo|promocion)\b/i;
+function esLineaDescuento(it) {
+  if (RE_LINEA_DESCUENTO.test(stripAccentsCosteo(String(it?.nombre || "")).trim())) return true;
+  const importe = Number(it?.importe), precio = Number(it?.precioUnitario);
+  return (Number.isFinite(importe) && importe < 0) || (Number.isFinite(precio) && precio < 0);
+}
+
+// La cantidad sale de la ARITMÉTICA, no de leer el número. cantidad = importe / precio unitario es
+// exacto y no depende de si el ticket usa coma o punto decimal: 66588,86 / 11191,40 da 5,95, sin
+// tener que adivinar si "5.950" son cinco mil novecientos cincuenta o cinco kilos con novecientos
+// cincuenta gramos. Es el mismo control que ya se le pide al modelo, pero garantizado.
+function corregirCantidadPorAritmetica(it) {
+  const importe = Math.abs(Number(it?.importe));
+  const precio = Math.abs(Number(it?.precioUnitario));
+  const cantidad = Number(it?.cantidad);
+  if (!(importe > 0) || !(precio > 0)) return it;
+  const cierra = (c) => Number.isFinite(c) && c > 0 && Math.abs(c * precio - importe) <= Math.max(importe * 0.01, 0.5);
+  if (cierra(cantidad)) return it;
+  const esperada = Math.round((importe / precio) * 1000) / 1000;
+  if (!(esperada > 0)) return it;
+  return { ...it, cantidad: esperada, cantidadOriginalIA: Number.isFinite(cantidad) ? cantidad : null };
+}
+
+// Junta las líneas que son el MISMO producto al MISMO precio unitario. Cubre dos casos distintos
+// con la misma regla: el ticket que lista el producto dos veces (las dos mermeladas de durazno,
+// las dos mayonesas) y la relectura por franjas, que con el solape puede traer la misma línea dos
+// veces. Se exige mismo precio unitario a propósito: dos precios distintos son dos cosas distintas
+// (otro tamaño, otra marca) y unirlas sería inventar.
+function consolidarItemsEscaneados(items) {
+  const out = [];
+  const porClave = new Map();
+  for (const it of items) {
+    const insumoId = it.insumoId && state.insumos[it.insumoId] ? it.insumoId : matchInsumoId(it.nombre);
+    const clave = [
+      insumoId || claveAliasInsumo(it.nombre),
+      Math.round((Number(it.precioUnitario) || 0) * 100),
+      normMarca(it.marca).toLowerCase()
+    ].join("|");
+    const yaEsta = porClave.get(clave);
+    if (yaEsta !== undefined) {
+      const prev = out[yaEsta];
+      prev.cantidad = (Number(prev.cantidad) || 0) + (Number(it.cantidad) || 0);
+      prev.importe = (Number(prev.importe) || 0) + (Number(it.importe) || 0);
+      prev.lineasUnidas = (prev.lineasUnidas || 1) + 1;
+    } else {
+      porClave.set(clave, out.length);
+      out.push({ ...it });
+    }
+  }
+  return out;
+}
+
+// Devuelve los ítems ya limpios más un detalle de qué se tocó, para poder mostrarlo: cambiar cosas
+// en silencio es lo que hace imposible darse cuenta de que algo se cargó mal.
+function normalizarItemsEscaneados(items) {
+  const crudos = Array.isArray(items) ? items.filter(Boolean) : [];
+  const cambios = { fragmentos: [], descuentos: [], cantidades: [], unidas: 0 };
+  let descuentos = 0;
+
+  const utiles = [];
+  for (const it of crudos) {
+    if (esLineaDescuento(it)) {
+      const monto = Math.abs(Number(it.importe) || Number(it.precioUnitario) || 0);
+      descuentos += monto;
+      cambios.descuentos.push({ nombre: it.nombre || "(sin nombre)", monto });
+      continue;
+    }
+    if (esFragmentoDeLinea(it.nombre)) {
+      cambios.fragmentos.push(String(it.nombre || "").trim());
+      continue;
+    }
+    const corregido = corregirCantidadPorAritmetica(it);
+    if (corregido.cantidadOriginalIA !== undefined) {
+      cambios.cantidades.push({ nombre: corregido.nombre, antes: corregido.cantidadOriginalIA, ahora: corregido.cantidad });
+    }
+    utiles.push(corregido);
+  }
+
+  const consolidados = consolidarItemsEscaneados(utiles);
+  cambios.unidas = utiles.length - consolidados.length;
+  return { items: consolidados, descuentos, cambios };
+}
+
+function avisoNormalizacionHtml(cambios, descuentos) {
+  const partes = [];
+  if (cambios.cantidades.length) {
+    partes.push(`<div>🔢 <strong>${cambios.cantidades.length} cantidad(es) corregidas</strong> porque no cerraban con el importe de la línea: ${cambios.cantidades.slice(0, 4).map(c => `${escapeHtml(c.nombre || "")} ${c.antes ?? "?"} → <strong>${c.ahora}</strong>`).join(", ")}${cambios.cantidades.length > 4 ? "…" : ""}</div>`);
+  }
+  if (cambios.unidas) partes.push(`<div>🔗 Se unieron <strong>${cambios.unidas} línea(s) repetidas</strong> del mismo producto al mismo precio.</div>`);
+  if (cambios.fragmentos.length) partes.push(`<div>✂️ Se descartaron <strong>${cambios.fragmentos.length} renglón(es) sueltos</strong> que eran solo el contador de piezas (${cambios.fragmentos.slice(0, 4).map(escapeHtml).join(", ")}).</div>`);
+  if (cambios.descuentos.length) partes.push(`<div>🏷️ <strong>${cambios.descuentos.length} línea(s) de descuento</strong> por ${fmtMoney(descuentos)} — van a "Otros cargos", no como productos comprados.</div>`);
+  if (!partes.length) return "";
+  return `<div class="item-note" style="margin:0 0 8px">🧹 <strong>Se ordenó el detalle leído:</strong>${partes.join("")}<div class="text-muted" style="font-size:11px;margin-top:4px">Revisá las filas de abajo antes de guardar.</div></div>`;
+}
 
 function aplicarDatosEscaneados(data) {
   // El modelo a veces declara un campo como ilegible y aun así devuelve un valor. Ese valor no es
@@ -1794,9 +1933,18 @@ function aplicarDatosEscaneados(data) {
     const deberiaEstarOn = data.preciosIncluyenIva === true;
     if (toggle && toggle.classList.contains("on") !== deberiaEstarOn) window.toggleIvaFactura(toggle);
   }
-  if (data.descuentos != null && !Number.isNaN(Number(data.descuentos)) && Number(data.descuentos) > 0) {
+  // El detalle se limpia ANTES de pintarlo: se descartan los renglones sueltos que son solo el
+  // contador de piezas, las líneas de descuento se suman aparte, las cantidades se corrigen con la
+  // aritmética de la propia línea y las repeticiones del mismo producto se unen.
+  const normalizado = normalizarItemsEscaneados(data.items);
+  data.items = normalizado.items;
+  state._ultimaNormalizacionEscaneo = { cambios: normalizado.cambios, descuentos: normalizado.descuentos };
+
+  // Los descuentos que la IA sí separó, más los que se detectaron en las líneas.
+  const descuentosTotal = Math.abs(Number(data.descuentos) || 0) + normalizado.descuentos;
+  if (descuentosTotal > 0) {
     const cargos = document.getElementById("f-cargos");
-    if (cargos && !cargos.value) cargos.value = -Math.abs(Number(data.descuentos));
+    if (cargos && !cargos.value) cargos.value = -descuentosTotal;
   }
 
   if (Array.isArray(data.items) && data.items.length) {
