@@ -251,7 +251,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-20 22:30";
+const APP_VERSION = "2026-08-20 23:15";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -334,6 +334,8 @@ const state = {
   insumosMergeNombreFinal: "",
   mostrarDuplicados: false,
   mostrarVariantesMarca: false,
+  mostrarProductosEnInsumos: false,
+  productosEnInsumosSeleccion: {},
   consultaPregunta: "",
   consultaCargando: false,
   consultaHistorial: [],
@@ -715,10 +717,13 @@ window.actualizarItemHint = function(precioInput) {
   row.querySelector(".item-hint").innerHTML = hint;
 };
 
-function itemRowHtml({ insumoId = "", nombre = "", precioUnitario = "", cantidad = "", unidad = "", importe = "", marca = "", contenidoPorUnidad = "" } = {}) {
+function itemRowHtml({ insumoId = "", nombre = "", precioUnitario = "", cantidad = "", unidad = "", importe = "", marca = "", contenidoPorUnidad = "", textoOriginal = "" } = {}) {
   const displayName = insumoId && state.insumos[insumoId] ? state.insumos[insumoId].nombre : (nombre || "");
+  // El texto TAL COMO VINO EN LA FACTURA se conserva aparte: en cuanto la línea matchea, el campo
+  // visible pasa a mostrar el nombre del catálogo y ese texto se perdería. Es justo el dato que
+  // hace falta para aprender el alias ("CREMA D/LECHE SEREN.X1L" -> Crema de leche).
   return `
-    <div class="item-row">
+    <div class="item-row" data-texto-original="${escapeHtml(textoOriginal || nombre || "")}">
       <div class="insumo-picker">
         <input type="hidden" class="item-insumo-id" value="${escapeHtml(insumoId)}">
         <input type="text" class="form-input item-insumo-search" autocomplete="off" placeholder="Buscar o crear insumo..."
@@ -800,17 +805,175 @@ window.addItemRow = function() {
   document.getElementById("items-container").insertAdjacentHTML("beforeend", itemRowHtml());
 };
 
+// =============================================================
+// RECONOCER UN INSUMO A PARTIR DEL TEXTO DE UNA FACTURA
+// =============================================================
+// Es el corazón del problema de los insumos repetidos. El proveedor imprime
+// "CREMA DE LECHE LA SERENISIMA X 1LT" y el sistema tiene cargado "Crema de leche": si no lo
+// reconoce, crea uno nuevo y hay que fusionarlos a mano. Y a la factura siguiente, otra vez.
+//
+// Tres capas, de la más confiable a la más dudosa:
+//  1. ALIAS aprendidos: el texto exacto que ya se resolvió antes para ese insumo. Un proveedor
+//     imprime siempre igual, así que esto resuelve el caso repetido sin margen de error.
+//  2. Nombre normalizado idéntico.
+//  3. Parecido por palabras significativas (Dice), sacando ruido de envase y tamaño.
+// Solo las dos primeras y un parecido MUY alto se aplican solas; el resto se pregunta.
+
+// Ruido de envase, tamaño y presentación: no dice qué producto es, solo cómo viene.
+const PALABRAS_ENVASE = new Set([
+  "x", "por", "caja", "cajas", "cja", "bulto", "bultos", "fardo", "fardos", "balde", "baldes",
+  "pack", "packs", "bidon", "bidones", "sachet", "sachets", "botella", "botellas", "frasco",
+  "frascos", "lata", "latas", "bolsa", "bolsas", "paquete", "paquetes", "paq", "pote", "potes",
+  "bandeja", "bandejas", "sobre", "sobres", "horma", "hormas", "pieza", "piezas", "rollo", "rollos",
+  "kg", "kgs", "gr", "grs", "g", "ml", "cc", "lt", "lts", "l", "litro", "litros",
+  "un", "uni", "unid", "unidad", "unidades", "u", "docena", "doc", "cm", "mts", "mt"
+]);
+// Palabras vacías que no aportan nada al parecido.
+const PALABRAS_VACIAS = new Set(["de", "del", "la", "el", "los", "las", "y", "a", "al"]);
+
+// Clave de ALIAS: el texto de la factura, normalizado lo justo para que no lo rompan mayúsculas,
+// acentos ni puntuación. Deliberadamente NO saca palabras: es una coincidencia exacta, y de ahí
+// que no tenga falsos positivos.
+function claveAliasInsumo(texto) {
+  return stripAccentsCosteo(String(texto || ""))
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Tokens significativos: sin acentos, sin puntuación, sin números ni medidas ni envases, y con
+// los plurales reducidos ("dulces de membrillo" y "dulce de membrillo" son lo mismo).
+function tokensInsumo(texto) {
+  const crudo = stripAccentsCosteo(String(texto || ""))
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  const out = [];
+  for (let t of crudo) {
+    if (/^\d/.test(t)) continue;                       // 1lt, 400, 25kg…
+    if (PALABRAS_ENVASE.has(t) || PALABRAS_VACIAS.has(t)) continue;
+    t = raizPalabra(t);
+    if (t.length < 2) continue;
+    out.push(t);
+  }
+  return out;
+}
+
+// Raíz aproximada, para que singular y plural den lo mismo. NO pretende ser el singular correcto
+// —"dulces" queda en "dulc", no en "dulce"— porque lo único que importa es que las dos formas
+// caigan en la MISMA raíz. Sacar solo la "s" fallaba con "panes"/"pan"; sacar "es" fallaba con
+// "dulces"/"dulce". Sacando la "s" y después la "e" final, los dos pares coinciden.
+function raizPalabra(t) {
+  if (t.length > 3 && t.endsWith("s")) t = t.slice(0, -1);
+  if (t.length > 3 && t.endsWith("e")) t = t.slice(0, -1);
+  return t;
+}
+
+// Coeficiente de Dice sobre los tokens: 1 = mismos tokens, 0 = ninguno en común. Tolera que la
+// factura traiga la marca de más ("crema leche serenisima" vs "crema leche" da 0,8).
+function parecidoTokens(a, b) {
+  const A = new Set(a), B = new Set(b);
+  if (!A.size || !B.size) return 0;
+  let comunes = 0;
+  for (const t of A) if (B.has(t)) comunes++;
+  return (2 * comunes) / (A.size + B.size);
+}
+
+// Dos productos que se distinguen JUSTAMENTE por su palabra de tipo no son el mismo: "Leche
+// entera" y "Leche descremada", "Queso rallado" y "Queso crema". Sin esta regla el parecido por
+// palabras los daría como candidatos, que es peor que no sugerir nada.
+function tiposIncompatibles(tokensA, tokensB) {
+  const tiposA = tokensA.filter(t => PALABRAS_TIPO_NO_MARCA.has(t));
+  const tiposB = tokensB.filter(t => PALABRAS_TIPO_NO_MARCA.has(t));
+  if (!tiposA.length || !tiposB.length) return false;
+  return !tiposA.some(t => tiposB.includes(t));
+}
+
+// Índice de alias: clave normalizada -> id de insumo. Se rearma cuando cambian los insumos.
+let _cacheAlias = null;
+function indiceAlias() {
+  if (_cacheAlias) return _cacheAlias;
+  const idx = new Map();
+  for (const [id, ins] of Object.entries(state.insumos)) {
+    // El propio nombre del insumo siempre es alias de sí mismo.
+    idx.set(claveAliasInsumo(ins.nombre), id);
+    for (const clave of Object.keys(ins.alias || {})) if (clave) idx.set(clave, id);
+  }
+  _cacheAlias = idx;
+  return idx;
+}
+function invalidarCacheAlias() { _cacheAlias = null; }
+
+// Devuelve { id, confianza, score, candidatos }.
+//   confianza "alias" | "alta"  -> se puede aplicar solo
+//   confianza "media"           -> hay que preguntar
+//   confianza null              -> no se parece a nada cargado
+const MATCH_UMBRAL_ALTA = 0.85;
+const MATCH_UMBRAL_MEDIA = 0.55;
+function buscarInsumoParaTexto(texto) {
+  const vacio = { id: "", confianza: null, score: 0, candidatos: [] };
+  const limpio = String(texto || "").trim();
+  if (!limpio) return vacio;
+
+  const clave = claveAliasInsumo(limpio);
+  const porAlias = indiceAlias().get(clave);
+  if (porAlias && state.insumos[porAlias]) {
+    const esNombrePropio = claveAliasInsumo(state.insumos[porAlias].nombre) === clave;
+    return { id: porAlias, confianza: esNombrePropio ? "alta" : "alias", score: 1, candidatos: [] };
+  }
+
+  const tokens = tokensInsumo(limpio);
+  if (!tokens.length) return vacio;
+
+  const puntuados = [];
+  const setTexto = new Set(tokens);
+  for (const [id, ins] of Object.entries(state.insumos)) {
+    const tokensIns = tokensInsumo(ins.nombre);
+    if (!tokensIns.length) continue;
+    if (tiposIncompatibles(tokens, tokensIns)) continue;
+    let score = parecidoTokens(tokens, tokensIns);
+    // El caso típico de la factura: trae el nombre del catálogo ENTERO más la marca y el envase
+    // ("CREMA DE LECHE LA SERENISIMA X 1LT" contra "Crema de leche"). Dice castiga esas palabras
+    // de más y lo dejaba en 0,8 — abajo del umbral—, así que se preguntaba algo obvio. Si el
+    // nombre del catálogo está contenido completo, eso pesa más que la cantidad de palabras extra.
+    // Se exige que el catálogo tenga al menos DOS palabras: con una sola, "Leche" se comería
+    // "LECHE DESCREMADA".
+    if (tokensIns.length >= 2 && tokensIns.every(t => setTexto.has(t))) score = Math.max(score, 0.95);
+    if (score >= MATCH_UMBRAL_MEDIA) puntuados.push({ id, score, nombre: ins.nombre });
+  }
+  puntuados.sort((a, b) => b.score - a.score || a.nombre.localeCompare(b.nombre));
+  if (!puntuados.length) return vacio;
+
+  const mejor = puntuados[0];
+  // Empate técnico entre dos insumos distintos: no se elige solo. Elegir "el primero" es
+  // exactamente cómo se creaban asociaciones equivocadas antes.
+  const hayEmpate = puntuados.length > 1 && Math.abs(puntuados[1].score - mejor.score) < 0.01;
+  const confianza = (mejor.score >= MATCH_UMBRAL_ALTA && !hayEmpate) ? "alta" : "media";
+  return { id: mejor.id, confianza, score: mejor.score, candidatos: puntuados.slice(0, 4) };
+}
+
+// Compatibilidad: los llamadores que solo quieren "el id o nada" reciben únicamente lo que se
+// puede aplicar sin preguntar. Lo dudoso se resuelve en el panel de confirmación, no en silencio.
 function matchInsumoId(nombre) {
-  if (!nombre) return "";
-  const n = nombre.trim().toLowerCase();
-  if (!n) return "";
-  const exact = Object.entries(state.insumos).find(([, ins]) => ins.nombre.trim().toLowerCase() === n);
-  if (exact) return exact[0];
-  const partial = Object.entries(state.insumos).find(([, ins]) => {
-    const insN = ins.nombre.trim().toLowerCase();
-    return insN.length > 2 && (n.includes(insN) || insN.includes(n));
-  });
-  return partial ? partial[0] : "";
+  const r = buscarInsumoParaTexto(nombre);
+  return (r.confianza === "alias" || r.confianza === "alta") ? r.id : "";
+}
+
+// Aprende que este texto de factura corresponde a este insumo. Es lo que hace que la próxima
+// factura del mismo proveedor no vuelva a crear un duplicado.
+async function aprenderAliasInsumo(insumoId, texto) {
+  const ins = state.insumos[insumoId];
+  const clave = claveAliasInsumo(texto);
+  if (!ins || !clave) return false;
+  if (clave === claveAliasInsumo(ins.nombre)) return false;   // ya matchea por nombre
+  if (ins.alias && ins.alias[clave]) return false;            // ya lo sabía
+  const alias = { ...(ins.alias || {}), [clave]: true };
+  await update(ref(db, `costeo/insumos/${insumoId}`), { alias });
+  state.insumos[insumoId] = { ...ins, alias };
+  invalidarCacheAlias();
+  return true;
 }
 
 function renderNuevaFacturaView(container) {
@@ -1179,7 +1342,11 @@ function catalogoParaEscaneo() {
   return Object.entries(state.insumos).map(([id, ins]) => ({
     id, nombre: ins.nombre, unidad: ins.unidad || "",
     contenidoPorUnidad: ins.contenidoPorUnidad || null,
-    ultimoPrecio: Math.round(precioEfectivoInsumo(id) * 100) / 100 || null
+    ultimoPrecio: Math.round(precioEfectivoInsumo(id) * 100) / 100 || null,
+    // Cómo lo escribieron las facturas anteriores. Es la mejor pista que se le puede dar a la IA:
+    // le muestra el texto real del proveedor, no el nombre prolijo del catálogo. Se mandan pocos
+    // para no inflar el pedido — el reconocimiento por alias del cliente igual los usa todos.
+    alias: Object.keys(ins.alias || {}).slice(0, 4)
   }));
 }
 
@@ -1631,6 +1798,7 @@ function aplicarDatosEscaneados(data) {
       return itemRowHtml({
         insumoId: matchedId || "",
         nombre: it.nombre || "",
+        textoOriginal: it.nombre || "",
         precioUnitario: it.precioUnitario ?? "",
         cantidad: it.cantidad ?? "",
         unidad: it.unidad ?? "",
@@ -1953,6 +2121,72 @@ function descripcionFacturaDuplicada(dup) {
   return `${d.proveedorNombre || "—"} · ${d.numeroFactura ? "N° " + d.numeroFactura : "sin N°"} · ${fmtDate(d.fecha)} · ${fmtMoney(d.montoTotal)}`;
 }
 
+// =============================================================
+// ANTES DE CREAR UN INSUMO NUEVO: PREGUNTAR
+// =============================================================
+// Guardar una factura creaba en silencio un insumo por cada línea que no matcheaba. Ahí nacían
+// los repetidos —"Crema de leche" y "CREMA DE LECHE LA SERENISIMA X1L"— y la única salida era
+// fusionarlos a mano, factura tras factura. Ahora, si la línea se parece a algo ya cargado, se
+// muestra antes de guardar y se decide una vez: si es el mismo, se aprende el alias y no vuelve a
+// preguntar nunca más por ese texto.
+function filasSinInsumoConCandidatos() {
+  const pendientes = [];
+  for (const row of document.querySelectorAll("#items-container .item-row")) {
+    if ((row.querySelector(".item-insumo-id")?.value || "").trim()) continue;
+    const texto = (row.querySelector(".item-insumo-search")?.value || "").trim();
+    const precio = parseFloat(row.querySelector(".item-precio")?.value);
+    if (!texto || !(precio > 0)) continue;          // esas líneas no se guardan igual
+    if (row.dataset.crearNuevo === "1") continue;   // el usuario ya dijo que es nuevo
+    const r = buscarInsumoParaTexto(texto);
+    if (r.candidatos.length) pendientes.push({ row, texto, candidatos: r.candidatos });
+  }
+  return pendientes;
+}
+
+function mostrarConfirmacionInsumosNuevos(pendientes) {
+  const cont = document.getElementById("escaneo-pendientes");
+  if (!cont) return;
+  const bloques = pendientes.map((p, i) => {
+    const opciones = p.candidatos.map(c =>
+      `<button type="button" class="btn btn-turq btn-sm" onclick="resolverInsumoNuevo(${i}, '${c.id}')">Es «${escapeHtml(state.insumos[c.id]?.nombre || "")}»</button>`).join(" ");
+    return `<div class="item-warn" style="margin:0 0 8px">
+      📦 En la factura dice <strong>«${escapeHtml(p.texto)}»</strong>. ¿Es un insumo que ya tenés?
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        ${opciones}
+        <button type="button" class="btn btn-ghost btn-sm" onclick="resolverInsumoNuevo(${i}, '')">No, es uno nuevo</button>
+      </div>
+    </div>`;
+  }).join("");
+  cont.innerHTML = `<div class="section-block" style="border-color:var(--terra);margin-bottom:14px">
+    <div class="section-title" style="margin-bottom:10px">🧐 Antes de guardar: ${pendientes.length} línea(s) crearían un insumo nuevo</div>
+    ${bloques}
+    <div class="text-muted" style="font-size:11px">Si elegís uno que ya tenés, el sistema se acuerda de este texto: la próxima factura de este proveedor lo va a reconocer solo, sin volver a preguntar ni crear un repetido.</div>
+  </div>`;
+  try { cont.scrollIntoView({ behavior: "smooth", block: "center" }); } catch {}
+}
+
+// Se guarda la lista viva para que los botones del panel puedan tocar la fila que corresponde.
+let _pendientesInsumosNuevos = [];
+window.resolverInsumoNuevo = function(indice, insumoId) {
+  const p = _pendientesInsumosNuevos[indice];
+  if (!p) return;
+  if (insumoId && state.insumos[insumoId]) {
+    p.row.querySelector(".item-insumo-id").value = insumoId;
+    p.row.querySelector(".item-insumo-search").value = state.insumos[insumoId].nombre;
+    // El texto de la factura queda anotado en la fila; el alias se aprende al guardar, cuando ya
+    // se sabe que la factura efectivamente se registró.
+    p.row.dataset.textoOriginal = p.texto;
+  } else {
+    p.row.dataset.crearNuevo = "1";
+  }
+  _pendientesInsumosNuevos = filasSinInsumoConCandidatos();
+  if (_pendientesInsumosNuevos.length) mostrarConfirmacionInsumosNuevos(_pendientesInsumosNuevos);
+  else {
+    document.getElementById("escaneo-pendientes").innerHTML = "";
+    showToast("✅ Listo. Ya podés guardar la factura.", "success");
+  }
+};
+
 window.guardarFactura = async function() {
   const proveedorSel = document.getElementById("f-proveedor").value;
   const proveedorNombreNuevo = document.getElementById("f-proveedor-nombre-nuevo").value.trim();
@@ -1984,6 +2218,16 @@ window.guardarFactura = async function() {
       ? "⚠️ Esta factura YA ESTÁ CARGADA:"
       : "⚠️ Esta factura podría estar cargada ya:";
     if (!confirm(`${encabezado}\n\n${descripcionFacturaDuplicada(duplicada)}\nCoincide por: ${duplicada.motivo}.\n\n¿Guardarla igual? (si de verdad es otra factura distinta, confirmá)`)) return;
+  }
+
+  // Puerta contra los insumos repetidos: si alguna línea va a crear un insumo nuevo y se parece a
+  // uno que ya existe, se pregunta ANTES de escribir nada. Solo se interrumpe cuando hay algo
+  // parecido que mirar — una línea genuinamente nueva no molesta a nadie.
+  _pendientesInsumosNuevos = filasSinInsumoConCandidatos();
+  if (_pendientesInsumosNuevos.length) {
+    mostrarConfirmacionInsumosNuevos(_pendientesInsumosNuevos);
+    showToast(`🧐 ${_pendientesInsumosNuevos.length} línea(s) se parecen a insumos que ya tenés — revisalas y guardá de nuevo.`, "warn");
+    return;
   }
 
   const saveBtn = document.getElementById("guardar-factura-btn");
@@ -2028,6 +2272,10 @@ window.guardarFactura = async function() {
       // recetas (que usan kg, litros, unidades) queda en la misma escala.
       const precioUnitario = contenidoPorUnidad && contenidoPorUnidad > 0 ? precioLinea / contenidoPorUnidad : precioLinea;
 
+      // El texto tal como venía en la factura, para poder aprender el alias. Si la fila fue
+      // resuelta a mano en el panel, ahí quedó anotado; si no, es lo que escribió el escaneo.
+      const textoFactura = (row.dataset.textoOriginal || "").trim() || nombreTyped;
+
       let insumoId = insumoIdSel;
       let nombre;
       if (!insumoId) {
@@ -2036,8 +2284,12 @@ window.guardarFactura = async function() {
         nombre = nombreTyped;
         await set(newInsRef, { nombre, unidad: "", creadoTs: Date.now() });
         state.insumos[insumoId] = { nombre, unidad: "" };
+        invalidarCacheAlias();
       } else {
         nombre = state.insumos[insumoId]?.nombre || nombreTyped;
+        // Acá está el aprendizaje: esta línea de factura corresponde a este insumo. La próxima vez
+        // que el proveedor imprima el mismo texto se reconoce solo, y deja de haber que fusionar.
+        if (textoFactura) await aprenderAliasInsumo(insumoId, textoFactura);
       }
       const resultadoPrecio = await actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, precio: precioUnitario, marca, fecha, conIva: preciosConIva, facturaId });
       if (resultadoPrecio && !resultadoPrecio.referenciaActualizada) {
@@ -2917,6 +3169,105 @@ function buscarVariantesMarca() {
   return Object.values(grupos).filter(items => items.length >= 2);
 }
 
+// =============================================================
+// INSUMOS QUE EN REALIDAD SON PRODUCTOS
+// =============================================================
+// Se cuelan solos: el escaneo de una factura crea un insumo por cada línea, y las facturas de
+// panadería/pastelería traen productos terminados que se compran para revender (medialunas,
+// facturas, budines). Quedan mezclados con la materia prima, ensucian el buscador de recetas y no
+// se les puede poner precio de venta ni margen, porque eso vive en Productos.
+const PALABRAS_PRODUCTO_TERMINADO = new Set([
+  "medialuna", "medialunas", "factura", "facturas", "criollo", "criollos", "cañoncito", "canoncito",
+  "canoncitos", "cañoncitos", "vigilante", "vigilantes", "sacramento", "sacramentos",
+  "bizcocho", "bizcochos", "bizcochuelo", "torta", "tortas", "tarta", "tartas", "tartaleta",
+  "tartaletas", "budin", "budines", "alfajor", "alfajores", "brownie", "brownies", "cookie",
+  "cookies", "galleta", "galletas", "galletita", "galletitas", "muffin", "muffins", "cupcake",
+  "cupcakes", "scone", "scones", "pastafrola", "pionono", "piononos", "rogel", "cheesecake",
+  "lemon", "chipa", "chipas", "palmerita", "palmeritas", "palmera", "palmeras",
+  "pan", "panes", "baguette", "baguettes", "pebete", "pebetes", "figazza", "figaza", "mignon",
+  "mignones", "sandwich", "sandwiches", "sanguche", "sanguches", "ciabatta", "ciabattas",
+  "empanada", "empanadas", "tostado", "tostados", "torta", "postre", "postres", "flan", "flanes",
+  "mousse", "cañon", "masita", "masitas", "pasta", "pastas", "pastel", "pasteles", "trufa", "trufas"
+]);
+
+// Palabras que delatan que, aunque suene a producto, es materia prima ("harina para pan",
+// "premezcla de bizcochuelo", "esencia de vainilla"). Sin esto la sugerencia sería ruidosa.
+const PALABRAS_MATERIA_PRIMA = new Set([
+  "harina", "premezcla", "premezclas", "mejorador", "esencia", "esencias", "colorante",
+  "colorantes", "levadura", "polvo", "aditivo", "aditivos", "mix", "base", "bases", "masa", "masas",
+  "relleno", "rellenos", "cobertura", "coberturas", "bano", "molde", "moldes", "papel", "bandeja",
+  "caja", "cajas", "bolsa", "bolsas", "envase", "envases", "servilleta", "servilletas"
+]);
+
+// Un insumo se propone como producto solo si además NO participa en ninguna receta y no es una
+// base: si algo se usa para elaborar, es materia prima por definición, se llame como se llame.
+function buscarInsumosQueSonProductos() {
+  const usadosEnRecetas = new Set();
+  for (const p of Object.values(state.productos)) for (const k of Object.keys(p.receta || {})) usadosEnRecetas.add(k);
+  for (const ins of Object.values(state.insumos)) for (const k of Object.keys(ins.receta || {})) usadosEnRecetas.add(k);
+
+  const out = [];
+  for (const [id, ins] of objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))) {
+    if (esBaseInsumo(ins)) continue;
+    if (usadosEnRecetas.has(id)) continue;
+    const tokens = tokensInsumo(ins.nombre);
+    if (tokens.some(t => PALABRAS_MATERIA_PRIMA.has(t))) continue;
+    const motivo = tokens.find(t => PALABRAS_PRODUCTO_TERMINADO.has(t));
+    if (!motivo) continue;
+    out.push({ id, ins, motivo, costo: precioEfectivoInsumo(id) });
+  }
+  return out;
+}
+
+window.toggleBuscarProductosEnInsumos = function() {
+  state.mostrarProductosEnInsumos = !state.mostrarProductosEnInsumos;
+  state.productosEnInsumosSeleccion = {};
+  render();
+};
+window.toggleSeleccionProductoEnInsumo = function(id) {
+  const sel = { ...state.productosEnInsumosSeleccion };
+  if (sel[id]) delete sel[id]; else sel[id] = true;
+  state.productosEnInsumosSeleccion = sel;
+  render();
+};
+window.seleccionarTodosProductosEnInsumos = function() {
+  const todos = buscarInsumosQueSonProductos();
+  const yaTodos = todos.length && todos.every(x => state.productosEnInsumosSeleccion[x.id]);
+  state.productosEnInsumosSeleccion = yaTodos ? {} : Object.fromEntries(todos.map(x => [x.id, true]));
+  render();
+};
+
+// Mueve en lote. El costo conocido del insumo pasa a ser el costo del producto de reventa, así
+// el precio sugerido sale bien de entrada (modelo PLU: costo sin IVA + impuestos + ganancia).
+window.moverInsumosAProductos = async function() {
+  const ids = Object.keys(state.productosEnInsumosSeleccion).filter(id => state.insumos[id]);
+  if (!ids.length) { showToast("⚠️ No hay ninguno seleccionado.", "warn"); return; }
+  const nombres = ids.map(id => state.insumos[id].nombre);
+  if (!confirm(`¿Mover ${ids.length} insumo(s) a Productos?\n\n${nombres.slice(0, 12).join("\n")}${ids.length > 12 ? `\n…y ${ids.length - 12} más` : ""}\n\nSe crean como productos de reventa con el costo que ya tenían, y se eliminan de Insumos.`)) return;
+
+  let movidos = 0;
+  for (const id of ids) {
+    const ins = state.insumos[id];
+    const costo = precioEfectivoInsumo(id);
+    await set(push(ref(db, "costeo/productos")), {
+      nombre: ins.nombre, categoria: "Reventa", precioVenta: null, receta: {},
+      // El costo se guarda SIN IVA porque es lo que el modelo de retail espera; el IVA se le suma
+      // después con la alícuota del producto.
+      costoSinIva: costo > 0 ? costo : null,
+      ivaPct: RETAIL_IVA_PCT, gananciaPct: RETAIL_GANANCIA_PCT,
+      creadoTs: Date.now()
+    });
+    await remove(ref(db, `costeo/insumos/${id}`));
+    delete state.insumos[id];
+    movidos++;
+  }
+  state.productosEnInsumosSeleccion = {};
+  state.mostrarProductosEnInsumos = false;
+  invalidarCacheCosteo();
+  showToast(`✅ ${movidos} insumo(s) movidos a Productos. Ponéles el precio de venta desde ahí.`, "success");
+  render();
+};
+
 window.toggleBuscarVariantesMarca = function() {
   state.mostrarVariantesMarca = !state.mostrarVariantesMarca;
   render();
@@ -3053,8 +3404,24 @@ window.fusionarInsumos = async function(idsSeleccionados, survivorId, marcasPorI
   const precioActual = proveedorPreferido ? (precios[proveedorPreferido]?.precio ?? 0) : (survivor.precioActual || 0);
   const nombreFinalLimpio = String(nombreFinal || "").trim();
 
+  // Fusionar ENSEÑA. El que queda hereda los alias de los absorbidos y, sobre todo, sus NOMBRES
+  // pasan a ser alias suyos. Es lo que hace que el trabajo de fusionar no haya que repetirlo: la
+  // próxima factura que traiga el texto del insumo absorbido cae directo en el que quedó, en vez
+  // de crear otra vez el repetido que se acaba de eliminar.
+  const alias = { ...(survivor.alias || {}) };
+  const sumarAlias = (texto) => { const k = claveAliasInsumo(texto); if (k) alias[k] = true; };
+  sumarAlias(survivor.nombre);
+  for (const id of others) {
+    const o = state.insumos[id] || {};
+    sumarAlias(o.nombre);
+    for (const k of Object.keys(o.alias || {})) if (k) alias[k] = true;
+  }
+  // El nombre definitivo no necesita ser alias de sí mismo (ya matchea por nombre).
+  if (nombreFinalLimpio) delete alias[claveAliasInsumo(nombreFinalLimpio)];
+  else delete alias[claveAliasInsumo(survivor.nombre)];
+
   await update(ref(db, `costeo/insumos/${survivorId}`), {
-    precios, historial, precioActual, actualizadoTs: Date.now(),
+    precios, historial, precioActual, alias, actualizadoTs: Date.now(),
     ...(proveedorPreferido ? { proveedorPreferido } : {}),
     ...(nombreFinalLimpio ? { nombre: nombreFinalLimpio } : {})
   });
@@ -3125,9 +3492,10 @@ function mantenimientoCostosProductos() {
 function renderInsumosView(container) {
   const editing = state.editingInsumoId;
   const editingData = editing && editing !== "new" ? (state.insumos[editing] || {}) : {};
-  if (state.insumosMergeMode || state.mostrarDuplicados || state.mostrarVariantesMarca || state.viewingInsumoHistId) state.formOpen = true;
+  if (state.insumosMergeMode || state.mostrarDuplicados || state.mostrarVariantesMarca || state.mostrarProductosEnInsumos || state.viewingInsumoHistId) state.formOpen = true;
   const duplicados = state.mostrarDuplicados ? buscarInsumosDuplicados() : [];
   const variantesMarca = state.mostrarVariantesMarca ? buscarVariantesMarca() : [];
+  const productosEnInsumos = state.mostrarProductosEnInsumos ? buscarInsumosQueSonProductos() : [];
   mantenimientoBases();
   // Para el formulario de "agregar otro proveedor/marca" que se abre dentro de cada insumo — no
   // hace falta fusionar nada para que un insumo tenga varias líneas proveedor+marca, se cargan
@@ -3294,7 +3662,7 @@ function renderInsumosView(container) {
         <div class="page-title">Insumos</div>
         <div class="page-sub" style="margin-bottom:0">Precio actual e historial de cada insumo.</div>
       </div>
-      ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${state.mostrarDuplicados ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarDuplicados()">${state.mostrarDuplicados ? "✕ Cerrar búsqueda" : "🔍 Buscar posibles duplicados"}</button><button class="btn ${state.mostrarVariantesMarca ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarVariantesMarca()">${state.mostrarVariantesMarca ? "✕ Cerrar búsqueda" : "🏷️ Detectar variantes de marca"}</button><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar" : "🔀 Agrupar insumos a mano"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
+      ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${state.mostrarDuplicados ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarDuplicados()">${state.mostrarDuplicados ? "✕ Cerrar búsqueda" : "🔍 Buscar posibles duplicados"}</button><button class="btn ${state.mostrarVariantesMarca ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarVariantesMarca()">${state.mostrarVariantesMarca ? "✕ Cerrar búsqueda" : "🏷️ Detectar variantes de marca"}</button><button class="btn ${state.mostrarProductosEnInsumos ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarProductosEnInsumos()">${state.mostrarProductosEnInsumos ? "✕ Cerrar búsqueda" : "🍞 Insumos que son productos"}</button><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar" : "🔀 Agrupar insumos a mano"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
     </div>
     ${formHtml}
     ${!editing ? buscadorHtml(state.insumosBusqueda, "Buscar por nombre, proveedor o marca...", "setInsumosBusqueda") : ""}
@@ -3313,6 +3681,28 @@ function renderInsumosView(container) {
                 <button class="btn btn-turq btn-sm" onclick="fusionarDesdeSugerencia('${d.idA}','${d.idB}')">Revisar y fusionar</button>
               </div>`).join("")}
           </div>` : `<div class="empty-state">No se encontraron posibles duplicados por ahora.</div>`}
+      </div>` : ""}
+    ${state.mostrarProductosEnInsumos ? `
+      <div class="section-block">
+        <div class="section-title" style="margin-bottom:10px">🍞 Insumos que parecen productos terminados</div>
+        ${productosEnInsumos.length ? `
+          <div class="text-muted" style="margin-bottom:12px">Cosas que se compran <strong>ya hechas para vender</strong> (medialunas, budines, panes) y quedaron cargadas como insumo — el escaneo de facturas crea un insumo por cada línea, así que se cuelan solas. Como productos podés ponerles precio de venta y ver el margen; como insumos, no. Solo se listan los que <strong>no se usan en ninguna receta</strong> y no son bases: si algo se usa para elaborar, es materia prima aunque se llame "pan". Revisá la lista — es una sugerencia, no se mueve nada sin que lo confirmes.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <button class="btn btn-ghost btn-sm" onclick="seleccionarTodosProductosEnInsumos()">Seleccionar todos (${productosEnInsumos.length})</button>
+            <button class="btn btn-primary btn-sm" onclick="moverInsumosAProductos()">➡️ Mover ${Object.keys(state.productosEnInsumosSeleccion).length || ""} a Productos</button>
+          </div>
+          <div class="card-list">
+            ${productosEnInsumos.map(x => `
+              <div class="mini-card">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1">
+                  <input type="checkbox" ${state.productosEnInsumosSeleccion[x.id] ? "checked" : ""} onchange="toggleSeleccionProductoEnInsumo('${x.id}')">
+                  <span>
+                    <span class="mini-card-title">${escapeHtml(x.ins.nombre)}</span>
+                    <span class="mini-card-sub">${fmtMoney(x.costo)} · se detectó por "${escapeHtml(x.motivo)}"</span>
+                  </span>
+                </label>
+              </div>`).join("")}
+          </div>` : `<div class="empty-state">No se encontraron insumos que parezcan productos terminados.</div>`}
       </div>` : ""}
     ${state.mostrarVariantesMarca ? `
       <div class="section-block">
@@ -3544,7 +3934,7 @@ function precioCosteoInsumo(ins) {
 // lentitud en Productos y Recetas. El cache se limpia solo cuando cambian insumos o productos,
 // así que nunca puede quedar mostrando un costo viejo.
 let _cacheCosteo = new Map();
-function invalidarCacheCosteo() { _cacheCosteo = new Map(); _cacheOpcionesReceta = new Map(); }
+function invalidarCacheCosteo() { _cacheCosteo = new Map(); _cacheOpcionesReceta = new Map(); invalidarCacheAlias(); }
 
 function precioEfectivoInsumo(insumoId, visiting) {
   const ins = state.insumos[insumoId];

@@ -99,6 +99,9 @@ exports.handler = async (event) => {
         if (it.unidad) partes.push(`unidad: ${it.unidad}`);
         if (it.contenidoPorUnidad) partes.push(`contenido por unidad: ${it.contenidoPorUnidad}`);
         if (it.ultimoPrecio) partes.push(`último precio conocido: ${it.ultimoPrecio}`);
+        // Cómo lo escribieron facturas anteriores. Es la pista más fuerte que hay para matchear:
+        // muestra el texto real que imprime el proveedor, no el nombre prolijo del catálogo.
+        if (Array.isArray(it.alias) && it.alias.length) partes.push(`en facturas aparece como: ${it.alias.join(" / ")}`);
         return partes.join(" · ");
       })
       .join("\n");
