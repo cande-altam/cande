@@ -8,8 +8,10 @@ producción, y para el cruce posterior contra facturas de compra y los reportes 
 | Archivo | Qué es |
 |---|---|
 | `crear_en_sheets.gs` | **Apps Script que construye la planilla en Google Sheets.** Es el camino principal. |
-| `Control_Stock_Semanal_Candela.xlsx` | El mismo relevamiento en Excel. Sirve para **imprimir las planillas en papel** (trae la configuración de impresión lista) y trae además el análisis autocontenido. |
-| `generar_planillas.py` | Genera el `.xlsx` desde el catálogo real de la app. |
+| `clasificar_insumos.py` | Unifica las variantes de nombre y clasifica cada insumo como central o por área. |
+| `verificar_apps_script.js` | Corre el Apps Script contra un mock de `SpreadsheetApp` para validarlo sin Google. |
+| `Control_Stock_Semanal_Candela.xlsx` | ⚠️ **DESACTUALIZADO.** Quedó con la lista sin deduplicar, semana de lunes a domingo y una sola semana. No usar sin regenerarlo. |
+| `generar_planillas.py` | Genera el `.xlsx` (también desactualizado). |
 
 ## Crear la planilla en Google Sheets
 
@@ -25,7 +27,33 @@ El script se niega a ejecutarse si la hoja ya tiene pestañas de la planilla, pa
 pisar datos cargados. Si hay que rehacerla, correrlo en una hoja nueva.
 
 > Esa planilla es **solo de carga**: no lleva hojas de análisis, porque la comparación
-> (stock inicial + compras − ventas − stock final) se hace aparte sobre estos datos.
+> se hace aparte sobre estos datos.
+
+## Alcance de la medición
+
+Dos semanas, de **martes a lunes**: del **01/09 al 07/09** y del **22/09 al 28/09**.
+
+Los dos resultados que se buscan:
+
+- **Consumo real por insumo** = stock inicial + compras − stock final.
+- **Diferencia por producto** = elaborado − vendido − consumo interno − descarte.
+
+## Deduplicación de insumos
+
+La lista pasó de 159 filas a **134** (111 insumos distintos). Dos cambios:
+
+1. **Variantes de escritura unificadas** — `Frutilla` / `Frutillas` / `Frutilla x kg` → `Frutilla`;
+   `Tomates` / `Tomate x kg` → `Tomate`; y así con arándanos, kiwi, palta, ciruela, banana,
+   jengibre, rúcula y tomate cherry. **No** se fusionaron `Harina 000` con `Harina 0000`,
+   `Durazno` con `Durazno al natural`, ni `Albahaca` con `Albahaca hidropónica`: son productos
+   distintos.
+2. **Alcance por insumo** — los secos de depósito (harina, azúcar, huevos, grasa, chocolate)
+   se cuentan **una sola vez**; los perecederos que cada área guarda en su heladera (manteca,
+   crema, quesos, fiambres, fruta) se cuentan **por área**. Así Azúcar deja de aparecer 4 veces
+   y Manteca 3. Los críticos bajaron de 62 a **51**.
+
+La columna `ALCANCE` de la pestaña `Insumos` es editable: si un insumo está clasificado mal,
+se corrige ahí.
 
 ## Regenerar el libro
 
