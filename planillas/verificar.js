@@ -71,7 +71,7 @@ global.SpreadsheetApp={
   BorderStyle:{SOLID:'solid'},
   getUi:()=>({alert(a,b,c){return respuesta;},ButtonSet:{YES_NO:'yn'},Button:{YES:'YES',NO:'NO'}})
 };
-const src=require('fs').readFileSync('/home/user/cande/../planillas/planilla_candela.gs','utf8');
+const src=require('fs').readFileSync(require('path').join(__dirname,'planilla_candela.gs'),'utf8');
 eval(src);
 
 console.log('--- 1) crearPlanilla() en hoja vacia ---');
