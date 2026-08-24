@@ -1,0 +1,6910 @@
+{
+  "-Oy3x7UYs0WNbAUIhem7": {
+    "actualizadoTs": 1784738843812,
+    "historial": {
+      "-Oy3x7YutwWEZ_xtYIgB": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 20006.6966,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iO2S5GIHWSWCn2jC": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 19911.6632,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Propionato de calcio",
+    "precioActual": 19911.6632,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738843812,
+        "precio": 19911.6632,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3x8ItOmR0AxgGZ4RZ": {
+    "actualizadoTs": 1784738779285,
+    "historial": {
+      "-Oy3x8MEsmuUMkPHiCeA": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2257.543,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9i8ILWvRjhvorJM4o": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2453.4359,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Almidon de maiz",
+    "precioActual": 2453.4359,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738779285,
+        "precio": 2453.4359,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3x8QurzmWxfyOUakx": {
+    "actualizadoTs": 1787580790023,
+    "alertaBaja": {
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 0.9047581003627279,
+      "precioNuevo": 3212.5299999999997,
+      "precioReferencia": 3241.861,
+      "proveedorNombre": "La Rotonda"
+    },
+    "alias": {
+      "aceite canuelas x 5 lt girasol": true
+    },
+    "contenidoPorUnidad": 5,
+    "historial": {
+      "-Oy3x8UEn7APigSh-eo1": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3227.3827,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9i7ZP5pGKeTrK-CVz": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 3241.861,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Aceite de girasol",
+    "precioActual": 3241.861,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1787580790023,
+        "fechaUltimo": "2026-07-22",
+        "marca": "",
+        "origen": "compra",
+        "precio": 3241.861,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "litros"
+  },
+  "-Oy3x8XVuSn6ogswg5kh": {
+    "actualizadoTs": 1784738776921,
+    "historial": {
+      "-Oy3x8b2dMZ6gHHMVUTQ": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 11935,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9i7iUl7Fhbv7IaI54": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 28116.0204,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Aceite de oliva",
+    "precioActual": 28116.0204,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738776921,
+        "precio": 28116.0204,
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "litros"
+  },
+  "-Oy3x8eIS2dWwC8d-cgM": {
+    "actualizadoTs": 1784992573202,
+    "historial": {
+      "-Oy3x8hfC3FP16OduC4U": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Fórmula 1",
+        "precio": 7030.054,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9i7lsSpfeqmM1rnsk_-Oy9i7p9DtEaH7EgQOeZ": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6068.9994,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Aditivo",
+    "precioActual": 6068.9994,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738777359,
+        "marca": "",
+        "precio": 6068.9994,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3x8mI91fKM_FeThn2": {
+    "actualizadoTs": 1784738778205,
+    "historial": {
+      "-Oy9i81XIbj7maKZKczU": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 5000,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "nombre": "Albahaca",
+    "precioActual": 5000,
+    "precios": {
+      "-Oy9i7sX4WQLLHbd5dNR": {
+        "actualizadoTs": 1784738778205,
+        "precio": 5000,
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "proveedorPreferido": "-Oy9i7sX4WQLLHbd5dNR",
+    "unidad": "kg"
+  },
+  "-Oy3x93Bp8brbU2d3beW": {
+    "actualizadoTs": 1784642051929,
+    "nombre": "Anana",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3x96grG0KR0rp521P": {
+    "actualizadoTs": 1784738779943,
+    "historial": {
+      "-Oy3x9AtFJa6QvjRJP8X": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3567.8148,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9i8SamNnPwOO27Lgz": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 3567.8148,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Anana en lata",
+    "precioActual": 3567.8148,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738779943,
+        "precio": 3567.8148,
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3x9E9drOB9z9BSa9E": {
+    "actualizadoTs": 1784642052631,
+    "nombre": "Arandanos",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3x9HQEub9NhojDyGj": {
+    "actualizadoTs": 1784738780582,
+    "historial": {
+      "-Oy3x9M5lSPgEjijPxvf": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6561.1,
+        "proveedorId": "",
+        "proveedorNombre": "Milenium"
+      },
+      "-Oy9i8bbjiSDXIkPeEa0": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6561.1,
+        "proveedorId": "-Oy3x6_YT0XO-LGdauVw",
+        "proveedorNombre": "Milenium"
+      }
+    },
+    "nombre": "Arandanos congelados",
+    "precioActual": 6561.1,
+    "precios": {
+      "-Oy3x6_YT0XO-LGdauVw": {
+        "actualizadoTs": 1784738780582,
+        "precio": 6561.1,
+        "proveedorNombre": "Milenium"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6_YT0XO-LGdauVw",
+    "unidad": "kg"
+  },
+  "-Oy3x9PMQUSkubz_0YEc": {
+    "actualizadoTs": 1784738781214,
+    "historial": {
+      "-Oy3x9SYs6Mf0TTS1PiR": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2649.7064,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9i8lawiDnDI0K2Qpr": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2649.7064,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Avena",
+    "precioActual": 2649.7064,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738781214,
+        "precio": 2649.7064,
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3x9kh6pE8yk5lup89": {
+    "actualizadoTs": 1787343297876,
+    "historial": {
+      "-Oy3x9cn9TVnWdHRjSt8_-Oy3x9g2F5eIiIT27-ar": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Ledesma",
+        "precio": 907.6552,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3x9nzFhuqKJDh3SZJ": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Ledesma",
+        "precio": 680,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9i8vn-Axf-1XslaZQ_-Oy9i8z510_wD0m4W9de": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 907.6552,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Azucar x 1 kg",
+    "precioActual": 907.6552,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738782090,
+        "marca": "",
+        "precio": 907.6552,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3x9rICiM4Ag4c7ZKp": {
+    "actualizadoTs": 1787416354728,
+    "alertaPrecio": {
+      "abrupta": true,
+      "fecha": "2026-08-20",
+      "marca": "Doña Bertina",
+      "pct": 878.017,
+      "precioAnterior": 1000,
+      "precioNuevo": 9780.17,
+      "proveedorNombre": "La Rotonda"
+    },
+    "historial": {
+      "-Oy3x9Vi4QfqmBjZKrFA_-Oy3x9_VJT2JMqufBbI-": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Leach",
+        "precio": 999.9999,
+        "proveedorId": "",
+        "proveedorNombre": "Casa Naoum"
+      },
+      "-Oy3x9vtmPMCgLf1N4bk": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 578.7838,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9i8p19UW8cwlgK4xq_-Oy9i8sT8x7DpM7L-Zyi": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Rio Grande",
+        "precio": 1000,
+        "proveedorId": "-Oy3x5U5rkDaNIAPsni2",
+        "proveedorNombre": "Casa Naoum"
+      },
+      "-Oy9i989aJBqY64mBt6w": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 578.7838,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Azúcar x 50 kg",
+    "precioActual": 1000,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1787416354727,
+        "fechaUltimo": "2026-07-22",
+        "marca": "",
+        "precio": 578.7838,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x5U5rkDaNIAPsni2::rio grande": {
+        "actualizadoTs": 1787416354727,
+        "fechaUltimo": "2026-07-22",
+        "marca": "Rio Grande",
+        "precio": 1000,
+        "proveedorId": "-Oy3x5U5rkDaNIAPsni2",
+        "proveedorNombre": "Casa Naoum"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd::dzero",
+    "unidad": "kg"
+  },
+  "-Oy3xAFhIDdR6mgbHtsx": {
+    "actualizadoTs": 1784738784440,
+    "historial": {
+      "-Oy3xAIzV54dxOkwD2ax": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1178,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9i9YvPKeOxPpd4kGb": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 1542.7984,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Azucar mascabo",
+    "precioActual": 1542.7984,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738784440,
+        "precio": 1542.7984,
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3xAMF3_uj9WeimtAv": {
+    "actualizadoTs": 1787343192559,
+    "historial": {
+      "-Oy3xAQvzulN14r95A13": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "— Cofrutos",
+        "precio": 166.6667,
+        "proveedorId": "",
+        "proveedorNombre": "Cofrutos"
+      },
+      "-Oy3xAUIGkTZ54Ah1DyV_-Oy3xAYyyxnvuNAGPPq5": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "— paquete docena",
+        "precio": 1800,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9i9bLyYB8T7Jh0flA_-Oy9i9ea-1MTnADxoryL": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 166.6667,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "nombre": "Banana",
+    "precioActual": 166.6667,
+    "precios": {
+      "-Oy9i7sX4WQLLHbd5dNR": {
+        "actualizadoTs": 1784738784877,
+        "marca": "",
+        "precio": 166.6667,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "proveedorPreferido": "-Oy9i7sX4WQLLHbd5dNR",
+    "unidad": "docena"
+  },
+  "-Oy3xAcoE7rWKbuMxFVT": {
+    "actualizadoTs": 1784994943815,
+    "historial": {
+      "-Oy3xAg2HSYN6ljl94GK": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Alpino",
+        "precio": 12333.53,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy3xAkmc0kZzGacDXAG_-Oy3xAoEhZyXwVTYS7fH": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Lodiser",
+        "precio": 12976.2719,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3xAkmc0kZzGacDXAG_-Oy9i9z6-aCNDh3F0OHr": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Lodiser",
+        "precio": 13132.0009,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3xCHSTRRhPODCMnav_-Oy3xCL9TguNuW7wsELp": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Alpino especial",
+        "precio": 10862.8092,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy3xCHSTRRhPODCMnav_-Oy9iBwhrQhTmsL5RTM1": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Alpino especial",
+        "precio": 10862.8092,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9i9oquwBFMFpM2fGM": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Alpino",
+        "precio": 11784.96,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Chocolate baño semiamargo",
+    "precioActual": 13132.0009,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw::lodiser": {
+        "actualizadoTs": 1784738786174,
+        "marca": "Lodiser",
+        "precio": 13132.0009,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x5zQJsff2tXic0En::alpino": {
+        "actualizadoTs": 1784738785514,
+        "marca": "Alpino",
+        "precio": 11784.96,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy3x5zQJsff2tXic0En::alpino especial": {
+        "actualizadoTs": 1784738794217,
+        "marca": "Alpino especial",
+        "precio": 10862.8092,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw::lodiser",
+    "unidad": "kg"
+  },
+  "-Oy3xAshTw_gDbxTfNWe": {
+    "actualizadoTs": 1784738786825,
+    "historial": {
+      "-Oy3xAxd5TpxagNcdbUg": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 9713.5896,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iA8GP6-9NOSC7JVS": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 9713.5896,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Baño moldeo c/leche",
+    "precioActual": 9713.5896,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738786825,
+        "precio": 9713.5896,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "kg"
+  },
+  "-Oy3xB1PofpFel_6nxCJ": {
+    "actualizadoTs": 1784738787486,
+    "historial": {
+      "-Oy3xB6AnbLkuHOpkCWw": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6851.7068,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      },
+      "-Oy9iAIRIsZJBtCXH7ZX": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6525.1669,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Berlina",
+    "precioActual": 6525.1669,
+    "precios": {
+      "-Oy3x5PQG-Q_8gCTDCC4": {
+        "actualizadoTs": 1784738787486,
+        "precio": 6525.1669,
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5PQG-Q_8gCTDCC4",
+    "unidad": "kg"
+  },
+  "-Oy3xBAuJ0vyNHs0kToE": {
+    "actualizadoTs": 1784738788126,
+    "historial": {
+      "-Oy3xBE6FnbHpKcEl6P9": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 9279.88,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iASbmkn3cjwCOkxJ": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 9279.88,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Bicarbonato de amonio",
+    "precioActual": 9279.88,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738788126,
+        "precio": 9279.88,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xBM6jSYCbGredXVK": {
+    "actualizadoTs": 1784738789433,
+    "historial": {
+      "-Oy3xBQvBbzY5l4BdLOT": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 10791.6853,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      },
+      "-Oy9iAmBDjyUNSVh6xct": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 10791.6853,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Brownie express",
+    "precioActual": 10791.6853,
+    "precios": {
+      "-Oy3x5PQG-Q_8gCTDCC4": {
+        "actualizadoTs": 1784738789433,
+        "precio": 10791.6853,
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5PQG-Q_8gCTDCC4",
+    "unidad": "kg"
+  },
+  "-Oy3xBUFeIuf3KRuKT2g": {
+    "actualizadoTs": 1784738790089,
+    "historial": {
+      "-Oy3xBYvu8vbok71kuqD": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 12499.9897,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iAwMM1A0FDzYBcxl": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 45065.6514,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Cacao",
+    "precioActual": 45065.6514,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738790089,
+        "precio": 45065.6514,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xBbDMQl5MmiyVc5v": {
+    "actualizadoTs": 1784738790745,
+    "historial": {
+      "-Oy9iB5NgwvMsNZ6KOAV": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 30000,
+        "proveedorId": "-Oy3x4zIVCAfQD8ZLMle",
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "nombre": "Canela en polvo",
+    "precioActual": 30000,
+    "precios": {
+      "-Oy3x4zIVCAfQD8ZLMle": {
+        "actualizadoTs": 1784738790745,
+        "precio": 30000,
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "proveedorPreferido": "-Oy3x4zIVCAfQD8ZLMle",
+    "unidad": "kg"
+  },
+  "-Oy3xBpVmcuibaBC2gAT": {
+    "actualizadoTs": 1784642063277,
+    "nombre": "Cerezas — Cofrutos",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3xBsu2e7bxguTZ_jl": {
+    "actualizadoTs": 1787343461791,
+    "historial": {
+      "-Oy3xBxkHFuoWfimmguG": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 16649.7132,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iBJ12GH0FavhBMsU_-Oy9iBMReuOQ6sqGs8LB": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 16912.2111,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iBPgodPwxdUNXn07_-Oy3xBft93I74XCPQQ6O_-Oy3xBkjTtq-v62SE7e-": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 11784.96,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iBPgodPwxdUNXn07_-Oy3xBft93I74XCPQQ6O_-Oy9iBFXQDv26qNpcWKo": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 8099.4016,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iBPgodPwxdUNXn07_-Oy9iBT6OpjdA3MR5fyZ": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 12386.2774,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Cerezas en lata",
+    "precioActual": 16912.2111,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738792259,
+        "marca": "",
+        "precio": 12386.2774,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738791386,
+        "marca": "",
+        "precio": 8099.4016,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738791833,
+        "marca": "",
+        "precio": 16912.2111,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3xC9K2WXXn3okv8jC": {
+    "actualizadoTs": 1787343492278,
+    "historial": {
+      "-Oy3xCE7g0ZmtFxpQZuE": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 14386.21,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3xCOViftw4Cc1f-jb_-Oy3xCSV06unooXzY6vV": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 7905.5474,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy3xCOViftw4Cc1f-jb_-Oy9iC6BmWaGmVqFrTZB": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 7905.5474,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iBmMpU9flYh7rlRv": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 18891.8994,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Chocolate chip",
+    "precioActual": 18891.8994,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738793555,
+        "marca": "",
+        "precio": 18891.8994,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738794889,
+        "marca": "",
+        "precio": 7905.5474,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xCViv0w0vUnk7amz": {
+    "actualizadoTs": 1784738795540,
+    "historial": {
+      "-Oy3xCZ169v9Myxg_KTG": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 9610.0031,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iCGM2WkmApV23muu": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 9610.0031,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Chocolate moldeo",
+    "precioActual": 9610.0031,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738795540,
+        "precio": 9610.0031,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "kg"
+  },
+  "-Oy3xCchziVlsDBFpsl2": {
+    "actualizadoTs": 1787343516865,
+    "historial": {
+      "-Oy3xChVD3zGzFFiUOwr": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 20661.158,
+        "proveedorId": "",
+        "proveedorNombre": "Bonifacio Monge S.R.L."
+      },
+      "-Oy3x_HU35itt__ZsrVy_-Oy3x_M83UtxM8honykd": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 640,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iCQXbQuWXMMRySf2": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 25000,
+        "proveedorId": "-Oy3x5CU1wbvKIrHD_Ap",
+        "proveedorNombre": "Bonifacio Monge S.R.L"
+      }
+    },
+    "nombre": "Chocolate para submarino",
+    "precioActual": 25000,
+    "precios": {
+      "-Oy3x5CU1wbvKIrHD_Ap": {
+        "actualizadoTs": 1784738796190,
+        "marca": "",
+        "precio": 25000,
+        "proveedorId": "-Oy3x5CU1wbvKIrHD_Ap",
+        "proveedorNombre": "Bonifacio Monge S.R.L"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5CU1wbvKIrHD_Ap",
+    "unidad": "kg"
+  },
+  "-Oy3xCkt_q-opn5DVMvr": {
+    "actualizadoTs": 1784738796852,
+    "historial": {
+      "-Oy3xCpVlKfcwfLDd4Ag": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 4753.509,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iC_rNnd7RKzg7elj": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 11145.8696,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Chocolino",
+    "precioActual": 11145.8696,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738796852,
+        "precio": 11145.8696,
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3xCspGUkzEe07I_Sz": {
+    "actualizadoTs": 1784642067586,
+    "nombre": "Ciruelas",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3xCxV8L2aQoTeCzsC": {
+    "actualizadoTs": 1784738797491,
+    "historial": {
+      "-Oy3xD2ue7r6_c7f44cY": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6859.06,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iCjmqGwc5jgf9g1s": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6859.06,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Coco rallado",
+    "precioActual": 6859.06,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738797491,
+        "precio": 6859.06,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xD6Czd5Tb1Hibcds": {
+    "actualizadoTs": 1787343571473,
+    "historial": {
+      "-Oy3xD9eNuD4hS3P3CcG": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 736.032,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iCuHS9WYa3hGpeWp": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 736.032,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Colorante en pasta",
+    "precioActual": 736.032,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738798148,
+        "marca": "",
+        "precio": 736.032,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "unidad"
+  },
+  "-Oy3xDGpivNBBlCyNQYc": {
+    "actualizadoTs": 1784738798803,
+    "historial": {
+      "-Oy3xDKZCHADUcYfCjow": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 14880,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iD7EhUsgt68IYsyZ": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 14880,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Confites mini",
+    "precioActual": 14880,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738798803,
+        "precio": 14880,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "kg"
+  },
+  "-Oy3xDeIcxgHxoKmVWv0": {
+    "actualizadoTs": 1787346651924,
+    "historial": {
+      "-Oy3xC1Wrf_YN5GS3czi_-Oy3xC4s0dv_ZjHcB37Z": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 8159.22,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      },
+      "-Oy3xC1Wrf_YN5GS3czi_-Oy9iBbwPe890LsL7NLY": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 8159.22,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      },
+      "-Oy3xDj75y8zHdX6GZGF": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 7140.0003,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iDVC6gmPtYARX9Yp": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 7140.0003,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Crema Vegetal",
+    "precioActual": 8159.22,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738800585,
+        "marca": "",
+        "precio": 7140.0003,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x5PQG-Q_8gCTDCC4": {
+        "actualizadoTs": 1784738792894,
+        "marca": "",
+        "precio": 8159.22,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5PQG-Q_8gCTDCC4",
+    "unidad": "litros"
+  },
+  "-Oy3xDmKSnMQx4tuy9mx": {
+    "actualizadoTs": 1784738801252,
+    "historial": {
+      "-Oy3xDqNrPmEU2xe4dVH": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6558.6675,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iDeg2DwiMw1MCpZl": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 11052.9991,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Crocante de mani",
+    "precioActual": 11052.9991,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738801252,
+        "precio": 11052.9991,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xDtynkcJ2f3V4ePb": {
+    "actualizadoTs": 1784738801899,
+    "historial": {
+      "-Oy3xDxUcnw_abgCvJUj": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 15000,
+        "proveedorId": "",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy9iDokx4vOgoOkZP-_": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 15000,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "nombre": "Culatello",
+    "precioActual": 15000,
+    "precios": {
+      "-Oy3x6FgGm8bAAjccrbI": {
+        "actualizadoTs": 1784738801899,
+        "precio": 15000,
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6FgGm8bAAjccrbI",
+    "unidad": "kg"
+  },
+  "-Oy3xE-hcPoL_93D-rid": {
+    "actualizadoTs": 1787346670804,
+    "alertaBaja": {
+      "fecha": "2026-07-27",
+      "marca": "Campo Quijano",
+      "pct": 32.55131964809384,
+      "precioNuevo": 4416,
+      "precioReferencia": 6547.2,
+      "proveedorNombre": "Campo Quijano"
+    },
+    "alertaPrecio": {
+      "abrupta": true,
+      "fecha": "2026-07-27",
+      "marca": "Campo Quijano",
+      "pct": 51.275415896487985,
+      "precioAnterior": 4328,
+      "precioNuevo": 6547.2,
+      "proveedorNombre": "Campo Quijano"
+    },
+    "contenidoPorUnidad": 25,
+    "historial": {
+      "-Oy3xE4V3jV5QSUuohop": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6547.2,
+        "proveedorId": "",
+        "proveedorNombre": "Citric"
+      },
+      "-Oy9iDykcx08IDCbvXQR": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 4328,
+        "proveedorId": "-Oy3x5M5XcdKeUTevCcM",
+        "proveedorNombre": "Campo quijano"
+      },
+      "-OyZ3dzC-IMY-0L0aGD8": {
+        "conIva": true,
+        "facturaId": "-OyZ3duVI1ZIg0nM1G7I",
+        "fecha": "2026-07-21",
+        "marca": "Campo Quijano",
+        "precio": 4416,
+        "proveedorId": "-Oy3x5M5XcdKeUTevCcM",
+        "proveedorNombre": "Campo Quijano"
+      }
+    },
+    "nombre": "Dulce de leche repostero",
+    "precioActual": 4416,
+    "precios": {
+      "-Oy3x5M5XcdKeUTevCcM": {
+        "actualizadoTs": 1784738802544,
+        "marca": "",
+        "precio": 4328,
+        "proveedorId": "-Oy3x5M5XcdKeUTevCcM",
+        "proveedorNombre": "Campo quijano"
+      },
+      "-Oy3x5M5XcdKeUTevCcM::campo quijano": {
+        "actualizadoTs": 1785164111913,
+        "fechaUltimo": "2026-07-27",
+        "marca": "Campo Quijano",
+        "origen": "compra",
+        "precio": 4416,
+        "proveedorId": "-Oy3x5M5XcdKeUTevCcM",
+        "proveedorNombre": "Campo Quijano"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5M5XcdKeUTevCcM::campo quijano",
+    "unidad": "kg"
+  },
+  "-Oy3xE9Jm7bq0iAZ9fce": {
+    "actualizadoTs": 1784738804708,
+    "historial": {
+      "-Oy3xEE6OYkQdEE_rKNZ": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1101.2388,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      },
+      "-Oy9iEVkhBxzeipYmCpf": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 868.5269,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Dulcerio tres leches",
+    "precioActual": 868.5269,
+    "precios": {
+      "-Oy3x5PQG-Q_8gCTDCC4": {
+        "actualizadoTs": 1784738804708,
+        "precio": 868.5269,
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5PQG-Q_8gCTDCC4",
+    "unidad": "kg"
+  },
+  "-Oy3xEIuai8_VJjZa1Ty": {
+    "actualizadoTs": 1784738805363,
+    "historial": {
+      "-Oy3xENhh1vOTHgxfXc9": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2058.8092,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iEes7afWvjWtdZRL": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2944.1513,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Durazno al natural",
+    "precioActual": 2944.1513,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738805363,
+        "precio": 2944.1513,
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3xESVevvQsPIzErXx": {
+    "actualizadoTs": 1784738806012,
+    "historial": {
+      "-Oy3xEVl8GWXkKCBkJnh": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 25158.1909,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iEp7M2yO729z4XEV": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 25158.1909,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Emulsionante en pasta",
+    "precioActual": 25158.1909,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738806012,
+        "precio": 25158.1909,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xEkkijdQfwLNKG3i": {
+    "actualizadoTs": 1784738807339,
+    "historial": {
+      "-Oy3xEo9sq0wZCF3uOze": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1639.9856,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iF8fRKFFwFT62Jvu": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2049.596,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Fecula",
+    "precioActual": 2049.596,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738807339,
+        "precio": 2049.596,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "kg"
+  },
+  "-Oy3xEsj1pjpnQ3moD5e": {
+    "actualizadoTs": 1784738807984,
+    "historial": {
+      "-Oy3xExYCBdZ_1CBcYLz": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 4509.136,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iFItiLVUNg_DxuSD": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2766.936,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Fondant",
+    "precioActual": 2766.936,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738807984,
+        "precio": 2766.936,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "kg"
+  },
+  "-Oy3xF1KxRzE3tH_WFOE": {
+    "actualizadoTs": 1787346767781,
+    "nombre": "Fruta abrillantada",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3xF66lABMBgfpzYzX": {
+    "actualizadoTs": 1784738808632,
+    "historial": {
+      "-Oy3xFAxBWZyw4xxdXzy": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 11250,
+        "proveedorId": "",
+        "proveedorNombre": "Cofrutos"
+      },
+      "-Oy9iFSx2D_rXQnUdzun": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 12857.1429,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "nombre": "Frutillas",
+    "precioActual": 12857.1429,
+    "precios": {
+      "-Oy9i7sX4WQLLHbd5dNR": {
+        "actualizadoTs": 1784738808632,
+        "precio": 12857.1429,
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "proveedorPreferido": "-Oy9i7sX4WQLLHbd5dNR",
+    "unidad": "kg"
+  },
+  "-Oy3xFFqjF6eflWyyGVl": {
+    "actualizadoTs": 1785163592446,
+    "alertaBaja": {
+      "fecha": "2026-07-27",
+      "marca": "Alif",
+      "pct": 9.502131147540984,
+      "precioNuevo": 5520.37,
+      "precioReferencia": 6100,
+      "proveedorNombre": "Milenium"
+    },
+    "historial": {
+      "-Oy3xFKYrRq8ppB4tf-3": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 5695.3369,
+        "proveedorId": "",
+        "proveedorNombre": "Milenium"
+      },
+      "-Oy9iFc3H-hCYCGGoxjn": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6100,
+        "proveedorId": "-Oy3x6_YT0XO-LGdauVw",
+        "proveedorNombre": "Milenium"
+      },
+      "-OyYqFztunQ1rw0fpECb": {
+        "conIva": true,
+        "facturaId": "-OyYqFwQXtuVth7voPKy",
+        "fecha": "2026-07-24",
+        "marca": "Alif",
+        "precio": 5520.37,
+        "proveedorId": "-Oy3x6_YT0XO-LGdauVw",
+        "proveedorNombre": "Milenium"
+      },
+      "-OyZ1f9E1HREtGLtuTsi": {
+        "conIva": true,
+        "facturaId": "-OyZ1f4q-qnWV3DaUQgW",
+        "fecha": "2026-07-21",
+        "marca": "Alif",
+        "precio": 5520.37,
+        "proveedorId": "-Oy3x6_YT0XO-LGdauVw",
+        "proveedorNombre": "Milenium"
+      }
+    },
+    "nombre": "Frutillas congeladas",
+    "precioActual": 6100,
+    "precios": {
+      "-Oy3x6_YT0XO-LGdauVw": {
+        "actualizadoTs": 1784738809287,
+        "precio": 6100,
+        "proveedorNombre": "Milenium"
+      },
+      "-Oy3x6_YT0XO-LGdauVw::alif": {
+        "actualizadoTs": 1785163592446,
+        "fechaUltimo": "2026-07-27",
+        "marca": "Alif",
+        "origen": "compra",
+        "precio": 5520.37,
+        "proveedorId": "-Oy3x6_YT0XO-LGdauVw",
+        "proveedorNombre": "Milenium"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6_YT0XO-LGdauVw",
+    "unidad": "kg"
+  },
+  "-Oy3xFRUN50aVUUcmF9G": {
+    "actualizadoTs": 1784738809927,
+    "historial": {
+      "-Oy3xFVhhSQR7sVvb8Vv": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 33057.85,
+        "proveedorId": "",
+        "proveedorNombre": "Bonifacio Monge S.R.L."
+      },
+      "-Oy9iFmAF4IJCyJV_HMq": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 33057.85,
+        "proveedorId": "-Oy3x5CU1wbvKIrHD_Ap",
+        "proveedorNombre": "Bonifacio Monge S.R.L"
+      }
+    },
+    "nombre": "Frutos del bosque",
+    "precioActual": 33057.85,
+    "precios": {
+      "-Oy3x5CU1wbvKIrHD_Ap": {
+        "actualizadoTs": 1784738809927,
+        "precio": 33057.85,
+        "proveedorNombre": "Bonifacio Monge S.R.L"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5CU1wbvKIrHD_Ap",
+    "unidad": "kg"
+  },
+  "-Oy3xFZ0Gq19gJtdsk90": {
+    "actualizadoTs": 1784738810564,
+    "historial": {
+      "-Oy3xFbpxoMvDTTxgswn": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1100,
+        "proveedorId": "",
+        "proveedorNombre": "Herrera Golosinas"
+      },
+      "-Oy9iFw6Lc17RrSgspRx": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 9200,
+        "proveedorId": "-Oy3x5U5rkDaNIAPsni2",
+        "proveedorNombre": "casa naoum"
+      }
+    },
+    "nombre": "Galletas chocolinas",
+    "precioActual": 9200,
+    "precios": {
+      "-Oy3x5U5rkDaNIAPsni2": {
+        "actualizadoTs": 1784738810564,
+        "precio": 9200,
+        "proveedorNombre": "casa naoum"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5U5rkDaNIAPsni2",
+    "unidad": "kg"
+  },
+  "-Oy3xFfuNxz2Y53E_uFo": {
+    "actualizadoTs": 1784642079047,
+    "nombre": "Galletas lincoln",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3xFj7UK5RQ2CnG0Lw": {
+    "actualizadoTs": 1784738811423,
+    "historial": {
+      "-Oy3xFnuqLw_NZA62V_o": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1400,
+        "proveedorId": "",
+        "proveedorNombre": "Herrera Golosinas"
+      },
+      "-Oy9iG8Vn9AHzdjQKKRT": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 1400,
+        "proveedorId": "-Oy9iFzRrmC155dtg5_V",
+        "proveedorNombre": "Herrera Golosinas"
+      }
+    },
+    "nombre": "Galletas oreo",
+    "precioActual": 1400,
+    "precios": {
+      "-Oy9iFzRrmC155dtg5_V": {
+        "actualizadoTs": 1784738811423,
+        "precio": 1400,
+        "proveedorNombre": "Herrera Golosinas"
+      }
+    },
+    "proveedorPreferido": "-Oy9iFzRrmC155dtg5_V",
+    "unidad": "kg"
+  },
+  "-Oy3xFsh0RpYX-ON7lAI": {
+    "actualizadoTs": 1784738812059,
+    "historial": {
+      "-Oy3xFw0MzNcJyxA3Rdp": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 408.4903,
+        "proveedorId": "",
+        "proveedorNombre": "Herrera Golosinas"
+      },
+      "-Oy9iGIR5EbGNwNBDYp6": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 7500,
+        "proveedorId": "-Oy9iFzRrmC155dtg5_V",
+        "proveedorNombre": "Herrera Golosinas"
+      }
+    },
+    "nombre": "Galletas vainillas",
+    "precioActual": 7500,
+    "precios": {
+      "-Oy9iFzRrmC155dtg5_V": {
+        "actualizadoTs": 1784738812059,
+        "precio": 7500,
+        "proveedorNombre": "Herrera Golosinas"
+      }
+    },
+    "proveedorPreferido": "-Oy9iFzRrmC155dtg5_V",
+    "unidad": "kg"
+  },
+  "-Oy3xG-W5AiTz64PGxs-": {
+    "actualizadoTs": 1784738812708,
+    "historial": {
+      "-Oy3xG2uRZNoAB01IVQK": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 4816.4055,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iGSW5UbgrK2HBMQU": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 4816.4055,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Granas",
+    "precioActual": 4816.4055,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738812708,
+        "precio": 4816.4055,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "kg"
+  },
+  "-Oy3xGPXGEXUS5FwGKJn": {
+    "actualizadoTs": 1787346811993,
+    "historial": {
+      "-Oy3xGU6dIUOSEMsYg8J": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Pastelgras",
+        "precio": 6010.4133,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iGbh0CaZmV7h437w_-Oy9iGf867IO__ANlZ9t": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 5079.6,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Grasa",
+    "precioActual": 5079.6,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738813572,
+        "marca": "",
+        "precio": 5079.6,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xGr6zRqL1vTd82HC": {
+    "actualizadoTs": 1787346860058,
+    "historial": {
+      "-Oy3xGvuuT08vlAt2TPR": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 744.634,
+        "proveedorId": "",
+        "proveedorNombre": "Chahla Zaid"
+      },
+      "-Oy3xTnvtbDDAAHHGdoe_-Oy3xTrCUOGEw9HQeus0": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 522.8424,
+        "proveedorId": "",
+        "proveedorNombre": "Sucesion de Picchio"
+      },
+      "-Oy3xTnvtbDDAAHHGdoe_-Oy9iH1xC0Lsr18Jxbdk": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 522.8424,
+        "proveedorId": "-Oy3x67hSkn6lE44uHjv",
+        "proveedorNombre": "Harina — Sucesion de Picchio"
+      },
+      "-Oy9iHC32ExCImEnDcBo": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 840,
+        "proveedorId": "-Oy3x6BB2k7o0gjXohnv",
+        "proveedorNombre": "Harina — Chahala Ziad"
+      }
+    },
+    "nombre": "Harina 0000 x25kg",
+    "precioActual": 840,
+    "precios": {
+      "-Oy3x67hSkn6lE44uHjv": {
+        "actualizadoTs": 1784738815099,
+        "marca": "",
+        "precio": 522.8424,
+        "proveedorId": "-Oy3x67hSkn6lE44uHjv",
+        "proveedorNombre": "Harina — Sucesion de Picchio"
+      },
+      "-Oy3x6BB2k7o0gjXohnv": {
+        "actualizadoTs": 1784738815748,
+        "marca": "",
+        "precio": 840,
+        "proveedorId": "-Oy3x6BB2k7o0gjXohnv",
+        "proveedorNombre": "Harina — Chahala Ziad"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6BB2k7o0gjXohnv",
+    "unidad": "kg"
+  },
+  "-Oy3xHM8Tk8fWVZmR72D": {
+    "actualizadoTs": 1787346935939,
+    "historial": {
+      "-Oy3xHR-IqyCnHDodjm1": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Calsa",
+        "precio": 2033.0239,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iHWHt9oh27tDv9Po": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Calsa",
+        "precio": 1479.265,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Jalea fruta",
+    "precioActual": 1479.265,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw::calsa": {
+        "actualizadoTs": 1784738817037,
+        "marca": "Calsa",
+        "precio": 1479.265,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw::calsa",
+    "unidad": "kg"
+  },
+  "-Oy3xHVh_9EmffXK-vFA": {
+    "actualizadoTs": 1787580786178,
+    "alertaPrecio": {
+      "abrupta": true,
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 376.22320711390523,
+      "precioAnterior": 13982.6995,
+      "precioNuevo": 66588.86,
+      "proveedorNombre": "La Rotonda"
+    },
+    "alias": {
+      "jamon cocido paladini grande": true
+    },
+    "historial": {
+      "-Oy3xH_VxkwyS74p7HZi": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Paladini",
+        "precio": 14983.0936,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3xYIwuxKdunpMA3Rh_-Oy3xYNitdimC1d1pgCP": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 10346.7,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iHZa_fvnEsXWw79a_-Oy9iHbyNqJLtmi3KuPa": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 13982.6995,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iHZa_fvnEsXWw79a_-P-Vo3MfPMDKq2ieMZu_": {
+        "conIva": false,
+        "facturaId": "-P-Vo2mCsxMlooSGncwM",
+        "fecha": "2020-09-16",
+        "marca": "Paladini",
+        "precio": 11191.4,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Jamon cocido",
+    "precioActual": 14983.0936,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1787580786178,
+        "fechaUltimo": "2026-07-22",
+        "marca": "",
+        "origen": "compra",
+        "precio": 13982.6995,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd::paladini": {
+        "actualizadoTs": 1787580786178,
+        "fechaUltimo": "2020-09-16",
+        "marca": "Paladini",
+        "origen": "compra",
+        "precio": 11191.4,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3xHsiTJD3jZI5wt1K": {
+    "actualizadoTs": 1784738818541,
+    "historial": {
+      "-Oy3xHxWPKwzsOfgOBRn": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 4500,
+        "proveedorId": "",
+        "proveedorNombre": "Cofrutos"
+      },
+      "-Oy9iHstWWaB5lkgnXBy": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 4500,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "nombre": "Kiwi",
+    "precioActual": 4500,
+    "precios": {
+      "-Oy9i7sX4WQLLHbd5dNR": {
+        "actualizadoTs": 1784738818541,
+        "precio": 4500,
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "proveedorPreferido": "-Oy9i7sX4WQLLHbd5dNR",
+    "unidad": "kg"
+  },
+  "-Oy3xI1Le78Au_bkVbHq": {
+    "actualizadoTs": 1784738819197,
+    "historial": {
+      "-Oy3xI67Bxs_htU6VoQ9": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2310.82,
+        "proveedorId": "",
+        "proveedorNombre": "Serenisima"
+      },
+      "-Oy9iI21Vf-w7yeUPzdV": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2310.82,
+        "proveedorId": "-Oy3x79ILHmcrJFf2cFU",
+        "proveedorNombre": "Serenisima"
+      }
+    },
+    "nombre": "Leche de almendras",
+    "precioActual": 2310.82,
+    "precios": {
+      "-Oy3x79ILHmcrJFf2cFU": {
+        "actualizadoTs": 1784738819196,
+        "precio": 2310.82,
+        "proveedorNombre": "Serenisima"
+      }
+    },
+    "proveedorPreferido": "-Oy3x79ILHmcrJFf2cFU",
+    "unidad": "litros"
+  },
+  "-Oy3xIAvFpmn5veiilyn": {
+    "actualizadoTs": 1784738819873,
+    "historial": {
+      "-Oy3xIFhzCO7381bnZNU": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3946.06,
+        "proveedorId": "",
+        "proveedorNombre": "Serenisima"
+      },
+      "-Oy9iICTS7fX9bL1-yHM": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 3946.06,
+        "proveedorId": "-Oy3x79ILHmcrJFf2cFU",
+        "proveedorNombre": "Serenisima"
+      }
+    },
+    "nombre": "Leche de coco",
+    "precioActual": 3946.06,
+    "precios": {
+      "-Oy3x79ILHmcrJFf2cFU": {
+        "actualizadoTs": 1784738819873,
+        "precio": 3946.06,
+        "proveedorNombre": "Serenisima"
+      }
+    },
+    "proveedorPreferido": "-Oy3x79ILHmcrJFf2cFU",
+    "unidad": "litros"
+  },
+  "-Oy3xIKV77quDbMtxXja": {
+    "actualizadoTs": 1784738820505,
+    "historial": {
+      "-Oy4-q_SlrG-GI3WeuWE": {
+        "facturaId": "-Oy4-qQZekEMbHsf9cu1",
+        "fecha": "2026-07-21",
+        "precio": 1435.26,
+        "proveedorId": "-Oy3x5hUUrbMdfLny41w",
+        "proveedorNombre": "Cosalta"
+      },
+      "-Oy5lEmcO4lUl5adeQ1J": {
+        "conIva": true,
+        "facturaId": "-Oy5lEd1fwwr5ZL-qn18",
+        "fecha": "2026-07-20",
+        "precio": 1435.26,
+        "proveedorId": "-Oy5lEAvhTTuFPOgLwJI",
+        "proveedorNombre": "Daniela Cecilia Gallardo"
+      },
+      "-Oy9iIMX6QjS6L8U7EuJ": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 1736.6646,
+        "proveedorId": "-Oy3x5hUUrbMdfLny41w",
+        "proveedorNombre": "Cosalta"
+      }
+    },
+    "nombre": "Leche deslactosada",
+    "precioActual": 1435.26,
+    "precios": {
+      "-Oy3x5hUUrbMdfLny41w": {
+        "actualizadoTs": 1784738820505,
+        "precio": 1736.6646,
+        "proveedorNombre": "Cosalta"
+      },
+      "-Oy5lEAvhTTuFPOgLwJI": {
+        "actualizadoTs": 1784672483073,
+        "precio": 1435.26,
+        "proveedorNombre": "Daniela Cecilia Gallardo"
+      }
+    },
+    "proveedorPreferido": "-Oy5lEAvhTTuFPOgLwJI",
+    "unidad": "l"
+  },
+  "-Oy3xIpXYJOCBC840w5Z": {
+    "actualizadoTs": 1784738822250,
+    "historial": {
+      "-Oy3xIstjKyC7D4n8Hkf": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 14903.7152,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iImeoVNODRyOm2wx": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 14903.7152,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Lentejas chocolate",
+    "precioActual": 14903.7152,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738822250,
+        "precio": 14903.7152,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xIxWStC84nGZcpx1": {
+    "actualizadoTs": 1787347062343,
+    "historial": {
+      "-Oy3xJ-odCxAk87NHqOj": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 7598.9996,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3xJ4WA_IgHTLsA76w_-Oy3xJ9JiEl9Ar9TzaVq": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 4691.157,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3xJ4WA_IgHTLsA76w_-Oy9iIwqDMZXxJQRQeFR_-Oy9iJ-SSnCLnPVv3-KI": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6742.1999,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iIq4o7aWIIVZfxFe_-Oy9iItW6Wd6q-I31pkM": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 7731.5999,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Levadura",
+    "precioActual": 6742.1999,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738823117,
+        "marca": "",
+        "precio": 6742.1999,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xJHJlhIDkFiA3bT9": {
+    "actualizadoTs": 1784738823777,
+    "historial": {
+      "-Oy3xJM61eOI8CAyy_wf": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 42399.9972,
+        "proveedorId": "",
+        "proveedorNombre": "Casa Naoum"
+      },
+      "-Oy9iJ9ao0nQDl4TdTjF": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 8550.6667,
+        "proveedorId": "-Oy3x5U5rkDaNIAPsni2",
+        "proveedorNombre": "casa naoum"
+      }
+    },
+    "nombre": "licor",
+    "precioActual": 8550.6667,
+    "precios": {
+      "-Oy3x5U5rkDaNIAPsni2": {
+        "actualizadoTs": 1784738823777,
+        "precio": 8550.6667,
+        "proveedorNombre": "casa naoum"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5U5rkDaNIAPsni2",
+    "unidad": "litros"
+  },
+  "-Oy3xJQuR_boxspE-IF4": {
+    "actualizadoTs": 1784642094407,
+    "nombre": "Limon",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3xJVh_AxvMMGP8ib0": {
+    "actualizadoTs": 1784738824438,
+    "historial": {
+      "-Oy3xJ_Xk-keaAb4Iqij": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 7890.8677,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iJK2VuKdv7BDHPxK": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 7890.8677,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Mani filetiado",
+    "precioActual": 7890.8677,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738824438,
+        "precio": 7890.8677,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "kg"
+  },
+  "-Oy3xJxWtddwVznwDl6E": {
+    "actualizadoTs": 1784642096558,
+    "nombre": "Manzana verde",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3xK0QsZRrJ2tBMbk2": {
+    "actualizadoTs": 1787347191420,
+    "historial": {
+      "-Oy3xK4WhfxWby__IN6K": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "MTK",
+        "precio": 6976.7995,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iJeXVU_01_IQNVC3_-Oy9iJhpXZeyF-fUL3-i": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 5630.401,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Margarina hojaldre",
+    "precioActual": 5630.401,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738826041,
+        "marca": "",
+        "precio": 5630.401,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xKfvgVYdwZ-INrvA": {
+    "actualizadoTs": 1784642099528,
+    "historial": {
+      "-Oy3xKkhZ5Wd_ORrMkxC": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1000,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Mayonesa — paquete 1 kg",
+    "precioActual": 1000,
+    "unidad": "kg"
+  },
+  "-Oy3xKpWnztRZ9b-P8SF": {
+    "actualizadoTs": 1784738827981,
+    "historial": {
+      "-Oy3xKuJbRqtXaBBCgqc": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3112.2907,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iKBT9fdan55X1vZK": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 3112.2907,
+        "proveedorId": "",
+        "proveedorNombre": "Carga manual"
+      }
+    },
+    "nombre": "Mermelada ciruela",
+    "precioActual": 3112.2907,
+    "precios": {
+      "_manual": {
+        "actualizadoTs": 1784738827981,
+        "precio": 3112.2907,
+        "proveedorNombre": "Carga manual"
+      }
+    },
+    "proveedorPreferido": "_manual",
+    "unidad": "kg"
+  },
+  "-Oy3xLCZAbHGikDHZsXf": {
+    "actualizadoTs": 1787580787559,
+    "alertaBaja": {
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 64.16525528464724,
+      "precioNuevo": 1461.65,
+      "precioReferencia": 4078.8626,
+      "proveedorNombre": "La Rotonda"
+    },
+    "alias": {
+      "mermelada ortega fco durazno x 40": true
+    },
+    "historial": {
+      "-Oy3xLHJr0KCgoJftwNX": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Oriel",
+        "precio": 4078.8626,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3xUmNo8koi-3JG2Vv_-Oy3xUr7Jn9vJIypZKqM": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2201.8007,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3xUuRDArm0nQ4WfSC_-Oy3xUxk1gIXx5gb1XOv": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1610.4979,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iKbp2oFlFj5R7mGx": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Oriel",
+        "precio": 4078.8626,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-P-Vo3iGCb_tSJu4HnHV_-P-Vo3q9RL7BaCQmy5Hm": {
+        "conIva": false,
+        "facturaId": "-P-Vo2mCsxMlooSGncwM",
+        "fecha": "2020-09-16",
+        "marca": "Orieta",
+        "precio": 8769.91,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Mermelada durazno",
+    "precioActual": 4078.8626,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd::oriel": {
+        "actualizadoTs": 1787580787559,
+        "fechaUltimo": "2026-07-22",
+        "marca": "Oriel",
+        "precio": 4078.8626,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd::orieta": {
+        "actualizadoTs": 1787580787559,
+        "fechaUltimo": "2020-09-16",
+        "marca": "Orieta",
+        "origen": "compra",
+        "precio": 8769.91,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd::oriel",
+    "unidad": "kg"
+  },
+  "-Oy3xLM6OJyJeZ9d8oPS": {
+    "actualizadoTs": 1787580787825,
+    "alertaBaja": {
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 65.94786330624046,
+      "precioNuevo": 1869.59,
+      "precioReferencia": 5490.375,
+      "proveedorNombre": "La Rotonda"
+    },
+    "alias": {
+      "mermelada ortega fco frutilla x 4": true
+    },
+    "historial": {
+      "-Oy3xLPVTvltz88GBU9Y": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Orieta",
+        "precio": 5105.9048,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iKluhFHtuVT8h81h": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Orieta",
+        "precio": 5105.9048,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iTQxeRxLVXCHLg7R_-Oy9iTUJpoPuMGTn4mPK": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 5490.375,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-P-Vo3uDeXz_UUjNmsLc_-P-Vo40vSbwMcjKP-oPk": {
+        "conIva": false,
+        "facturaId": "-P-Vo2mCsxMlooSGncwM",
+        "fecha": "2020-09-16",
+        "marca": "Frutilla",
+        "precio": 2804.38,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Mermelada frutilla",
+    "precioActual": 5490.375,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1787580787825,
+        "fechaUltimo": "2026-07-22",
+        "marca": "",
+        "origen": "compra",
+        "precio": 5490.375,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd::frutilla": {
+        "actualizadoTs": 1787580787825,
+        "fechaUltimo": "2020-09-16",
+        "marca": "Frutilla",
+        "origen": "compra",
+        "precio": 2804.38,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd::orieta": {
+        "actualizadoTs": 1787580787825,
+        "fechaUltimo": "2026-07-22",
+        "marca": "Orieta",
+        "precio": 5105.9048,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd::orieta",
+    "unidad": "kg"
+  },
+  "-Oy3xLb6UVnHnL0p7cQ6": {
+    "actualizadoTs": 1787347401476,
+    "historial": {
+      "-Oy3xLfuuhZ0j7VoBlTj": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 29495.5824,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iTd3T72vCcsessJX_-Oy9iTgJQG9CURlPhLnr": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 13324.416,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Miel de abeja — Squezze Aleluya",
+    "precioActual": 13324.416,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738866907,
+        "marca": "",
+        "precio": 13324.416,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3xLjCihPWxFzF6ZWj": {
+    "actualizadoTs": 1784738832096,
+    "historial": {
+      "-Oy3xLnwxXpRlF2NafeS": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 8234.4184,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iLBZ8piOaXTvc0Y8": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 12754.2816,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Miel de caña",
+    "precioActual": 12754.2816,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738832096,
+        "precio": 12754.2816,
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3xLrAR0kmykTQPibj": {
+    "actualizadoTs": 1784738832740,
+    "historial": {
+      "-Oy3xLvuc-cWnHQeaC8q": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 7000,
+        "proveedorId": "",
+        "proveedorNombre": "Milenium"
+      },
+      "-Oy9iLLcagLtcupFE0ZP": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 8700.0076,
+        "proveedorId": "-Oy3x6_YT0XO-LGdauVw",
+        "proveedorNombre": "Milenium"
+      }
+    },
+    "nombre": "Mix de frutos rojos",
+    "precioActual": 8700.0076,
+    "precios": {
+      "-Oy3x6_YT0XO-LGdauVw": {
+        "actualizadoTs": 1784738832740,
+        "precio": 8700.0076,
+        "proveedorNombre": "Milenium"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6_YT0XO-LGdauVw",
+    "unidad": "kg"
+  },
+  "-Oy3xLz7wzj6oRtwaW4B": {
+    "actualizadoTs": 1784738833383,
+    "historial": {
+      "-Oy3xM1MSnBs62fEwUAN": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6000.0028,
+        "proveedorId": "",
+        "proveedorNombre": "13 Hermanos"
+      },
+      "-Oy9iLVhtAvMLlS5Sh_w": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 5208,
+        "proveedorId": "-Oy3x4zIVCAfQD8ZLMle",
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "nombre": "Mix de semillas",
+    "precioActual": 5208,
+    "precios": {
+      "-Oy3x4zIVCAfQD8ZLMle": {
+        "actualizadoTs": 1784738833383,
+        "precio": 5208,
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "proveedorPreferido": "-Oy3x4zIVCAfQD8ZLMle",
+    "unidad": "kg"
+  },
+  "-Oy3xM68OgQxGTWL-1L_": {
+    "actualizadoTs": 1787417954158,
+    "alertaPrecio": {
+      "abrupta": true,
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 105.85508235907137,
+      "precioAnterior": 6455.998,
+      "precioNuevo": 13290,
+      "proveedorNombre": "La Francisca"
+    },
+    "historial": {
+      "-Oy3xMAvBRU_YyMSV498": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 7016.664,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iLesk9g8BGHInyVR": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6455.998,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-P-ePNXTEVU0rjIRHW7r": {
+        "conIva": false,
+        "facturaId": "-P-ePNSdWyZgihem2-QY",
+        "fecha": "2026-08-08",
+        "marca": "",
+        "precio": 13290,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "nombre": "Mortadela",
+    "precioActual": 13290,
+    "precios": {
+      "-Oy3x6FgGm8bAAjccrbI": {
+        "actualizadoTs": 1787417954157,
+        "fechaUltimo": "2026-08-22",
+        "marca": "",
+        "origen": "compra",
+        "precio": 13290,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738834033,
+        "precio": 6455.998,
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6FgGm8bAAjccrbI",
+    "unidad": "kg"
+  },
+  "-Oy3xMEFraqDIl0WAvda": {
+    "actualizadoTs": 1787347426735,
+    "historial": {
+      "-Oy3xMIwqIkvd5Tflc7H": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 15155.25,
+        "proveedorId": "",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy3xYuKz6qo4XXpUWAf_-Oy3xYz8fAd0a7-kKpjp": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 5300,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iLpCapU4s1fn0beU": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 12900,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-OyB1roJzvXiSlsDXYj7": {
+        "conIva": true,
+        "facturaId": "-OyB1rl8Ofvf1VsL1pXV",
+        "fecha": "2026-07-04",
+        "precio": 10320.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "nombre": "Mortadela con pistachos",
+    "precioActual": 10320.01,
+    "precios": {
+      "-Oy3x6FgGm8bAAjccrbI": {
+        "actualizadoTs": 1784760990498,
+        "marca": "",
+        "precio": 10320.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6FgGm8bAAjccrbI",
+    "unidad": "kg"
+  },
+  "-Oy3xMVoUWLeajUZkK6d": {
+    "actualizadoTs": 1784642107009,
+    "historial": {
+      "-Oy3xM_WN9yNGzK0EObh": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1200,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Naranja — paquete lt",
+    "precioActual": 1200,
+    "unidad": "litros"
+  },
+  "-Oy3xMsjCJh7DEXxltlh": {
+    "actualizadoTs": 1784738836208,
+    "historial": {
+      "-Oy3xMxWIz5iC_35gBUT": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 29001.6501,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iMBlgtL7lWzl8lmO": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 29001.6501,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Nutella",
+    "precioActual": 29001.6501,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738836207,
+        "precio": 29001.6501,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "kg"
+  },
+  "-Oy3xN1JikNqJDKfYYe3": {
+    "actualizadoTs": 1784642109153,
+    "nombre": "Oregano",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3xN66ycASjZ44alYR": {
+    "actualizadoTs": 1784738836848,
+    "historial": {
+      "-Oy3xN9OxOLYWZYy81kN": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 4357.5148,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      },
+      "-Oy9iMLk_uSZh5lIjQtH": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 57233.3025,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Otentic",
+    "precioActual": 57233.3025,
+    "precios": {
+      "-Oy3x5PQG-Q_8gCTDCC4": {
+        "actualizadoTs": 1784738836848,
+        "precio": 57233.3025,
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5PQG-Q_8gCTDCC4",
+    "unidad": "kg"
+  },
+  "-Oy3xNSgiN3aZ_24F6nd": {
+    "actualizadoTs": 1784738837920,
+    "historial": {
+      "-Oy3xNXJBsiIf2Lmk5ra": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6987.7559,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      },
+      "-Oy9iMb_dLPm7JGa1CpB": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6987.7559,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Panes blandos",
+    "precioActual": 6987.7559,
+    "precios": {
+      "-Oy3x5PQG-Q_8gCTDCC4": {
+        "actualizadoTs": 1784738837920,
+        "precio": 6987.7559,
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5PQG-Q_8gCTDCC4",
+    "unidad": "kg"
+  },
+  "-Oy3xN_ZxpmwKS4RXAgf": {
+    "actualizadoTs": 1787347572590,
+    "historial": {
+      "-Oy3xNcrALorgNlfcKRH": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Puratos",
+        "precio": 9191.8819,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      },
+      "-Oy9iMq8hknmqF7d2W_L": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Puratos",
+        "precio": 9191.8819,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Panes granos andinos",
+    "precioActual": 9191.8819,
+    "precios": {
+      "-Oy3x5PQG-Q_8gCTDCC4::puratos": {
+        "actualizadoTs": 1784738838865,
+        "marca": "Puratos",
+        "precio": 9191.8819,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5PQG-Q_8gCTDCC4::puratos",
+    "unidad": "kg"
+  },
+  "-Oy3xNhW0bXpfCcc4IFl": {
+    "actualizadoTs": 1787347604021,
+    "historial": {
+      "-Oy3xNknpz4Tkg6I--MR": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "Puratos",
+        "precio": 9191.8819,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      },
+      "-Oy9iN-CdvAFapew4tpz": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Puratos",
+        "precio": 9191.8819,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Panes multicereal",
+    "precioActual": 9191.8819,
+    "precios": {
+      "-Oy3x5PQG-Q_8gCTDCC4::puratos": {
+        "actualizadoTs": 1784738839500,
+        "marca": "Puratos",
+        "precio": 9191.8819,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5PQG-Q_8gCTDCC4::puratos",
+    "unidad": "kg"
+  },
+  "-Oy3xNo6eFecwb0di2gX": {
+    "actualizadoTs": 1784642112340,
+    "nombre": "Panes salvado",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3xNrMP62njdrB_O2m": {
+    "actualizadoTs": 1784642112548,
+    "nombre": "Pasas de uva",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3xNvygmQfnAyY61OI": {
+    "actualizadoTs": 1784738840144,
+    "historial": {
+      "-Oy3xNzFa82MZnielDV9": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 55851.2368,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iN9Gz4WL5utYopsV": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 55851.2368,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Pasta de pistachos",
+    "precioActual": 55851.2368,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738840144,
+        "precio": 55851.2368,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "kg"
+  },
+  "-Oy3xO1V-8ENacuqIOgf": {
+    "actualizadoTs": 1784738840797,
+    "historial": {
+      "-Oy3xO4fka-pp2kIWZtL": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 8667.8108,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iNJS0N-frtNaKuAj": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 8667.8108,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Pernil",
+    "precioActual": 8667.8108,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738840797,
+        "precio": 8667.8108,
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3xO9-8hlNyooqnl_Y": {
+    "actualizadoTs": 1784738842084,
+    "historial": {
+      "-Oy3xOFS3Dfgb_J4YHq_": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 10983.0914,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iNcdxvMO6t6NL21l": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 15358.8506,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Polvo para hornear",
+    "precioActual": 15358.8506,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738842084,
+        "precio": 15358.8506,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xOIkc1sD-FfeeBUt": {
+    "actualizadoTs": 1787347707127,
+    "historial": {
+      "-Oy3xOLzkUCTK1CfzX4A": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 8771.9999,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iNg0IfzfxNw2X2r6_-Oy9iNjS8vqR_xwElOpM": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 9043.9998,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Premezcla muffin",
+    "precioActual": 9043.9998,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738842520,
+        "marca": "",
+        "precio": 9043.9998,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xOPJZkDOPixA0vBo": {
+    "actualizadoTs": 1784642114785,
+    "historial": {
+      "-Oy3xOS_ybc9AXbJKR3A": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 19039.4238,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Premezcla pan de papa",
+    "precioActual": 19039.4238,
+    "unidad": "kg"
+  },
+  "-Oy3xOXK2pS32MxtmkWS": {
+    "actualizadoTs": 1784738843164,
+    "historial": {
+      "-Oy3xO_Uqm20ER97oGnL": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6477.003,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iNtWmnpHMBmPuI9b": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6885.0028,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Premezcla pan de queso",
+    "precioActual": 6885.0028,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738843164,
+        "precio": 6885.0028,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xOcoCOqpBenHjUeT": {
+    "actualizadoTs": 1784738844444,
+    "historial": {
+      "-Oy3xOg6gPVBCtvW4yKm": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 8675.9372,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iOCSt4zasMYrknNR": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 9426.8002,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Pulpalist neutro",
+    "precioActual": 9426.8002,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738844444,
+        "precio": 9426.8002,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xPNpSPeYb3r-MpDP": {
+    "actualizadoTs": 1784738846593,
+    "historial": {
+      "-Oy3xPSW2B6xvNkJVwey": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1570.6491,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy4-qQ_lz-B1q5k_ZSJ": {
+        "facturaId": "-Oy4-qQZekEMbHsf9cu1",
+        "fecha": "2026-07-21",
+        "precio": 7293.9,
+        "proveedorId": "-Oy3x5hUUrbMdfLny41w",
+        "proveedorNombre": "Cosalta"
+      },
+      "-Oy5lEd2USVdblQCsE_d": {
+        "conIva": true,
+        "facturaId": "-Oy5lEd1fwwr5ZL-qn18",
+        "fecha": "2026-07-20",
+        "precio": 7293.9,
+        "proveedorId": "-Oy5lEAvhTTuFPOgLwJI",
+        "proveedorNombre": "Daniela Cecilia Gallardo"
+      },
+      "-Oy9iOj7uEtg-dl79Dl8": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 8969.125,
+        "proveedorId": "-Oy3x5hUUrbMdfLny41w",
+        "proveedorNombre": "Cosalta"
+      }
+    },
+    "nombre": "Queso cremoso",
+    "precioActual": 7293.9,
+    "precios": {
+      "-Oy3x5hUUrbMdfLny41w": {
+        "actualizadoTs": 1784738846593,
+        "precio": 8969.125,
+        "proveedorNombre": "Cosalta"
+      },
+      "-Oy5lEAvhTTuFPOgLwJI": {
+        "actualizadoTs": 1784672482464,
+        "precio": 7293.9,
+        "proveedorNombre": "Daniela Cecilia Gallardo"
+      }
+    },
+    "proveedorPreferido": "-Oy5lEAvhTTuFPOgLwJI",
+    "unidad": "kg"
+  },
+  "-Oy3xQVjZqfjE_UYABly": {
+    "actualizadoTs": 1787415337258,
+    "historial": {
+      "-Oy3xQZ2e2-RnBUThDNk": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 13499.728,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Rocklets - lentejas de chocolate",
+    "precioActual": 13499.728,
+    "unidad": "kg"
+  },
+  "-Oy3xQciEcO-lGxLiiOD": {
+    "actualizadoTs": 1784738849419,
+    "historial": {
+      "-Oy3xQfzdnp3bvixnHMz": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 24.8,
+        "proveedorId": "",
+        "proveedorNombre": "13 Hermanos"
+      },
+      "-Oy9iPQ7E62pyZzFoL26": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 24.8,
+        "proveedorId": "-Oy3x4zIVCAfQD8ZLMle",
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "nombre": "Romero",
+    "precioActual": 24.8,
+    "precios": {
+      "-Oy3x4zIVCAfQD8ZLMle": {
+        "actualizadoTs": 1784738849419,
+        "precio": 24.8,
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "proveedorPreferido": "-Oy3x4zIVCAfQD8ZLMle",
+    "unidad": "kg"
+  },
+  "-Oy3xQuQtroaxe_REOaj": {
+    "actualizadoTs": 1784738850499,
+    "historial": {
+      "-Oy3xQxf7UxhuYaWRffZ": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 139.755,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iPg7P8cbm6qvJUvM": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 233.1912,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Sal",
+    "precioActual": 233.1912,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738850499,
+        "precio": 233.1912,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xR1KiX_F0VtrYmWn": {
+    "actualizadoTs": 1787417956664,
+    "alertaPrecio": {
+      "abrupta": false,
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 3.0490489913544576,
+      "precioAnterior": 17350,
+      "precioNuevo": 17879.01,
+      "proveedorNombre": "La Francisca"
+    },
+    "alias": {
+      "salame": true,
+      "salame la francisca": true
+    },
+    "historial": {
+      "-Oy3xR6-647igh0qiyZt": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 9392.69,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iPjUmX8s8P2q8FlA_-Oy9iPmzolRmnJgzRal1": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 8416.7356,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-OyB1rrZrbVDLc7bbF7L": {
+        "conIva": true,
+        "facturaId": "-OyB1rl8Ofvf1VsL1pXV",
+        "fecha": "2026-07-04",
+        "precio": 17350,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-OyYrfS32UcLjD4aRwZ_": {
+        "conIva": true,
+        "facturaId": "-OyYrfDnbFVTutFFM8u0",
+        "fecha": "2026-07-23",
+        "marca": "La Francisca",
+        "precio": 17350,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-P-ePO7p8gwb60GbuRjY": {
+        "conIva": false,
+        "facturaId": "-P-ePNSdWyZgihem2-QY",
+        "fecha": "2026-08-08",
+        "marca": "",
+        "precio": 17879.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "nombre": "Salame — Milan",
+    "precioActual": 17879.01,
+    "precios": {
+      "-Oy3x6FgGm8bAAjccrbI": {
+        "actualizadoTs": 1787417956662,
+        "fechaUltimo": "2026-08-22",
+        "marca": "",
+        "origen": "compra",
+        "precio": 17879.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy3x6FgGm8bAAjccrbI::la francisca": {
+        "actualizadoTs": 1785160709765,
+        "fechaUltimo": "2026-07-27",
+        "marca": "La Francisca",
+        "precio": 17350,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738850934,
+        "marca": "",
+        "precio": 8416.7356,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6FgGm8bAAjccrbI",
+    "unidad": "kg"
+  },
+  "-Oy3xRKW9jpNq7Hljsgl": {
+    "actualizadoTs": 1787417959460,
+    "alertaBaja": {
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 3.418128236204896,
+      "precioNuevo": 28569.01,
+      "precioReferencia": 29580.0956,
+      "proveedorNombre": "La Francisca"
+    },
+    "alias": {
+      "salamin": true,
+      "salamin la francisca": true,
+      "salamin paladini": true
+    },
+    "historial": {
+      "-Oy3xRCcnTOiueelBsU7_-Oy3xRHKYuMLpGgpWSUY": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 19560,
+        "proveedorId": "",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy3xRNt-laGuqkIv9R7": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1100,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iPqMt8g3r72lJZgb_-Oy9iPtotZJ9SFRS_zhO": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 29580.0956,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-P-ePOJ_LvUne0DmB8jL": {
+        "conIva": false,
+        "facturaId": "-P-ePNSdWyZgihem2-QY",
+        "fecha": "2026-08-08",
+        "marca": "",
+        "precio": 28569.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-P-ePOR22RPyfWkQ1kO5": {
+        "conIva": false,
+        "facturaId": "-P-ePNSdWyZgihem2-QY",
+        "fecha": "2026-08-08",
+        "marca": "",
+        "precio": 28569.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-P-ePOciFtvXoXZVbQOi": {
+        "conIva": false,
+        "facturaId": "-P-ePNSdWyZgihem2-QY",
+        "fecha": "2026-08-08",
+        "marca": "",
+        "precio": 28569.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-P-ePOoL9fRC_Fr6zJsH": {
+        "conIva": false,
+        "facturaId": "-P-ePNSdWyZgihem2-QY",
+        "fecha": "2026-08-08",
+        "marca": "",
+        "precio": 28569.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "nombre": "Salamin — paquete unidad",
+    "precioActual": 29580.0956,
+    "precios": {
+      "-Oy3x6FgGm8bAAjccrbI": {
+        "actualizadoTs": 1787417959460,
+        "fechaUltimo": "2026-08-22",
+        "marca": "",
+        "origen": "compra",
+        "precio": 28569.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738851374,
+        "marca": "",
+        "precio": 29580.0956,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "unidad"
+  },
+  "-Oy3xRSfIV6OhZXnn3lZ": {
+    "actualizadoTs": 1784738852026,
+    "historial": {
+      "-Oy3xRXKi6_1d1w-2WW5": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6611.5667,
+        "proveedorId": "",
+        "proveedorNombre": "Bonifacio Monge S.R.L."
+      },
+      "-Oy9iQ3-GPum5nzffmEH": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6611.5667,
+        "proveedorId": "-Oy3x5CU1wbvKIrHD_Ap",
+        "proveedorNombre": "Bonifacio Monge S.R.L"
+      }
+    },
+    "nombre": "Salsa de chocolate x900gr",
+    "precioActual": 6611.5667,
+    "precios": {
+      "-Oy3x5CU1wbvKIrHD_Ap": {
+        "actualizadoTs": 1784738852026,
+        "precio": 6611.5667,
+        "proveedorNombre": "Bonifacio Monge S.R.L"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5CU1wbvKIrHD_Ap",
+    "unidad": "kg"
+  },
+  "-Oy3xR_cbYMOb57OhRRh": {
+    "actualizadoTs": 1784738852679,
+    "historial": {
+      "-Oy3xReKpTmbeU4KKy-X": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1155.9348,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iQDAtnve-pQY0KuH": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 856.8,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Salsa para pizza",
+    "precioActual": 856.8,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738852679,
+        "precio": 856.8,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy3xRh_GLyqAgBw4Kta": {
+    "actualizadoTs": 1785163835863,
+    "alertaBaja": {
+      "fecha": "2026-07-27",
+      "marca": "Jupiter",
+      "pct": 11.397955210045989,
+      "precioNuevo": 840.025,
+      "precioReferencia": 948.0876,
+      "proveedorNombre": "Calsa"
+    },
+    "alertaPrecio": {
+      "abrupta": true,
+      "fecha": "2026-07-27",
+      "marca": "Jupiter",
+      "pct": 43.3305088140874,
+      "precioAnterior": 661.4695,
+      "precioNuevo": 948.0876,
+      "proveedorNombre": "Calsa"
+    },
+    "contenidoPorUnidad": 20,
+    "historial": {
+      "-Oy3xRkoXq5S6MQXC9hX": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 948.0876,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iQNM1_uymoKrBiDH": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 661.4695,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-OyZ2ab2nV4d0N9w50vF": {
+        "conIva": true,
+        "facturaId": "-OyZ2aWGmU-UX9XcLIFP",
+        "fecha": "2026-07-20",
+        "marca": "Jupiter",
+        "precio": 840.025,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Salvado de trigo",
+    "precioActual": 948.0876,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738853330,
+        "precio": 661.4695,
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x5HICG7dqWSc5Hqw::jupiter": {
+        "actualizadoTs": 1785163835862,
+        "fechaUltimo": "2026-07-27",
+        "marca": "Jupiter",
+        "origen": "compra",
+        "precio": 840.025,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw::jupiter",
+    "unidad": "kg"
+  },
+  "-Oy3xRo-Hh-pIQMQcI8Q": {
+    "actualizadoTs": 1784738853982,
+    "historial": {
+      "-Oy3xRrFEb651H1rgv5Y": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 17999.9963,
+        "proveedorId": "",
+        "proveedorNombre": "13 Hermanos"
+      },
+      "-Oy9iQXYJ-kfRbyfGvmX": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 18600,
+        "proveedorId": "-Oy3x4zIVCAfQD8ZLMle",
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "nombre": "Semillas de amapola",
+    "precioActual": 18600,
+    "precios": {
+      "-Oy3x4zIVCAfQD8ZLMle": {
+        "actualizadoTs": 1784738853982,
+        "precio": 18600,
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "proveedorPreferido": "-Oy3x4zIVCAfQD8ZLMle",
+    "unidad": "kg"
+  },
+  "-Oy3xRvvtx_opnJ0M0c4": {
+    "actualizadoTs": 1784738854634,
+    "historial": {
+      "-Oy3xRz73jp9EBWeuThb": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 9999.9966,
+        "proveedorId": "",
+        "proveedorNombre": "13 Hermanos"
+      },
+      "-Oy9iQgky41Knwa5IVar": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 12400,
+        "proveedorId": "-Oy3x4zIVCAfQD8ZLMle",
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "nombre": "Semillas de sesamo",
+    "precioActual": 12400,
+    "precios": {
+      "-Oy3x4zIVCAfQD8ZLMle": {
+        "actualizadoTs": 1784738854634,
+        "precio": 12400,
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "proveedorPreferido": "-Oy3x4zIVCAfQD8ZLMle",
+    "unidad": "kg"
+  },
+  "-Oy3xS1LV3yvLXuqmUkV": {
+    "actualizadoTs": 1784738855292,
+    "historial": {
+      "-Oy3xS4cF2Wo-EUTiWfZ": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 9651.85,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      },
+      "-Oy9iQr-99bBY4gcoyfl": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 9191.8819,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Spekkel",
+    "precioActual": 9191.8819,
+    "precios": {
+      "-Oy3x5PQG-Q_8gCTDCC4": {
+        "actualizadoTs": 1784738855292,
+        "precio": 9191.8819,
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5PQG-Q_8gCTDCC4",
+    "unidad": "kg"
+  },
+  "-Oy3xS7o3_ic8rVTevgp": {
+    "actualizadoTs": 1784738855943,
+    "historial": {
+      "-Oy3xSCXkvToifCbNpP7": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 16294.2076,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iR0BhxWgO7itc7Ia": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 13900,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Syrope avellanas",
+    "precioActual": 13900,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738855943,
+        "precio": 13900,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "litros"
+  },
+  "-Oy3xSFm7h9LyzsOyzCA": {
+    "actualizadoTs": 1784738856927,
+    "historial": {
+      "-Oy3xSKDKc-ttcQotHUg": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 16294.2076,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iRFYtgv7rRfx5F1P": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 13899.996,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Syrope caramelo",
+    "precioActual": 13899.996,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738856927,
+        "precio": 13899.996,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "litros"
+  },
+  "-Oy3xSNkYNS-BrP77IYR": {
+    "actualizadoTs": 1784738857583,
+    "historial": {
+      "-Oy3xSSXrzJDgYnshFZs": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 16294.2076,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iRPnBXxmZfwNH56Z": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 13900,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Syrope coco",
+    "precioActual": 13900,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738857583,
+        "precio": 13900,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "litros"
+  },
+  "-Oy3xSVoc3b0Y0oi-czI": {
+    "actualizadoTs": 1784738858234,
+    "historial": {
+      "-Oy3xS_WFZyjBQRJatQk": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 16294.2076,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iRZziiJl9uUdRhDz": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 13900,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Syrope vainilla",
+    "precioActual": 13900,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738858234,
+        "precio": 13900,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "litros"
+  },
+  "-Oy3xSco6s_jf5PVd-sM": {
+    "actualizadoTs": 1784738858882,
+    "historial": {
+      "-Oy3xShXc0N03Xv1OnCR": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 16294.2076,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iRj3Cs8VH3jv_DJg": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 17099.9983,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Syrup Pistacho",
+    "precioActual": 17099.9983,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738858882,
+        "precio": 17099.9983,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "litros"
+  },
+  "-Oy3xSmNvMwTeIMn2SWd": {
+    "actualizadoTs": 1784738859538,
+    "historial": {
+      "-Oy3xSpd2K_zfPImb6nH": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 7457.8272,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      },
+      "-Oy9iRtMf_w88tn1IPwM": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 7457.8272,
+        "proveedorId": "-Oy3x5PQG-Q_8gCTDCC4",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Tegral torta",
+    "precioActual": 7457.8272,
+    "precios": {
+      "-Oy3x5PQG-Q_8gCTDCC4": {
+        "actualizadoTs": 1784738859538,
+        "precio": 7457.8272,
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5PQG-Q_8gCTDCC4",
+    "unidad": "kg"
+  },
+  "-Oy3xSspGuFHPuVajcnC": {
+    "actualizadoTs": 1784848519218,
+    "historial": {
+      "-Oy3xSw-pQ9V1wKkufQ9": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 750,
+        "proveedorId": "",
+        "proveedorNombre": "Cofrutos"
+      },
+      "-Oy9iS2YwIJvX6DvT8aQ": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 3000,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "nombre": "Tomates",
+    "precioActual": 3000,
+    "precios": {
+      "-Oy9i7sX4WQLLHbd5dNR": {
+        "actualizadoTs": 1784738860190,
+        "precio": 3000,
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "proveedorPreferido": "-Oy9i7sX4WQLLHbd5dNR",
+    "unidad": "kg"
+  },
+  "-Oy3xT-if8mkSvr1D_RO": {
+    "actualizadoTs": 1784848574097,
+    "historial": {
+      "-Oy3xT30-K28uB9AwSHg": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2000,
+        "proveedorId": "",
+        "proveedorNombre": "Cofrutos"
+      },
+      "-Oy9iSChkLeVAssjZdae": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2000,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "nombre": "Tomates cherrys",
+    "precioActual": 2000,
+    "precios": {
+      "-Oy9i7sX4WQLLHbd5dNR": {
+        "actualizadoTs": 1784738860843,
+        "precio": 2000,
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "proveedorPreferido": "-Oy9i7sX4WQLLHbd5dNR",
+    "unidad": "kg"
+  },
+  "-Oy3xT7irvzTTO0kYGA1": {
+    "actualizadoTs": 1784738861467,
+    "historial": {
+      "-Oy3xTAxj8RvnOagBHXx": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 100,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iSMNDfpkL5hvHNua": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 100,
+        "proveedorId": "",
+        "proveedorNombre": "Carga manual"
+      }
+    },
+    "nombre": "Tulipas",
+    "precioActual": 100,
+    "precios": {
+      "_manual": {
+        "actualizadoTs": 1784738861467,
+        "precio": 100,
+        "proveedorNombre": "Carga manual"
+      }
+    },
+    "proveedorPreferido": "_manual",
+    "unidad": "kg"
+  },
+  "-Oy3xTECSd9TsAYOuIpB": {
+    "actualizadoTs": 1784738862091,
+    "historial": {
+      "-Oy3xTHSeJ3gr1Lpphz5": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 14695.5351,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iSW8lVHhH9AkAmgZ": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 11764.624,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Variegato Frutos del bosque",
+    "precioActual": 11764.624,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738862091,
+        "precio": 11764.624,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "kg"
+  },
+  "-Oy3xTM7LNVJTD2nRhsV": {
+    "actualizadoTs": 1784738862716,
+    "historial": {
+      "-Oy3xTPKFjn-AaowAEgu": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 10821.8183,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iSeo3vpeXq9gq30-": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 10821.8183,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Variegato Maracuya",
+    "precioActual": 10821.8183,
+    "precios": {
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738862716,
+        "precio": 10821.8183,
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "kg"
+  },
+  "-Oy3xTg1JUcSTkkBZGdc": {
+    "actualizadoTs": 1784738863967,
+    "historial": {
+      "-Oy3xTki8AA2gASXi7JU": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6040,
+        "proveedorId": "",
+        "proveedorNombre": "Greenway"
+      },
+      "-Oy9iSyKGKPf_C2txRqr": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 5320,
+        "proveedorId": "-Oy9iSi3RKNpfwUiMVPE",
+        "proveedorNombre": "Greenway"
+      }
+    },
+    "nombre": "Yogurt natural",
+    "precioActual": 5320,
+    "precios": {
+      "-Oy9iSi3RKNpfwUiMVPE": {
+        "actualizadoTs": 1784738863967,
+        "precio": 5320,
+        "proveedorNombre": "Greenway"
+      }
+    },
+    "proveedorPreferido": "-Oy9iSi3RKNpfwUiMVPE",
+    "unidad": "kg"
+  },
+  "-Oy3xTz7fu4i5vxZFdQt": {
+    "actualizadoTs": 1784738841440,
+    "historial": {
+      "-Oy3xU1NoVFERGNO4tyE": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 74999.9987,
+        "proveedorId": "",
+        "proveedorNombre": "13 Hermanos"
+      },
+      "-Oy9iNTVIr_2KYFH57W-": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 39000,
+        "proveedorId": "-Oy3x4zIVCAfQD8ZLMle",
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "nombre": "Pistachos",
+    "precioActual": 39000,
+    "precios": {
+      "-Oy3x4zIVCAfQD8ZLMle": {
+        "actualizadoTs": 1784738841440,
+        "precio": 39000,
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "proveedorPreferido": "-Oy3x4zIVCAfQD8ZLMle",
+    "unidad": "kg"
+  },
+  "-Oy3xU4dIZl8Sh_54A_p": {
+    "actualizadoTs": 1784738788789,
+    "historial": {
+      "-Oy3xU9KOv6o1MxqibiK": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 12000,
+        "proveedorId": "",
+        "proveedorNombre": "13 Hermanos"
+      },
+      "-Oy9iAc1i4-SArGhfEoZ": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 12000,
+        "proveedorId": "-Oy3x4zIVCAfQD8ZLMle",
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "nombre": "Bicarbonato de sodio",
+    "precioActual": 12000,
+    "precios": {
+      "-Oy3x4zIVCAfQD8ZLMle": {
+        "actualizadoTs": 1784738788789,
+        "precio": 12000,
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "proveedorPreferido": "-Oy3x4zIVCAfQD8ZLMle",
+    "unidad": "kg"
+  },
+  "-Oy3xUC_QQA6zpGEAGFb": {
+    "actualizadoTs": 1784642138546,
+    "historial": {
+      "-Oy3xUHKNIZExMqtHlAM": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 8855.8518,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Satin carrot",
+    "precioActual": 8855.8518,
+    "unidad": "kg"
+  },
+  "-Oy3xUK_nF1ZvThEie-C": {
+    "actualizadoTs": 1784642139058,
+    "historial": {
+      "-Oy3xUNkmDHCzegCxJpx": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 11593.9982,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Premezcla brownie x3kg",
+    "precioActual": 11593.9982,
+    "unidad": "kg"
+  },
+  "-Oy3xUR-kTFEiSIGgA88": {
+    "actualizadoTs": 1784642139469,
+    "historial": {
+      "-Oy3xUUFFF6xy_adwzqN": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 27759.4691,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Bondiola",
+    "precioActual": 27759.4691,
+    "unidad": "kg"
+  },
+  "-Oy3xUYvMSDsnmJ7asA0": {
+    "actualizadoTs": 1784642139976,
+    "historial": {
+      "-Oy3xUbFVM0i1gtXTwR9": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 11056.9824,
+        "proveedorId": "",
+        "proveedorNombre": "Carfila"
+      }
+    },
+    "nombre": "Tegral brownie",
+    "precioActual": 11056.9824,
+    "unidad": "kg"
+  },
+  "-Oy3xUfwLvxCi_COrGRy": {
+    "actualizadoTs": 1784642140489,
+    "historial": {
+      "-Oy3xUjBxjv1x0F8hLst": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2662,
+        "proveedorId": "",
+        "proveedorNombre": "Casa Naoum"
+      }
+    },
+    "nombre": "Chocolinas",
+    "precioActual": 2662,
+    "unidad": "kg"
+  },
+  "-Oy3xV-zqTieu4udsPUM": {
+    "actualizadoTs": 1784642141836,
+    "historial": {
+      "-Oy3xV3P25GQifb1JZeC": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6252.0942,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "café instantaneo",
+    "precioActual": 6252.0942,
+    "unidad": "kg"
+  },
+  "-Oy3xV7jdyUsrpq0iAMg": {
+    "actualizadoTs": 1784642142332,
+    "historial": {
+      "-Oy3xVCYx81REW3oKzEw": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 14027.53,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "queso roquefort",
+    "precioActual": 14027.53,
+    "unidad": "kg"
+  },
+  "-Oy3xVVyzJa4TtZx3_t9": {
+    "actualizadoTs": 1787417956185,
+    "alertaBaja": {
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 31.878844973522313,
+      "precioNuevo": 19090,
+      "precioReferencia": 28023.6,
+      "proveedorNombre": "La Francisca"
+    },
+    "alertaPrecio": {
+      "abrupta": true,
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 103.4868651688651,
+      "precioAnterior": 13771.6997,
+      "precioNuevo": 28023.6,
+      "proveedorNombre": "La Francisca"
+    },
+    "alias": {
+      "salame": true,
+      "salame cantimpalo goggi": true
+    },
+    "historial": {
+      "-Oy3xV_eks4P4YOlRHyc": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 28023.6,
+        "proveedorId": "",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy9iTKJykLADEy2OgVp_-Oy9iTNgh2jnivNJ0RCY": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 13771.6997,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-P-ePO0J9MNOR_eCAQ-A": {
+        "conIva": false,
+        "facturaId": "-P-ePNSdWyZgihem2-QY",
+        "fecha": "2026-08-08",
+        "marca": "",
+        "precio": 19090,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "nombre": "Cantimpalo",
+    "precioActual": 28023.6,
+    "precios": {
+      "-Oy3x6FgGm8bAAjccrbI": {
+        "actualizadoTs": 1787417956184,
+        "fechaUltimo": "2026-08-22",
+        "marca": "",
+        "origen": "compra",
+        "precio": 19090,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738865643,
+        "marca": "",
+        "precio": 13771.6997,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6FgGm8bAAjccrbI",
+    "unidad": "kg"
+  },
+  "-Oy3xVcu7mlZQm3Lnvak": {
+    "actualizadoTs": 1787417954929,
+    "alertaBaja": {
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 35.03748715916748,
+      "precioNuevo": 24430,
+      "precioReferencia": 37606.3039,
+      "proveedorNombre": "La Francisca"
+    },
+    "alias": {
+      "jamon cocido": true
+    },
+    "historial": {
+      "-Oy3xVgNWJnOJu71RdFM": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 35876.5,
+        "proveedorId": "",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy9iTjgDCZu5HswRtZW_-Oy9iTnB4WcsRo4HgGuj": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 37606.3039,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-OyYrfIVtWCXmwLTc2v_": {
+        "conIva": true,
+        "facturaId": "-OyYrfDnbFVTutFFM8u0",
+        "fecha": "2026-07-23",
+        "marca": "La Francisca",
+        "precio": 23720.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-P-ePNhjuMIzyhRyXMM9": {
+        "conIva": false,
+        "facturaId": "-P-ePNSdWyZgihem2-QY",
+        "fecha": "2026-08-08",
+        "marca": "",
+        "precio": 24430,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "nombre": "Lomito ahumado",
+    "precioActual": 37606.3039,
+    "precios": {
+      "-Oy3x6FgGm8bAAjccrbI": {
+        "actualizadoTs": 1787417954928,
+        "fechaUltimo": "2026-08-22",
+        "marca": "",
+        "origen": "compra",
+        "precio": 24430,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy3x6FgGm8bAAjccrbI::la francisca": {
+        "actualizadoTs": 1785160709160,
+        "fechaUltimo": "2026-07-27",
+        "marca": "La Francisca",
+        "precio": 23720.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738867331,
+        "marca": "",
+        "precio": 37606.3039,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3xVqsfZsjEiRPj_6k": {
+    "actualizadoTs": 1785163744712,
+    "alertaBaja": {
+      "fecha": "2026-07-27",
+      "marca": "Las Flores",
+      "pct": 17.35536,
+      "precioNuevo": 10330.58,
+      "precioReferencia": 12500,
+      "proveedorNombre": "Panificadora las Flores"
+    },
+    "historial": {
+      "-Oy3xVuOKw4Q263iRNyZ": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 12500,
+        "proveedorId": "",
+        "proveedorNombre": "Panificadora las Flores"
+      },
+      "-Oy9iU3S0cOhs5jsQ9cX": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 12500,
+        "proveedorId": "-Oy3x6pWOEfg-38KOqwf",
+        "proveedorNombre": "Panificadora las Flores"
+      },
+      "-OyZ2FKLqDwaUnEt4DtM": {
+        "conIva": true,
+        "facturaId": "-OyZ2FG39g57SGat8k_f",
+        "fecha": "2020-07-26",
+        "marca": "Las Flores",
+        "precio": 10330.58,
+        "proveedorId": "-Oy3x6pWOEfg-38KOqwf",
+        "proveedorNombre": "Panificadora las Flores"
+      }
+    },
+    "nombre": "Pan de miga",
+    "precioActual": 12500,
+    "precios": {
+      "-Oy3x6pWOEfg-38KOqwf": {
+        "actualizadoTs": 1784738868435,
+        "precio": 12500,
+        "proveedorNombre": "Panificadora las Flores"
+      },
+      "-Oy3x6pWOEfg-38KOqwf::las flores": {
+        "actualizadoTs": 1785163744712,
+        "fechaUltimo": "2026-07-27",
+        "marca": "Las Flores",
+        "origen": "compra",
+        "precio": 10330.58,
+        "proveedorId": "-Oy3x6pWOEfg-38KOqwf",
+        "proveedorNombre": "Panificadora las Flores"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6pWOEfg-38KOqwf",
+    "unidad": "kg"
+  },
+  "-Oy3xW68eA5xGbXIw1UW": {
+    "actualizadoTs": 1784642146326,
+    "historial": {
+      "-Oy3xW9SklSHb968rvJv": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 13960.7,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Café — paquete 1/4",
+    "precioActual": 13960.7,
+    "unidad": "1/4"
+  },
+  "-Oy3xWCca-c4iJVtKnZe": {
+    "actualizadoTs": 1784642146741,
+    "historial": {
+      "-Oy3xWHKPxI_duaTA__-": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3200,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Agua saboriz",
+    "precioActual": 3200,
+    "unidad": "500 cc"
+  },
+  "-Oy3xWKZoFltkhE6Pqz5": {
+    "actualizadoTs": 1784642147249,
+    "historial": {
+      "-Oy3xWNoDpNOF1i5Quu7": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2500,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Agua",
+    "precioActual": 2500,
+    "unidad": "500 cc"
+  },
+  "-Oy3xWj7TV99ORUSFQdR": {
+    "actualizadoTs": 1784642148885,
+    "historial": {
+      "-Oy3xWmR7amaeblFEXwz": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 800,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Bagel",
+    "precioActual": 800,
+    "unidad": "kg"
+  },
+  "-Oy3xWxcQ85toufQ6_cx": {
+    "actualizadoTs": 1784642149813,
+    "historial": {
+      "-Oy3xX1KlIM6xEsBrq_b": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 600,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Churro",
+    "precioActual": 600,
+    "unidad": "unidad"
+  },
+  "-Oy3xX670NFM162pwjPl": {
+    "actualizadoTs": 1784642150421,
+    "nombre": "Cookies",
+    "precioActual": 0,
+    "unidad": "unidad"
+  },
+  "-Oy3xXHWN7WfQ60Gyi9F": {
+    "actualizadoTs": 1784642151150,
+    "historial": {
+      "-Oy3xXMAyuEx5VQLurvS": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1000,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Croissant",
+    "precioActual": 1000,
+    "unidad": "kg"
+  },
+  "-Oy3xXPRgYcTVDbIOcGe": {
+    "actualizadoTs": 1784642151657,
+    "historial": {
+      "-Oy3xXSh5YxfXPsQ-Q44": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1400,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Donas",
+    "precioActual": 1400,
+    "unidad": "kg"
+  },
+  "-Oy3xX__M0p8hx3jHdnw": {
+    "actualizadoTs": 1784642152370,
+    "historial": {
+      "-Oy3xXcpXdgu02Ck5s9J": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1361,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Durazno",
+    "precioActual": 1361,
+    "unidad": "kg"
+  },
+  "-Oy3xXhXLgxvXAS537kR": {
+    "actualizadoTs": 1784642152879,
+    "historial": {
+      "-Oy3xXkkVGV4UGw9y4_e": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1000,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Focaccia",
+    "precioActual": 1000,
+    "unidad": "kg"
+  },
+  "-Oy3xXo75xqA6pgf076W": {
+    "actualizadoTs": 1784822746285,
+    "alertaPrecio": {
+      "abrupta": true,
+      "fecha": "2026-07-23",
+      "pct": 451.99999999999994,
+      "precioAnterior": 2000,
+      "precioNuevo": 11040,
+      "proveedorNombre": "Coca Cola"
+    },
+    "historial": {
+      "-Oy3xXrRO-H3pMFL0hld": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2000,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-OyEiSdqNp9BkioJc_pA": {
+        "conIva": true,
+        "facturaId": "-OyEiS_30SxydPESjn3N",
+        "fecha": "2026-07-23",
+        "precio": 11040,
+        "proveedorId": "-Oy3x5cgg3zdamPydBR_",
+        "proveedorNombre": "Coca Cola"
+      }
+    },
+    "nombre": "Frutas",
+    "precioActual": 11040,
+    "precios": {
+      "-Oy3x5cgg3zdamPydBR_": {
+        "actualizadoTs": 1784822746285,
+        "precio": 11040,
+        "proveedorNombre": "Coca Cola"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5cgg3zdamPydBR_",
+    "unidad": "kg"
+  },
+  "-Oy3xXvyI4qek6uWXqda": {
+    "actualizadoTs": 1784642153803,
+    "historial": {
+      "-Oy3xY-j0IO2rb0wu9oP": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 277.3374,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Ganache",
+    "precioActual": 277.3374,
+    "unidad": "kg"
+  },
+  "-Oy3xY32xftkHX5GCKel": {
+    "actualizadoTs": 1784642154320,
+    "historial": {
+      "-Oy3xY7jvyGEYhcyH6s4": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3200,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Gaseosa",
+    "precioActual": 3200,
+    "unidad": "500 cc"
+  },
+  "-Oy3xYAz50GnAnGO5rTw": {
+    "actualizadoTs": 1784642154829,
+    "historial": {
+      "-Oy3xYEE3f-o0ZADOcyr": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2400,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Helado",
+    "precioActual": 2400,
+    "unidad": "kg"
+  },
+  "-Oy3xYSIMzfaEEMgAs6z": {
+    "actualizadoTs": 1784642155936,
+    "historial": {
+      "-Oy3xYVsDMlCO6FJW8yT": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1052.22,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Leche Descremada",
+    "precioActual": 1052.22,
+    "unidad": "litros"
+  },
+  "-Oy3xY_XOsy4-IeiFg3Q": {
+    "actualizadoTs": 1784642156463,
+    "nombre": "Lechuga",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3xYkvmiSrPjk97dN0": {
+    "actualizadoTs": 1784642157192,
+    "historial": {
+      "-Oy3xYpXIPHad2GtCAU6": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 120,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "MiniBaguette",
+    "precioActual": 120,
+    "unidad": "kg"
+  },
+  "-Oy3xZIwmojPeAcRyGbJ": {
+    "actualizadoTs": 1787347792535,
+    "historial": {
+      "-Oy3xP7r26MSsZd35y2O_-Oy3xPC_6b0YQgbQ7PXF": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 19225.0003,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3xPFycXLy18o5c_v-_-Oy3xPKXDBeakE5cLQ1Y": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 17350.2021,
+        "proveedorId": "",
+        "proveedorNombre": "Samin"
+      },
+      "-Oy3xZMA6Sc4bMLS666W": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2875,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iOW_h8Z5rqyUkpXO_-Oy9iOZrKyuj6QEwdG8o": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6672.5752,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-OyYs2YTWN7vAWl0D-Je_-Oy3xP1KFkRJrCGIShpN_-Oy3xP4YGVuZFVRwp7YZ": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 5822.4758,
+        "proveedorId": "",
+        "proveedorNombre": "Serenisima"
+      },
+      "-OyYs2YTWN7vAWl0D-Je_-OyYs2h2ap6gDPzheSwS": {
+        "conIva": true,
+        "facturaId": "-OyYs2YTWN7vAWl0D-Jd",
+        "fecha": "2026-07-23",
+        "marca": "Casancrem",
+        "precio": 40387.6,
+        "proveedorId": "-OyYs0PCr53ZOD2Famxb",
+        "proveedorNombre": "VITAL MAYORISTA - MAYCAR S.A"
+      }
+    },
+    "nombre": "Queso crema x pouch",
+    "precioActual": 40387.6,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738845948,
+        "marca": "",
+        "precio": 6672.5752,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-OyYs0PCr53ZOD2Famxb::casancrem": {
+        "actualizadoTs": 1785160809099,
+        "fechaUltimo": "2026-07-27",
+        "marca": "Casancrem",
+        "precio": 40387.6,
+        "proveedorId": "-OyYs0PCr53ZOD2Famxb",
+        "proveedorNombre": "VITAL MAYORISTA - MAYCAR S.A"
+      }
+    },
+    "proveedorPreferido": "-OyYs0PCr53ZOD2Famxb::casancrem",
+    "unidad": "kg"
+  },
+  "-Oy3xZQw7i9k45PXQErH": {
+    "actualizadoTs": 1784642159945,
+    "nombre": "Sirope",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3xZVjJNAEqkMybWXe": {
+    "actualizadoTs": 1784642160252,
+    "historial": {
+      "-Oy3xZ_XtKoLzf1cqRqc": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 500,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Soda",
+    "precioActual": 500,
+    "unidad": "litros"
+  },
+  "-Oy3xZjYNvd-clg8VO_N": {
+    "actualizadoTs": 1784642161200,
+    "nombre": "Tortillas",
+    "precioActual": 0,
+    "unidad": "unidad"
+  },
+  "-Oy3xZmrFFqGf8bhRFjI": {
+    "actualizadoTs": 1784642161413,
+    "historial": {
+      "-Oy3xZqELzr7GJu9mT2X": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3500,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Tostadas Blancas",
+    "precioActual": 3500,
+    "unidad": "kg"
+  },
+  "-Oy3xZuKmhbaNuEO9v3m": {
+    "actualizadoTs": 1784642161890,
+    "historial": {
+      "-Oy3xZxfWMk10KsavxT1": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 4200,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Tostadas Granos Andinos",
+    "precioActual": 4200,
+    "unidad": "kg"
+  },
+  "-Oy3x_1Loo5LsHP12H1S": {
+    "actualizadoTs": 1784642162403,
+    "historial": {
+      "-Oy3x_4fJq9g1eNxyX5K": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 4200,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Tostadas Multicereal",
+    "precioActual": 4200,
+    "unidad": "kg"
+  },
+  "-Oy3x_9KkQren_el-uE3": {
+    "actualizadoTs": 1784642162914,
+    "historial": {
+      "-Oy3x_E7nj6HmHQiCTK8": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3800,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Tostadas Salvados",
+    "precioActual": 3800,
+    "unidad": "kg"
+  },
+  "-Oy3x_PQ3ej0Z9o05fuu": {
+    "actualizadoTs": 1784642163944,
+    "historial": {
+      "-Oy3x_U905TAnsvuXcw0": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1000,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      }
+    },
+    "nombre": "Hielo",
+    "precioActual": 1000,
+    "unidad": "bolsa"
+  },
+  "-Oy3x_XUTvD2k3lEFnOC": {
+    "actualizadoTs": 1787343261423,
+    "historial": {
+      "-Oy9iTDksbd1RtJzw8FK_-Oy9iTH4mvjhzmeIAVTI": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 17.8104,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Azucar en Sobre",
+    "precioActual": 17.8104,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738865223,
+        "marca": "",
+        "precio": 17.8104,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy3x_b7UceL0zOdLaRS": {
+    "actualizadoTs": 1784642164757,
+    "nombre": "Miga de jamon cocido",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy3x_eQ1H_DmzmDZpPG": {
+    "actualizadoTs": 1784642164968,
+    "nombre": "Miga de jamon crudo",
+    "precioActual": 0,
+    "unidad": "kg"
+  },
+  "-Oy9i6FAaFviqUJatUoj": {
+    "creadoTs": 1784738771106,
+    "nombre": "Claras",
+    "unidad": "kg"
+  },
+  "-Oy9i6P97QmO0nts6A4k": {
+    "creadoTs": 1784738771745,
+    "nombre": "Premezcla Easy Pannettone",
+    "unidad": "kg"
+  },
+  "-Oy9i6Z5UJVgFL0zZzBq": {
+    "creadoTs": 1784738772381,
+    "nombre": "Yemas",
+    "unidad": "kg"
+  },
+  "-Oy9i84q3YJBVEPP6fxu": {
+    "actualizadoTs": 1784902809387,
+    "creadoTs": 1784738778638,
+    "historial": {
+      "-Oy3x8pVd92Rw8RewXey_-Oy3x8ssL_7vfKnj3-p2": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "— 13 hermanos",
+        "precio": 28694.22,
+        "proveedorId": "",
+        "proveedorNombre": "13 Hermanos"
+      },
+      "-Oy3x8pVd92Rw8RewXey_-Oy3x8xW40n7lkt1P84L_-Oy3x9-mJ_MurLqUwKuU": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "marca": "— Café",
+        "precio": 19000,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9i88A_aaZh8es9OkE": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 34720,
+        "proveedorId": "-Oy3x4zIVCAfQD8ZLMle",
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "nombre": "Almendras",
+    "precioActual": 34720,
+    "precios": {
+      "-Oy3x4zIVCAfQD8ZLMle": {
+        "actualizadoTs": 1784738778637,
+        "marca": "",
+        "precio": 34720,
+        "proveedorId": "-Oy3x4zIVCAfQD8ZLMle",
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "proveedorPreferido": "-Oy3x4zIVCAfQD8ZLMle",
+    "unidad": "kg"
+  },
+  "-Oy9i9Bal1WCQjLeAOBk": {
+    "actualizadoTs": 1784994847852,
+    "creadoTs": 1784738783165,
+    "historial": {
+      "-Oy3xA-gUtD-bNLoGALD_-Oy3xA2zd6xatKHJDlG8": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3027.2784,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3xA6Fn93qzUKbr_qL_-Oy3xAAuH7mU3NHcPcLf": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1311.7355,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9i9F1BDsoji3-xgbL": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 3027.2784,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9i9P2Y0Z22axxL7Zi": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 1311.7355,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Azucar impalpable",
+    "precioActual": 3027.2784,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738783165,
+        "marca": "",
+        "precio": 3027.2784,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738783814,
+        "marca": "",
+        "precio": 1311.7355,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy9iDHYgtPee6VHdFxE": {
+    "actualizadoTs": 1787343620412,
+    "creadoTs": 1784738799930,
+    "historial": {
+      "-Oy3xDNp2h7YdRBTgld2_-Oy3xDSVCg6XNBGnhlEK": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 8671.6647,
+        "proveedorId": "",
+        "proveedorNombre": "Cosalta"
+      },
+      "-Oy3xDNp2h7YdRBTgld2_-Oy4-qdy5tKh5Y0pxYAe": {
+        "facturaId": "-Oy4-qQZekEMbHsf9cu1",
+        "fecha": "2026-07-21",
+        "precio": 26012.19,
+        "proveedorId": "-Oy3x5hUUrbMdfLny41w",
+        "proveedorNombre": "Cosalta"
+      },
+      "-Oy3xDNp2h7YdRBTgld2_-Oy9iDAcdsUM2KlJcS5T_-Oy9iDEBK8nuub8jO96d": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 7868.6875,
+        "proveedorId": "-Oy3x5hUUrbMdfLny41w",
+        "proveedorNombre": "Cosalta"
+      },
+      "-Oy3xDXIQeKvnvZizFSK_-Oy3xD_dQN0X1xrQBeL8": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 15500.0002,
+        "proveedorId": "",
+        "proveedorNombre": "La Reina Lacteos"
+      },
+      "-Oy3xX9Vh1lV6-fOGc4-_-Oy3xXDzpNImYgpR8xxq": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 5546.7475,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy5lEUQfO9AxvFSMILS_-Oy5lErPYbZcsct-_HbF": {
+        "conIva": true,
+        "facturaId": "-Oy5lEd1fwwr5ZL-qn18",
+        "fecha": "2026-07-20",
+        "precio": 26012.19,
+        "proveedorId": "-Oy5lEAvhTTuFPOgLwJI",
+        "proveedorNombre": "Daniela Cecilia Gallardo"
+      },
+      "-Oy9iDL6xB5qQLVKMbkQ": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Cosalta",
+        "precio": 6874.9992,
+        "proveedorId": "-Oy3x6KWg7AE5crimEUr",
+        "proveedorNombre": "La Reina Lacteos"
+      }
+    },
+    "nombre": "Crema de leche",
+    "precioActual": 26012.19,
+    "precios": {
+      "-Oy3x5hUUrbMdfLny41w": {
+        "actualizadoTs": 1784738799487,
+        "marca": "",
+        "precio": 7868.6875,
+        "proveedorId": "-Oy3x5hUUrbMdfLny41w",
+        "proveedorNombre": "Cosalta"
+      },
+      "-Oy3x6KWg7AE5crimEUr::cosalta": {
+        "actualizadoTs": 1784738799930,
+        "marca": "Cosalta",
+        "precio": 6874.9992,
+        "proveedorId": "-Oy3x6KWg7AE5crimEUr",
+        "proveedorNombre": "La Reina Lacteos"
+      },
+      "-Oy5lEAvhTTuFPOgLwJI": {
+        "actualizadoTs": 1784672483687,
+        "marca": "",
+        "precio": 26012.19,
+        "proveedorId": "-Oy5lEAvhTTuFPOgLwJI",
+        "proveedorNombre": "Daniela Cecilia Gallardo"
+      }
+    },
+    "proveedorPreferido": "-Oy5lEAvhTTuFPOgLwJI",
+    "unidad": "kg"
+  },
+  "-Oy9iE17drHS0vo-PLsr": {
+    "actualizadoTs": 1787346704965,
+    "creadoTs": 1784738802975,
+    "historial": {
+      "-Oy3x7chx0YVzD6Uo4r8_-Oy3x7hVzSGpa9-hDTdt": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3940.6022,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x7mIpuiQKoVFJWB0_-Oy3x7r57yiE9xBKIkMt": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1938.842,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x7uRYyPoiNqkYsf1_-Oy3x7z50zA1UJ1U7d_o": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2849.024,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy3x82ttrxx8QYlREhu_-Oy3x87gPUY9F9OCKnR0": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2995.0888,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x8B-uq75zGZWpmTM_-Oy3x8EAIHzRMjT5-9WY": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2814.0002,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3x8B-uq75zGZWpmTM_-Oy9iE7xpb19-f433KeP_-Oy9iEBOfBcwsDtKoHt5": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2864.5201,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iE4S7od1QkhpzbyP": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 3940.6022,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iELZKZ1vGL4WmnFi": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2849.024,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Dulce de membrillo",
+    "precioActual": 3940.6022,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738802975,
+        "marca": "",
+        "precio": 3940.6022,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738804071,
+        "marca": "",
+        "precio": 2849.024,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738803412,
+        "marca": "",
+        "precio": 2864.5201,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy9iEshAfeiypgrdC8H": {
+    "actualizadoTs": 1787346735743,
+    "creadoTs": 1784738806468,
+    "historial": {
+      "-Oy3xEcpFuCp-d1nATxB_-Oy3xEhVFinae66oVdSY": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2683.2331,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iEw8cKDPz9Kc-Oo7_-Oy9iEzZGwdechdJ87Iy": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2683.2331,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Esencia de vainilla",
+    "precioActual": 2683.2331,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738806688,
+        "marca": "",
+        "precio": 2683.2331,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy9iGVow1CGUZInokxL": {
+    "actualizadoTs": 1787346789688,
+    "creadoTs": 1784738813131,
+    "historial": {
+      "-Oy3xG7izirhg-_gm4a3_-Oy3xGCVL4u7Zs6ovnjb": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 12999.998,
+        "proveedorId": "",
+        "proveedorNombre": "13 Hermanos"
+      },
+      "-Oy3xGHJZuiPC2W6g1Zg_-Oy3xGM60hK6P9JRplLV": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1800,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iGZG7CzCFKK14AvK": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 13800,
+        "proveedorId": "-Oy3x4zIVCAfQD8ZLMle",
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "nombre": "Granola",
+    "precioActual": 13800,
+    "precios": {
+      "-Oy3x4zIVCAfQD8ZLMle": {
+        "actualizadoTs": 1784738813131,
+        "marca": "",
+        "precio": 13800,
+        "proveedorId": "-Oy3x4zIVCAfQD8ZLMle",
+        "proveedorNombre": "13 hermanos"
+      }
+    },
+    "proveedorPreferido": "-Oy3x4zIVCAfQD8ZLMle",
+    "unidad": "kg"
+  },
+  "-Oy9iGiR3UNQfH7pSdmw": {
+    "actualizadoTs": 1787346836790,
+    "creadoTs": 1784738814003,
+    "historial": {
+      "-Oy3xGYu7HzDBVuF-Sz4_-Oy3xGchXexI7bC7tz5v": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 635.1532,
+        "proveedorId": "",
+        "proveedorNombre": "Chahla Zaid"
+      },
+      "-Oy3xGhVOXsYYLTHcmVc_-Oy3xGmJa6hXiTaC34Ic": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 466.8235,
+        "proveedorId": "",
+        "proveedorNombre": "Sucesión de Picchio"
+      },
+      "-Oy3xGhVOXsYYLTHcmVc_-Oy9iGpAWWhEz0yYiZmW_-Oy9iGscz8Tw0X_rB7t0": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 466.8235,
+        "proveedorId": "-Oy3x67hSkn6lE44uHjv",
+        "proveedorNombre": "Harina — Sucesion de Picchio"
+      },
+      "-Oy9iGloLDoaabUdJlYY": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 840,
+        "proveedorId": "-Oy3x6BB2k7o0gjXohnv",
+        "proveedorNombre": "Harina — Chahala Ziad"
+      }
+    },
+    "nombre": "Harina 000 x25kg",
+    "precioActual": 840,
+    "precios": {
+      "-Oy3x67hSkn6lE44uHjv": {
+        "actualizadoTs": 1784738814434,
+        "marca": "",
+        "precio": 466.8235,
+        "proveedorId": "-Oy3x67hSkn6lE44uHjv",
+        "proveedorNombre": "Harina — Sucesion de Picchio"
+      },
+      "-Oy3x6BB2k7o0gjXohnv": {
+        "actualizadoTs": 1784738814003,
+        "marca": "",
+        "precio": 840,
+        "proveedorId": "-Oy3x6BB2k7o0gjXohnv",
+        "proveedorNombre": "Harina — Chahala Ziad"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6BB2k7o0gjXohnv",
+    "unidad": "kg"
+  },
+  "-Oy9iHIeh4qT78fuul4k": {
+    "actualizadoTs": 1787346912165,
+    "creadoTs": 1784738816385,
+    "historial": {
+      "-Oy3xGzJp4V8qkRZZq5J_-Oy3xH2uLxwuZMkbVeF8": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 200,
+        "proveedorId": "",
+        "proveedorNombre": "Lila"
+      },
+      "-Oy3xH7hfOXRehWgCsEr_-Oy3xHCVfGeSi7hEFfXE": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 172.2222,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iHM5ifiS5TwDTHvK": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Lila",
+        "precio": 4000,
+        "proveedorId": "-Oy9iHFKHzQfOCWS2yMx",
+        "proveedorNombre": "Lila"
+      }
+    },
+    "nombre": "Huevos",
+    "precioActual": 4000,
+    "precios": {
+      "-Oy9iHFKHzQfOCWS2yMx::lila": {
+        "actualizadoTs": 1784738816385,
+        "marca": "Lila",
+        "precio": 4000,
+        "proveedorId": "-Oy9iHFKHzQfOCWS2yMx",
+        "proveedorNombre": "Lila"
+      }
+    },
+    "proveedorPreferido": "-Oy9iHFKHzQfOCWS2yMx::lila",
+    "unidad": "kg"
+  },
+  "-Oy9iHfG__J6NDnR9Rz4": {
+    "actualizadoTs": 1787346998870,
+    "creadoTs": 1784738817896,
+    "historial": {
+      "-Oy3xHeJfBtQUiFbY9QM_-Oy3xHj6cliaVgZB_iXm": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 57656.5121,
+        "proveedorId": "",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy9iHiiMnQWyzHXlDYz": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "La Francisca",
+        "precio": 47650,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-OyB1rl8Ofvf1VsL1pXW": {
+        "conIva": true,
+        "facturaId": "-OyB1rl8Ofvf1VsL1pXV",
+        "fecha": "2026-07-04",
+        "marca": "La Francisca",
+        "precio": 47650.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "nombre": "Jamon crudo",
+    "precioActual": 47650.01,
+    "precios": {
+      "-Oy3x6FgGm8bAAjccrbI::la francisca": {
+        "actualizadoTs": 1784760989982,
+        "marca": "La Francisca",
+        "precio": 47650.01,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6FgGm8bAAjccrbI::la francisca",
+    "unidad": "kg"
+  },
+  "-Oy9iIPtJCbSl-JKK1x2": {
+    "actualizadoTs": 1787347029876,
+    "creadoTs": 1784738820944,
+    "historial": {
+      "-Oy3xIPJLFnRkv5AJRB-_-Oy3xIU6VD16H9dzHd3l": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1455.202,
+        "proveedorId": "",
+        "proveedorNombre": "Citric"
+      },
+      "-Oy3xIX_Ie2HdL7Pizl3_-Oy3xIb7-iplVPZHAZZG": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1052.22,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy3xIX_Ie2HdL7Pizl3_-Oy4-qVP6dHRE4VzkGcF": {
+        "facturaId": "-Oy4-qQZekEMbHsf9cu1",
+        "fecha": "2026-07-21",
+        "precio": 1208.4,
+        "proveedorId": "-Oy3x5hUUrbMdfLny41w",
+        "proveedorNombre": "Cosalta"
+      },
+      "-Oy3xIX_Ie2HdL7Pizl3_-Oy5lEhoX-rWVKju6XkJ": {
+        "conIva": true,
+        "facturaId": "-Oy5lEd1fwwr5ZL-qn18",
+        "fecha": "2026-07-20",
+        "precio": 1208.4,
+        "proveedorId": "-Oy5lEAvhTTuFPOgLwJI",
+        "proveedorNombre": "Daniela Cecilia Gallardo"
+      },
+      "-Oy3xIg-tEieqpAKWAgU_-Oy3xIkhAwLdH_I313wq": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1626.0827,
+        "proveedorId": "",
+        "proveedorNombre": "Cosalta"
+      },
+      "-Oy3xIg-tEieqpAKWAgU_-Oy9iIcYwbqSx5hLTTim": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 1462.164,
+        "proveedorId": "-Oy3x5hUUrbMdfLny41w",
+        "proveedorNombre": "Cosalta"
+      },
+      "-Oy9iITP2Fpsne5Osf2Q": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Cosalta",
+        "precio": 1455.202,
+        "proveedorId": "-Oy3x5YuhyfGCT3WHhEk",
+        "proveedorNombre": "Citric"
+      }
+    },
+    "nombre": "Leche entera",
+    "precioActual": 1462.164,
+    "precios": {
+      "-Oy3x5YuhyfGCT3WHhEk::cosalta": {
+        "actualizadoTs": 1784738820944,
+        "marca": "Cosalta",
+        "precio": 1455.202,
+        "proveedorId": "-Oy3x5YuhyfGCT3WHhEk",
+        "proveedorNombre": "Citric"
+      },
+      "-Oy3x5hUUrbMdfLny41w": {
+        "actualizadoTs": 1784738821597,
+        "marca": "",
+        "precio": 1462.164,
+        "proveedorId": "-Oy3x5hUUrbMdfLny41w",
+        "proveedorNombre": "Cosalta"
+      },
+      "-Oy5lEAvhTTuFPOgLwJI": {
+        "actualizadoTs": 1784672482767,
+        "marca": "",
+        "precio": 1208.4,
+        "proveedorId": "-Oy5lEAvhTTuFPOgLwJI",
+        "proveedorNombre": "Daniela Cecilia Gallardo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5hUUrbMdfLny41w",
+    "unidad": "kg"
+  },
+  "-Oy9iJU0b1wOw8fgOJnC": {
+    "actualizadoTs": 1787347124593,
+    "creadoTs": 1784738825304,
+    "historial": {
+      "-Oy3xJeJrtvq43J-jqx4_-Oy3xJj6khiktfXIDKZy": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 10561.984,
+        "proveedorId": "",
+        "proveedorNombre": "Milkaut"
+      },
+      "-Oy3xJnu5hXCdBYe4Lp9_-Oy3xJsiFs4LYFXvtc1-": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 30216.444,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3xVFqQgtaQWD5jaUJ_-Oy3xVKYkT0Ri7gr3ZIL": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1931.9997,
+        "proveedorId": "",
+        "proveedorNombre": "Samin"
+      },
+      "-Oy9iJNIfYUUZCM7f1FI_-Oy9iJQbkmhL7vWYMsj2": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 9787.4988,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iJNIfYUUZCM7f1FI_-P-Vo4Y68YCU5w-ZL4Oq": {
+        "conIva": false,
+        "facturaId": "-P-Vo2mCsxMlooSGncwM",
+        "fecha": "2020-09-16",
+        "marca": "",
+        "precio": 121332.64,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iJbEUOV6ZnIkgOiC": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 30216.444,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Manteca en pilón",
+    "precioActual": 121332.64,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1787256920002,
+        "fechaUltimo": "2026-08-20",
+        "marca": "",
+        "origen": "compra",
+        "precio": 121332.64,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy9iJs0lbkkWvaiq8WW": {
+    "actualizadoTs": 1787347223097,
+    "creadoTs": 1784738826904,
+    "historial": {
+      "-Oy3xK7k6sZBuFq2JSIk_-Oy3xKCWdgYi4jwyorYM": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6670.8002,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3xK7k6sZBuFq2JSIk_-Oy9iJlDh5i10MKow5oq_-Oy9iJocV0UjC5Rh_vbo": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 5630.402,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3xKHJ46M70zKlHdfb_-Oy3xKM68wz__ueqHmnG": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3000.992,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iJvOg25CPv-je9de": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "MTK",
+        "precio": 3000.992,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Margarina masa",
+    "precioActual": 5630.402,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738826469,
+        "marca": "",
+        "precio": 5630.402,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x5HICG7dqWSc5Hqw::mtk": {
+        "actualizadoTs": 1784738826904,
+        "marca": "MTK",
+        "precio": 3000.992,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy9iJyiuqC1Mq-cWzmg": {
+    "actualizadoTs": 1787580789766,
+    "alertaBaja": {
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 99.96667995657674,
+      "precioNuevo": 1.3240241379310345,
+      "precioReferencia": 3973.6567,
+      "proveedorNombre": "La Rotonda"
+    },
+    "alias": {
+      "mayonesa mayonesa x 2900 cc": true
+    },
+    "contenidoPorUnidad": 2900,
+    "creadoTs": 1784738827333,
+    "historial": {
+      "-Oy3xKPMXpGD6wVQsTTP_-Oy3xKU6vNWj1JBw1uqS": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3883.6116,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3xKYuOCtAcmmI74rV_-Oy3xKbB86skmso1xi1U": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3342.069,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iK14c0g-a1Ve83rK": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 3973.6567,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Mayonesa",
+    "precioActual": 3973.6567,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1787580789766,
+        "fechaUltimo": "2026-07-22",
+        "marca": "",
+        "origen": "compra",
+        "precio": 3973.6567,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy9iKEp0lPAYa9oCslF": {
+    "actualizadoTs": 1787347341426,
+    "creadoTs": 1784738828428,
+    "historial": {
+      "-Oy3xKy2bKgXmJohs63E_-Oy3xL0RAJYQwMoDr0vG": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 1711.24,
+        "proveedorId": "",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3xL4XGkEuy4v7_M_W_-Oy3xL9JwLlpHnx3C53E": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 2787.396,
+        "proveedorId": "",
+        "proveedorNombre": "Galoppo"
+      },
+      "-Oy9iKI9HcSzLzjcHWPK": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 1711.24,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy9iKSenAMar4cp596p": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2254.5065,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "nombre": "Mermelada de membrillo",
+    "precioActual": 2254.5065,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738828428,
+        "marca": "",
+        "precio": 1711.24,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      },
+      "-Oy3x5zQJsff2tXic0En": {
+        "actualizadoTs": 1784738829093,
+        "marca": "",
+        "precio": 2254.5065,
+        "proveedorId": "-Oy3x5zQJsff2tXic0En",
+        "proveedorNombre": "Galoppo"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5zQJsff2tXic0En",
+    "unidad": "kg"
+  },
+  "-Oy9iKpHSZSZGjr6dwkA": {
+    "actualizadoTs": 1787347379408,
+    "creadoTs": 1784738830825,
+    "historial": {
+      "-Oy3xLU6nTTINJ6LPdDC_-Oy3xLXMef459_lO4jKI": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 8856.0021,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iKskX0Cb-pYyzGNh": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 9775.6989,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iL1_cX1_QhwST0D8": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 29495.5824,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Miel de abeja",
+    "precioActual": 29495.5824,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738831464,
+        "marca": "",
+        "precio": 29495.5824,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy9iLsVTgCJOMzmpS_p": {
+    "actualizadoTs": 1787347455959,
+    "creadoTs": 1784738835127,
+    "historial": {
+      "-Oy3xMNpwgabgNk7fPc1_-Oy3xMSXP7mbJ6MDxHiQ": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 3000,
+        "proveedorId": "",
+        "proveedorNombre": "Cofrutos"
+      },
+      "-Oy9iLvtNHJDnx42r1jh": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 4500,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "nombre": "Naranja",
+    "precioActual": 4500,
+    "precios": {
+      "-Oy9i7sX4WQLLHbd5dNR": {
+        "actualizadoTs": 1784738835127,
+        "marca": "",
+        "precio": 4500,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "proveedorPreferido": "-Oy9i7sX4WQLLHbd5dNR",
+    "unidad": "kg"
+  },
+  "-Oy9iLzGwLvpykYYqYK2": {
+    "actualizadoTs": 1787347475617,
+    "creadoTs": 1784738835560,
+    "historial": {
+      "-Oy3xMeKi8FjhQHYbXX7_-Oy3xMhVaKdK6jEM3Hvr": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 15000,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy3xMkjpiQgCMy1TFn5_-Oy3xMnvHxL0Ml8ym6iD": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6800,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iM1hH42BeSg2QmlY": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 15000,
+        "proveedorId": "",
+        "proveedorNombre": "Carga manual"
+      }
+    },
+    "nombre": "Nueces",
+    "precioActual": 15000,
+    "precios": {
+      "_manual": {
+        "actualizadoTs": 1784738835560,
+        "marca": "",
+        "precio": 15000,
+        "proveedorId": "",
+        "proveedorNombre": "Carga manual"
+      }
+    },
+    "proveedorPreferido": "_manual",
+    "unidad": "kg"
+  },
+  "-Oy9iMP8i5UPc_U8fg-F": {
+    "actualizadoTs": 1787347502882,
+    "creadoTs": 1784738837280,
+    "historial": {
+      "-Oy3xNE6jyaTXrukBi5K_-Oy3xNHKsHdvmcGDJRp8": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6500,
+        "proveedorId": "",
+        "proveedorNombre": "Cofrutos"
+      },
+      "-Oy3xNM6SU6eiYp6nSPj_-Oy3xNPO1PZo8RnetLC3": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 7500,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iMSVh6CPf4b4Sirb": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6500,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "nombre": "Palta",
+    "precioActual": 6500,
+    "precios": {
+      "-Oy9i7sX4WQLLHbd5dNR": {
+        "actualizadoTs": 1784738837280,
+        "marca": "",
+        "precio": 6500,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "proveedorPreferido": "-Oy9i7sX4WQLLHbd5dNR",
+    "unidad": "kg"
+  },
+  "-Oy9iOFlWvT3l4ODV3_n": {
+    "actualizadoTs": 1787417955416,
+    "alertaBaja": {
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 30.55231932024418,
+      "precioNuevo": 17400,
+      "precioReferencia": 25054.8324,
+      "proveedorNombre": "La Francisca"
+    },
+    "alertaPrecio": {
+      "abrupta": true,
+      "fecha": "2026-08-22",
+      "marca": "",
+      "pct": 68.62182178296636,
+      "precioAnterior": 14858.5943,
+      "precioNuevo": 25054.8324,
+      "proveedorNombre": "La Francisca"
+    },
+    "creadoTs": 1784738844872,
+    "historial": {
+      "-Oy3xOkxEUfE3EoCw_U1_-Oy3xOpeAwPvSm9fBYDh": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 25054.8324,
+        "proveedorId": "",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy9iOJCzprR7rRJyNWN": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 14858.5943,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-P-ePNpg_KCTuEK8Rrty": {
+        "conIva": false,
+        "facturaId": "-P-ePNSdWyZgihem2-QY",
+        "fecha": "2026-08-08",
+        "marca": "",
+        "precio": 17400,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "nombre": "Queso azul",
+    "precioActual": 25054.8324,
+    "precios": {
+      "-Oy3x6FgGm8bAAjccrbI": {
+        "actualizadoTs": 1787417955414,
+        "fechaUltimo": "2026-08-22",
+        "marca": "",
+        "origen": "compra",
+        "precio": 17400,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738844872,
+        "marca": "",
+        "precio": 14858.5943,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6FgGm8bAAjccrbI",
+    "unidad": "kg"
+  },
+  "-Oy9iOmUfwCMcKs0m7XY": {
+    "actualizadoTs": 1787347819739,
+    "creadoTs": 1784738847030,
+    "historial": {
+      "-Oy3xOxfV5C-8PMvp98m_-Oy9iOTFcVILjWJ7BGV7": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 11400,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      },
+      "-Oy3xPVkrXX-sfo_i4je_-Oy3xPbEeTdbdYvTYT4x": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 13900,
+        "proveedorId": "",
+        "proveedorNombre": "Cofrutos"
+      },
+      "-Oy3xPfv3pATlZL_R7za_-Oy3xPjA6LTNAin41e8k": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 18000,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iOpw8QLeTF_ihIwC": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 13900,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "nombre": "Queso de cabra",
+    "precioActual": 13900,
+    "precios": {
+      "-Oy9i7sX4WQLLHbd5dNR": {
+        "actualizadoTs": 1784738847030,
+        "marca": "",
+        "precio": 13900,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "proveedorPreferido": "-Oy9i7sX4WQLLHbd5dNR",
+    "unidad": "kg"
+  },
+  "-Oy9iOtIu6eltPZlSnxO": {
+    "actualizadoTs": 1787580786440,
+    "alias": {
+      "sardo d 70": true
+    },
+    "creadoTs": 1784738847466,
+    "historial": {
+      "-Oy3xPmQIb-CK9J4J4Eg_-Oy3xPpbjlsUjjSTRtNV": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 10990.9136,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3xPmQIb-CK9J4J4Eg_-P-Vo3Uq763HDLMmlZYF": {
+        "conIva": false,
+        "facturaId": "-P-Vo2mCsxMlooSGncwM",
+        "fecha": "2020-09-16",
+        "marca": "D70",
+        "precio": 67838.26,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3xPssMqyp-yxoGGff_-Oy3xPxW1nYAwG0rH1Dp": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 13294.7056,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iOwki2KYGYVbHjpS": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 11496.4036,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Queso sardo",
+    "precioActual": 13294.7056,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1787580786440,
+        "fechaUltimo": "2026-07-22",
+        "marca": "",
+        "origen": "compra",
+        "precio": 11496.4036,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd::d70": {
+        "actualizadoTs": 1787580786440,
+        "fechaUltimo": "2020-09-16",
+        "marca": "D70",
+        "origen": "compra",
+        "precio": 67838.26,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy9iP-6RG8jXH_7uXaf": {
+    "actualizadoTs": 1787415610594,
+    "alias": {
+      "tyro sandwich": true
+    },
+    "creadoTs": 1784738847902,
+    "historial": {
+      "-Oy3xQ-rbVfRPt5sfFSq_-Oy3xQ4XlIxs_mp42Ed0": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 11075.432,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3xQ9KaWL5SGKfas0h_-Oy3xQC_8STYYUR3y3DO": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 9182.5596,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3xQHLTePKIh_Njtpt_-Oy3xQKaexONkzDNROyO": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 9174.9944,
+        "proveedorId": "",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3xQNsk-NGgQHIGEfo_-Oy3xQS_60QAS1SfQRnj": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 6850.1994,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iP2ZDi_XjiV9ywq3": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 9538.3652,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iPCfkO1AJtX3w_cn": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 9182.5596,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-P-Vo4IHinPyPsSq95VZ_-P-Vo4Q7aNDUHT-A6TAq": {
+        "conIva": false,
+        "facturaId": "-P-Vo2mCsxMlooSGncwM",
+        "fecha": "2020-09-16",
+        "marca": "La Paulina",
+        "precio": 33403.02,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Queso tybo",
+    "precioActual": 33403.02,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738848554,
+        "marca": "",
+        "precio": 9182.5596,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd::la paulina": {
+        "actualizadoTs": 1787256919494,
+        "fechaUltimo": "2026-08-20",
+        "marca": "La Paulina",
+        "origen": "compra",
+        "precio": 33403.02,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd::la paulina",
+    "unidad": "kg"
+  },
+  "-Oy9iPTUieuBmAB5dOwg": {
+    "actualizadoTs": 1787415403312,
+    "alias": {
+      "rucula cafe": true,
+      "rucula cofrutos": true
+    },
+    "creadoTs": 1784738849846,
+    "historial": {
+      "-Oy3xQjF4Tyhw-IGK-Wd_-Oy3xQnvDwgfOUZ2gBcb": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 500,
+        "proveedorId": "",
+        "proveedorNombre": "Cofrutos"
+      },
+      "-Oy9iPWvvZVcrDJJm-Fl": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 500,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "nombre": "Rucula",
+    "precioActual": 500,
+    "precios": {
+      "-Oy9i7sX4WQLLHbd5dNR": {
+        "actualizadoTs": 1784738849846,
+        "marca": "",
+        "precio": 500,
+        "proveedorId": "-Oy9i7sX4WQLLHbd5dNR",
+        "proveedorNombre": "Cofrutos"
+      }
+    },
+    "proveedorPreferido": "-Oy9i7sX4WQLLHbd5dNR",
+    "unidad": "kg"
+  },
+  "-Oy9iSlK6om0RN0NFJ9Q": {
+    "actualizadoTs": 1787415639214,
+    "alias": {
+      "yogurt griego greenway": true,
+      "yogurt griego paquete kg": true
+    },
+    "creadoTs": 1784738863340,
+    "historial": {
+      "-Oy3xTS_4xs3UswuoDuC_-Oy3xTVolbuPUCJ7IeYp": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 7440,
+        "proveedorId": "",
+        "proveedorNombre": "Greenway"
+      },
+      "-Oy3xTZ4cxpOKZlLYoXk_-Oy3xTcikkpWu4Wj9EG7": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 4600,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iSoh_sog0nHG-PPV": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Mykra",
+        "precio": 6110,
+        "proveedorId": "-Oy9iSi3RKNpfwUiMVPE",
+        "proveedorNombre": "Greenway"
+      }
+    },
+    "nombre": "Yogurt griego",
+    "precioActual": 6110,
+    "precios": {
+      "-Oy9iSi3RKNpfwUiMVPE::mykra": {
+        "actualizadoTs": 1784738863340,
+        "marca": "Mykra",
+        "precio": 6110,
+        "proveedorId": "-Oy9iSi3RKNpfwUiMVPE",
+        "proveedorNombre": "Greenway"
+      }
+    },
+    "proveedorPreferido": "-Oy9iSi3RKNpfwUiMVPE::mykra",
+    "unidad": "kg"
+  },
+  "-Oy9iT0dqScsBVqyAizf": {
+    "creadoTs": 1784738864384,
+    "historial": {
+      "-Oy9iT40pJQLRhUS2ePp": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 47619.0476,
+        "proveedorId": "",
+        "proveedorNombre": "Carga manual"
+      }
+    },
+    "nombre": "Gelatina S/Sabor",
+    "precioActual": 47619.0476,
+    "precios": {
+      "_manual": {
+        "actualizadoTs": 1784738864384,
+        "precio": 47619.0476,
+        "proveedorNombre": "Carga manual"
+      }
+    },
+    "proveedorPreferido": "_manual",
+    "unidad": "kg"
+  },
+  "-Oy9iT7GVsWTyfrFFl7S": {
+    "creadoTs": 1784738864808,
+    "historial": {
+      "-Oy9iTA_ZEkMsYeGVvp5": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 92.7453,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Saquito de Te La Virginia",
+    "precioActual": 92.7453,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738864808,
+        "precio": 92.7453,
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy9iTXZyt7pq8bBIQrU": {
+    "creadoTs": 1784738866491,
+    "historial": {
+      "-Oy9iT_t0gK2B4Pchdgn": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 1319.0528,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "nombre": "Salsa Inglesa",
+    "precioActual": 1319.0528,
+    "precios": {
+      "-Oy3x6PIXYLxiYAtPhXd": {
+        "actualizadoTs": 1784738866491,
+        "precio": 1319.0528,
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": "kg"
+  },
+  "-Oy9iU6h2BEgKgF-S6r8": {
+    "creadoTs": 1784738868868,
+    "historial": {
+      "-Oy9iUA4n8pK8YWvwThc": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 7718.0011,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Premezcla budin chocolate",
+    "precioActual": 7718.0011,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738868868,
+        "precio": 7718.0011,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy9iUDGwRlyFEE8ckTt": {
+    "creadoTs": 1784738869288,
+    "historial": {
+      "-Oy9iUGc3k7gOMQKu00P": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 5422.9982,
+        "proveedorId": "-Oy3x5HICG7dqWSc5Hqw",
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "nombre": "Premezcla budin vainilla",
+    "precioActual": 5422.9982,
+    "precios": {
+      "-Oy3x5HICG7dqWSc5Hqw": {
+        "actualizadoTs": 1784738869288,
+        "precio": 5422.9982,
+        "proveedorNombre": "Calsa"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5HICG7dqWSc5Hqw",
+    "unidad": "kg"
+  },
+  "-Oy9iUJt1KFy6R9j5w7y": {
+    "actualizadoTs": 1787418176071,
+    "alertaBaja": {
+      "fecha": "2026-08-22",
+      "marca": "Arroyo Cabral",
+      "pct": 36.36902052343823,
+      "precioNuevo": 14300,
+      "precioReferencia": 22473.33,
+      "proveedorNombre": "La Francisca"
+    },
+    "creadoTs": 1784738869712,
+    "historial": {
+      "-Oy3xVkD2Veqe12FTJly_-Oy3xVncqTmFDiFNYXPz": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 22473.33,
+        "proveedorId": "",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy3xVkD2Veqe12FTJly_-P-Vo3eOnF5TmhSQjgs6": {
+        "conIva": false,
+        "facturaId": "-P-Vo2mCsxMlooSGncwM",
+        "fecha": "2020-09-16",
+        "marca": "Aurora",
+        "precio": 29889.94,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      },
+      "-Oy9iUNDobXhdKCUr6LG": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 9100,
+        "proveedorId": "-Oy3x5M5XcdKeUTevCcM",
+        "proveedorNombre": "Campo quijano"
+      },
+      "-P-eQDhyOpGZ1S1nfeLI": {
+        "conIva": true,
+        "facturaId": "-P-eQDd9r3mcqGOrHsF_",
+        "fecha": "2026-08-07",
+        "marca": "Arroyo Cabral",
+        "precio": 14300,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      }
+    },
+    "nombre": "Queso muzzarella",
+    "precioActual": 22473.33,
+    "precios": {
+      "-Oy3x5M5XcdKeUTevCcM": {
+        "actualizadoTs": 1784738869712,
+        "marca": "",
+        "precio": 9100,
+        "proveedorId": "-Oy3x5M5XcdKeUTevCcM",
+        "proveedorNombre": "Campo quijano"
+      },
+      "-Oy3x6FgGm8bAAjccrbI::arroyo cabral": {
+        "actualizadoTs": 1787418176071,
+        "fechaUltimo": "2026-08-22",
+        "marca": "Arroyo Cabral",
+        "origen": "compra",
+        "precio": 14300,
+        "proveedorId": "-Oy3x6FgGm8bAAjccrbI",
+        "proveedorNombre": "La Francisca"
+      },
+      "-Oy3x6PIXYLxiYAtPhXd::aurora": {
+        "actualizadoTs": 1787256916373,
+        "fechaUltimo": "2026-08-20",
+        "marca": "Aurora",
+        "origen": "compra",
+        "precio": 29889.94,
+        "proveedorId": "-Oy3x6PIXYLxiYAtPhXd",
+        "proveedorNombre": "La Rotonda"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd::aurora",
+    "unidad": "kg"
+  },
+  "-Oy9iURmDBVBgsLke2kM": {
+    "actualizadoTs": 1787343381359,
+    "creadoTs": 1784738870217,
+    "historial": {
+      "-Oy3xVz7regxwZrGNNDS_-Oy3xW1Urd56Vfrz-Gvn": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 42000,
+        "proveedorId": "",
+        "proveedorNombre": "Carga inicial"
+      },
+      "-Oy9iUWb9Rfv8H7eygbc": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "marca": "Cherry’s Season",
+        "precio": 49610,
+        "proveedorId": "-Oy3x5kjWPRVdMK1uF8i",
+        "proveedorNombre": "Cherry"
+      }
+    },
+    "nombre": "Café en grano x kg",
+    "precioActual": 49610,
+    "precios": {
+      "-Oy3x5kjWPRVdMK1uF8i::cherry’s season": {
+        "actualizadoTs": 1784738870217,
+        "marca": "Cherry’s Season",
+        "precio": 49610,
+        "proveedorId": "-Oy3x5kjWPRVdMK1uF8i",
+        "proveedorNombre": "Cherry"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5kjWPRVdMK1uF8i::cherry’s season",
+    "unidad": "kg"
+  },
+  "-Oy9iU_C7JhYGt8zqUNx": {
+    "actualizadoTs": 1787415239670,
+    "creadoTs": 1784738870756,
+    "historial": {
+      "-Oy9iUgaxf9NhOJq1i1i": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 6429.67833072,
+        "proveedorId": "",
+        "proveedorNombre": "Producción interna"
+      },
+      "-OyGFpb6tN2eLeDKpDE5": {
+        "facturaId": "",
+        "fecha": "2026-07-23",
+        "precio": 4871.67820572,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      },
+      "-OyGFyHaPfb_Gvq8NQ7x": {
+        "facturaId": "",
+        "fecha": "2026-07-23",
+        "precio": 4871.67820572,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      },
+      "-OyOypS6ZoC3H3lbmIsg": {
+        "facturaId": "",
+        "fecha": "2026-07-25",
+        "precio": 4739.67820572,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      },
+      "-P-eF0mpg2uHB9GzIKUN": {
+        "facturaId": "",
+        "fecha": "2026-08-22",
+        "precio": 5385.901122,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      }
+    },
+    "nombre": "Crema Chantilly",
+    "precioActual": 5385.901122,
+    "precios": {
+      "_manual": {
+        "actualizadoTs": 1787415239670,
+        "precio": 5385.901122,
+        "proveedorNombre": "Receta propia"
+      }
+    },
+    "proveedorPreferido": "_manual",
+    "receta": {
+      "-Oy3xDeIcxgHxoKmVWv0": 0.6601,
+      "-Oy3xEcpFuCp-d1nATxB": 0.0099,
+      "-Oy9i8p19UW8cwlgK4xq": 0.132,
+      "-Oy9iDAcdsUM2KlJcS5T": 0.198
+    },
+    "unidad": "kg"
+  },
+  "-Oy9iUkGyrq6cN0bKRE0": {
+    "actualizadoTs": 1787415239688,
+    "creadoTs": 1784738871464,
+    "historial": {
+      "-Oy9iUoyRRo40K_gEPMA": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 3652.5478775875004,
+        "proveedorId": "",
+        "proveedorNombre": "Producción interna"
+      },
+      "-OyOypSFaI67uKnDlpyK": {
+        "facturaId": "",
+        "fecha": "2026-07-25",
+        "precio": 3328.4228775875,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      },
+      "-P-eF0nsp1Ll2D7m3Ywi": {
+        "facturaId": "",
+        "fecha": "2026-08-22",
+        "precio": 3158.9565846875003,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      }
+    },
+    "nombre": "Bizcochuelo de Vainilla",
+    "precioActual": 3158.9565846875003,
+    "precios": {
+      "_manual": {
+        "actualizadoTs": 1787415239688,
+        "precio": 3158.9565846875003,
+        "proveedorNombre": "Receta propia"
+      }
+    },
+    "proveedorPreferido": "_manual",
+    "receta": {
+      "-Oy3xESVevvQsPIzErXx": 0.023125,
+      "-Oy3xO9-8hlNyooqnl_Y": 0.023125,
+      "-Oy3xTnvtbDDAAHHGdoe": 0.324125,
+      "-Oy9i8p19UW8cwlgK4xq": 0.324125,
+      "-Oy9iHIeh4qT78fuul4k": 0.5555
+    },
+    "unidad": "kg"
+  },
+  "-Oy9iUt_w59qeYLq8cdO": {
+    "actualizadoTs": 1784994812190,
+    "creadoTs": 1784738872060,
+    "historial": {
+      "-Oy9iUx9oK4yIks63S1Y": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2304.1247110963,
+        "proveedorId": "",
+        "proveedorNombre": "Producción interna"
+      },
+      "-OyOy5dXqOHncycPMQlo": {
+        "facturaId": "",
+        "fecha": "2026-07-25",
+        "precio": 4094.381951910799,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      },
+      "-OyOypSL6jHQvi-4vr2q": {
+        "facturaId": "",
+        "fecha": "2026-07-25",
+        "precio": 3565.2709519107993,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      }
+    },
+    "nombre": "Almibar Para Tortas",
+    "precioActual": 3565.2709519107993,
+    "precios": {
+      "_manual": {
+        "actualizadoTs": 1784994812190,
+        "precio": 3565.2709519107993,
+        "proveedorNombre": "Receta propia"
+      }
+    },
+    "proveedorPreferido": "_manual",
+    "receta": {
+      "-Oy3xJHJlhIDkFiA3bT9": 0.052889,
+      "-Oy3xWKZoFltkhE6Pqz5": 0.529111,
+      "-Oy9i8p19UW8cwlgK4xq": 0.529111
+    },
+    "unidad": "kg"
+  },
+  "-Oy9iV1LacWo7_7h6npn": {
+    "actualizadoTs": 1787415239691,
+    "creadoTs": 1784738872621,
+    "historial": {
+      "-Oy9iV4rq5vqkTuJ2q4U": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 3012.2940673,
+        "proveedorId": "",
+        "proveedorNombre": "Producción interna"
+      },
+      "-OyGGHvVm3uUxE342zqA": {
+        "facturaId": "",
+        "fecha": "2026-07-23",
+        "precio": 1819.2118835,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      },
+      "-OyGGJYC7B8lKuVtkjk0": {
+        "facturaId": "",
+        "fecha": "2026-07-23",
+        "precio": 1819.2118835,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      },
+      "-OyOypST8UjD7MuAKMhX": {
+        "facturaId": "",
+        "fecha": "2026-07-25",
+        "precio": 1607.3118835,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      },
+      "-P-eF0qkVHitYavPEAjM": {
+        "facturaId": "",
+        "fecha": "2026-08-22",
+        "precio": 1374.5139795999999,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      }
+    },
+    "nombre": "Masa Frola",
+    "precioActual": 1374.5139795999999,
+    "precios": {
+      "_manual": {
+        "actualizadoTs": 1787415239691,
+        "precio": 1374.5139795999999,
+        "proveedorNombre": "Receta propia"
+      }
+    },
+    "proveedorPreferido": "_manual",
+    "receta": {
+      "-Oy3xEcpFuCp-d1nATxB": 0.0042,
+      "-Oy3xO9-8hlNyooqnl_Y": 0.0212,
+      "-Oy3xTnvtbDDAAHHGdoe": 0.4237,
+      "-Oy9i8p19UW8cwlgK4xq": 0.2119,
+      "-Oy9iHIeh4qT78fuul4k": 0.1059,
+      "-Oy9iJlDh5i10MKow5oq": 0.2119,
+      "-Oy9iKpHSZSZGjr6dwkA": 0.0212
+    },
+    "unidad": "kg"
+  },
+  "-Oy9iV8SofBxADERFTcI": {
+    "actualizadoTs": 1787415239694,
+    "creadoTs": 1784738873076,
+    "historial": {
+      "-Oy9iVBp5XAdMkfqDKDV": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 1807.9218161562999,
+        "proveedorId": "",
+        "proveedorNombre": "Producción interna"
+      },
+      "-OyOypSXY5puy6GWhblL": {
+        "facturaId": "",
+        "fecha": "2026-07-25",
+        "precio": 1563.0798161563,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      },
+      "-P-eF0tfu9pum7mh6lAK": {
+        "facturaId": "",
+        "fecha": "2026-08-22",
+        "precio": 1634.8938451722,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      }
+    },
+    "nombre": "Crema Pastelera",
+    "precioActual": 1634.8938451722,
+    "precios": {
+      "_manual": {
+        "actualizadoTs": 1787415239694,
+        "precio": 1634.8938451722,
+        "proveedorNombre": "Receta propia"
+      }
+    },
+    "proveedorPreferido": "_manual",
+    "receta": {
+      "-Oy3x8ItOmR0AxgGZ4RZ": 0.061158,
+      "-Oy3xEcpFuCp-d1nATxB": 0.012211,
+      "-Oy9i8p19UW8cwlgK4xq": 0.244842,
+      "-Oy9iHIeh4qT78fuul4k": 0.122421,
+      "-Oy9iIPtJCbSl-JKK1x2": 0.612
+    },
+    "unidad": "kg"
+  },
+  "-Oy9iVF0REAocqpDvxju": {
+    "actualizadoTs": 1787415239696,
+    "creadoTs": 1784738873496,
+    "historial": {
+      "-Oy9iVIOlRNtELKi6WBJ": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 2563.8182992435,
+        "proveedorId": "",
+        "proveedorNombre": "Producción interna"
+      },
+      "-OyOy5hJlV826lHNhDrL": {
+        "facturaId": "",
+        "fecha": "2026-07-25",
+        "precio": 2613.1903352497,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      },
+      "-OyOy5iqM5_qAY-rCdLC": {
+        "facturaId": "",
+        "fecha": "2026-07-25",
+        "precio": 2613.1903352497,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      },
+      "-OyOypS_4X43sCmEUYGY": {
+        "facturaId": "",
+        "fecha": "2026-07-25",
+        "precio": 2167.1903352496997,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      },
+      "-P-eF0wixX0g4Vj70Fju": {
+        "facturaId": "",
+        "fecha": "2026-08-22",
+        "precio": 2155.3277617146,
+        "proveedorId": "",
+        "proveedorNombre": "Receta propia"
+      }
+    },
+    "nombre": "Almibar P/Facturas",
+    "precioActual": 2155.3277617146,
+    "precios": {
+      "_manual": {
+        "actualizadoTs": 1787415239696,
+        "precio": 2155.3277617146,
+        "proveedorNombre": "Receta propia"
+      }
+    },
+    "proveedorPreferido": "_manual",
+    "receta": {
+      "-Oy3xEcpFuCp-d1nATxB": 0.004421,
+      "-Oy3xHM8Tk8fWVZmR72D": 0.089158,
+      "-Oy3xWKZoFltkhE6Pqz5": 0.446,
+      "-Oy9i8p19UW8cwlgK4xq": 0.446,
+      "-Oy9iKpHSZSZGjr6dwkA": 0.022316,
+      "-Oy9iLsVTgCJOMzmpS_p": 0.044632
+    },
+    "unidad": "kg"
+  },
+  "-OyEiRb9VLXLWVz1iKD5": {
+    "actualizadoTs": 1784822745979,
+    "creadoTs": 1784822745702,
+    "historial": {
+      "-OyEiS_30SxydPESjn3O": {
+        "conIva": true,
+        "facturaId": "-OyEiS_30SxydPESjn3N",
+        "fecha": "2026-07-23",
+        "precio": 11040,
+        "proveedorId": "-Oy3x5cgg3zdamPydBR_",
+        "proveedorNombre": "Coca Cola"
+      }
+    },
+    "nombre": "Powerade Mountain Blast",
+    "precioActual": 11040,
+    "precios": {
+      "-Oy3x5cgg3zdamPydBR_": {
+        "actualizadoTs": 1784822745979,
+        "precio": 11040,
+        "proveedorNombre": "Coca Cola"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5cgg3zdamPydBR_",
+    "unidad": ""
+  },
+  "-OyEiRydfO5zG5ElNOMA": {
+    "actualizadoTs": 1784822747515,
+    "creadoTs": 1784822747205,
+    "historial": {
+      "-OyEiSsEn3ryGVauvLqa": {
+        "conIva": true,
+        "facturaId": "-OyEiS_30SxydPESjn3N",
+        "fecha": "2026-07-23",
+        "precio": 19999.88,
+        "proveedorId": "-Oy3x5cgg3zdamPydBR_",
+        "proveedorNombre": "Coca Cola"
+      }
+    },
+    "nombre": "Sprite 1.5L",
+    "precioActual": 19999.88,
+    "precios": {
+      "-Oy3x5cgg3zdamPydBR_": {
+        "actualizadoTs": 1784822747515,
+        "precio": 19999.88,
+        "proveedorNombre": "Coca Cola"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5cgg3zdamPydBR_",
+    "unidad": ""
+  },
+  "-OyEiSQRqvrSF9eY5U8W": {
+    "actualizadoTs": 1784822749355,
+    "creadoTs": 1784822749048,
+    "historial": {
+      "-OyEiT4GYXEOMTzuVxSe": {
+        "conIva": true,
+        "facturaId": "-OyEiS_30SxydPESjn3N",
+        "fecha": "2026-07-23",
+        "precio": 24999.87,
+        "proveedorId": "-Oy3x5cgg3zdamPydBR_",
+        "proveedorNombre": "Coca Cola"
+      }
+    },
+    "nombre": "Sprite 2.25L",
+    "precioActual": 24999.87,
+    "precios": {
+      "-Oy3x5cgg3zdamPydBR_": {
+        "actualizadoTs": 1784822749355,
+        "precio": 24999.87,
+        "proveedorNombre": "Coca Cola"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5cgg3zdamPydBR_",
+    "unidad": ""
+  },
+  "-OyYqG23o-CffAa7IpE6": {
+    "actualizadoTs": 1785160339942,
+    "creadoTs": 1785160339750,
+    "historial": {
+      "-OyYqG8KVRmEjBmA7IpG": {
+        "conIva": true,
+        "facturaId": "-OyYqFwQXtuVth7voPKy",
+        "fecha": "2026-07-24",
+        "marca": "Alif",
+        "precio": 5792.86,
+        "proveedorId": "-Oy3x6_YT0XO-LGdauVw",
+        "proveedorNombre": "Milenium"
+      }
+    },
+    "nombre": "Smoothie mix violeta",
+    "precioActual": 5792.86,
+    "precios": {
+      "-Oy3x6_YT0XO-LGdauVw::alif": {
+        "actualizadoTs": 1785160339942,
+        "fechaUltimo": "2026-07-27",
+        "marca": "Alif",
+        "precio": 5792.86,
+        "proveedorId": "-Oy3x6_YT0XO-LGdauVw",
+        "proveedorNombre": "Milenium"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6_YT0XO-LGdauVw::alif",
+    "unidad": ""
+  },
+  "-OyYqGBTCvTG611xQd7Z": {
+    "actualizadoTs": 1785163592951,
+    "creadoTs": 1785160340352,
+    "historial": {
+      "-OyYqGHsnZc96mgPQlBc": {
+        "conIva": true,
+        "facturaId": "-OyYqFwQXtuVth7voPKy",
+        "fecha": "2026-07-24",
+        "marca": "Alif",
+        "precio": 5792.86,
+        "proveedorId": "-Oy3x6_YT0XO-LGdauVw",
+        "proveedorNombre": "Milenium"
+      },
+      "-OyZ1fHATzRbXAOtDHH2": {
+        "conIva": true,
+        "facturaId": "-OyZ1f4q-qnWV3DaUQgW",
+        "fecha": "2026-07-21",
+        "marca": "Alif",
+        "precio": 5792.86,
+        "proveedorId": "-Oy3x6_YT0XO-LGdauVw",
+        "proveedorNombre": "Milenium"
+      }
+    },
+    "nombre": "Smoothie mix amarillo",
+    "precioActual": 5792.86,
+    "precios": {
+      "-Oy3x6_YT0XO-LGdauVw::alif": {
+        "actualizadoTs": 1785163592951,
+        "fechaUltimo": "2026-07-27",
+        "marca": "Alif",
+        "origen": "compra",
+        "precio": 5792.86,
+        "proveedorId": "-Oy3x6_YT0XO-LGdauVw",
+        "proveedorNombre": "Milenium"
+      }
+    },
+    "proveedorPreferido": "-Oy3x6_YT0XO-LGdauVw::alif",
+    "unidad": ""
+  },
+  "-OyYsCQRNUTrSEFzdmJb": {
+    "actualizadoTs": 1785160849473,
+    "creadoTs": 1785160849231,
+    "historial": {
+      "-OyYsCXmFGDWLzVsyJew": {
+        "conIva": true,
+        "facturaId": "-OyYsCQRNUTrSEFzdmJa",
+        "fecha": "2026-07-23",
+        "marca": "",
+        "precio": 1652.89,
+        "proveedorId": "-OyYsCLjF8XwEJhXle4Q",
+        "proveedorNombre": "Maru Cotillón - Julio César Cattaneo"
+      }
+    },
+    "nombre": "Vela corta",
+    "precioActual": 1652.89,
+    "precios": {
+      "-OyYsCLjF8XwEJhXle4Q": {
+        "actualizadoTs": 1785160849473,
+        "fechaUltimo": "2026-07-27",
+        "marca": "",
+        "precio": 1652.89,
+        "proveedorId": "-OyYsCLjF8XwEJhXle4Q",
+        "proveedorNombre": "Maru Cotillón - Julio César Cattaneo"
+      }
+    },
+    "proveedorPreferido": "-OyYsCLjF8XwEJhXle4Q",
+    "unidad": ""
+  },
+  "-OyYsCa5m9OAWgaomRIY": {
+    "actualizadoTs": 1785160850129,
+    "creadoTs": 1785160849914,
+    "historial": {
+      "-OyYsCgfeDQ9cILkgqez": {
+        "conIva": true,
+        "facturaId": "-OyYsCQRNUTrSEFzdmJa",
+        "fecha": "2026-07-23",
+        "marca": "",
+        "precio": 826.45,
+        "proveedorId": "-OyYsCLjF8XwEJhXle4Q",
+        "proveedorNombre": "Maru Cotillón - Julio César Cattaneo"
+      }
+    },
+    "nombre": "Bengala Gibre",
+    "precioActual": 826.45,
+    "precios": {
+      "-OyYsCLjF8XwEJhXle4Q": {
+        "actualizadoTs": 1785160850129,
+        "fechaUltimo": "2026-07-27",
+        "marca": "",
+        "precio": 826.45,
+        "proveedorId": "-OyYsCLjF8XwEJhXle4Q",
+        "proveedorNombre": "Maru Cotillón - Julio César Cattaneo"
+      }
+    },
+    "proveedorPreferido": "-OyYsCLjF8XwEJhXle4Q",
+    "unidad": ""
+  },
+  "-OyZ36L1EKDpEogQlIs_": {
+    "actualizadoTs": 1787415575960,
+    "alias": {
+      "ternera": true
+    },
+    "creadoTs": 1785163970311,
+    "historial": {
+      "-Oy3xVNrP8UvqRVnsrpz_-Oy3xVRG53ZoloExxtrq": {
+        "facturaId": "",
+        "fecha": "2026-07-21",
+        "precio": 22500,
+        "proveedorId": "",
+        "proveedorNombre": "El Desafio"
+      },
+      "-Oy9iTqgtvI8nUtavy5v_-Oy9iTuC1ZuGdnslMK3U": {
+        "facturaId": "",
+        "fecha": "2026-07-22",
+        "precio": 20000,
+        "proveedorId": "-Oy3x5sggwuQBtMEb2uy",
+        "proveedorNombre": "El desafio"
+      },
+      "-OyZ36UMCyfBNKLK-UAU": {
+        "conIva": true,
+        "facturaId": "-OyZ36L0oRS6yFgvELin",
+        "fecha": "2026-07-20",
+        "marca": "El Desafío",
+        "precio": 19999,
+        "proveedorId": "-Oy3x5sggwuQBtMEb2uy",
+        "proveedorNombre": "El Desafio"
+      }
+    },
+    "nombre": "Peceto",
+    "precioActual": 20000,
+    "precios": {
+      "-Oy3x5sggwuQBtMEb2uy": {
+        "actualizadoTs": 1784738867779,
+        "marca": "",
+        "precio": 20000,
+        "proveedorId": "-Oy3x5sggwuQBtMEb2uy",
+        "proveedorNombre": "El desafio"
+      },
+      "-Oy3x5sggwuQBtMEb2uy::el desafio": {
+        "actualizadoTs": 1785163970598,
+        "fechaUltimo": "2026-07-27",
+        "marca": "El Desafío",
+        "origen": "compra",
+        "precio": 19999,
+        "proveedorId": "-Oy3x5sggwuQBtMEb2uy",
+        "proveedorNombre": "El Desafio"
+      }
+    },
+    "proveedorPreferido": "-Oy3x5sggwuQBtMEb2uy",
+    "unidad": ""
+  },
+  "-OyZ4ZUB0BsyotIbS4y4": {
+    "actualizadoTs": 1785164352133,
+    "creadoTs": 1785164351824,
+    "historial": {
+      "-OyZ4Zcq3SxaTmhEpFnj": {
+        "conIva": true,
+        "facturaId": "-OyZ4ZUB0BsyotIbS4y3",
+        "fecha": "2026-07-27",
+        "marca": "",
+        "precio": 4000,
+        "proveedorId": "-OyZ4ZPPwu1kisPflQT4",
+        "proveedorNombre": "Adrián Isaac Darouiche"
+      }
+    },
+    "nombre": "Dulce de cayote",
+    "precioActual": 4000,
+    "precios": {
+      "-OyZ4ZPPwu1kisPflQT4": {
+        "actualizadoTs": 1785164352132,
+        "fechaUltimo": "2026-07-27",
+        "marca": "",
+        "origen": "compra",
+        "precio": 4000,
+        "proveedorId": "-OyZ4ZPPwu1kisPflQT4",
+        "proveedorNombre": "Adrián Isaac Darouiche"
+      }
+    },
+    "proveedorPreferido": "-OyZ4ZPPwu1kisPflQT4",
+    "unidad": ""
+  },
+  "-P-Vo2mKwLimeW9U1e1B": {
+    "actualizadoTs": 1787580785016,
+    "alertaPrecio": {
+      "abrupta": false,
+      "fecha": "2026-08-22",
+      "marca": "",
+      "precioAnterior": 0,
+      "precioNuevo": 23.637600000000003,
+      "proveedorNombre": "La Rotonda"
+    },
+    "contenidoPorUnidad": 400,
+    "creadoTs": 1787256913038,
+    "nombre": "Stevia hileret x 400 sobres",
+    "precioActual": 0,
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": ""
+  },
+  "-P-Vo32C7bysISuBMopX": {
+    "actualizadoTs": 1787580785910,
+    "alertaPrecio": {
+      "abrupta": false,
+      "fecha": "2026-08-22",
+      "marca": "",
+      "precioAnterior": 0,
+      "precioNuevo": 14.027674999999999,
+      "proveedorNombre": "La Rotonda"
+    },
+    "contenidoPorUnidad": 400,
+    "creadoTs": 1787256914118,
+    "nombre": "Edulcorante hileret forte x 400 sobres",
+    "precioActual": 0,
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": ""
+  },
+  "-P-Vo4j06TJLkfc-90XG": {
+    "actualizadoTs": 1787580788879,
+    "alertaPrecio": {
+      "abrupta": false,
+      "fecha": "2026-08-22",
+      "marca": "",
+      "precioAnterior": 0,
+      "precioNuevo": 134.347,
+      "proveedorNombre": "La Rotonda"
+    },
+    "alias": {
+      "higienol x 30 mts floripel": true
+    },
+    "contenidoPorUnidad": 30,
+    "creadoTs": 1787256921018,
+    "nombre": "Higienol",
+    "precioActual": 0,
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": ""
+  },
+  "-P-eJwZFUOVpo1DSTRjg": {
+    "actualizadoTs": 1787580786713,
+    "alias": {
+      "mozzarella cilindro": true
+    },
+    "creadoTs": 1787416529203,
+    "nombre": "Mozzarella Cilindro Aurora / Pianu",
+    "precioActual": 0,
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": ""
+  },
+  "-P-eJwjaB_ND8ebGBSyS": {
+    "actualizadoTs": 1787580786977,
+    "creadoTs": 1787416529929,
+    "nombre": "Horma",
+    "precioActual": 0,
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": ""
+  },
+  "-P-eJxI84Gy6WiKBsbTl": {
+    "actualizadoTs": 1787580788100,
+    "creadoTs": 1787416532205,
+    "nombre": "Tybo Sandwich La Paulina",
+    "precioActual": 0,
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": ""
+  },
+  "-P-eJxTqmSPTToAuHOzk": {
+    "actualizadoTs": 1787580788359,
+    "contenidoPorUnidad": 5,
+    "creadoTs": 1787416532953,
+    "nombre": "Manteca Teodoro x 5 kg",
+    "precioActual": 0,
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": ""
+  },
+  "-P-eJxiLlO8wHqDFeINr": {
+    "actualizadoTs": 1787580788618,
+    "creadoTs": 1787416533946,
+    "nombre": "Azúcar Doña Bertina x 1 kg",
+    "precioActual": 0,
+    "proveedorPreferido": "-Oy3x6PIXYLxiYAtPhXd",
+    "unidad": ""
+  }
+}
