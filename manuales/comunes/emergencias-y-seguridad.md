@@ -32,6 +32,20 @@
 
 ---
 
+## Dónde está cada cosa
+
+**En los dos locales, en el mismo lugar. Aprendelo el primer día.**
+
+| | Dónde |
+|---|---|
+| 🧰 **Botiquín** | En la **barra**, en la zona de la caja registradora |
+| 🧯 **Matafuegos** | Uno en el **salón** y uno en la **cocina** |
+
+> El botiquín está en la barra a propósito: es el punto del local por donde siempre
+> pasa alguien. **No lo tapes con nada** ni lo uses para guardar otra cosa.
+
+---
+
 # ACCIDENTES Y PRIMEROS AUXILIOS
 
 ## Lo primero, siempre
@@ -106,7 +120,7 @@ Es lo más frecuente acá: hornos, cafetera, lanza de vapor, aceite.
 1. **Sacá a la gente.** Clientes primero, equipo después.
 2. **Llamá al 100.**
 3. **Usá el matafuego solo si el fuego es chico y estás entre el fuego y la salida.**
-   Si dudás, salí.
+   Si dudás, salí. Hay uno en el **salón** y uno en la **cocina**.
 4. **No vuelvas a entrar** por nada.
 
 > ⛔ **Fuego de aceite o de grasa: nunca agua.** Tapá la olla o la sartén y cortá el
@@ -161,10 +175,13 @@ Es lo más frecuente acá: hornos, cafetera, lanza de vapor, aceite.
 > 🚧 **Este documento está incompleto sin estos datos.** Son cosas que no puedo saber
 > desde afuera y que hacen la diferencia en el momento.
 
-- [ ] **🔴 Dónde está el botiquín** en cada local, qué tiene, y quién lo repone.
-      Hoy no hay ninguna mención a un botiquín en todo el manual.
-- [ ] **🔴 Dónde están los matafuegos**, de qué tipo son y **cuándo vencen**.
-      Un matafuego vencido es un adorno.
+- [x] ~~**Dónde está el botiquín y dónde los matafuegos.**~~ Botiquín en la barra,
+      junto a la caja. Matafuegos en salón y cocina de cada local.
+- [ ] **🔴 Qué tiene el botiquín y quién lo repone.** Sin alguien que lo revise, en seis
+      meses tiene una gasa y una curita vencida.
+- [ ] **🔴 De qué tipo son los matafuegos y cuándo vencen.** En una cocina hace falta
+      uno apto para aceite y grasa (clase K o ABC); si el que hay es solo de agua, no
+      sirve para el fuego más probable del local. Un matafuego vencido es un adorno.
 - [ ] **🔴 Teléfonos**: Gerencia, Administración y la cobertura médica del personal.
 - [ ] **Capacitación en primeros auxilios.** Al menos una persona por turno debería
       tenerla. Los bomberos y la Cruz Roja dan cursos cortos.
