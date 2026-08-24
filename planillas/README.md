@@ -8,7 +8,7 @@ producción, y para el cruce posterior contra facturas de compra y los reportes 
 | Archivo | Qué es |
 |---|---|
 | `crear_en_sheets.gs` | **Apps Script que construye la planilla en Google Sheets.** Es el camino principal. |
-| `clasificar_insumos.py` | Unifica las variantes de nombre y clasifica cada insumo como central o por área. |
+| `mapear_insumos_reales.py` | Clasifica el export real de Firebase: grupo, unidad, alcance y criticidad. |
 | `verificar_apps_script.js` | Corre el Apps Script contra un mock de `SpreadsheetApp` para validarlo sin Google. |
 | `Control_Stock_Semanal_Candela.xlsx` | ⚠️ **DESACTUALIZADO.** Quedó con la lista sin deduplicar, semana de lunes a domingo y una sola semana. No usar sin regenerarlo. |
 | `generar_planillas.py` | Genera el `.xlsx` (también desactualizado). |
@@ -37,6 +37,24 @@ Los dos resultados que se buscan:
 
 - **Consumo real por insumo** = stock inicial + compras − stock final.
 - **Diferencia por producto** = elaborado − vendido − consumo interno − descarte.
+
+## Origen de los insumos
+
+La lista sale del **export real de Firebase** (`costeo/insumos`, 213 registros), no del
+catálogo de la app. De esos 213:
+
+- **156 son insumos de producción** y entran al control de stock.
+- **57 quedan en el maestro como referencia pero no se cuentan**: semielaborados que se hacen
+  en casa (almíbares, cremas, masas, tostadas, panes) y artículos de reventa o cafetería
+  (gaseosas, café, syrups, yogures, descartables).
+
+**37 marcados como críticos** para el conteo diario: los de precio alto por kilo más los
+staples de alto consumo (harinas, azúcar, manteca, margarinas, grasa, levadura, huevos,
+crema, leche, dulce de leche).
+
+El export **no tiene información de área**. Para los insumos perecederos que deberían contarse
+por área se pudo asignar área en 23 casos por coincidencia con el catálogo viejo; los otros 39
+quedaron en `Depósito central` y hay que reasignarlos a mano en la columna `AMBITO`.
 
 ## Deduplicación de insumos
 
