@@ -1214,6 +1214,72 @@ async function saveProductos(productos) { await set(ref(db, 'catalogo/productos'
 async function saveProductActive(productActive) { await set(ref(db, 'catalogo/activos'), productActive); }
 
 // ====================== FIREBASE LISTENERS ======================
+// Suscribe todos los listeners que dependen de la fecha (hoy/ayer). Se puede
+// re-ejecutar al cambiar de día: desuscribe los anteriores y crea los nuevos.
+function subscribeDateListeners() {
+  (state._dateUnsubs || []).forEach(u => { try { u(); } catch (e) {} });
+  state._dateUnsubs = [];
+  const tKey = todayKey(), yKey = yesterdayKey();
+
+  // pedidos de hoy — merge inteligente que protege valores en vuelo
+  state._dateUnsubs.push(onValue(ref(db, `pedidos/${tKey}`), snap => {
+    const incoming = snap.val() || {};
+    if (state.savingPaths.size === 0) {
+      state.pedidos[tKey] = incoming;
+    } else {
+      const snapshot = JSON.parse(JSON.stringify(incoming));
+      state.savingPaths.forEach(lockPath => {
+        const parts = lockPath.split('/');
+        if (parts.length === 5) {
+          const [, , localKey, area, pid] = parts;
+          const inFlightVal = state.pedidos[tKey]?.[localKey]?.[area]?.[pid];
+          if (inFlightVal !== undefined && inFlightVal !== null) {
+            if (!snapshot[localKey]) snapshot[localKey] = {};
+            if (!snapshot[localKey][area]) snapshot[localKey][area] = {};
+            snapshot[localKey][area][pid] = inFlightVal;
+          }
+        }
+      });
+      state.pedidos[tKey] = snapshot;
+    }
+    if (!state.loading) safeRender();
+  }));
+  state._dateUnsubs.push(onValue(ref(db, `pedidos/${yKey}`), snap => {
+    state.pedidos[yKey] = snap.val() || {};
+    if (!state.loading) safeRender();
+  }));
+  state._dateUnsubs.push(onValue(ref(db, `insumosPedidos/${tKey}`), snap => {
+    state.insumosPedidos[tKey] = snap.val() || {};
+    state.historialInsumos[tKey] = snap.val() || {};
+    if (!state.loading) safeRender();
+  }));
+  state._dateUnsubs.push(onValue(ref(db, `insumosPedidos/${yKey}`), snap => {
+    state.insumosPedidos[yKey] = snap.val() || {};
+    state.historialInsumos[yKey] = snap.val() || {};
+    if (!state.loading) safeRender();
+  }));
+  state._dateUnsubs.push(onValue(ref(db, `comprados/${tKey}`), snap => {
+    state.comprados = snap.val() || {};
+    if (!state.loading) safeRender();
+  }));
+  state._dateUnsubs.push(onValue(ref(db, `confirmados/${tKey}`), snap => {
+    state.confirmados = snap.val() || {};
+    if (!state.loading) safeRender();
+  }));
+
+  state._listenerDay = tKey;
+}
+
+// Detecta el cambio de día (pestaña abierta cruzando la medianoche) y
+// re-suscribe los listeners a las fechas nuevas para no quedar mostrando ayer.
+function checkDateRollover() {
+  if (state._listenerDay && todayKey() !== state._listenerDay) {
+    console.log(`📅 Cambio de día detectado (${state._listenerDay} → ${todayKey()}). Re-suscribiendo.`);
+    subscribeDateListeners();
+    if (!state.loading) safeRender();
+  }
+}
+
 async function initFirebase() {
   const catSnap = await get(ref(db, 'catalogo'));
   if (!catSnap.exists()) {
@@ -1223,38 +1289,9 @@ async function initFirebase() {
     await set(ref(db, 'catalogo/activos'), activos);
   }
 
-  // Listener: merge inteligente que protege valores en vuelo
-  onValue(ref(db, `pedidos/${todayKey()}`), snap => {
-    const incoming = snap.val() || {};
-    if (state.savingPaths.size === 0) {
-      // Sin guardados en curso: reemplazar completo (maneja también eliminaciones)
-      state.pedidos[todayKey()] = incoming;
-    } else {
-      // Hay guardados en curso: usar Firebase como base y superponer los valores bloqueados
-      // Esto garantiza que eliminaciones remotas se reflejen, pero los valores en vuelo
-      // no se pisen con snapshots que llegaron antes de que el write se propagara.
-      const snapshot = JSON.parse(JSON.stringify(incoming));
-      state.savingPaths.forEach(lockPath => {
-        // lockPath: "pedidos/YYYY-MM-DD/localKey/area/pid"
-        const parts = lockPath.split('/');
-        if (parts.length === 5) {
-          const [, , localKey, area, pid] = parts;
-          const inFlightVal = state.pedidos[todayKey()]?.[localKey]?.[area]?.[pid];
-          if (inFlightVal !== undefined && inFlightVal !== null) {
-            if (!snapshot[localKey]) snapshot[localKey] = {};
-            if (!snapshot[localKey][area]) snapshot[localKey][area] = {};
-            snapshot[localKey][area][pid] = inFlightVal;
-          }
-        }
-      });
-      state.pedidos[todayKey()] = snapshot;
-    }
-    if (!state.loading) safeRender();
-  });
-  onValue(ref(db, `pedidos/${yesterdayKey()}`), snap => {
-    state.pedidos[yesterdayKey()] = snap.val() || {};
-    if (!state.loading) safeRender();
-  });
+  // Listeners que dependen de la fecha (pedidos/insumos/comprados/confirmados de
+  // hoy y ayer). Se re-suscriben solos si la pestaña cruza la medianoche.
+  subscribeDateListeners();
 
   function toArr(val) {
     if (!val) return [];
@@ -1296,24 +1333,6 @@ async function initFirebase() {
     if (!state.loading) safeRender();
   });
 
-  onValue(ref(db, `insumosPedidos/${todayKey()}`), snap => {
-    state.insumosPedidos[todayKey()] = snap.val() || {};
-    state.historialInsumos[todayKey()] = snap.val() || {};
-    if (!state.loading) safeRender();
-  });
-  onValue(ref(db, `insumosPedidos/${yesterdayKey()}`), snap => {
-    state.insumosPedidos[yesterdayKey()] = snap.val() || {};
-    state.historialInsumos[yesterdayKey()] = snap.val() || {};
-    if (!state.loading) safeRender();
-  });
-  onValue(ref(db, `comprados/${todayKey()}`), snap => {
-    state.comprados = snap.val() || {};
-    if (!state.loading) safeRender();
-  });
-  onValue(ref(db, `confirmados/${todayKey()}`), snap => {
-    state.confirmados = snap.val() || {};
-    if (!state.loading) safeRender();
-  });
   onValue(ref(db, 'ventasCustomInsumos'), snap => {
     state.ventasCustomInsumos = snap.val() || {};
     if (!state.loading) safeRender();
@@ -2534,6 +2553,12 @@ window.closeMobileNav = () => { state.mobileNavOpen = false; };
 
 // Iniciar
 initFirebase();
+
+// Detección de cambio de día: chequeo periódico + al volver a la pestaña
+// (clave en celulares que quedan en segundo plano y se reabren a la mañana).
+setInterval(checkDateRollover, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDateRollover(); });
+window.addEventListener('focus', checkDateRollover);
 
 // Refresco periódico para aplicar expiraciones por hora sin recargar.
 // Solo re-renderiza cuando cambia la visibilidad del aviso de la vista actual.
