@@ -12,6 +12,21 @@ una atención amable en cada taza**.
 
 ---
 
+## Qué es la barra y qué preparás
+
+**La barra es tu espacio físico de trabajo**, igual que el mostrador lo es del
+vendedor y la cocina del cocinero. No es un puesto ni un rol: es el lugar.
+
+> ### Todas las preparaciones de cafetería son tuyas.
+> **Frías y calientes, más las infusiones.** Café, espresso y derivados, bebidas
+> frías, té, mate cocido, chocolate.
+
+| Única excepción | |
+|---|---|
+| **Frappuccino** | **Se prepara en cocina.** Lo pedís por comanda como cualquier otro producto de cocina |
+
+---
+
 ## 🖥️ Tu herramienta digital
 
 Usás una herramienta digital en tu turno:
@@ -69,9 +84,14 @@ Usás una herramienta digital en tu turno:
 
 ### Bebidas frías
 
+**Las bebidas frías de cafetería las hacés vos** — cold brew, iced latte, licuados de
+café, limonadas y jugos de barra.
+
 - Usar siempre **hielo limpio**.
 - Servir en **vaso frío**.
 - Respetar las **proporciones de la receta estándar**.
+
+> El **Frappuccino** es la única bebida que **no preparás vos**: va a **cocina**.
 
 ### Tiempos de entrega
 
