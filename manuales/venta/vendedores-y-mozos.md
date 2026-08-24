@@ -104,8 +104,47 @@ Cuando un cliente tiene un problema, seguí estos 4 pasos:
 
 - Las vitrinas **siempre limpias y ordenadas**.
 - Los productos con **etiqueta de precio visible** en todo momento.
-- **FIFO**: primero entra, primero sale. Los productos más viejos adelante.
 - Revisá la vitrina **al inicio del turno, a la mitad y antes del cierre**.
+
+---
+
+## 6.1 La heladera de tortas — Tiene un orden
+
+No se acomoda como entre. **Cada piso tiene lo suyo:**
+
+| Piso | Qué va |
+|---|---|
+| **Superior** | Porciones — mini cakes |
+| **Pisos del medio** | Tortas |
+| **Último piso** | Tartas y **pedidos** |
+
+### Dentro de cada piso
+
+**Se ordena por sabor.** Todo lo del mismo sabor, junto.
+
+### Y dentro de cada sabor — la regla que hace circular la mercadería
+
+> ### Lo más fresco adelante, lo más viejo atrás.
+> **Adelante** es el lado del cliente. **Atrás** es el lado del vendedor.
+
+Puesto así, **lo primero que agarra el vendedor es lo más viejo**, que es justo lo que
+tiene que salir primero. La mercadería rota sola, sin que nadie tenga que acordarse.
+
+> ⚠️ **Cuidado con el reflejo de reponer adelante.** Es lo cómodo y lo natural: llega
+> mercadería fresca y se pone al frente porque es donde hay lugar. Hecho así, lo viejo
+> queda atrás hasta que se vence.
+
+### Los pedidos
+
+**Los pedidos van en cajas siempre que haya**, en el último piso, junto a las tartas.
+
+Guardarlos en caja los protege y —sobre todo— **deja claro que no están a la venta**.
+
+---
+
+> ### La heladera de tortas no puede estar vacía a la mañana.
+> Una heladera vacía cuando abre el local es venta perdida directa, y lo primero que ve
+> el cliente que entra a comprar algo dulce.
 
 ---
 
