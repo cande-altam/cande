@@ -106,6 +106,18 @@ Cuando un cliente tiene un problema, seguí estos 4 pasos:
 - Los productos con **etiqueta de precio visible** en todo momento.
 - Revisá la vitrina **al inicio del turno, a la mitad y antes del cierre**.
 
+### Qué sale del mostrador y qué pasa por cocina
+
+> ### La regla: si hay que calentarlo, va por comanda a cocina.
+
+| Sale directo del mostrador a la mesa | Va por comanda a cocina |
+|---|---|
+| Budines · donas · alfajores · cookies | Medialunas · chipá · croissants · rol de canela |
+| Porciones de torta y tartas | Todo lo que se sirva caliente |
+
+**No calientes vos un producto de vitrina.** Aunque el horno esté al lado y parezca
+más rápido: si va caliente, entra por comanda.
+
 ---
 
 ## 6.1 La heladera de tortas — Tiene un orden
