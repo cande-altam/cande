@@ -17,13 +17,21 @@ una atención amable en cada taza**.
 **La barra es tu espacio físico de trabajo**, igual que el mostrador lo es del
 vendedor y la cocina del cocinero. No es un puesto ni un rol: es el lugar.
 
-> ### Todas las preparaciones de cafetería son tuyas.
-> **Frías y calientes, más las infusiones.** Café, espresso y derivados, bebidas
-> frías, té, mate cocido, chocolate.
+> ### Todas las bebidas con café son tuyas, frías o calientes.
+> Más las **chocolatadas, submarinos e infusiones**.
 
-| Única excepción | |
+| Tuyo — barra | De cocina |
 |---|---|
-| **Frappuccino** | **Se prepara en cocina.** Lo pedís por comanda como cualquier otro producto de cocina |
+| Espresso, doppio, cortadito, americano, flat white, capuccino, latte y lattes saborizados, mocaccino, lágrima, filtrado | **Frappuccino** |
+| Cold brew, café tónico, americano frío, latte frío y lattes dulces fríos | **Licuados y smoothies** |
+| **Chocolatada, submarino** | **Jugos naturales exprimidos** — vaso y 1 L |
+| **Té e infusiones** | **Limonada, limonada rosa, pomelada** y demás bebidas preparadas sin café |
+
+> ### La regla corta: si lleva café, es de barra. Si no lleva café y hay que prepararla, es de cocina.
+> El **Frappuccino** es la excepción: lleva café y aun así **se prepara en cocina**.
+
+Las bebidas que no se preparan — **gaseosa, agua, agua saborizada** — salen del
+mostrador.
 
 ---
 
@@ -82,16 +90,16 @@ Usás una herramienta digital en tu turno:
 | Textura | Cremosa y sedosa, **sin burbujas grandes** |
 | Para latte art | Leche con **microespuma** |
 
-### Bebidas frías
+### Bebidas frías con café
 
-**Las bebidas frías de cafetería las hacés vos** — cold brew, iced latte, licuados de
-café, limonadas y jugos de barra.
+**Cold brew, café tónico, americano frío, latte frío y lattes dulces fríos.**
 
 - Usar siempre **hielo limpio**.
 - Servir en **vaso frío**.
 - Respetar las **proporciones de la receta estándar**.
 
-> El **Frappuccino** es la única bebida que **no preparás vos**: va a **cocina**.
+> **Licuados, smoothies, jugos exprimidos y limonadas no son de barra: van a cocina.**
+> El **Frappuccino** también, aunque lleve café.
 
 ### Tiempos de entrega
 
