@@ -250,10 +250,14 @@ Dos cosas más que sí te corresponden:
 |---|---|
 | **9:00** | Panadería |
 | **16:00** | Pastelería |
-| **21:00** | Especialidades · Facturería · Sandwiches · Cocina San Luis |
+| **21:00** | Especialidades · Facturería · Sandwiches · **Cocina** (los dos locales) |
 
-Si el horario pasó y el pedido no está: **cargalo o hacelo cargar en el momento**, y
-dejalo en el informe.
+> ### Cada área carga su propio pedido. El horario no es la hora de hacerlo: es el tope para que no se olvide.
+> El pedido de la noche **puede cargarse hasta el final del turno**. Las 21:00 es el
+> punto en el que vos verificás, no el momento en que hay que sentarse a cargarlo.
+
+Si llegó el cierre del turno y el pedido no está: **cargalo o hacelo cargar antes de
+irte**, y dejalo en el informe.
 
 ### Recepción de mercadería
 
