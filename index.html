@@ -104,13 +104,6 @@ textarea.fc{resize:vertical;min-height:56px}
 .tb-esp{background:var(--esp-bg);color:var(--esp-c);border:1px solid var(--esp-b)}
 .tb-sand{background:var(--sand-bg);color:var(--sand-c);border:1px solid var(--sand-b)}
 
-/* NOTIFICATIONS */
-.notif{background:var(--turq-pale);border:1px solid var(--turq);border-radius:var(--rl);padding:12px 16px;display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;animation:sdown .3s ease}
-.notif-title{font-weight:600;color:var(--turq-dark);font-size:14px}
-.notif-sub{color:var(--turq-dark);font-size:13px;margin-top:2px;opacity:.8}
-.notif-x{background:none;border:none;cursor:pointer;color:var(--turq-dark);font-size:18px;margin-left:auto;padding:0;line-height:1;opacity:.6}
-.notif-x:hover{opacity:1}
-@keyframes sdown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 
 /* SECTION HEADER */
 .sh{margin-bottom:24px}
@@ -407,7 +400,6 @@ textarea.fc{resize:vertical;min-height:56px}
 
 <!-- ═══ VIEWS ═══ -->
 <div class="view active" id="view-ventas">
-  <div id="v-notifs"></div>
   <div class="sh"><div class="st">Nuevo pedido</div><div class="ss">Completá los datos y los productos</div></div>
   <div id="v-form"></div>
 </div>
@@ -719,22 +711,11 @@ function checkNotifs(){
 }
 
 function renderNotifs(){
-  const el=document.getElementById('v-notifs');
-  if(!el)return;
-  if(!pendingNotifs.length){el.innerHTML='';return;}
-  el.innerHTML=pendingNotifs.map((o,i)=>`
-    <div class="notif">
-      <span style="font-size:20px">✅</span>
-      <div style="flex:1">
-        <div class="notif-title">¡Pedido listo para retirar!</div>
-        <div class="notif-sub"><strong>${e(o.client)}</strong> · ${fdt(o.deliveryDateTime)} · ${e(o.local)}</div>
-      </div>
-      <button class="notif-x" onclick="dismissNotif(${i})">✕</button>
-    </div>
-  `).join('');
+  pendingNotifs.forEach(o=>{
+    toast(`✅ Pedido listo · ${o.client} · ${fdt(o.deliveryDateTime)}`);
+  });
+  pendingNotifs=[];
 }
-
-function dismissNotif(i){ pendingNotifs.splice(i,1); renderNotifs(); }
 
 // ════════════════════════════════════════════════
 //  VENTAS — FORMULARIO
