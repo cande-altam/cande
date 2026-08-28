@@ -51,6 +51,7 @@ Sheet.prototype.getLastColumn=function(){return this.maxC;};
     if(m==='setColumnWidth'&&(a<1||a>this.maxCols)) errores.push(`${this.name}: setColumnWidth col ${a} fuera de rango`);
     return this;});
 Sheet.prototype.hideSheet=function(){this.hidden=true;return this;};
+Sheet.prototype.hideColumns=function(c,n){if(c<1||c>this.maxCols)errores.push(`${this.name}: hideColumns col ${c} fuera de rango`);return this;};
 
 let hojas=[];
 const ss={
@@ -71,30 +72,27 @@ global.SpreadsheetApp={
   BorderStyle:{SOLID:'solid'},
   getUi:()=>({alert(a,b,c){return respuesta;},ButtonSet:{YES_NO:'yn'},Button:{YES:'YES',NO:'NO'}})
 };
-const src=require('fs').readFileSync(require('path').join(__dirname,'planilla_candela.gs'),'utf8');
+const src=require('fs').readFileSync(require('path').join(__dirname,'control_stock_v2.gs'),'utf8');
 eval(src);
 
-console.log('--- 1) crearPlanilla() en hoja vacia ---');
-hojas=[new Sheet('Hoja 1')];
-try{ crearPlanilla(); }catch(e){ errores.push('EXCEPCION crearPlanilla: '+e.message); }
+console.log('--- 1) construirTodo() sobre hoja con datos previos (payroll) ---');
+hojas=[new Sheet('Hoja2'), new Sheet('Hoja3')];
+try{ construirTodo(); }catch(e){ errores.push('EXCEPCION construirTodo (1a vez): '+e.message); }
 console.log('pestanas:',hojas.length);
-hojas.forEach(h=>console.log(`  ${h.name.padEnd(22)} filas ${String(h.getLastRow()).padStart(4)} cols ${String(h.getLastColumn()).padStart(2)} combinadas ${String(h.merged.size).padStart(3)}${h.hidden?' (oculta)':''}`));
+hojas.forEach(h=>console.log(`  ${h.name.padEnd(24)} filas ${String(h.getLastRow()).padStart(4)} cols ${String(h.getLastColumn()).padStart(2)} combinadas ${String(h.merged.size).padStart(3)}${h.hidden?' (oculta)':''}`));
+if(hojas.some(h=>h.name==='Hoja2'||h.name==='Hoja3')) errores.push('quedaron pestanas viejas (Hoja2/Hoja3) sin borrar');
+if(hojas.length!==20) errores.push('se esperaban 20 pestanas, hay '+hojas.length);
 
-console.log('\n--- 2) crearPlanilla() sobre una planilla ya creada (debe rechazar) ---');
-let rechazo=false;
-try{ crearPlanilla(); }catch(e){ rechazo=true; console.log('  rechazado correctamente'); }
-if(!rechazo) errores.push('crearPlanilla NO rechazo una planilla ya existente');
-
-console.log('\n--- 3) recrearPlanilla() (debe borrar y rehacer) ---');
-const antes=hojas.length;
-try{ recrearPlanilla(); }catch(e){ errores.push('EXCEPCION recrearPlanilla: '+e.message); }
+console.log('\n--- 2) construirTodo() de nuevo sobre el resultado (debe rehacer limpio) ---');
+const antes = hojas.length;
+try{ construirTodo(); }catch(e){ errores.push('EXCEPCION construirTodo (2a vez): '+e.message); }
 console.log('  pestanas antes',antes,'-> despues',hojas.length);
-if(hojas.length!==antes) errores.push(`recrearPlanilla dejo ${hojas.length} pestanas, se esperaban ${antes}`);
+if(hojas.length!==antes) errores.push(`2da corrida dejo ${hojas.length} pestanas, se esperaban ${antes}`);
 
-console.log('\n--- 4) recrearPlanilla() cancelado (no debe tocar nada) ---');
+console.log('\n--- 3) construirTodo() cancelado (no debe tocar nada) ---');
 respuesta='NO'; const antes2=hojas.length;
-try{ recrearPlanilla(); }catch(e){ errores.push('EXCEPCION al cancelar: '+e.message); }
-if(hojas.length!==antes2) errores.push('cancelar recrearPlanilla igual modifico las pestanas');
+try{ construirTodo(); }catch(e){ errores.push('EXCEPCION al cancelar: '+e.message); }
+if(hojas.length!==antes2) errores.push('cancelar construirTodo igual modifico las pestanas');
 else console.log('  cancelado sin tocar nada');
 
 console.log('\nERRORES:',errores.length);

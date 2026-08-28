@@ -1,0 +1,2272 @@
+[
+ {
+  "nombre": "Propionato de calcio",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 19911.6632,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Almidon de maiz",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 2453.4359,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Aceite de girasol",
+  "unidad": "L",
+  "bulto": 5.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3241.861,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Aceite de oliva",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 28116.0204,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Aditivo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 6068.9994,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Albahaca",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 5000,
+  "prov": "-Oy9i7sX4WQLLHbd5dNR"
+ },
+ {
+  "nombre": "Anana",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Anana en lata",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3567.8148,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Arandanos",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Arandanos congelados",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": 6561.1,
+  "prov": "-Oy3x6_YT0XO-LGdauVw"
+ },
+ {
+  "nombre": "Avena",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 2649.7064,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Azucar",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 1000,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Azucar mascabo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 1542.7984,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Banana",
+  "unidad": "docena",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": 166.6667,
+  "prov": "-Oy9i7sX4WQLLHbd5dNR"
+ },
+ {
+  "nombre": "Chocolate baño semiamargo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 13132.0009,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw::lodiser"
+ },
+ {
+  "nombre": "Baño moldeo c/leche",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 9713.5896,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Baño moldeo c/leche",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 9713.5896,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Berlina",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 6525.1669,
+  "prov": "-Oy3x5PQG-Q_8gCTDCC4"
+ },
+ {
+  "nombre": "Bicarbonato de amonio",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 9279.88,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Brownie express",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 10791.6853,
+  "prov": "-Oy3x5PQG-Q_8gCTDCC4"
+ },
+ {
+  "nombre": "Cacao",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 45065.6514,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Canela en polvo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 30000,
+  "prov": "-Oy3x4zIVCAfQD8ZLMle"
+ },
+ {
+  "nombre": "Cerezas en lata",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 16912.2111,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Chocolate chip",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 18891.8994,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Chocolate moldeo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 9610.0031,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Chocolate para submarino",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "SI",
+  "precio": 25000,
+  "prov": "-Oy3x5CU1wbvKIrHD_Ap"
+ },
+ {
+  "nombre": "Chocolate para submarino",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "SI",
+  "precio": 25000,
+  "prov": "-Oy3x5CU1wbvKIrHD_Ap"
+ },
+ {
+  "nombre": "Chocolino",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 11145.8696,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Ciruelas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Coco rallado",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 6859.06,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Colorante en pasta",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 736.032,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Confites mini",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 14880,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Crema Vegetal",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 8159.22,
+  "prov": "-Oy3x5PQG-Q_8gCTDCC4"
+ },
+ {
+  "nombre": "Crocante de mani",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 11052.9991,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Culatello",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 15000,
+  "prov": "-Oy3x6FgGm8bAAjccrbI"
+ },
+ {
+  "nombre": "Dulce de leche repostero",
+  "unidad": "kg",
+  "bulto": 25.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 4416,
+  "prov": "-Oy3x5M5XcdKeUTevCcM::campo quijano"
+ },
+ {
+  "nombre": "Dulcerio tres leches",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 868.5269,
+  "prov": "-Oy3x5PQG-Q_8gCTDCC4"
+ },
+ {
+  "nombre": "Dulcerio tres leches",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 868.5269,
+  "prov": "-Oy3x5PQG-Q_8gCTDCC4"
+ },
+ {
+  "nombre": "Durazno al natural",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 2944.1513,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Emulsionante en pasta",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 25158.1909,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Fecula",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 2049.596,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Fondant",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 2766.936,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Fruta abrillantada",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Frutillas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": 12857.1429,
+  "prov": "-Oy9i7sX4WQLLHbd5dNR"
+ },
+ {
+  "nombre": "Frutillas congeladas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": 6100,
+  "prov": "-Oy3x6_YT0XO-LGdauVw"
+ },
+ {
+  "nombre": "Frutos del bosque",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 33057.85,
+  "prov": "-Oy3x5CU1wbvKIrHD_Ap"
+ },
+ {
+  "nombre": "Galletas chocolinas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 9200,
+  "prov": "-Oy3x5U5rkDaNIAPsni2"
+ },
+ {
+  "nombre": "Galletas lincoln",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Galletas oreo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 1400,
+  "prov": "-Oy9iFzRrmC155dtg5_V"
+ },
+ {
+  "nombre": "Galletas vainillas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 7500,
+  "prov": "-Oy9iFzRrmC155dtg5_V"
+ },
+ {
+  "nombre": "Granas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 4816.4055,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Grasa",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 5079.6,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Harina 0000 x25kg",
+  "unidad": "kg",
+  "bulto": 25.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 840,
+  "prov": "-Oy3x6BB2k7o0gjXohnv"
+ },
+ {
+  "nombre": "Jalea fruta",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 1479.265,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw::calsa"
+ },
+ {
+  "nombre": "Jamon cocido",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 14983.0936,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Kiwi",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": 4500,
+  "prov": "-Oy9i7sX4WQLLHbd5dNR"
+ },
+ {
+  "nombre": "Leche de almendras",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 2310.82,
+  "prov": "-Oy3x79ILHmcrJFf2cFU"
+ },
+ {
+  "nombre": "Leche de almendras",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 2310.82,
+  "prov": "-Oy3x79ILHmcrJFf2cFU"
+ },
+ {
+  "nombre": "Leche de coco",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 3946.06,
+  "prov": "-Oy3x79ILHmcrJFf2cFU"
+ },
+ {
+  "nombre": "Leche de coco",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 3946.06,
+  "prov": "-Oy3x79ILHmcrJFf2cFU"
+ },
+ {
+  "nombre": "Leche deslactosada",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 1435.26,
+  "prov": "-Oy5lEAvhTTuFPOgLwJI"
+ },
+ {
+  "nombre": "Leche deslactosada",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 1435.26,
+  "prov": "-Oy5lEAvhTTuFPOgLwJI"
+ },
+ {
+  "nombre": "Lentejas chocolate",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 14903.7152,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Levadura",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 6742.1999,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "licor",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 8550.6667,
+  "prov": "-Oy3x5U5rkDaNIAPsni2"
+ },
+ {
+  "nombre": "licor",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 8550.6667,
+  "prov": "-Oy3x5U5rkDaNIAPsni2"
+ },
+ {
+  "nombre": "Limon",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Mani filetiado",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 7890.8677,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Manzana verde",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Margarina hojaldre",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 5630.401,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Mayonesa",
+  "unidad": "kg",
+  "bulto": 2900.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3973.6567,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Mermelada ciruela",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3112.2907,
+  "prov": "_manual"
+ },
+ {
+  "nombre": "Mermelada durazno",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 4078.8626,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd::oriel"
+ },
+ {
+  "nombre": "Mermelada frutilla",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 5490.375,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd::orieta"
+ },
+ {
+  "nombre": "Miel de abeja",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 29495.5824,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Miel de caña",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": 12754.2816,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Mix de frutos rojos",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 8700.0076,
+  "prov": "-Oy3x6_YT0XO-LGdauVw"
+ },
+ {
+  "nombre": "Mix de semillas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 5208,
+  "prov": "-Oy3x4zIVCAfQD8ZLMle"
+ },
+ {
+  "nombre": "Mortadela",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 13290,
+  "prov": "-Oy3x6FgGm8bAAjccrbI"
+ },
+ {
+  "nombre": "Mortadela con pistachos",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 10320.01,
+  "prov": "-Oy3x6FgGm8bAAjccrbI"
+ },
+ {
+  "nombre": "Naranja — paquete lt",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": 1200,
+  "prov": ""
+ },
+ {
+  "nombre": "Nutella",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 29001.6501,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Oregano",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Otentic",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 57233.3025,
+  "prov": "-Oy3x5PQG-Q_8gCTDCC4"
+ },
+ {
+  "nombre": "Panes blandos",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 6987.7559,
+  "prov": "-Oy3x5PQG-Q_8gCTDCC4"
+ },
+ {
+  "nombre": "Panes granos andinos",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 9191.8819,
+  "prov": "-Oy3x5PQG-Q_8gCTDCC4::puratos"
+ },
+ {
+  "nombre": "Panes multicereal",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 9191.8819,
+  "prov": "-Oy3x5PQG-Q_8gCTDCC4::puratos"
+ },
+ {
+  "nombre": "Panes salvado",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Pasas de uva",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Pasta de pistachos",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 55851.2368,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Pernil",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 8667.8108,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Polvo para hornear",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 15358.8506,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Premezcla muffin",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 9043.9998,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Premezcla pan de papa",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 19039.4238,
+  "prov": ""
+ },
+ {
+  "nombre": "Premezcla pan de queso",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 6885.0028,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Pulpalist neutro",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 9426.8002,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Queso cremoso",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 7293.9,
+  "prov": "-Oy5lEAvhTTuFPOgLwJI"
+ },
+ {
+  "nombre": "Romero",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": "-Oy3x4zIVCAfQD8ZLMle"
+ },
+ {
+  "nombre": "Sal",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Salame — Milan",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 17879.01,
+  "prov": "-Oy3x6FgGm8bAAjccrbI"
+ },
+ {
+  "nombre": "Salamin — paquete unidad",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 29580.0956,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Salsa de chocolate x900gr",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 6611.5667,
+  "prov": "-Oy3x5CU1wbvKIrHD_Ap"
+ },
+ {
+  "nombre": "Salsa para pizza",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 856.8,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Salvado de trigo",
+  "unidad": "kg",
+  "bulto": 20.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 948.0876,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw::jupiter"
+ },
+ {
+  "nombre": "Semillas de amapola",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 18600,
+  "prov": "-Oy3x4zIVCAfQD8ZLMle"
+ },
+ {
+  "nombre": "Semillas de sesamo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 12400,
+  "prov": "-Oy3x4zIVCAfQD8ZLMle"
+ },
+ {
+  "nombre": "Spekkel",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 9191.8819,
+  "prov": "-Oy3x5PQG-Q_8gCTDCC4"
+ },
+ {
+  "nombre": "Syrope avellanas",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 13900,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Syrope avellanas",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 13900,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Syrope caramelo",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 13899.996,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Syrope caramelo",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 13899.996,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Syrope coco",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 13900,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Syrope coco",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 13900,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Syrope vainilla",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 13900,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Syrope vainilla",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 13900,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Syrup Pistacho",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 17099.9983,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Syrup Pistacho",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 17099.9983,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Tegral torta",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 7457.8272,
+  "prov": "-Oy3x5PQG-Q_8gCTDCC4"
+ },
+ {
+  "nombre": "Tomates",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3000,
+  "prov": "-Oy9i7sX4WQLLHbd5dNR"
+ },
+ {
+  "nombre": "Tomates cherrys",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 2000,
+  "prov": "-Oy9i7sX4WQLLHbd5dNR"
+ },
+ {
+  "nombre": "Tulipas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": "_manual"
+ },
+ {
+  "nombre": "Variegato Frutos del bosque",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 11764.624,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Variegato Maracuya",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 10821.8183,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Yogurt natural",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 5320,
+  "prov": "-Oy9iSi3RKNpfwUiMVPE"
+ },
+ {
+  "nombre": "Pistachos",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 39000,
+  "prov": "-Oy3x4zIVCAfQD8ZLMle"
+ },
+ {
+  "nombre": "Bicarbonato de sodio",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 12000,
+  "prov": "-Oy3x4zIVCAfQD8ZLMle"
+ },
+ {
+  "nombre": "Satin carrot",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 8855.8518,
+  "prov": ""
+ },
+ {
+  "nombre": "Premezcla brownie x3kg",
+  "unidad": "kg",
+  "bulto": 3.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 11593.9982,
+  "prov": ""
+ },
+ {
+  "nombre": "Bondiola",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 27759.4691,
+  "prov": ""
+ },
+ {
+  "nombre": "Tegral brownie",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 11056.9824,
+  "prov": ""
+ },
+ {
+  "nombre": "café instantaneo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "SI",
+  "precio": 6252.0942,
+  "prov": ""
+ },
+ {
+  "nombre": "café instantaneo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "SI",
+  "precio": 6252.0942,
+  "prov": ""
+ },
+ {
+  "nombre": "queso roquefort",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 14027.53,
+  "prov": ""
+ },
+ {
+  "nombre": "Cantimpalo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 28023.6,
+  "prov": "-Oy3x6FgGm8bAAjccrbI"
+ },
+ {
+  "nombre": "Lomito ahumado",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 37606.3039,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Pan de miga",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 12500,
+  "prov": "-Oy3x6pWOEfg-38KOqwf"
+ },
+ {
+  "nombre": "Café — paquete 1/4",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 13960.7,
+  "prov": ""
+ },
+ {
+  "nombre": "Café — paquete 1/4",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 13960.7,
+  "prov": ""
+ },
+ {
+  "nombre": "Agua saboriz",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3200,
+  "prov": ""
+ },
+ {
+  "nombre": "Agua",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 2500,
+  "prov": ""
+ },
+ {
+  "nombre": "Bagel",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 800,
+  "prov": ""
+ },
+ {
+  "nombre": "Churro",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 600,
+  "prov": ""
+ },
+ {
+  "nombre": "Cookies",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Croissant",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 1000,
+  "prov": ""
+ },
+ {
+  "nombre": "Donas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 1400,
+  "prov": ""
+ },
+ {
+  "nombre": "Durazno",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": 1361,
+  "prov": ""
+ },
+ {
+  "nombre": "Focaccia",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 1000,
+  "prov": ""
+ },
+ {
+  "nombre": "Frutas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 11040,
+  "prov": "-Oy3x5cgg3zdamPydBR_"
+ },
+ {
+  "nombre": "Ganache",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Gaseosa",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3200,
+  "prov": ""
+ },
+ {
+  "nombre": "Helado",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": 2400,
+  "prov": ""
+ },
+ {
+  "nombre": "Leche Descremada",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 1052.22,
+  "prov": ""
+ },
+ {
+  "nombre": "Leche Descremada",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 1052.22,
+  "prov": ""
+ },
+ {
+  "nombre": "Lechuga",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "MiniBaguette",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Queso crema x pouch",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 40387.6,
+  "prov": "-OyYs0PCr53ZOD2Famxb::casancrem"
+ },
+ {
+  "nombre": "Sirope",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Soda",
+  "unidad": "L",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 500,
+  "prov": ""
+ },
+ {
+  "nombre": "Tortillas",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Tostadas Blancas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3500,
+  "prov": ""
+ },
+ {
+  "nombre": "Tostadas Granos Andinos",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 4200,
+  "prov": ""
+ },
+ {
+  "nombre": "Tostadas Multicereal",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 4200,
+  "prov": ""
+ },
+ {
+  "nombre": "Tostadas Salvados",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3800,
+  "prov": ""
+ },
+ {
+  "nombre": "Hielo",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 1000,
+  "prov": ""
+ },
+ {
+  "nombre": "Azucar en Sobre",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": "",
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Azucar en Sobre",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": "",
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Miga de jamon cocido",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Miga de jamon crudo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Claras",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Premezcla Easy Pannettone",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Yemas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": ""
+ },
+ {
+  "nombre": "Almendras",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 34720,
+  "prov": "-Oy3x4zIVCAfQD8ZLMle"
+ },
+ {
+  "nombre": "Azucar impalpable",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3027.2784,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Crema de leche",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "SI",
+  "precio": 26012.19,
+  "prov": "-Oy5lEAvhTTuFPOgLwJI"
+ },
+ {
+  "nombre": "Crema de leche",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "SI",
+  "precio": 26012.19,
+  "prov": "-Oy5lEAvhTTuFPOgLwJI"
+ },
+ {
+  "nombre": "Dulce de membrillo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3940.6022,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Esencia de vainilla",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 2683.2331,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Granola",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 13800,
+  "prov": "-Oy3x4zIVCAfQD8ZLMle"
+ },
+ {
+  "nombre": "Harina 000 x25kg",
+  "unidad": "kg",
+  "bulto": 25.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 840,
+  "prov": "-Oy3x6BB2k7o0gjXohnv"
+ },
+ {
+  "nombre": "Huevos",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 4000,
+  "prov": "-Oy9iHFKHzQfOCWS2yMx::lila"
+ },
+ {
+  "nombre": "Jamon crudo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 47650.01,
+  "prov": "-Oy3x6FgGm8bAAjccrbI::la francisca"
+ },
+ {
+  "nombre": "Leche entera",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "SI",
+  "precio": 1462.164,
+  "prov": "-Oy3x5hUUrbMdfLny41w"
+ },
+ {
+  "nombre": "Leche entera",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "SI",
+  "precio": 1462.164,
+  "prov": "-Oy3x5hUUrbMdfLny41w"
+ },
+ {
+  "nombre": "Manteca",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": "",
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Margarina masa",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 5630.402,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Mermelada de membrillo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 2254.5065,
+  "prov": "-Oy3x5zQJsff2tXic0En"
+ },
+ {
+  "nombre": "Naranja",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": 4500,
+  "prov": "-Oy9i7sX4WQLLHbd5dNR"
+ },
+ {
+  "nombre": "Nueces",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 15000,
+  "prov": "_manual"
+ },
+ {
+  "nombre": "Palta",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 6500,
+  "prov": "-Oy9i7sX4WQLLHbd5dNR"
+ },
+ {
+  "nombre": "Queso azul",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 25054.8324,
+  "prov": "-Oy3x6FgGm8bAAjccrbI"
+ },
+ {
+  "nombre": "Queso de cabra",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 13900,
+  "prov": "-Oy9i7sX4WQLLHbd5dNR"
+ },
+ {
+  "nombre": "Queso sardo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 13294.7056,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Queso tybo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 33403.02,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd::la paulina"
+ },
+ {
+  "nombre": "Rucula",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 500,
+  "prov": "-Oy9i7sX4WQLLHbd5dNR"
+ },
+ {
+  "nombre": "Yogurt griego",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 6110,
+  "prov": "-Oy9iSi3RKNpfwUiMVPE::mykra"
+ },
+ {
+  "nombre": "Gelatina S/Sabor",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 47619.0476,
+  "prov": "_manual"
+ },
+ {
+  "nombre": "Saquito de Te La Virginia",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": "",
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Saquito de Te La Virginia",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": "",
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Salsa Inglesa",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 1319.0528,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Premezcla budin chocolate",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 7718.0011,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Premezcla budin vainilla",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 5422.9982,
+  "prov": "-Oy3x5HICG7dqWSc5Hqw"
+ },
+ {
+  "nombre": "Queso muzzarella",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 22473.33,
+  "prov": "-Oy3x6PIXYLxiYAtPhXd::aurora"
+ },
+ {
+  "nombre": "Café en grano x kg",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "SI",
+  "precio": 49610,
+  "prov": "-Oy3x5kjWPRVdMK1uF8i::cherry’s season"
+ },
+ {
+  "nombre": "Café en grano x kg",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "SI",
+  "precio": 49610,
+  "prov": "-Oy3x5kjWPRVdMK1uF8i::cherry’s season"
+ },
+ {
+  "nombre": "Crema Chantilly",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 5385.901122,
+  "prov": "_manual"
+ },
+ {
+  "nombre": "Crema Chantilly",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 5385.901122,
+  "prov": "_manual"
+ },
+ {
+  "nombre": "Bizcochuelo de Vainilla",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3158.9565846875003,
+  "prov": "_manual"
+ },
+ {
+  "nombre": "Almibar Para Tortas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 3565.2709519107993,
+  "prov": "_manual"
+ },
+ {
+  "nombre": "Masa Frola",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 1374.5139795999999,
+  "prov": "_manual"
+ },
+ {
+  "nombre": "Crema Pastelera",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": 1634.8938451722,
+  "prov": "_manual"
+ },
+ {
+  "nombre": "Crema Pastelera",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": 1634.8938451722,
+  "prov": "_manual"
+ },
+ {
+  "nombre": "Almibar P/Facturas",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 2155.3277617146,
+  "prov": "_manual"
+ },
+ {
+  "nombre": "Powerade Mountain Blast",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 11040,
+  "prov": "-Oy3x5cgg3zdamPydBR_"
+ },
+ {
+  "nombre": "Sprite 1.5L",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 19999.88,
+  "prov": "-Oy3x5cgg3zdamPydBR_"
+ },
+ {
+  "nombre": "Sprite 2.25L",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 24999.87,
+  "prov": "-Oy3x5cgg3zdamPydBR_"
+ },
+ {
+  "nombre": "Smoothie mix violeta",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": 5792.86,
+  "prov": "-Oy3x6_YT0XO-LGdauVw::alif"
+ },
+ {
+  "nombre": "Smoothie mix amarillo",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Cocina San Luis",
+  "ambito": "Cocina San Luis",
+  "critico": "NO",
+  "precio": 5792.86,
+  "prov": "-Oy3x6_YT0XO-LGdauVw::alif"
+ },
+ {
+  "nombre": "Vela corta",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 1652.89,
+  "prov": "-OyYsCLjF8XwEJhXle4Q"
+ },
+ {
+  "nombre": "Bengala Gibre",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 826.45,
+  "prov": "-OyYsCLjF8XwEJhXle4Q"
+ },
+ {
+  "nombre": "Peceto",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Por area (cuadra)",
+  "ambito": "Deposito central",
+  "critico": "SI",
+  "precio": 20000,
+  "prov": "-Oy3x5sggwuQBtMEb2uy"
+ },
+ {
+  "nombre": "Dulce de cayote",
+  "unidad": "kg",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": 4000,
+  "prov": "-OyZ4ZPPwu1kisPflQT4"
+ },
+ {
+  "nombre": "Stevia hileret x 400 sobres",
+  "unidad": "u",
+  "bulto": 400.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": "",
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Stevia hileret x 400 sobres",
+  "unidad": "u",
+  "bulto": 400.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": "",
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Edulcorante hileret forte x 400 sobres",
+  "unidad": "u",
+  "bulto": 400.0,
+  "alcance": "Barra",
+  "ambito": "Barra SLA 5.0",
+  "critico": "NO",
+  "precio": "",
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Edulcorante hileret forte x 400 sobres",
+  "unidad": "u",
+  "bulto": 400.0,
+  "alcance": "Barra",
+  "ambito": "Barra San Luis",
+  "critico": "NO",
+  "precio": "",
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Higienol",
+  "unidad": "u",
+  "bulto": 30.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ },
+ {
+  "nombre": "Horma",
+  "unidad": "u",
+  "bulto": 1.0,
+  "alcance": "Central",
+  "ambito": "Deposito central",
+  "critico": "NO",
+  "precio": "",
+  "prov": "-Oy3x6PIXYLxiYAtPhXd"
+ }
+]
