@@ -18,12 +18,13 @@
     +-------------+-------------+-------------+---------------+
     |             |             |             |               |
  ADMINIS-      COMPRAS      LOCALES        COCINA        CUADRA DE
- TRACIÓN                    DE VENTA      SAN LUIS      PRODUCCIÓN
+ TRACIÓN                    DE VENTA      DE LOCALES    PRODUCCIÓN
                                 |             |               |
                              Cajeros     Jefe de cocina    Maestro
-                             Vendedores  Ayudante          de área
-                             Mozos                         (uno por área)
-                             Baristas
+                             Vendedores  (uno para los     de área
+                             Mozos        dos locales)     (uno por área)
+                             Baristas    Cocineros
+                                         Ayudantes
 
                       LIMPIEZA  —  atraviesa los tres locales
 ```
@@ -39,7 +40,7 @@
 | **Administración** | | Dinero, caja, proveedores, sobres de depósito |
 | **Compras** | | Insumos, reparto y vehículo |
 | **Locales de venta** | SLA 5.0 y San Luis | Atención al público |
-| **Cocina San Luis** | Jefe de cocina y ayudante | Cocina del local San Luis |
+| **Cocina de locales** | **Un jefe de cocina para los dos locales**, más cocineros y ayudantes | Las cocinas de San Luis y de SLA 5.0 |
 | **Cuadra de producción** | Un maestro por área | Panadería, Pastelería, Facturería, Especialidades, Sandwiches |
 | **Limpieza** | | Los tres locales |
 

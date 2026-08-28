@@ -43,6 +43,7 @@ y **un local de producción**.
 | Vendedores y Mozos | [venta/vendedores-y-mozos.md](venta/vendedores-y-mozos.md) | ✅ v2.0 — Junio 2026 |
 | Baristas | [venta/baristas.md](venta/baristas.md) | ✅ v2.0 — Junio 2026 |
 | **Experto del Turno** | [venta/experto-del-turno.md](venta/experto-del-turno.md) | 🟡 v1.0 — Agosto 2026 · con puntos a definir |
+| **Cocina de locales** | [venta/cocina.md](venta/cocina.md) | 🟡 v1.0 — Agosto 2026 · con puntos a definir |
 
 ### 🥖 Local de producción
 
