@@ -288,6 +288,7 @@ directos. Si falta algo, se reclama **en el momento**.
 
 - ☐ Sé quiénes están y en qué puesto
 - ☐ Si falta alguien, reorganicé los puestos
+- ☐ **Cada sector chequeó sus heladeras** — cocina, mostrador y barra
 - ☐ Revisé los pedidos de clientes que se entregan en este turno
 
 ### Durante el turno

@@ -35,6 +35,27 @@
 
 ## Cadena de frío
 
+### El chequeo de heladeras — al inicio de cada turno
+
+> ### Todos los turnos, todos los roles.
+> Cocina, vendedores, mozos y baristas: **al empezar el turno se chequea que las
+> heladeras del propio sector estén funcionando correctamente.**
+
+No es tarea de una persona designada ni del Experto. **Es de quien ocupa el puesto**,
+igual que la limpieza del sector.
+
+| | |
+|---|---|
+| **Cuándo** | Al **inicio de cada turno**, antes de empezar a trabajar |
+| **Qué** | Las heladeras y freezers **de tu sector** |
+| **Si algo no está bien** | Avisá al **Experto del turno de inmediato**, no al final del turno |
+
+> ### Una heladera que falla no avisa.
+> Entre que se apaga y que la mercadería se nota mal pasan horas. Si nadie la mira dos
+> veces al día, el problema se descubre cuando el producto **ya se sirvió**.
+
+### Lo demás
+
 - Verificá la **fecha de vencimiento** de fiambres y lácteos al inicio del turno.
 - Mantené la heladera **limpia y organizada**.
 - **Productos vencidos** → retirá y avisá al Experto del turno **de inmediato**.

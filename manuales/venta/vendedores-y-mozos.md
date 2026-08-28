@@ -174,11 +174,13 @@ Guardarlos en caja los protege y —sobre todo— **deja claro que no están a l
 
 ### Apertura
 
-1. Limpieza general del mostrador y vitrina.
-2. Reposición de productos (pan, pastelería, bebidas).
-3. Verificar etiquetas de precios.
-4. Encender equipos y verificar que todo funciona.
-5. **Cargar pedido de Panadería en la web (antes de las 9:00 hs).**
+1. **Chequear que las heladeras estén funcionando correctamente.** Se hace al inicio de
+   **todos** los turnos, igual que en cocina y en barra.
+2. Limpieza general del mostrador y vitrina.
+3. Reposición de productos (pan, pastelería, bebidas).
+4. Verificar etiquetas de precios.
+5. Encender equipos y verificar que todo funciona.
+6. **Cargar pedido de Panadería en la web (antes de las 9:00 hs).**
 
 ### Cierre
 
@@ -417,6 +419,7 @@ cumpleaños, encargues especiales, catering.
 - ☐ Vitrina limpia y con productos repuestos
 - ☐ Vajilla, servilleteros y azucareros completos
 - ☐ Carta limpia y completa
+- ☐ **Heladeras funcionando correctamente**
 - ☐ Heladera revisada (vencimientos, limpieza)
 - ☐ Uniforme correcto
 - ☐ Pedido de **Panadería** cargado en la web (antes de las **9:00 hs**)

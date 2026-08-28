@@ -19,6 +19,17 @@ Hay **un solo jefe de cocina para los dos locales**, y está a la mañana en San
 Si algo de acá parece obvio, es porque está escrito para el día en que la persona que
 lo sabía no vino.
 
+### Quién cubre cuando falta alguien
+
+> ### El jefe de cocina es el respaldo de las dos cocinas.
+> **Cubre los descansos de los cocineros**, y en los días restantes **es quien
+> reemplaza si falta un cocinero.**
+
+Esto tiene una consecuencia que conviene tener presente: **el respaldo de las cuatro
+guardias es una sola persona.** Por eso las reglas de este manual — el rotulado, la
+producción que se deja hecha, la previsión del leudado — no son formalidades. Son lo
+que permite que alguien entre a una cocina que no es la suya y pueda trabajar.
+
 ---
 
 ## Las dos cocinas no son iguales
@@ -70,11 +81,12 @@ es el tiempo de las tres cosas que siguen.
 
 | # | Qué | Por qué |
 |---|---|---|
-| 1 | **Verificá los pedidos pendientes de clientes** | Un pedido para las 10:00 que se ve a las 10:00 ya está tarde |
-| 2 | **Chequeá qué hay leudando y qué falta poner a leudar** | Es la decisión más temprana del día y la que no se puede recuperar después |
-| 3 | **Arrancá la mise en place** | |
+| 1 | **Chequeá que las heladeras y el freezer funcionen** | Se hace al inicio de **todos** los turnos. Ver Higiene y presentación |
+| 2 | **Verificá los pedidos pendientes de clientes** | Un pedido para las 10:00 que se ve a las 10:00 ya está tarde |
+| 3 | **Chequeá qué hay leudando y qué falta poner a leudar** | Es la decisión más temprana del día y la que no se puede recuperar después |
+| 4 | **Arrancá la mise en place** | |
 
-> **En SLA, el punto 2 es el más importante del turno.** Sin cámara de fermentación,
+> **En SLA, el punto 3 es el más importante del turno.** Sin cámara de fermentación,
 > lo que no se pone a leudar en los primeros minutos **no está listo hasta dentro de
 > dos horas y media**.
 
@@ -285,16 +297,16 @@ Todo lo que se deja **va guardado y rotulado según la Sección 6**.
 
 ---
 
-## Limpieza semanal
+## Limpieza semanal — los lunes
 
-**Una vez por semana**, además de lo diario:
+> ### La limpieza profunda de cocina se hace los lunes.
+> Tiene día fijo por la misma razón que lo tiene la limpieza del local: **una tarea
+> semanal sin día asignado se hace cuando alguien se acuerda.**
 
 - Limpieza de **heladeras por dentro**
 - Limpieza del **horno**
 - Limpieza de **paredes** — remoción de grasa
 - **Orden de repisas y espacios de almacenado**
-
-> Una limpieza semanal sin día asignado es una limpieza que no se hace. Ver "Pendientes".
 
 ---
 
@@ -335,6 +347,7 @@ Un pedido cargado apurado entre comandas es un pedido mal cargado.
 
 ### Al entrar (15 minutos antes)
 
+- ☐ **Heladeras y freezer funcionando**
 - ☐ Revisé los **pedidos de clientes** de este turno
 - ☐ Vi **qué hay leudando** y **puse a leudar lo que falta**
 - ☐ Arranqué la **mise en place**
@@ -354,7 +367,7 @@ Un pedido cargado apurado entre comandas es un pedido mal cargado.
 - ☐ **Bacha** y **baño interno**, si no hubo ayudante
 - ☐ **Pedido de producción** y **pedido de insumos** cargados
 
-### Una vez por semana
+### Los lunes
 
 - ☐ Heladeras por dentro
 - ☐ Horno
@@ -365,11 +378,9 @@ Un pedido cargado apurado entre comandas es un pedido mal cargado.
 
 ## Pendientes de definición
 
-- [ ] **Control de temperatura de heladeras y freezer.** Hoy no hay registro. Sin un
-      control diario, una heladera que se está yendo de temperatura se detecta cuando
-      la mercadería ya está perdida — o peor, cuando ya se sirvió.
-- [ ] **Qué día se hace la limpieza semanal**, en cada local. Limpieza tiene lunes,
-      miércoles y viernes; cocina no tiene día asignado.
+- [ ] **Si el chequeo de heladeras queda registrado en algún lado.** El chequeo ya es
+      obligatorio al inicio de cada turno, pero hoy no deja rastro: si una heladera
+      falla, no hay forma de saber cuándo fue el último turno que la vio bien.
 - [ ] **El pedido de sándwiches de SLA.** Hoy las variedades y cantidades las decide el
       jefe de cocina según el stock del día. Lo ideal es que **SLA cargue su propio
       pedido** para que San Luis lo elabore y envíe al día siguiente. Funciona, pero
@@ -382,8 +393,6 @@ Un pedido cargado apurado entre comandas es un pedido mal cargado.
       quien las hizo la última vez.
 - [ ] **Cada cuánto se limpia el baño interno** durante el turno: una vez al cierre o
       con revisiones intermedias.
-- [ ] **Qué pasa si falta el cocinero.** Con una sola persona por guardia en tres de
-      las cuatro guardias, no hay respaldo definido.
 
 ---
 

@@ -51,12 +51,14 @@ Usás una herramienta digital en tu turno:
 
 ## 1. Apertura de barra
 
-1. **Encendé los equipos**: cafetera, vaporizador, molinos.
-2. Verificá que haya **insumos suficientes**: café, leche, azúcar, vasos, servilletas.
-3. **Limpiá la barra y los utensilios** antes de empezar.
-4. **Calibrá la molienda** del café (según el clima o el lote).
-5. Preparate un **café de prueba** — verificá sabor, temperatura y extracción.
-6. **Avisá al Experto del turno** si algo no está en condiciones.
+1. **Chequeá que las heladeras estén funcionando correctamente.** Se hace al inicio de
+   **todos** los turnos, igual que en cocina y en mostrador.
+2. **Encendé los equipos**: cafetera, vaporizador, molinos.
+3. Verificá que haya **insumos suficientes**: café, leche, azúcar, vasos, servilletas.
+4. **Limpiá la barra y los utensilios** antes de empezar.
+5. **Calibrá la molienda** del café (según el clima o el lote).
+6. Preparate un **café de prueba** — verificá sabor, temperatura y extracción.
+7. **Avisá al Experto del turno** si algo no está en condiciones.
 
 > ⚠️ **No arranques a atender si la cafetera no está a temperatura y la molienda no
 > está correcta.**
@@ -224,6 +226,7 @@ Si no cargás a tiempo, producción no puede cumplir.
 - ☐ Café de prueba realizado — sabor y extracción correctos
 - ☐ Insumos disponibles: café, leche, azúcar, vasos, servilletas
 - ☐ Barra y utensilios limpios
+- ☐ **Heladeras del sector funcionando correctamente**
 - ☐ Heladera con leche suficiente
 - ☐ Web Pedidos de Producción disponible (abrir y verificar)
 - ☐ Pedido de **Panadería** cargado en la web (antes de las **9:00 hs**)
