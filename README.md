@@ -276,6 +276,16 @@ El nombre oficial del rol es **"Experto Candela"** — así aparece en `cronogra
 
 ---
 
+### Adicionales / extras (no entran en el total)
+
+Cosas que el cliente **puede** sumar y se cotizan para que sepa cuánto costarían —servicio de mozo, mantelería, una torta extra—, pero que no forman parte de lo presupuestado.
+
+Van en su propia lista, en su propio bloque impreso al final del PDF, después del total y separados por una línea. La decisión de fondo: **`calcTotales` no los conoce**. No son ítems con una marca de "opcional" que haya que acordarse de excluir en cada cuenta — están en otra estructura, así que no hay forma de que se cuelen en el total por un olvido. En el formulario el total de adicionales se muestra en un renglón aparte con la aclaración de que no está incluido, y en el PDF el bloque lleva el aviso en el encabezado más un "si se suman todos: $X (aparte del total)".
+
+El bloque impreso no se puede partir entre páginas (`break-inside: avoid`): si el título quedara en una hoja y los precios en la otra, se leería como si estuvieran incluidos.
+
+---
+
 ## Desplegar en Netlify
 
 1. [app.netlify.com](https://app.netlify.com/) → **Add new site → Import an existing project → GitHub**.

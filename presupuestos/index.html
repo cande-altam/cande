@@ -103,6 +103,14 @@ textarea.form-input{resize:vertical;min-height:60px;}
 .item-row-header{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--cream-dark);margin-bottom:4px;}
 .item-row-wrap{overflow-x:auto;}
 @media(max-width:700px){.item-row,.item-row-header{grid-template-columns:repeat(6,140px);min-width:780px;}}
+/* Los adicionales no llevan la columna de área: son una cotización opcional, no algo que haya que
+   mandar a producir. Una columna menos que la fila de ítems. */
+.adicional-row{grid-template-columns:1.8fr .8fr 1fr 1fr 32px;}
+@media(max-width:700px){.adicional-row{grid-template-columns:repeat(5,140px);min-width:640px;}}
+/* En el PDF, el bloque de adicionales se separa del total con una línea, y no se parte entre
+   páginas: si el título queda en una hoja y los precios en la otra, se lee como si estuvieran
+   incluidos. */
+.bloque-adicionales{margin-top:20px;padding-top:14px;border-top:2px dashed var(--cream-dark);break-inside:avoid;page-break-inside:avoid;}
 
 /* CARDS LIST */
 .card-list{display:flex;flex-direction:column;gap:10px;}
@@ -543,6 +551,45 @@ function itemRowHtml({ descripcion = "", area = "pan", cantidad = "", precioUnit
 window.addItemRow = function() {
   document.getElementById("items-container").insertAdjacentHTML("beforeend", itemRowHtml());
 };
+
+// =============================================================
+// ADICIONALES / EXTRAS
+// =============================================================
+// Van al final del presupuesto y NO se suman al total. Son cosas que el cliente puede sumar si
+// quiere: se cotizan para que sepa cuánto costarían, pero lo presupuestado es lo de arriba. Por
+// eso viven en su propia lista y en su propio bloque impreso — meterlos entre los ítems, aunque
+// fuera con una marca, es pedirle a quien lee el PDF que descuente de memoria.
+function adicionalRowHtml({ descripcion = "", cantidad = "", precioUnitario = "" } = {}) {
+  const subtotal = (Number(cantidad) > 0 && Number(precioUnitario) > 0) ? fmtMoney(Number(cantidad) * Number(precioUnitario)) : "—";
+  return `
+    <div class="item-row adicional-row">
+      <input type="text" class="form-input adic-descripcion" placeholder="Descripción (ej. Servicio de mozo por hora)" value="${escapeHtml(descripcion)}">
+      <input type="number" step="0.01" min="0" class="form-input adic-cantidad" placeholder="Cant." value="${cantidad ?? ""}" oninput="updateAdicionalSubtotal(this)">
+      <input type="number" step="0.01" min="0" class="form-input adic-precio" placeholder="$ unit." value="${precioUnitario ?? ""}" oninput="updateAdicionalSubtotal(this)">
+      <div class="text-muted adic-subtotal">${subtotal}</div>
+      <button type="button" class="btn btn-danger btn-sm no-print" onclick="this.closest('.adicional-row').remove();updateTotalPreview()">✕</button>
+    </div>`;
+}
+window.addAdicionalRow = function() {
+  document.getElementById("adicionales-container").insertAdjacentHTML("beforeend", adicionalRowHtml());
+};
+window.updateAdicionalSubtotal = function(el) {
+  const row = el.closest(".adicional-row");
+  const cant = parseFloat(row.querySelector(".adic-cantidad").value) || 0;
+  const precio = parseFloat(row.querySelector(".adic-precio").value) || 0;
+  row.querySelector(".adic-subtotal").textContent = (cant > 0 && precio > 0) ? fmtMoney(cant * precio) : "—";
+  updateTotalPreview();
+};
+function leerAdicionalesDelForm() {
+  return Array.from(document.querySelectorAll("#adicionales-container .adicional-row")).map(row => ({
+    descripcion: row.querySelector(".adic-descripcion").value.trim(),
+    cantidad: parseFloat(row.querySelector(".adic-cantidad").value) || 0,
+    precioUnitario: parseFloat(row.querySelector(".adic-precio").value) || 0
+  })).filter(a => a.descripcion);
+}
+function totalAdicionales(adicionales) {
+  return (adicionales || []).reduce((sum, a) => sum + (Number(a.cantidad) || 0) * (Number(a.precioUnitario) || 0), 0);
+}
 window.updateItemSubtotal = function(el) {
   const row = el.closest(".item-row");
   const cant = parseFloat(row.querySelector(".item-cantidad").value) || 0;
@@ -562,6 +609,13 @@ window.updateTotalPreview = function() {
   const totEl = document.getElementById("total-preview");
   if (subEl) subEl.textContent = fmtMoney(subtotal);
   if (totEl) totEl.textContent = fmtMoney(total);
+  // El total de los adicionales se muestra SIEMPRE aparte y nunca entra en `total`: si se sumara
+  // acá, el presupuesto diría un número que el cliente no pidió.
+  const adicEl = document.getElementById("adicionales-preview");
+  if (adicEl) {
+    const suma = totalAdicionales(leerAdicionalesDelForm());
+    adicEl.textContent = suma > 0 ? `Adicionales (aparte, no incluidos): ${fmtMoney(suma)}` : "";
+  }
 };
 
 // =============================================================
@@ -579,6 +633,9 @@ function renderNuevoView(container) {
   const itemsPrecargados = base && Array.isArray(base.items) && base.items.length
     ? base.items.map(it => itemRowHtml(it)).join("")
     : (desdeCantidades && desdeCantidades.length ? desdeCantidades.map(it => itemRowHtml(it)).join("") : itemRowHtml());
+  const adicionalesPrecargados = (base && Array.isArray(base.adicionales) && base.adicionales.length)
+    ? base.adicionales.map(a => adicionalRowHtml(a)).join("")
+    : "";
   const notasGuardadas = Array.isArray(state.config.notasGuardadas) ? state.config.notasGuardadas : [];
   state.formOpen = true;
   container.innerHTML = `
@@ -611,6 +668,16 @@ function renderNuevoView(container) {
       <div class="form-row" style="margin-top:14px">
         <div class="form-group" style="max-width:220px"><label class="form-label">Descuento (monto, opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="p-descuento" value="${editando ? (editando.descuento || 0) : 0}" oninput="updateTotalPreview()"></div>
       </div>
+
+      <div class="section-header" style="margin-top:16px">
+        <div class="section-title">➕ Adicionales / extras (no entran en el total)</div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addAdicionalRow()">+ Agregar adicional</button>
+      </div>
+      <div class="text-muted" style="font-size:11px;margin-bottom:8px">Se imprimen al final, en un bloque aparte y con su precio, para que el cliente sepa cuánto costarían si los suma. El total presupuestado no los incluye.</div>
+      <div class="item-row-wrap">
+        <div class="item-row adicional-row item-row-header"><div>Descripción</div><div>Cantidad</div><div>Precio unit.</div><div>Subtotal</div><div></div></div>
+        <div id="adicionales-container">${adicionalesPrecargados}</div>
+      </div>
       <div class="form-group" style="margin-top:4px">
         <label class="form-label">Notas y aclaraciones (opcional)</label>
         <textarea class="form-input" id="p-notas" rows="4" placeholder="Una aclaración por párrafo. Ej.:&#10;Seña del 50% al confirmar.&#10;Presupuesto válido por 15 días.&#10;La entrega incluye traslado dentro de la ciudad.">${escapeHtml(editando ? (editando.notas || "") : "")}</textarea>
@@ -625,6 +692,7 @@ function renderNuevoView(container) {
 
       <div class="total-line">Subtotal: <span id="subtotal-preview">—</span></div>
       <div class="total-line grand">Total: <span id="total-preview">$0,00</span></div>
+      <div class="text-muted" id="adicionales-preview" style="text-align:right;font-size:12px;margin-top:2px"></div>
 
       <button class="btn btn-primary" style="margin-top:10px" onclick="guardarPresupuesto()" id="guardar-btn">💾 ${editando ? "Guardar cambios" : "Guardar presupuesto"}</button>
       ${editando || base ? `<button class="btn btn-ghost" style="margin-top:10px" onclick="cancelarEdicion()">Cancelar</button>` : ""}
@@ -651,6 +719,9 @@ window.guardarPresupuesto = async function() {
 
   if (items.length === 0) { showToast("⚠️ Agregá al menos un ítem con descripción y cantidad.", "warn"); return; }
 
+  // Los adicionales se guardan aparte y NO tocan subtotal ni total: son una cotización opcional.
+  const adicionales = leerAdicionalesDelForm();
+
   const btn = document.getElementById("guardar-btn");
   btn.disabled = true; btn.textContent = "Guardando...";
 
@@ -663,7 +734,7 @@ window.guardarPresupuesto = async function() {
       // haya generado— y cambia solo el contenido. Si no, cada corrección crearía un duplicado.
       await update(ref(db, `presupuestos/items/${editandoId}`), {
         cliente: { nombre, telefono },
-        fechaEntrega, items, descuento, subtotal, total, notas,
+        fechaEntrega, items, adicionales, descuento, subtotal, total, notas,
         actualizadoTs: Date.now()
       });
       state.editandoId = null;
@@ -673,7 +744,7 @@ window.guardarPresupuesto = async function() {
       await set(push(ref(db, "presupuestos/items")), {
         numero,
         cliente: { nombre, telefono },
-        fechaEntrega, items, descuento, subtotal, total, notas,
+        fechaEntrega, items, adicionales, descuento, subtotal, total, notas,
         estado: "borrador",
         pedidoClienteOrderId: null,
         pedidoClienteOrderNum: null,
@@ -959,6 +1030,23 @@ function renderDetalleImprimible(container, id) {
   const itemsRows = (p.items || []).map(it => `
     <tr><td>${escapeHtml(it.descripcion)}${it.area && TEAMS[it.area] ? `<div class="text-muted" style="font-size:11px">${TEAMS[it.area].icon} ${TEAMS[it.area].name}</div>` : ""}</td><td style="text-align:center">${it.cantidad}</td><td style="text-align:right">${fmtMoney(it.precioUnitario)}</td><td style="text-align:right">${fmtMoney(it.cantidad * it.precioUnitario)}</td></tr>`).join("");
 
+  // Los adicionales van DESPUÉS del total, en su propia tabla y con el aviso de que no están
+  // incluidos. Es la única forma de que quien lee el PDF no tenga que descontarlos de memoria.
+  const adicionales = Array.isArray(p.adicionales) ? p.adicionales.filter(a => a && a.descripcion) : [];
+  const adicionalesHtml = adicionales.length ? `
+    <div class="bloque-adicionales">
+      <div class="section-title" style="margin-bottom:4px">Adicionales opcionales</div>
+      <div class="text-muted" style="font-size:11.5px;margin-bottom:10px">Estos valores <strong>no están incluidos</strong> en el total de arriba. Se cotizan por si querés sumarlos.</div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr style="background:var(--cream)"><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:right">Precio unit.</th><th style="text-align:right">Subtotal</th></tr></thead>
+          <tbody>${adicionales.map(a => `
+            <tr><td>${escapeHtml(a.descripcion)}</td><td style="text-align:center">${a.cantidad || "—"}</td><td style="text-align:right">${fmtMoney(a.precioUnitario)}</td><td style="text-align:right">${(Number(a.cantidad) > 0 && Number(a.precioUnitario) > 0) ? fmtMoney(a.cantidad * a.precioUnitario) : "—"}</td></tr>`).join("")}</tbody>
+        </table>
+      </div>
+      <div class="total-line" style="font-style:italic">Si se suman todos: ${fmtMoney(totalAdicionales(adicionales))} <span class="text-muted">(aparte del total)</span></div>
+    </div>` : "";
+
   container.innerHTML = `
     <div class="no-print" style="margin-bottom:16px;display:flex;gap:8px">
       <button class="btn btn-ghost btn-sm" onclick="cerrarVista()">← Volver</button>
@@ -989,6 +1077,7 @@ function renderDetalleImprimible(container, id) {
       <div class="total-line">Subtotal: ${fmtMoney(p.subtotal)}</div>
       ${p.descuento > 0 ? `<div class="total-line">Descuento: -${fmtMoney(p.descuento)}</div>` : ""}
       <div class="total-line grand" style="color:var(--terra)">Total: ${fmtMoney(p.total)}</div>
+      ${adicionalesHtml}
       ${p.notas ? `<div style="margin-top:16px"><div class="form-label">Notas</div><div style="white-space:pre-wrap;line-height:1.6">${escapeHtml(p.notas)}</div></div>` : ""}
       ${(p.items || []).some(esItemCafeteria) ? `<div class="text-muted" style="margin-top:18px;font-style:italic;font-size:11px;line-height:1.5;border-top:1px solid var(--cream-dark);padding-top:12px">${escapeHtml(CAFETERIA_LEGEND)}</div>` : ""}
     </div>`;
