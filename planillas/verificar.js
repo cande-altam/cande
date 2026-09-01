@@ -12,6 +12,10 @@ function Range(s,r,c,nr,nc){
  'setHorizontalAlignment','setWrap','setNumberFormat','setFontFamily','setBorder','setValue',
  'setFormula','setDataValidation','setFontStyle'].forEach(m=>Range.prototype[m]=function(){return this;});
 Range.prototype.merge=function(){
+  this.s.mergeRanges.push({r:this.r,c:this.c,nr:this.nr,nc:this.nc});
+  if(this.s.frozenCols>0 && this.c<=this.s.frozenCols && this.c+this.nc-1>this.s.frozenCols){
+    errores.push(`${this.s.name}: merge en fila ${this.r} col ${this.c}-${this.c+this.nc-1} cruza el limite de columnas congeladas (${this.s.frozenCols})`);
+  }
   for(let r=this.r;r<this.r+this.nr;r++) for(let c=this.c;c<this.c+this.nc;c++){
     if(this.s.merged.has(key(r,c))) errores.push(`${this.s.name}: celda ${r},${c} combinada dos veces`);
     this.s.merged.add(key(r,c));
@@ -39,14 +43,23 @@ Range.prototype.createFilter=function(){
       errores.push(`${this.s.name}: FILTRO sobre celda combinada en la fila ${this.r}, col ${c}`);
   return this;
 };
-function Sheet(n){this.name=n;this.maxCols=MAXC_DEF;this.maxR=0;this.maxC=0;this.filtros=0;this.hidden=false;this.merged=new Set();this.escrituras=0;}
+function Sheet(n){this.name=n;this.maxCols=MAXC_DEF;this.mergeRanges=[];this.frozenCols=0;this.maxR=0;this.maxC=0;this.filtros=0;this.hidden=false;this.merged=new Set();this.escrituras=0;}
 Sheet.prototype.getRange=function(r,c,nr,nc){return new Range(this,r,c,nr===undefined?1:nr,nc===undefined?1:nc);};
 Sheet.prototype.getMaxRows=()=>MAXR; Sheet.prototype.getMaxColumns=function(){return this.maxCols;};
 Sheet.prototype.insertColumnsAfter=function(after,n){this.maxCols+=n;return this;};
 Sheet.prototype.getName=function(){return this.name;};
 Sheet.prototype.getLastRow=function(){return this.maxR;};
 Sheet.prototype.getLastColumn=function(){return this.maxC;};
-['setRowHeight','setColumnWidth','setFrozenRows','setFrozenColumns','setTabColor'].forEach(m=>
+Sheet.prototype.setFrozenColumns=function(n){
+  this.frozenCols=n;
+  this.mergeRanges.forEach(m=>{
+    if(m.c<=n && m.c+m.nc-1>n){
+      errores.push(`${this.name}: setFrozenColumns(${n}) choca con un merge en fila ${m.r} col ${m.c}-${m.c+m.nc-1}`);
+    }
+  });
+  return this;
+};
+['setRowHeight','setColumnWidth','setFrozenRows','setTabColor'].forEach(m=>
   Sheet.prototype[m]=function(a){
     if(m==='setColumnWidth'&&(a<1||a>this.maxCols)) errores.push(`${this.name}: setColumnWidth col ${a} fuera de rango`);
     return this;});

@@ -121,15 +121,29 @@ function hoja_(ss, nombre, ncols) {
   h.getRange(1, 1, h.getMaxRows(), h.getMaxColumns()).setFontFamily(FUENTE).setFontSize(10);
   return h;
 }
-function titulo_(h, ncols, texto, sub, sub2) {
-  h.getRange(1,1,1,ncols).merge().setValue(texto).setBackground(C_TIT).setFontColor('#FFFFFF')
-   .setFontWeight('bold').setFontSize(13).setVerticalAlignment('middle');
+function titulo_(h, ncols, texto, sub, sub2, corte) {
+  // Si la hoja va a congelar columnas (parametro "corte"), el titulo NO puede
+  // combinarse en una sola celda de punta a punta: esa combinada cruzaria la
+  // linea de congelado y Sheets lo rechaza ("No puedes inmovilizar columnas
+  // que solo contengan parte de una celda combinada"). Se arma en 2 tramos
+  // -1..corte y corte+1..ncols- con el mismo fondo: se ve igual, una sola
+  // franja de color, pero ninguno de los dos cruza el limite.
+  function fila(r, texto, fill, color, bold, size) {
+    if (corte && corte < ncols) {
+      h.getRange(r,1,1,corte).merge().setValue(texto).setBackground(fill).setFontColor(color)
+       .setFontWeight(bold).setFontSize(size).setVerticalAlignment('middle').setWrap(true);
+      h.getRange(r,corte+1,1,ncols-corte).merge().setBackground(fill);
+    } else {
+      h.getRange(r,1,1,ncols).merge().setValue(texto).setBackground(fill).setFontColor(color)
+       .setFontWeight(bold).setFontSize(size).setVerticalAlignment('middle').setWrap(true);
+    }
+  }
+  fila(1, texto, C_TIT, '#FFFFFF', true, 13);
   h.setRowHeight(1, 28);
   let r = 2;
-  [[sub, C_SUB, false, '#FFFFFF'], [sub2, C_ACC, true, C_TIT]].forEach(function(t){
+  [[sub, C_SUB, '#FFFFFF', false], [sub2, C_ACC, C_TIT, true]].forEach(function(t){
     if (t[0] == null) { return; }
-    h.getRange(r,1,1,ncols).merge().setValue(t[0]).setBackground(t[1]).setFontColor(t[3])
-     .setFontWeight(t[2]).setFontSize(9).setVerticalAlignment('middle').setWrap(true);
+    fila(r, t[0], t[1], t[2], t[3], 9);
     h.setRowHeight(r, 26);
     r++;
   });
@@ -325,7 +339,7 @@ function crearInsumos_(ss) {
   anchos_(h, [140, 260, 65, 100, 95, 110, 300]);
   titulo_(h, 7, 'MAESTRO DE INSUMOS (' + INSUMOS.length + ' filas · ' + criticosUnicos_().length + ' criticos)',
     'Insumos reales del sistema de costeo, ya depurados de duplicados. Cubre los 3 locales: deposito central + cuadra + barra + Cocina San Luis.',
-    'REVISAR: AMBITO (donde se cuenta) y CONTENIDO POR BULTO. Los de barra/Cocina San Luis se asignaron por palabra clave: confirmar contra lo real.');
+    'REVISAR: AMBITO (donde se cuenta) y CONTENIDO POR BULTO. Los de barra/Cocina San Luis se asignaron por palabra clave: confirmar contra lo real.', 2);
   cabecera_(h, 4, ['AMBITO\n(donde se cuenta)','INSUMO','UNIDAD','CONTENIDO\nPOR BULTO','CRITICO\n(solo por factura)','COSTO\nUNIT. $','CLAVE (no tocar)'], 32);
   const n = INSUMOS.length;
   h.getRange(5,1,n,7).setValues(INSUMOS.map(function(r){
@@ -351,7 +365,7 @@ function crearProductos_(ss) {
   const h = hoja_(ss, 'Productos');
   anchos_(h, [140, 340, 70]);
   titulo_(h, 3, 'MAESTRO DE PRODUCTOS (' + PRODUCTOS.length + ')',
-    '141 de la cuadra de produccion (catalogo real de la app) + cartas de Barra y Cocina San Luis (de los manuales de procedimientos).', null);
+    '141 de la cuadra de produccion (catalogo real de la app) + cartas de Barra y Cocina San Luis (de los manuales de procedimientos).', null, 1);
   cabecera_(h, 3, ['AREA / AMBITO','PRODUCTO','UNIDAD'], 22);
   const n = PRODUCTOS.length;
   h.getRange(4,1,n,3).setValues(PRODUCTOS);
@@ -367,7 +381,7 @@ function crearStock_(ss) {
   anchos_(h, [140, 260, 65, 90, 65,65,80, 65,65,80, 65,65,80, 65,65,80, 200]);
   titulo_(h, 17, 'PLANILLA 1 · STOCK DE INSUMOS (4 conteos)',
     'Martes temprano y lunes al cierre, en cada semana. Bultos cerrados + suelto: el TOTAL lo calcula la planilla.',
-    'Contar TODOS los insumos, no solo los criticos.');
+    'Contar TODOS los insumos, no solo los criticos.', 2);
   const FIJAS = ['AMBITO','INSUMO','UNID.','CONT/\nBULTO'];
   const r1 = 4, r2 = 5;
   for (var i = 0; i < FIJAS.length; i++) {
@@ -503,7 +517,7 @@ function crearVentasFudo_(ss) {
 function crearFudoStock_(ss, nombre, tituloTxt, sub, listado, conAmbito) {
   const h = hoja_(ss, nombre, 7);
   anchos_(h, conAmbito ? [140,260,90,90,90,90,220] : [340,70,90,90,90,90,220]);
-  titulo_(h, 7, tituloTxt, sub, null);
+  titulo_(h, 7, tituloTxt, sub, null, 2);
   const r1 = 4;
   const heads = conAmbito ? ['AMBITO','INSUMO'] : ['PRODUCTO','UNID.'];
   cabecera_(h, r1, heads.concat(['STOCK\nS1 INICIAL','STOCK\nS1 FINAL','STOCK\nS2 INICIAL','STOCK\nS2 FINAL','OBSERVACIONES']), 30);
