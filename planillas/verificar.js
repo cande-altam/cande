@@ -96,6 +96,13 @@ hojas.forEach(h=>console.log(`  ${h.name.padEnd(24)} filas ${String(h.getLastRow
 if(hojas.some(h=>h.name==='Hoja2'||h.name==='Hoja3')) errores.push('quedaron pestanas viejas (Hoja2/Hoja3) sin borrar');
 if(hojas.length!==20) errores.push('se esperaban 20 pestanas, hay '+hojas.length);
 
+console.log('--- 1b) construirTodo() con restos de una corrida anterior que se corto a mitad ---');
+hojas=[new Sheet('Listas'), new Sheet('Instrucciones'), new Sheet('Config'), new Sheet('Insumos'), new Sheet('__temp__')];
+try{ construirTodo(); }catch(e){ errores.push('EXCEPCION construirTodo (con __temp__ colgado): '+e.message); }
+if(hojas.some(h=>h.name==='__temp__')) errores.push('quedo un __temp__ sin borrar tras reconstruir con restos previos');
+if(hojas.length!==20) errores.push('con restos previos: se esperaban 20 pestanas, hay '+hojas.length);
+console.log('  pestanas tras reconstruir tirando restos previos:', hojas.length);
+
 console.log('\n--- 2) construirTodo() de nuevo sobre el resultado (debe rehacer limpio) ---');
 const antes = hojas.length;
 try{ construirTodo(); }catch(e){ errores.push('EXCEPCION construirTodo (2a vez): '+e.message); }

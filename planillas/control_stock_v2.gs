@@ -83,7 +83,10 @@ function construirTodo() {
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const previas = ss.getSheets();
-  const temp = ss.insertSheet('__temp__');
+  // Nombre unico (con timestamp): si una corrida anterior se corto a mitad de
+  // camino y dejo un "__temp__" sin borrar, no choca con este, y ademas queda
+  // adentro de "previas" -> se borra solo junto con el resto de las hojas viejas.
+  const temp = ss.insertSheet('__temp__' + new Date().getTime());
   previas.forEach(function(h){ ss.deleteSheet(h); });
 
   crearListas_(ss);
