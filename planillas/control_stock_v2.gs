@@ -118,10 +118,17 @@ function construirTodo() {
 }
 
 // ====================== HELPERS ======================
+// Filas que de verdad se usan en la hoja mas larga (Compras/Consumos internos
+// llegan a la fila 265; Ventas Fudo a ~305) mas margen. Formatear las 1000
+// filas por defecto de una hoja nueva -20 veces, con formulas y validaciones
+// de por medio- es trabajo innecesario sobre celdas vacias y es la causa mas
+// probable de "Service Spreadsheets failed while accessing document": una
+// sola ejecucion terminaba tocando ~550.000 celdas solo para el font.
+const FILAS_FMT = 320;
 function hoja_(ss, nombre, ncols) {
   const h = ss.insertSheet(nombre);
   if (ncols && ncols > h.getMaxColumns()) { h.insertColumnsAfter(h.getMaxColumns(), ncols - h.getMaxColumns()); }
-  h.getRange(1, 1, h.getMaxRows(), h.getMaxColumns()).setFontFamily(FUENTE).setFontSize(10);
+  h.getRange(1, 1, Math.min(FILAS_FMT, h.getMaxRows()), h.getMaxColumns()).setFontFamily(FUENTE).setFontSize(10);
   return h;
 }
 function titulo_(h, ncols, texto, sub, sub2, corte) {
