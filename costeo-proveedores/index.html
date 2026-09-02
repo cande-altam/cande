@@ -251,7 +251,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-08-21 22:40";
+const APP_VERSION = "2026-09-02 20:15";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -657,6 +657,21 @@ function attachListeners() {
 // avisa si el precio cambia fuerte respecto al último conocido, y aclara cuándo un precio guardado
 // NO va a actualizar el costo de los productos porque la regla de referencia lo mantiene sin cambios
 // (protege el margen: una cotización más barata de otro proveedor no baja la referencia sola).
+// Lo que dice el ticket, SIEMPRE a la vista, aunque la línea ya haya matcheado con un insumo.
+//
+// Esto es lo que faltaba cuando una factura entera se cargó con los nombres corridos un renglón:
+// la fila mostraba "Salsa de chocolate" y el ticket decía "DURAZNO DOÑA BERTINA", pero el texto
+// del ticket no aparecía en ningún lado, así que no había forma de notarlo. Un dato que el sistema
+// interpretó tiene que poder compararse con el original sin ir a buscar la foto.
+function textoOriginalHintHtml(textoOriginal, insumoId) {
+  const texto = String(textoOriginal || "").trim();
+  if (!texto) return "";
+  const ins = insumoId ? state.insumos[insumoId] : null;
+  // Si el nombre del catálogo es prácticamente el mismo texto, no hace falta repetirlo.
+  if (ins && claveAliasInsumo(ins.nombre) === claveAliasInsumo(texto)) return "";
+  return `<div class="item-note" style="margin:0 0 4px">📄 En la factura dice: <strong>«${escapeHtml(texto)}»</strong>${ins ? ` → se asoció a <strong>${escapeHtml(ins.nombre)}</strong>. Si no es ese, cambialo acá arriba.` : ""}</div>`;
+}
+
 function itemHintHtml(insumoId, precioLinea, cantidad, unidad, importe, marca, contenidoPorUnidad) {
   const partes = [];
   const num = (v) => { const n = Number(v); return v !== "" && v != null && Number.isFinite(n) ? n : null; };
@@ -715,7 +730,10 @@ window.actualizarItemHint = function(precioInput) {
   const cantidad = row.querySelector(".item-cantidad")?.value || "";
   const contenido = row.querySelector(".item-contenido")?.value || "";
   const hint = itemHintHtml(insumoId, precioInput.value, cantidad, precioInput.dataset.unidad, precioInput.dataset.importe, marca, contenido);
-  row.querySelector(".item-hint").innerHTML = hint;
+  // El texto del ticket se vuelve a poner: se redibuja en cada tecla y si no, desaparecería justo
+  // cuando el usuario está corrigiendo la línea, que es cuando más falta hace.
+  row.querySelector(".item-hint").innerHTML =
+    textoOriginalHintHtml(row.dataset.textoOriginal, insumoId) + hint;
 };
 
 function itemRowHtml({ insumoId = "", nombre = "", precioUnitario = "", cantidad = "", unidad = "", importe = "", marca = "", contenidoPorUnidad = "", textoOriginal = "" } = {}) {
@@ -739,7 +757,7 @@ function itemRowHtml({ insumoId = "", nombre = "", precioUnitario = "", cantidad
         data-unidad="${escapeHtml(unidad ?? "")}" data-importe="${escapeHtml(importe ?? "")}"
         oninput="actualizarItemHint(this)">
       <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.item-row').remove()">✕</button>
-      <div class="item-hint">${itemHintHtml(insumoId, precioUnitario, cantidad, unidad, importe, marca, contenidoPorUnidad)}</div>
+      <div class="item-hint">${textoOriginalHintHtml(textoOriginal, insumoId)}${itemHintHtml(insumoId, precioUnitario, cantidad, unidad, importe, marca, contenidoPorUnidad)}</div>
     </div>`;
 }
 
@@ -1129,6 +1147,7 @@ function precargarFacturaEnFormulario(f) {
     document.getElementById("items-container").innerHTML = items.map(it => itemRowHtml({
       insumoId: it.insumoId && state.insumos[it.insumoId] ? it.insumoId : "",
       nombre: it.nombre || "",
+      textoOriginal: it.textoFactura || "",
       precioUnitario: it.precioLinea ?? it.precioUnitario ?? "",
       cantidad: it.cantidad ?? "",
       marca: it.marca ?? "",
@@ -1351,16 +1370,13 @@ async function fetchEscaneo(url, body, ms) {
   }
 }
 
+// Ya NO se le manda el catálogo a la IA. Se le pedía que copiara el id de Firebase de cada insumo
+// y en una factura real los corrió un renglón: la manteca quedó como salamín, el jamón como
+// manteca, el durazno como salsa de chocolate. El reconocimiento se hace acá, donde hay alias
+// aprendidos, comparación determinística y una pregunta al usuario cuando hay duda.
+// Se deja la función devolviendo vacío para no romper a los llamadores.
 function catalogoParaEscaneo() {
-  return Object.entries(state.insumos).map(([id, ins]) => ({
-    id, nombre: ins.nombre, unidad: ins.unidad || "",
-    contenidoPorUnidad: ins.contenidoPorUnidad || null,
-    ultimoPrecio: Math.round(precioEfectivoInsumo(id) * 100) / 100 || null,
-    // Cómo lo escribieron las facturas anteriores. Es la mejor pista que se le puede dar a la IA:
-    // le muestra el texto real del proveedor, no el nombre prolijo del catálogo. Se mandan pocos
-    // para no inflar el pedido — el reconocimiento por alias del cliente igual los usa todos.
-    alias: Object.keys(ins.alias || {}).slice(0, 4)
-  }));
+  return [];
 }
 
 window.escanearFactura = async function() {
@@ -1668,7 +1684,8 @@ function mostrarPendientesDelEscaneo(data, opts) {
   // Preguntas concretas, en orden de utilidad para el reconocimiento automático.
   if (estadoProv !== "ok") {
     preguntas.push(estadoProv === "nuevo"
-      ? `🏭 El escaneo leyó <strong>"${escapeHtml(document.getElementById("f-proveedor-nombre-nuevo").value.trim())}"</strong>, pero no coincide con ningún proveedor que tengas cargado. ¿Es un proveedor nuevo, o es uno que ya tenés con otro nombre? Elegilo de la lista o confirmá su CUIT.`
+      ? `🏭 El escaneo leyó <strong>"${escapeHtml(document.getElementById("f-proveedor-nombre-nuevo").value.trim())}"</strong>, pero no coincide con ningún proveedor que tengas cargado. ¿Es un proveedor nuevo, o es uno que ya tenés con otro nombre? Elegilo de la lista o confirmá su CUIT.
+        <div style="margin-top:6px"><button type="button" class="btn btn-ghost btn-sm" onclick="marcarComoNegocioPropio()">🏠 Ese es MI negocio, no un proveedor</button></div>`
       : `🏭 <strong>¿De qué proveedor es esta factura?</strong> Con el nombre o el CUIT se puede reconocer el resto de los datos y asociarle los precios.`);
   }
   if (!fecha) preguntas.push(`📅 <strong>¿Qué fecha tiene la factura?</strong>`);
@@ -1735,6 +1752,26 @@ function mostrarPendientesDelEscaneo(data, opts) {
 // Toma lo que el usuario contestó en el panel, lo vuelca al formulario y reintenta el escaneo
 // pasándolo como pista. Es lo que convierte el aviso en una conversación: la IA arranca el segundo
 // intento sabiendo de quién es la factura.
+// Los tickets muestran arriba al emisor y más abajo el bloque "CLIENTE" —que es el propio
+// negocio—. Cuando la foto sale cortada y solo se ve el bloque del cliente, el escaneo lo toma
+// como proveedor: así se cargó "MIGUEL MARGARITA E HIJOS SAS" con su propio CUIT. Guardando el
+// CUIT propio una sola vez, el sistema deja de confundirse para siempre — aplicarDatosEscaneados
+// ya descarta cualquier proveedor cuyo CUIT sea el propio.
+window.marcarComoNegocioPropio = async function() {
+  const cuit = (document.getElementById("f-cuit")?.value || document.getElementById("pend-cuit")?.value || "").trim();
+  const nombre = (document.getElementById("f-proveedor-nombre-nuevo")?.value || "").trim();
+  if (!cuit) { showToast("⚠️ No hay CUIT leído para guardar. Cargalo en el campo de CUIT y volvé a tocar.", "warn"); return; }
+  await set(ref(db, "costeo/config/cuitPropio"), cuit);
+  state.config = { ...state.config, cuitPropio: cuit };
+  // Se limpia lo que se había tomado por proveedor: era el propio negocio.
+  const sel = document.getElementById("f-proveedor");
+  if (sel) { sel.value = ""; window.onFacturaProveedorChange(sel); }
+  const cuitInput = document.getElementById("f-cuit");
+  if (cuitInput) cuitInput.value = "";
+  showToast(`🏠 Guardado: ${cuit} es el CUIT de tu negocio. No se va a volver a tomar como proveedor.${nombre ? ` Elegí ahora el proveedor real de esta factura.` : ""}`, "success");
+  mostrarPendientesDelEscaneo(state._ultimoEscaneo || {}, {});
+};
+
 window.responderPendientesDelEscaneo = async function() {
   const provSel = document.getElementById("pend-proveedor")?.value || "";
   const cuit = document.getElementById("pend-cuit")?.value.trim() || "";
@@ -1788,6 +1825,37 @@ window.responderPendientesDelEscaneo = async function() {
 // medidas y palabras de envase no queda NINGUNA palabra con significado, no hay producto ahí.
 // El "y además tiene algún dígito" es la salvaguarda: un insumo que de verdad se llame "Bolsas" o
 // "Cajas" tampoco deja palabras significativas, pero no trae números y sí es algo que se compra.
+// "PAQUETE X 500 GR" trae 0,5 kg, no 500. Si el contenido viene en otra unidad que la del insumo,
+// se convierte; si no, un paquete de sal de medio kilo se guarda como si trajera 500 kg y el
+// precio por kilo queda mil veces mal.
+const FACTORES_UNIDAD = {
+  "gr->kg": 0.001, "g->kg": 0.001, "gramo->kg": 0.001, "gramos->kg": 0.001,
+  "kg->gr": 1000, "kg->g": 1000,
+  "ml->l": 0.001, "cc->l": 0.001, "mililitro->l": 0.001, "mililitros->l": 0.001,
+  "ml->lt": 0.001, "cc->lt": 0.001, "ml->litro": 0.001, "cc->litro": 0.001,
+  "l->ml": 1000, "lt->ml": 1000
+};
+function normUnidadCorta(u) {
+  const n = stripAccentsCosteo(String(u || "")).toLowerCase().trim().replace(/\.$/, "");
+  if (n === "lts" || n === "litros") return "l";
+  if (n === "grs" || n === "gramos") return "gr";
+  return n;
+}
+// Unidad de destino cuando el insumo todavía no tiene una configurada. Un contenido en gramos o
+// mililitros prácticamente nunca quiere decir "500 unidades de medida": se lleva a la unidad base.
+// Sin esto la conversión solo funcionaba si la línea YA había matcheado con un insumo — o sea,
+// justo no funcionaba en las líneas nuevas, que son las que más la necesitan.
+const UNIDAD_BASE = { gr: "kg", g: "kg", ml: "l", cc: "l" };
+function convertirContenido(contenido, unidadContenido, unidadInsumo) {
+  const n = Number(contenido);
+  if (!Number.isFinite(n) || n <= 0) return contenido;
+  const desde = normUnidadCorta(unidadContenido);
+  const hasta = normUnidadCorta(unidadInsumo) || UNIDAD_BASE[desde] || "";
+  if (!desde || !hasta || desde === hasta) return n;
+  const factor = FACTORES_UNIDAD[`${desde}->${hasta}`];
+  return factor ? Math.round(n * factor * 100000) / 100000 : n;
+}
+
 function esFragmentoDeLinea(nombre) {
   const n = String(nombre || "").trim();
   if (!n) return true;
@@ -1827,7 +1895,9 @@ function consolidarItemsEscaneados(items) {
   const out = [];
   const porClave = new Map();
   for (const it of items) {
-    const insumoId = it.insumoId && state.insumos[it.insumoId] ? it.insumoId : matchInsumoId(it.nombre);
+    // El id lo decide SIEMPRE el matcher del cliente: la IA ya no devuelve ids (ver el comentario
+    // en extraer-factura.js sobre la factura que se cargó con los nombres corridos un renglón).
+    const insumoId = matchInsumoId(it.nombre);
     const clave = [
       insumoId || claveAliasInsumo(it.nombre),
       Math.round((Number(it.precioUnitario) || 0) * 100),
@@ -1938,10 +2008,17 @@ function aplicarDatosEscaneados(data) {
   // aritmética de la propia línea y las repeticiones del mismo producto se unen.
   const normalizado = normalizarItemsEscaneados(data.items);
   data.items = normalizado.items;
+  state._ultimoEscaneo = data;
   state._ultimaNormalizacionEscaneo = { cambios: normalizado.cambios, descuentos: normalizado.descuentos };
 
-  // Los descuentos que la IA sí separó, más los que se detectaron en las líneas.
-  const descuentosTotal = Math.abs(Number(data.descuentos) || 0) + normalizado.descuentos;
+  // Descuentos: NO se suman los dos orígenes. Si la IA los reportó en "descuentos" Y además los
+  // dejó como líneas, son los MISMOS descuentos contados dos veces — pasó en una factura real:
+  // $10.243 del campo + $12.603 de las líneas dieron $22.846 cuando el ticket decía $13.193.
+  // Cuando hay líneas de descuento identificadas se usa esa suma, que es la verificable ítem por
+  // ítem; el campo suelto de la IA queda solo para cuando no se detectó ninguna.
+  const descuentosTotal = normalizado.cambios.descuentos.length
+    ? normalizado.descuentos
+    : Math.abs(Number(data.descuentos) || 0);
   if (descuentosTotal > 0) {
     const cargos = document.getElementById("f-cargos");
     if (cargos && !cargos.value) cargos.value = -descuentosTotal;
@@ -1950,10 +2027,11 @@ function aplicarDatosEscaneados(data) {
   if (Array.isArray(data.items) && data.items.length) {
     const cont = document.getElementById("items-container");
     cont.innerHTML = data.items.map(it => {
-      // Trust the AI's insumoId only if it's a real, current insumo — otherwise fall back
-      // to the client-side name-matching heuristic as a safety net.
-      const aiMatchId = it.insumoId && state.insumos[it.insumoId] ? it.insumoId : "";
-      const matchedId = aiMatchId || matchInsumoId(it.nombre);
+      // El matcheo es SIEMPRE del cliente. Antes ganaba el insumoId que devolvía la IA, y cuando
+      // ese id estaba corrido —cosa imposible de notar mirando, porque un id equivocado parece un
+      // id válido— la fila mostraba el nombre del catálogo equivocado y el texto del ticket
+      // desaparecía. Acá el texto de la factura manda y la asociación se decide con reglas.
+      const matchedId = matchInsumoId(it.nombre);
       return itemRowHtml({
         insumoId: matchedId || "",
         nombre: it.nombre || "",
@@ -1964,8 +2042,11 @@ function aplicarDatosEscaneados(data) {
         importe: it.importe ?? "",
         marca: it.marca ?? "",
         // Si la IA no lo detectó, se usa el que ya esté configurado en el insumo (aprendido de
-        // una factura anterior), así no hay que volver a cargarlo cada vez.
-        contenidoPorUnidad: it.contenidoPorUnidad ?? (matchedId ? (state.insumos[matchedId]?.contenidoPorUnidad ?? "") : "")
+        // una factura anterior), así no hay que volver a cargarlo cada vez. Y si vino en otra
+        // unidad que la del insumo (un paquete "X 500 GR" contra un insumo en kg), se convierte.
+        contenidoPorUnidad: it.contenidoPorUnidad != null
+          ? convertirContenido(it.contenidoPorUnidad, it.unidadContenido, matchedId ? state.insumos[matchedId]?.unidad : "")
+          : (matchedId ? (state.insumos[matchedId]?.contenidoPorUnidad ?? "") : "")
       });
     }).join("");
   }
@@ -2498,7 +2579,10 @@ window.guardarFactura = async function() {
         await update(ref(db, `costeo/insumos/${insumoId}`), { contenidoPorUnidad });
         state.insumos[insumoId] = { ...state.insumos[insumoId], contenidoPorUnidad };
       }
-      items.push({ insumoId, nombre, precioUnitario, marca, cantidad: cantidadCompra, contenidoPorUnidad, precioLinea });
+      // textoFactura es lo que decía el comprobante. Se guarda porque es el único dato con el que
+      // se puede auditar una carga vieja: sin él, revisar si una línea se asoció bien obliga a
+      // volver a buscar la foto.
+      items.push({ insumoId, nombre, precioUnitario, marca, cantidad: cantidadCompra, contenidoPorUnidad, precioLinea, textoFactura });
     }
 
     // La foto va a una rama APARTE, no dentro de la factura: el listado de facturas se descarga
@@ -2682,6 +2766,9 @@ function diagnosticoFacturaTexto(id) {
     const importe = cant > 0 && precioLinea > 0 ? cant * precioLinea : 0;
     sumaLineas += importe;
     const nombre = it.insumoId && state.insumos[it.insumoId] ? state.insumos[it.insumoId].nombre : (it.nombre || "(sin nombre)");
+    if (it.textoFactura && claveAliasInsumo(it.textoFactura) !== claveAliasInsumo(nombre)) {
+      L.push(`    (en la factura decía: «${it.textoFactura}»)`);
+    }
     L.push(`${String(i + 1).padStart(2, " ")}. ${nombre}${it.marca ? ` [${it.marca}]` : ""} — cant ${it.cantidad ?? "?"} × $${precioLinea ? precioLinea.toFixed(2) : "?"}${contenido !== 1 ? ` · contenido c/u ${contenido} → $${(Number(it.precioUnitario) || 0).toFixed(2)} por unidad de medida` : ""} = $${importe ? importe.toFixed(2) : "?"}${it.insumoId && state.insumos[it.insumoId] ? "" : "  ⚠️ sin insumo asociado"}`);
   });
   L.push("");

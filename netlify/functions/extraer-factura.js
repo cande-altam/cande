@@ -19,7 +19,7 @@ Analizá la imagen y devolvé SOLO un JSON válido, sin texto adicional y sin bl
   "cantidadItemsDeclarada": number | null,
   "subtotal": number | null,
   "items": [
-    { "nombre": string, "insumoId": string | null, "marca": string | null, "cantidad": number | null, "unidad": string | null, "contenidoPorUnidad": number | null, "unidadContenido": string | null, "precioUnitario": number | null, "importe": number | null }
+    { "nombre": string, "marca": string | null, "cantidad": number | null, "unidad": string | null, "contenidoPorUnidad": number | null, "unidadContenido": string | null, "precioUnitario": number | null, "importe": number | null }
   ],
   "calidadImagen": "buena" | "regular" | "mala",
   "camposIlegibles": [string]
@@ -46,6 +46,7 @@ Reglas:
 - "subtotal": el SUBTOTAL impreso (antes del IVA), si figura. Es el control de completitud más confiable que hay: **la suma de los importes de todas las líneas, menos los descuentos, tiene que dar el subtotal**. Antes de responder, hacé esa cuenta; si no cierra, te faltaron líneas o leíste mal un importe — revisá de nuevo.
 - "cantidadItemsDeclarada": si el ticket trae un contador tipo "Cantidad de ítems: 40", copiá ese número tal cual, pero NO lo uses como control: en los tickets reales ese número no coincide con la cantidad de productos (uno con 15 productos declaraba 40). El control bueno es el del subtotal.
 - "items" son las líneas de detalle (productos comprados). Si no hay detalle legible, devolvé un array vacío.
+- **"nombre" ES EL TEXTO IMPRESO EN EL TICKET, TAL CUAL.** Copiá la descripción como está: "MANTECA TEODORO X 5 KG", "SARDO ESTAC. AURORA / PIANURA". No lo traduzcas, no lo acortes, no lo reemplaces por otro nombre y no lo interpretes. Es el único dato con el que después se puede verificar que la línea se leyó bien: si devolvés otra cosa, nadie puede darse cuenta de que está mal.
 - "marca" de cada ítem: la marca comercial si figura en la línea (ej. "Levadura Leudex"). Un mismo insumo puede comprarse en varias marcas a distinto precio, así que no se puede perder.
 - Para cada ítem: "cantidad" y "unidad" son los impresos; "importe" es el subtotal de esa línea. No confundas la columna de cantidad con la de código de producto — es el error más común. Si solo hay precio unitario e importe, inferí cantidad = importe / precioUnitario.
 - "fecha" en formato ISO YYYY-MM-DD.
@@ -53,15 +54,21 @@ Reglas:
 - "calidadImagen": qué tan legible está la foto ("buena", "regular", "mala").
 - "camposIlegibles": los campos que no pudiste leer con confianza. Array vacío si leíste todo. Sé honesto: es preferible declarar que no se leyó a inventar.`;
 
-const CATALOG_INSTRUCTIONS = `
-
-Además, tenés una lista de insumos YA CARGADOS en el sistema (id y nombre). Para cada ítem de la factura, fijate si corresponde a uno de esos insumos ya existentes, aunque el texto de la factura tenga mayúsculas, abreviaturas, marca o tamaño de envase distintos al nombre guardado (ejemplo: "LECHE ENT. SACHET X 1LT" es el mismo insumo que "Leche entera"). Si estás razonablemente seguro de la coincidencia, poné el "id" EXACTO de ese insumo en "insumoId" del ítem. Si el ítem no corresponde a ningún insumo de la lista (es nuevo), poné "insumoId": null — nunca inventes un id que no esté en la lista.
-- "nombre" de cada ítem: si coincide con un insumo de la lista, copiá su nombre EXACTO tal como aparece en la lista; si es un insumo nuevo, un nombre corto y claro, sin marca ni tamaño de envase.
-
-Para cada insumo de la lista te paso, cuando se conocen: su unidad de medida, el contenido por unidad que ya está configurado (cuántas unidades de medida trae cada unidad de compra) y el último precio conocido POR UNIDAD DE MEDIDA. Usalos como control de coherencia: si el precio unitario que leés en la factura es muy distinto del último conocido (por ejemplo 25 veces mayor), es casi seguro que el precio de la factura es por bulto y no por unidad de medida — en ese caso completá "contenidoPorUnidad" con el factor que corresponda en vez de forzar el precio.
-
-Lista de insumos ya cargados (id → nombre · unidad · contenido por unidad · último precio conocido):
-`;
+// NO se le manda el catálogo de insumos al modelo, y es deliberado.
+//
+// Antes se le pasaban hasta 600 insumos como "id → nombre" y se le pedía que copiara el id exacto
+// de Firebase (20 caracteres aleatorios) en cada línea. En una factura real de 8 productos los
+// corrió UN RENGLÓN: cada ítem quedó con el id —y por lo tanto el nombre— del anterior. La manteca
+// figuró como salamín, el jamón como manteca, el durazno como salsa de chocolate. Las cantidades y
+// los precios estaban perfectos; solo los nombres estaban corridos.
+//
+// Es el error esperable: copiar identificadores opacos fila por fila a lo largo de una lista larga
+// es exactamente lo que un modelo de visión hace mal, y un id equivocado no se puede detectar
+// mirando —parece un id válido—. El reconocimiento contra el catálogo se hace en el cliente, que
+// tiene los alias aprendidos, comparación determinística y le pregunta al usuario cuando duda.
+//
+// De yapa: sacar 600 insumos del prompt lo achica muchísimo, y en esta función el límite que manda
+// es el TIEMPO de respuesta.
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
@@ -80,7 +87,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: "Body inválido." }) };
   }
 
-  const { imageBase64, mediaType, insumosConocidos, pistas, modelo } = payload;
+  const { imageBase64, mediaType, pistas, modelo } = payload;
   if (!imageBase64) {
     return { statusCode: 400, body: JSON.stringify({ error: "Falta la imagen." }) };
   }
@@ -96,23 +103,8 @@ exports.handler = async (event) => {
     if (pistas.numero) partes.push(`el N° de comprobante es ${pistas.numero}`);
     prompt += `\n\nIMPORTANTE — el usuario ya confirmó estos datos de la factura porque el primer intento de lectura falló: ${partes.join(", ")}. Tomalos como ciertos (devolvelos tal cual en los campos correspondientes) y concentrate en leer lo que falta: fecha, monto total, IVA y sobre todo el detalle de ítems con sus cantidades y precios. Si aun así no podés leer algo, dejalo en null y declaralo en "camposIlegibles".`;
   }
-  if (Array.isArray(insumosConocidos) && insumosConocidos.length) {
-    // Defensive cap so a very large catalog can't balloon the request indefinitely.
-    const lista = insumosConocidos.slice(0, 600)
-      .filter((it) => it && it.id && it.nombre)
-      .map((it) => {
-        const partes = [`${it.id} → ${it.nombre}`];
-        if (it.unidad) partes.push(`unidad: ${it.unidad}`);
-        if (it.contenidoPorUnidad) partes.push(`contenido por unidad: ${it.contenidoPorUnidad}`);
-        if (it.ultimoPrecio) partes.push(`último precio conocido: ${it.ultimoPrecio}`);
-        // Cómo lo escribieron facturas anteriores. Es la pista más fuerte que hay para matchear:
-        // muestra el texto real que imprime el proveedor, no el nombre prolijo del catálogo.
-        if (Array.isArray(it.alias) && it.alias.length) partes.push(`en facturas aparece como: ${it.alias.join(" / ")}`);
-        return partes.join(" · ");
-      })
-      .join("\n");
-    prompt += CATALOG_INSTRUCTIONS + lista;
-  }
+  // `insumosConocidos` se sigue aceptando por compatibilidad con clientes viejos, pero NO se usa:
+  // ver el comentario grande de arriba. El matcheo contra el catálogo es del cliente.
 
   try {
     const resp = await fetch("https://api.anthropic.com/v1/messages", {
