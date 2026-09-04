@@ -251,7 +251,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-09-02 20:15";
+const APP_VERSION = "2026-09-04 14:02";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -316,6 +316,8 @@ const state = {
   productosSoloAlertas: false,
   productosClasificacionFiltro: "todos",
   mostrarCambiosPrecio: false,
+  mostrarPendientesFudo: false,
+  pendientesFudo: {},
   proveedoresBusqueda: "",
   insumosBusqueda: "",
   recetasBasesBusqueda: "",
@@ -646,6 +648,7 @@ function attachListeners() {
   onValue(ref(db, "costeo/ivaDebito"), snap => { state.ivaDebito = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
   onValue(ref(db, "costeo/listasPrecios"), snap => { state.listasPrecios = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
   onValue(ref(db, "costeo/config"), snap => { state.config = snap.val() || {}; });
+  onValue(ref(db, "costeo/pendientesFudo"), snap => { state.pendientesFudo = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
 }
 
 // =============================================================
@@ -4488,6 +4491,7 @@ function renderProductosView(container) {
   mantenimientoBases();
   mantenimientoCostosProductos();
   const cambiosPrecio = productosConCambioDePrecio();
+  const pendientesFudo = pendientesFudoOrdenados();
 
   container.innerHTML = `
     <div class="section-header">
@@ -4496,10 +4500,35 @@ function renderProductosView(container) {
         <div class="page-sub" style="margin-bottom:0">El costo se calcula automáticamente a partir de la receta. Si un producto no tiene receta armada, podés cargarle un costo manual (acá mismo, en la columna "Costo actual") para que igual entre en la comparación de costo vs. precio de venta.</div>
       </div>
       ${!editing ? `<div class="row-actions">
+        <button class="btn ${pendientesFudo.length ? "btn-primary" : "btn-ghost"}" onclick="togglePendientesFudo()" title="Los precios de venta que editaste, para copiarlos fácil en FUDO">📤 Precios editados${pendientesFudo.length ? ` (${pendientesFudo.length})` : ""}</button>
         <button class="btn btn-turq" onclick="toggleCambiosPrecio()" title="Los productos cuyo precio de venta quedó distinto del sugerido, para ir a actualizarlos en la caja">🔄 Precios a actualizar${cambiosPrecio.length ? ` (${cambiosPrecio.length})` : ""}</button>
         <button class="btn btn-primary" onclick="abrirFormProducto()">+ Nuevo producto</button>
       </div>` : ""}
     </div>
+    ${!editing && state.mostrarPendientesFudo ? `
+    <div class="section-block" style="border-color:var(--terra)">
+      <div class="section-header">
+        <div>
+          <div class="section-title">📤 Precios editados — pendientes de pasar a FUDO</div>
+          <div class="text-muted" style="font-size:12px">Cada precio de venta que tocaste desde acá, del más reciente al más viejo, con el valor de antes de que empezaras a editarlo. Cuando ya los pasaste a la caja, marcalos como listo para vaciar la lista.</div>
+        </div>
+        <div class="row-actions">
+          ${pendientesFudo.length ? `<button class="btn btn-ghost btn-sm" onclick="copiarPendientesFudoTexto()" title="Copia nombre y precio nuevo, uno por línea">📋 Copiar</button>
+          <button class="btn btn-ghost btn-sm" onclick="descargarPendientesFudo()" title="Descarga un CSV que se abre en Excel">📤 Descargar CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="marcarTodoPendienteFudoListo()">✅ Ya lo pasé a FUDO</button>` : ""}
+        </div>
+      </div>
+      ${pendientesFudo.length ? `<div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th>Producto</th><th>Precio anterior</th><th>Precio nuevo</th><th>Diferencia</th><th></th></tr></thead>
+        <tbody>${pendientesFudo.map(f => `<tr>
+          <td>${escapeHtml(f.nombre)}</td>
+          <td>${fmtMoney(f.precioAnterior)}</td>
+          <td><strong>${fmtMoney(f.precioNuevo)}</strong></td>
+          <td><span class="badge ${f.diferencia > 0 ? "badge-suba" : "badge-baja"}">${f.diferencia > 0 ? "🔺" : "🔻"} ${fmtMoney(Math.abs(f.diferencia))}</span></td>
+          <td><button class="btn btn-ghost btn-sm btn-icon" onclick="quitarPendienteFudo('${f.id}')" title="Ya lo pasé a FUDO">✕</button></td>
+        </tr>`).join("")}</tbody>
+      </table></div>` : `<div class="empty-state">No editaste ningún precio de venta todavía. Cuando cambies uno acá abajo, aparece en esta lista.</div>`}
+    </div>` : ""}
     ${!editing && state.mostrarCambiosPrecio ? `
     <div class="section-block" style="border-color:var(--turq)">
       <div class="section-header">
@@ -4691,10 +4720,12 @@ function renderProductosTable() {
     const badgeAjuste = difVsSugerido !== null && Math.abs(difVsSugerido) >= 1
       ? `<div><span class="badge ${difVsSugerido > 0 ? "badge-suba" : "badge-baja"}" title="El precio sugerido cambió respecto del precio que tenés cargado">${difVsSugerido > 0 ? "🔺 Subir" : "🔻 Bajar"} ${fmtMoney(Math.abs(difVsSugerido))}</span></div>`
       : "";
+    const pendienteFudo = state.pendientesFudo[id];
     const precioVentaCell = `
       <input type="number" step="1" min="0" class="form-input" style="max-width:120px" value="${p.precioVenta ?? ""}" placeholder="Precio venta" onchange="guardarPrecioVentaRapido('${id}', this.value)">
       ${precioSugeridoRedondeado !== null ? `<div class="text-muted" style="font-size:11px">Sugerido: ${fmtMoney(precioSugeridoRedondeado)}</div>` : ""}
       ${desgloseRetail}${badgeAjuste}
+      ${pendienteFudo ? `<div><span class="badge" style="background:var(--terra);color:#fff" title="Antes: ${fmtMoney(pendienteFudo.precioAnterior)}">📤 Falta pasar a FUDO</span></div>` : ""}
       ${p.precioVenta ? `<div class="text-muted" style="font-size:11px">Mesa (+10%): ${fmtMoney(p.precioVenta * 1.1)}</div>` : ""}`;
     return `
       <tr class="${recetaAbierta ? "fila-abierta" : ""}">
@@ -5035,12 +5066,109 @@ window.guardarCostoManualRapido = async function(id, val) {
   renderProductosTable();
 };
 
+// ── Precios editados, pendientes de pasar a FUDO ─────────────────────────────
+// "Precios a actualizar" (más abajo) es otra cosa: compara contra el precio SUGERIDO por el costo,
+// y solo lista una divergencia que nace de un costo que cambió. Esto es lo que faltaba: un
+// registro de qué precios de venta TOCASTE VOS — sin importar si coinciden o no con el sugerido —
+// para poder ir a buscarlos fácil y pasarlos a la caja. Sin esto, después de editar diez productos
+// no había forma de saber cuáles habían sido sin repasar la tabla entera de memoria.
+//
+// Se guarda el precio ANTERIOR AL PRIMER cambio de la tanda, no el de cada edición intermedia: si
+// tocás el mismo producto dos veces antes de pasarlo a FUDO, lo que importa es "de cuánto a cuánto"
+// en limpio, no cada paso. Si terminás volviendo al valor original, la entrada se borra sola — no
+// hay nada que actualizar en FUDO.
+async function registrarPendienteFudo(id, precioVentaNuevo) {
+  const p = state.productos[id];
+  if (!p) return;
+  const existente = state.pendientesFudo[id];
+  const anterior = existente ? existente.precioAnterior : (Number(p.precioVenta) || 0);
+  if (Math.abs((Number(precioVentaNuevo) || 0) - anterior) < 0.005) {
+    if (existente) {
+      await remove(ref(db, `costeo/pendientesFudo/${id}`));
+      const rest = { ...state.pendientesFudo }; delete rest[id];
+      state.pendientesFudo = rest;
+    }
+    return;
+  }
+  const entry = { nombre: p.nombre, categoria: p.categoria || "", precioAnterior: anterior, precioNuevo: Number(precioVentaNuevo) || 0, ts: Date.now() };
+  await set(ref(db, `costeo/pendientesFudo/${id}`), entry);
+  state.pendientesFudo = { ...state.pendientesFudo, [id]: entry };
+}
+
 window.guardarPrecioVentaRapido = async function(id, val) {
   const precioVenta = val ? parseFloat(val) : null;
+  await registrarPendienteFudo(id, precioVenta || 0);
   await update(ref(db, `costeo/productos/${id}`), { precioVenta });
   state.productos[id] = { ...state.productos[id], precioVenta };
   showToast("✅ Precio de venta guardado.", "success");
   renderProductosTable();
+};
+
+window.quitarPendienteFudo = async function(id) {
+  await remove(ref(db, `costeo/pendientesFudo/${id}`));
+  const rest = { ...state.pendientesFudo }; delete rest[id];
+  state.pendientesFudo = rest;
+  render();
+};
+
+window.marcarTodoPendienteFudoListo = async function() {
+  const ids = Object.keys(state.pendientesFudo);
+  if (!ids.length) return;
+  if (!confirm(`¿Marcar los ${ids.length} precio(s) como ya pasados a FUDO? Se vacía la lista.`)) return;
+  await Promise.all(ids.map(id => remove(ref(db, `costeo/pendientesFudo/${id}`))));
+  state.pendientesFudo = {};
+  showToast("✅ Lista de FUDO vaciada.", "success");
+  render();
+};
+
+function pendientesFudoOrdenados() {
+  return Object.entries(state.pendientesFudo)
+    .sort(([, a], [, b]) => (b.ts || 0) - (a.ts || 0))
+    .map(([id, e]) => ({ id, ...e, diferencia: e.precioNuevo - e.precioAnterior }));
+}
+
+window.togglePendientesFudo = function() {
+  state.mostrarPendientesFudo = !state.mostrarPendientesFudo;
+  render();
+};
+
+window.copiarPendientesFudoTexto = async function() {
+  const filas = pendientesFudoOrdenados();
+  if (!filas.length) return;
+  const texto = filas.map(f => `${f.nombre}\t${fmtMoney(f.precioNuevo)}`).join("\n");
+  try {
+    await navigator.clipboard.writeText(texto);
+    showToast("📋 Copiado — nombre y precio nuevo, uno por línea.", "success");
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = texto; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch {}
+    ta.remove();
+    showToast(ok ? "📋 Copiado." : "⚠️ No se pudo copiar solo — descargá el CSV.", ok ? "success" : "warn");
+  }
+};
+
+window.descargarPendientesFudo = function() {
+  const filas = pendientesFudoOrdenados();
+  if (!filas.length) { showToast("✅ No hay precios editados pendientes.", "success"); return; }
+  const encabezado = ["Producto", "Categoria", "Precio anterior", "Precio nuevo", "Diferencia"];
+  const num = n => (n === null || n === undefined) ? "" : String(Math.round(n * 100) / 100).replace(".", ",");
+  const txt = t => `"${String(t ?? "").replace(/"/g, '""')}"`;
+  const lineas = [encabezado.join(";")].concat(filas.map(f => [
+    txt(f.nombre), txt(f.categoria), num(f.precioAnterior), num(f.precioNuevo), num(f.diferencia)
+  ].join(";")));
+  const blob = new Blob(["﻿" + lineas.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `precios-editados-fudo-${todayISO()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(`📤 Se descargaron ${filas.length} precios editados.`, "success");
 };
 
 window.setProductosFiltro = function(val) {
