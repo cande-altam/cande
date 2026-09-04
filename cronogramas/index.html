@@ -59,8 +59,9 @@
   .syncBanner button{margin-left:auto;border:none;background:transparent;color:inherit;font-size:16px;cursor:pointer;line-height:1;padding:2px;opacity:.7}
   .syncBanner button:hover{opacity:1}
   .weekbox{display:flex;align-items:center;gap:8px}
-  .weekbox input{background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 11px;width:190px}
+  .weekbox input,.weekbox select{background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 11px;width:190px;color:var(--ink);font:inherit}
   .weekbox input#weekStart{width:150px}
+  .weekbox select#weekSwitcher{width:150px}
   .btn{border:1px solid var(--line-strong);background:var(--panel-2);border-radius:9px;padding:8px 13px;cursor:pointer;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:.12s}
   .btn:hover{border-color:var(--ink-soft)}
   .btn:disabled{opacity:.35;cursor:default;pointer-events:none}
@@ -257,8 +258,8 @@
     .wrap{padding:12px 12px 70px}
     .top{position:static;padding:12px 14px;gap:10px}
     .brand{width:100%}
-    .weekbox{width:100%;order:3}
-    .weekbox input{width:100%}
+    .weekbox{width:100%;order:3;flex-wrap:wrap}
+    .weekbox input,.weekbox select{width:100%}
     #btnAuto{order:1;flex:1 1 auto;justify-content:center}
     #btnSave{order:2}
     #btnNew{order:4}
@@ -332,8 +333,9 @@
       </div>
     </div>
     <div class="weekbox">
+      <select id="weekSwitcher" title="Saltar a otra semana ya cargada" aria-label="Elegir semana"></select>
       <input id="weekLabel" type="text" placeholder="Semana (ej: 13–19/07)" aria-label="Etiqueta de la semana">
-      <input id="weekStart" type="date" title="Lunes de esta semana (para cruzar automáticamente con Vacaciones)" aria-label="Fecha del lunes de esta semana">
+      <input id="weekStart" type="date" title="Lunes de la semana — elegí una fecha nueva para crear esa semana (podés copiar esta como base), o una ya usada para abrirla" aria-label="Fecha del lunes de la semana">
     </div>
     <span id="syncStatus" class="syncStatus" title="Conectando…">☁️</span>
     <button class="btn primary" id="btnAuto" title="Genera la semana respetando las reglas">✨ Autocompletar</button>
@@ -610,45 +612,104 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const cloudRef = ref(db, "cronogramas/state");
+// Varias semanas en simultáneo, cada una independiente: en vez de un solo bloque que se pisa
+// entero en cada guardado (como era antes, en cronogramas/state), lo que es común a todas las
+// semanas (personas, puestos, reglas fijas, incompatibilidades, Experto Candela) vive en
+// cronogramas/config, y cada semana vive en su propia ruta cronogramas/weeks/<lunes> — guardar
+// una semana nunca toca ni pisa el nodo de otra. cronogramas/weekIndex es una lista liviana
+// (solo fecha+etiqueta de cada semana) para armar el selector sin descargar todas las semanas.
+const configRef = ref(db, "cronogramas/config");
+const weekIndexRef = ref(db, "cronogramas/weekIndex");
+const legacyStateRef = ref(db, "cronogramas/state"); // ruta vieja, de antes de separar por semana
 
-// Ecos propios: guardamos CADA guardado pendiente (no solo el último), porque si hacés varios
-// cambios seguidos puede haber más de un guardado en el aire al mismo tiempo — con una sola
-// variable, el eco del primero podía llegar después de que ya hubiéramos anotado el segundo,
-// no coincidir, y confundirse con un cambio "de otro dispositivo" pisando tu edición más reciente.
-let pendingEchoes = [];
-let pushTimer = null;
+// fábrica de canal de sync con eco propio: guardamos CADA guardado pendiente (no solo el último),
+// porque si hacés varios cambios seguidos puede haber más de un guardado en el aire al mismo
+// tiempo — con una sola variable, el eco del primero podía llegar después de que ya hubiéramos
+// anotado el segundo, no coincidir, y confundirse con un cambio "de otro dispositivo" pisando tu
+// edición más reciente.
+function makeSyncChannel(nodeRef, updateEvent, wrapDetail){
+  wrapDetail = wrapDetail || (remote=>remote);
+  let pendingEchoes = [];
+  let pushTimer = null;
+  let unsub = onValue(nodeRef, snap=>{
+    const remote = snap.val();
+    const remoteJSON = remote==null ? null : JSON.stringify(remote);
+    if(remoteJSON!==null){
+      const idx=pendingEchoes.indexOf(remoteJSON);
+      if(idx>=0){pendingEchoes.splice(idx,1);return;} // era el eco de uno de nuestros guardados
+    }
+    window.dispatchEvent(new CustomEvent(updateEvent,{detail:wrapDetail(remote)}));
+  }, err=>{
+    console.error(updateEvent+" onValue:",err);
+    window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
+  });
+  return {
+    push(stateObj){
+      clearTimeout(pushTimer);
+      pushTimer = setTimeout(()=>{
+        const json = JSON.stringify(stateObj);
+        pendingEchoes.push(json);
+        if(pendingEchoes.length>25)pendingEchoes.shift(); // por las dudas, que no crezca sin límite
+        window.dispatchEvent(new CustomEvent("cloudsync-saving"));
+        set(nodeRef, stateObj)
+          .then(()=>window.dispatchEvent(new CustomEvent("cloudsync-saved")))
+          .catch(err=>{
+            pendingEchoes=pendingEchoes.filter(j=>j!==json);
+            console.error(updateEvent+" push:",err);window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
+          });
+      }, 400);
+    },
+    stop(){unsub();}
+  };
+}
 
-window.CloudSync = {
-  push(stateObj){
-    clearTimeout(pushTimer);
-    pushTimer = setTimeout(()=>{
-      const json = JSON.stringify(stateObj);
-      pendingEchoes.push(json);
-      if(pendingEchoes.length>25)pendingEchoes.shift(); // por las dudas, que no crezca sin límite
-      window.dispatchEvent(new CustomEvent("cloudsync-saving"));
-      set(cloudRef, stateObj)
-        .then(()=>window.dispatchEvent(new CustomEvent("cloudsync-saved")))
-        .catch(err=>{
-          pendingEchoes=pendingEchoes.filter(j=>j!==json);
-          console.error("cloudsync:",err);window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
-        });
-    }, 400);
+window.CloudSync = makeSyncChannel(configRef, "cloudsync-update"); // config global, ruta fija
+
+// la semana activa cambia de ruta cada vez que el usuario salta de una semana a otra. En vez de un
+// método aparte para avisar "ahora mirás esta otra semana" (que podría perderse si este módulo
+// todavía no terminó de cargar cuando el script principal intenta avisarle), push() recibe la key
+// de la semana en cada llamada y se reconecta solo si cambió — así alcanza con llamar push() para
+// que siempre termine escuchando/guardando en la semana correcta, sin coordinación previa.
+let activeWeekChannel = null, activeWeekKey = null;
+window.CloudSyncWeek = {
+  push(weekKey, stateObj){
+    if(activeWeekKey!==weekKey){
+      if(activeWeekChannel)activeWeekChannel.stop();
+      activeWeekKey = weekKey;
+      // el detail lleva la key para que quien escucha pueda ignorar ecos tardíos de una semana de
+      // la que ya te fuiste (si saltás rápido de semana en semana, puede llegar una respuesta vieja).
+      activeWeekChannel = makeSyncChannel(ref(db,"cronogramas/weeks/"+weekKey), "weeksync-update", remote=>({key:weekKey,data:remote}));
+    }
+    activeWeekChannel.push(stateObj);
+    // índice liviano para el selector de semanas — no hace falta esperar a que confirme
+    set(ref(db,"cronogramas/weekIndex/"+weekKey),{weekStart:stateObj.weekStart||"",label:stateObj.label||""}).catch(()=>{});
   }
 };
+onValue(weekIndexRef, snap=>{
+  window.dispatchEvent(new CustomEvent("weekindex-update",{detail:snap.val()||{}}));
+}, err=>console.error("weekIndex onValue:",err));
 
-onValue(cloudRef, snap=>{
-  const remote = snap.val();
-  const remoteJSON = remote==null ? null : JSON.stringify(remote);
-  if(remoteJSON!==null){
-    const idx=pendingEchoes.indexOf(remoteJSON);
-    if(idx>=0){pendingEchoes.splice(idx,1);return;} // era el eco de uno de nuestros guardados
-  }
-  window.dispatchEvent(new CustomEvent("cloudsync-update",{detail:remote}));
-}, err=>{
-  console.error("cloudsync onValue:",err);
-  window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
-});
+// migración única desde la ruta vieja (cronogramas/state, un solo bloque para toda la app) hacia
+// la nueva (config separada + una ruta por semana). Es una transformación determinística de los
+// mismos datos de origen, así que no importa si más de un dispositivo la dispara al mismo tiempo:
+// todos calculan el mismo resultado y escribirlo de más no pierde nada. Solo corre si la config
+// nueva todavía no existe — una vez migrado, no se vuelve a tocar cronogramas/state.
+get(configRef).then(configSnap=>{
+  if(configSnap.exists())return; // ya migrado (por este dispositivo o por otro)
+  return get(legacyStateRef).then(legacySnap=>{
+    const legacy=legacySnap.val();
+    if(!legacy||!legacy.assign)return; // no había nada que migrar
+    const WEEK_KEYS=["label","weekStart","assign","abs","ex","rules","comments","expertoTurno"];
+    const week={},cfg={};
+    Object.keys(legacy).forEach(k=>{ if(WEEK_KEYS.includes(k))week[k]=legacy[k]; else cfg[k]=legacy[k]; });
+    const weekKey=(legacy.weekStart||"").trim()||"sin-fecha";
+    return Promise.all([
+      set(configRef,cfg),
+      set(ref(db,"cronogramas/weeks/"+weekKey),week),
+      set(ref(db,"cronogramas/weekIndex/"+weekKey),{weekStart:week.weekStart||"",label:week.label||""})
+    ]);
+  });
+}).catch(err=>console.error("migración config/semanas:",err));
 
 // Historial de versiones: además del estado "vivo" (que siempre se pisa con el último guardado),
 // se guarda una foto aparte cada tanto en cronogramas/history/<fecha>. Nació porque un guardado se
@@ -693,7 +754,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-08-24 fix-mozos-duplicados-elegir-experto";
+const APP_VERSION="2026-09-04 semanas-en-simultaneo";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -850,11 +911,31 @@ function blankWeek(weekStart){return {label:"",weekStart:weekStart||"",assign:{}
 function migrationDone(tag){return state.migrationsApplied&&state.migrationsApplied.includes(tag);}
 function marcarMigracion(tag){if(!state.migrationsApplied)state.migrationsApplied=[];if(!state.migrationsApplied.includes(tag))state.migrationsApplied.push(tag);}
 let state=defaultState();
-const LS="candela_scheduler_v1";
-// deshacer/rehacer: cada persist() guarda una foto de cómo estaba el estado ANTES de este cambio
-// (lo que ya había en localStorage), así que no hay que tocar cada botón de la app para que funcione.
+// localStorage por dispositivo, en tres partes: la config global, un diccionario con todas las
+// semanas que se cargaron alguna vez en este dispositivo, y qué semana estás mirando ACÁ (esto
+// último a propósito NO se sincroniza con la nube — cada dispositivo puede estar mirando/editando
+// una semana distinta al mismo tiempo, que es justo el pedido de "trabajar varias semanas en
+// simultáneo"). LS_LEGACY es el formato viejo (un solo bloque para toda la app); se migra una vez.
+const LS_CONFIG="candela_scheduler_config_v2";
+const LS_WEEKS="candela_scheduler_weeks_v2";
+const LS_ACTIVE="candela_scheduler_active_v2";
+const LS_LEGACY="candela_scheduler_v1";
+function loadLocalConfig(){try{return JSON.parse(localStorage.getItem(LS_CONFIG));}catch(e){return null;}}
+function saveLocalConfig(cfg){localStorage.setItem(LS_CONFIG,JSON.stringify(cfg));}
+function loadLocalWeeks(){try{return JSON.parse(localStorage.getItem(LS_WEEKS))||{};}catch(e){return {};}}
+function saveLocalWeek(key,weekObj){const all=loadLocalWeeks();all[key]=weekObj;localStorage.setItem(LS_WEEKS,JSON.stringify(all));}
+// deshacer/rehacer: cada semana tiene su propio historial (deshacer en la semana que estás mirando
+// nunca te manda a otra semana ni deshace cambios que hiciste en otra). weekHistories guarda el
+// historial de cada semana aunque saltes a otra y vuelvas; undoStack/redoStack son siempre la
+// pareja de la semana activa — loadWeek() los reapunta al cambiar de semana.
 const UNDO_LIMIT=60;
-let undoStack=[],redoStack=[],suspendHistory=false;
+let weekHistories={},undoStack=[],redoStack=[],suspendHistory=false;
+function useHistoryBucket(key){
+  if(!weekHistories[key])weekHistories[key]={undo:[],redo:[]};
+  undoStack=weekHistories[key].undo;
+  redoStack=weekHistories[key].redo;
+  syncUndoRedoButtons();
+}
 // además del deshacer local (que se pierde al cerrar la pestaña), cada tanto se manda una foto
 // aparte a la nube que sobrevive aunque cierres todo — la red de seguridad real ante un guardado
 // que se pisa mal. No en cada tecla: como mucho cada 10 minutos de uso real.
@@ -865,44 +946,133 @@ function maybeSnapshot(){
   const now=Date.now();
   if(now-lastSnapshotAt<SNAPSHOT_MIN_INTERVAL)return;
   lastSnapshotAt=now;
-  window.CloudHistory.save(state);
+  window.CloudHistory.save(state); // guarda TODO (config + la semana activa en este momento)
 }
 function persist(){
+  const key=weekKeyOf(state);
+  const localWeeks=loadLocalWeeks();
+  const weekJSON=JSON.stringify(weekPart(state));
   if(!suspendHistory){
-    const prev=localStorage.getItem(LS);
-    if(prev&&prev!==JSON.stringify(state)){undoStack.push(prev);if(undoStack.length>UNDO_LIMIT)undoStack.shift();redoStack.length=0;}
+    const prevJSON=Object.prototype.hasOwnProperty.call(localWeeks,key)?JSON.stringify(localWeeks[key]):null;
+    if(prevJSON!==null&&prevJSON!==weekJSON){undoStack.push(prevJSON);if(undoStack.length>UNDO_LIMIT)undoStack.shift();redoStack.length=0;}
   }
-  localStorage.setItem(LS,JSON.stringify(state));
+  localWeeks[key]=JSON.parse(weekJSON);
+  localStorage.setItem(LS_WEEKS,JSON.stringify(localWeeks));
+  saveLocalConfig(configPart(state));
+  localStorage.setItem(LS_ACTIVE,key);
   syncUndoRedoButtons();
-  if(!suspendHistory&&window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);maybeSnapshot();}
+  if(!suspendHistory){
+    if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(configPart(state));}
+    if(window.CloudSyncWeek){setSyncStatus("saving");window.CloudSyncWeek.push(key,weekPart(state));}
+    maybeSnapshot();
+  }
 }
-function loadLS(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.assign){state=Object.assign(defaultState(),s);}}catch(e){}}
-function restoreSnapshot(json){
-  // Object.assign(defaultState(),...) + runMigrations() por si el snapshot es de una versión vieja
-  // del código (le pueden faltar campos que se agregaron después) — pasa sobre todo al restaurar
-  // desde el historial de la nube, que puede tener semanas de antigüedad.
-  state=Object.assign(defaultState(),JSON.parse(json));
-  suspendHistory=true; // esta escritura es parte del deshacer/rehacer, no un cambio nuevo del usuario
-  runMigrations();
-  localStorage.setItem(LS,JSON.stringify(state));
+// arranque: reconstruye config + la semana que este dispositivo tenía abierta la última vez,
+// migrando una sola vez desde el formato viejo (un solo bloque) si hace falta. Devuelve la key de
+// la semana con la que hay que arrancar.
+function loadLocalState(){
+  let cfg=loadLocalConfig();
+  const weeks=loadLocalWeeks();
+  let activeKey=localStorage.getItem(LS_ACTIVE);
+  if(!cfg&&!activeKey){
+    try{
+      const legacy=JSON.parse(localStorage.getItem(LS_LEGACY));
+      if(legacy&&legacy.assign){
+        const full=Object.assign(defaultState(),legacy);
+        activeKey=weekKeyOf(full);
+        cfg=configPart(full);
+        weeks[activeKey]=weekPart(full);
+        saveLocalConfig(cfg);
+        localStorage.setItem(LS_WEEKS,JSON.stringify(weeks));
+        localStorage.setItem(LS_ACTIVE,activeKey);
+      }
+    }catch(e){}
+  }
+  activeKey=activeKey||FALLBACK_WEEK_KEY;
+  state=Object.assign(defaultState(),cfg||{},weeks[activeKey]||blankWeek(activeKey===FALLBACK_WEEK_KEY?"":activeKey));
+  return activeKey;
+}
+// saltar (o crear) la semana "key" — no altera ninguna otra semana, cada una vive en su propio
+// lugar tanto localmente como en la nube. seedWeekObj se usa solo al crear una semana nueva (por
+// ej. copiando la grilla de la semana actual como base).
+function loadWeek(key,seedWeekObj){
+  if(!key)return;
+  suspendHistory=true; // saltar de semana no es "un cambio" que se pueda deshacer
+  const localWeeks=loadLocalWeeks();
+  const weekObj=seedWeekObj||localWeeks[key]||blankWeek(key===FALLBACK_WEEK_KEY?"":key);
+  Object.assign(state,weekObj); // weekObj siempre trae los 8 campos de WEEK_FIELDS completos
+  if(!state.weekStart&&key!==FALLBACK_WEEK_KEY)state.weekStart=key;
+  runMigrations(); // regenera los refuerzos automáticos de medio turno para los días de ESTA semana
+  aplicarAusenciasPorVacaciones();
+  useHistoryBucket(key);
+  fillPersonSelects();
+  document.getElementById("weekLabel").value=state.label||"";
+  document.getElementById("weekStart").value=state.weekStart||"";
+  renderWeekSwitcher();
+  renderMini();render();
+  persist();
+  suspendHistory=false;
+}
+// crea una semana nueva para "dateStr" (preguntando si copiar la grilla actual como base) o, si ya
+// existe una semana con esa fecha, simplemente salta a ella — nunca pisa la que ya había.
+function crearOAbrirSemana(dateStr,opts){
+  opts=opts||{};
+  if(!dateStr)return;
+  const localWeeks=loadLocalWeeks();
+  const yaExiste=Object.prototype.hasOwnProperty.call(localWeeks,dateStr)||(weekIndexCache&&Object.prototype.hasOwnProperty.call(weekIndexCache,dateStr));
+  if(yaExiste){loadWeek(dateStr);toast("Semana abierta");return;}
+  const copiarBase=opts.copyBase!==undefined?opts.copyBase:confirm("Todavía no hay una semana cargada para esa fecha.\n\n¿Copiar las asignaciones de la semana actual como base para la nueva?");
+  const seed=blankWeek(dateStr);
+  if(copiarBase)seed.assign=JSON.parse(JSON.stringify(state.assign));
+  loadWeek(dateStr,seed);
+  toast("Semana nueva lista"+(copiarBase?" (base copiada)":""));
+}
+// deshacer/rehacer local: solo tocan los datos de ESTA semana (nunca la config global ni otra
+// semana) — restoreLocalWeekSnapshot no re-suscribe ni cambia qué semana está activa.
+function restoreLocalWeekSnapshot(json){
+  suspendHistory=true;
+  Object.assign(state,JSON.parse(json));
   suspendHistory=false;
   fillPersonSelects();
   document.getElementById("weekLabel").value=state.label||"";
   document.getElementById("weekStart").value=state.weekStart||"";
   renderMini();render();
   syncUndoRedoButtons();
-  if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);} // el deshacer/rehacer también se sincroniza a otros dispositivos
+  saveLocalWeek(weekKeyOf(state),weekPart(state));
+  if(window.CloudSyncWeek){setSyncStatus("saving");window.CloudSyncWeek.push(weekKeyOf(state),weekPart(state));} // el deshacer/rehacer también se sincroniza a otros dispositivos
+}
+// "🕐 Historial de versiones": restaura una foto de la nube que puede ser de OTRA semana (o de una
+// config vieja) — a diferencia del deshacer local, acá sí hay que pisar la config global y ubicar
+// la semana restaurada en su lugar correcto (puede no ser la que tenés abierta ahora).
+function restoreHistorySnapshot(json){
+  state=Object.assign(defaultState(),JSON.parse(json));
+  suspendHistory=true;
+  runMigrations();
+  const key=weekKeyOf(state);
+  saveLocalConfig(configPart(state));
+  saveLocalWeek(key,weekPart(state));
+  localStorage.setItem(LS_ACTIVE,key);
+  suspendHistory=false;
+  useHistoryBucket(key);
+  fillPersonSelects();
+  document.getElementById("weekLabel").value=state.label||"";
+  document.getElementById("weekStart").value=state.weekStart||"";
+  renderWeekSwitcher();
+  renderMini();render();
+  syncUndoRedoButtons();
+  if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(configPart(state));}
+  if(window.CloudSyncWeek){setSyncStatus("saving");window.CloudSyncWeek.push(key,weekPart(state));}
 }
 function undoLast(){
   if(!undoStack.length)return;
-  redoStack.push(localStorage.getItem(LS));
-  restoreSnapshot(undoStack.pop());
+  redoStack.push(JSON.stringify(weekPart(state)));
+  restoreLocalWeekSnapshot(undoStack.pop());
   toast("Cambio deshecho ↩️");
 }
 function redoLast(){
   if(!redoStack.length)return;
-  undoStack.push(localStorage.getItem(LS));
-  restoreSnapshot(redoStack.pop());
+  undoStack.push(JSON.stringify(weekPart(state)));
+  restoreLocalWeekSnapshot(redoStack.pop());
   toast("Cambio rehecho ↪️");
 }
 function syncUndoRedoButtons(){
@@ -1656,7 +1826,7 @@ function openHistoryPanel(){
       window.CloudHistory.save(state); // guarda lo actual antes de pisarlo, por si hay que volver
       const restored=Object.assign({},item.state);
       delete restored._snapshotAt;
-      restoreSnapshot(JSON.stringify(restored));
+      restoreHistorySnapshot(JSON.stringify(restored));
       close();
       toast("Versión restaurada 🕐");
     }));
@@ -1897,10 +2067,12 @@ function openImportView(){
       state.ex=(data.ex||[]).filter(e=>!e.auto);
       state.rules=data.rules||[]; state.fixed=data.fixed||[]; state.francoFixed=data.francoFixed||{};
       dedupeFixed(); regenerateFixedHalfExtras(); dedupeEx();
+      useHistoryBucket(weekKeyOf(state)); // los datos importados pueden ser de otra semana: historial propio
       persist();
       document.getElementById("weekLabel").value=state.label||"";
       document.getElementById("weekStart").value=state.weekStart||"";
       renderMini(); render();
+      renderWeekSwitcher();
       ov.remove();
       toast("Datos importados ✅");
     });
@@ -2157,11 +2329,16 @@ function initControls(){
   document.getElementById("btnAddSticky").addEventListener("click",addSticky);
   document.getElementById("stickyText").addEventListener("keydown",e=>{if(e.key==="Enter")addSticky();});
   document.getElementById("btnAuto").addEventListener("click",autocomplete);
+  // la fecha ahora identifica QUÉ semana abrir — si ya existe una semana con esa fecha, salta a
+  // ella (sin tocarla ni tocar la que tenías); si es una fecha nueva, ofrece crearla.
   document.getElementById("weekStart").addEventListener("change",e=>{
-    state.weekStart=e.target.value;
-    const changed=aplicarAusenciasPorVacaciones();
-    renderMini();render();persist();
-    toast(changed?"Semana vinculada — se marcaron ausencias por vacaciones 🏖️":"Semana vinculada");
+    const val=e.target.value;
+    if(!val){document.getElementById("weekStart").value=state.weekStart||"";return;}
+    if(val===state.weekStart)return;
+    crearOAbrirSemana(val);
+  });
+  document.getElementById("weekSwitcher").addEventListener("change",e=>{
+    if(e.target.value&&e.target.value!==weekKeyOf(state))loadWeek(e.target.value);
   });
   document.getElementById("rolePerson").addEventListener("change",syncRoleControls);
   document.getElementById("btnSetRoleMain").addEventListener("click",()=>{
@@ -2189,7 +2366,7 @@ function initControls(){
     renderMini();render();persist();
     toast(v==="auto"?`${n} vuelve a franco automático`:`Franco de ${n} fijado el ${DAYS[+v][1].toLowerCase()}`);
   });
-  document.getElementById("btnSave").addEventListener("click",()=>{state.label=document.getElementById("weekLabel").value;persist();toast("Semana guardada 💾");});
+  document.getElementById("btnSave").addEventListener("click",()=>{state.label=document.getElementById("weekLabel").value;persist();renderWeekSwitcher();toast("Semana guardada 💾");});
   document.getElementById("btnUndo").addEventListener("click",undoLast);
   document.getElementById("btnRedo").addEventListener("click",redoLast);
   document.getElementById("btnHistory").addEventListener("click",openHistoryPanel);
@@ -2201,15 +2378,13 @@ function initControls(){
     else if(e.key==="y"||(e.key==="z"&&e.shiftKey)){e.preventDefault();redoLast();}
   });
   document.getElementById("btnNew").addEventListener("click",()=>{
-    state.label="";state.abs=[];state.ex=[];state.rules=[];
-    if(state.weekStart){ // si había una fecha cargada, la semana nueva avanza 7 días sola
-      const d=new Date(state.weekStart+"T00:00:00");d.setDate(d.getDate()+7);
-      state.weekStart=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-    }
-    document.getElementById("weekLabel").value="";
-    document.getElementById("weekStart").value=state.weekStart||"";
-    aplicarAusenciasPorVacaciones();
-    renderMini();render();persist();toast("Nueva semana lista (base copiada)");
+    // avanza 7 días desde la semana actual (o desde hoy si todavía no había fecha) y abre/crea esa
+    // semana copiando la grilla actual como base — la semana de la que partís queda intacta.
+    let next;
+    if(state.weekStart){const d=new Date(state.weekStart+"T00:00:00");d.setDate(d.getDate()+7);next=d;}
+    else next=new Date();
+    const val=next.getFullYear()+"-"+String(next.getMonth()+1).padStart(2,"0")+"-"+String(next.getDate()).padStart(2,"0");
+    crearOAbrirSemana(val,{copyBase:true});
   });
   document.getElementById("ruleType").addEventListener("change",e=>{
     const cierre=e.target.value==="cierre";
@@ -2434,32 +2609,84 @@ function showSyncError(detail){
     msgEl.textContent=`⚠️ No se pudo conectar con la sincronización en la nube (${detail.code}). Tus cambios se guardan en este dispositivo, pero no van a verse en otros hasta que se resuelva esto.`;
   console.error("cloudsync error:",detail);
 }
-let cloudFirstSyncDone=false;
-function applyRemoteState(remote){
-  const isFirst=!cloudFirstSyncDone; cloudFirstSyncDone=true;
+let cloudConfigFirstSyncDone=false;
+// config global (personas, puestos, reglas fijas, incompatibilidades, expertos...) — igual en
+// todas las semanas, así que un cambio de otro dispositivo se aplica sin importar qué semana
+// estés mirando vos.
+function applyRemoteConfig(remote){
+  const isFirst=!cloudConfigFirstSyncDone; cloudConfigFirstSyncDone=true;
   if(remote==null){
     // todavía no hay nada guardado en la nube (primera vez que se usa desde algún dispositivo):
     // subimos lo que ya tenemos acá para sembrarla.
-    persist();
+    if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(configPart(state));}
     setSyncStatus("ok");
     return;
   }
-  if(JSON.stringify(remote)===JSON.stringify(state)){setSyncStatus("ok");return;} // ya estábamos al día
+  if(JSON.stringify(remote)===JSON.stringify(configPart(state))){setSyncStatus("ok");return;} // ya estábamos al día
   suspendHistory=true; // esto llega de otro dispositivo, no es una acción de este usuario: no cuenta para deshacer
-  state=Object.assign(defaultState(),remote);
+  Object.assign(state,remote); // remote solo trae campos de config: no toca la semana activa
   runMigrations(); // por si este dispositivo tiene reglas nuevas que la nube todavía no vio
-  localStorage.setItem(LS,JSON.stringify(state));
+  saveLocalConfig(configPart(state));
   suspendHistory=false;
   fillPersonSelects();
-  document.getElementById("weekLabel").value=state.label||"";
-  document.getElementById("weekStart").value=state.weekStart||"";
   renderMini();render();
   syncUndoRedoButtons();
   persist(); // si las migraciones cambiaron algo, se lo mandamos de vuelta a la nube
   setSyncStatus("ok");
-  if(!isFirst)toast("Cronograma actualizado desde otro dispositivo ☁️");
+  if(!isFirst)toast("Datos del equipo actualizados desde otro dispositivo ☁️");
 }
-window.addEventListener("cloudsync-update",e=>applyRemoteState(e.detail));
+// datos de una semana puntual — solo importa si es la semana que tenés abierta ahora mismo: si
+// llega una actualización de una semana de la que ya te fuiste, se ignora sin tocar nada.
+function applyRemoteWeek(detail){
+  const{key,data:remote}=detail;
+  if(key!==weekKeyOf(state))return;
+  if(remote==null){
+    if(window.CloudSyncWeek){setSyncStatus("saving");window.CloudSyncWeek.push(key,weekPart(state));}
+    setSyncStatus("ok");
+    return;
+  }
+  if(JSON.stringify(remote)===JSON.stringify(weekPart(state))){setSyncStatus("ok");return;} // ya estábamos al día
+  suspendHistory=true;
+  Object.assign(state,remote);
+  runMigrations();
+  saveLocalWeek(key,weekPart(state));
+  suspendHistory=false;
+  document.getElementById("weekLabel").value=state.label||"";
+  document.getElementById("weekStart").value=state.weekStart||"";
+  renderMini();render();renderWeekSwitcher();
+  syncUndoRedoButtons();
+  persist();
+  setSyncStatus("ok");
+  toast("Esta semana se actualizó desde otro dispositivo ☁️");
+}
+// lista liviana de semanas (para el selector) — se combina con lo que ya hay en este dispositivo
+// por si una semana nueva creada offline todavía no llegó a la nube.
+let weekIndexCache={};
+function renderWeekSwitcher(){
+  const sel=document.getElementById("weekSwitcher");if(!sel)return;
+  const merged=Object.assign({},weekIndexCache);
+  const localWeeks=loadLocalWeeks();
+  Object.keys(localWeeks).forEach(k=>{if(!merged[k])merged[k]={weekStart:localWeeks[k].weekStart||"",label:localWeeks[k].label||""};});
+  const curKey=weekKeyOf(state);
+  if(!merged[curKey])merged[curKey]={weekStart:state.weekStart||"",label:state.label||""};
+  const entries=Object.keys(merged).map(k=>({key:k,...merged[k]})).sort((a,b)=>(a.weekStart||"").localeCompare(b.weekStart||""));
+  sel.innerHTML=entries.map(e=>{
+    const rango=fmtWeekRange(e.weekStart);
+    const etiqueta=e.label?` · ${e.label}`:"";
+    const texto=rango?rango+etiqueta:(e.key===FALLBACK_WEEK_KEY?"Sin fecha"+etiqueta:e.key+etiqueta);
+    return `<option value="${e.key}" ${e.key===curKey?"selected":""}>${texto}</option>`;
+  }).join("");
+}
+function fmtWeekRange(weekStart){
+  if(!weekStart)return"";
+  const start=new Date(weekStart+"T00:00:00");if(isNaN(start))return"";
+  const end=new Date(start);end.setDate(end.getDate()+6);
+  const f=d=>String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0");
+  return f(start)+"–"+f(end);
+}
+window.addEventListener("cloudsync-update",e=>applyRemoteConfig(e.detail));
+window.addEventListener("weeksync-update",e=>applyRemoteWeek(e.detail));
+window.addEventListener("weekindex-update",e=>{weekIndexCache=e.detail||{};renderWeekSwitcher();});
 window.addEventListener("cloudsync-saving",()=>setSyncStatus("saving"));
 window.addEventListener("cloudsync-saved",()=>setSyncStatus("ok"));
 window.addEventListener("cloudsync-error",e=>showSyncError(e.detail));
@@ -2471,8 +2698,9 @@ document.getElementById("syncBannerClose").addEventListener("click",()=>document
 
 /* ---------------- BOOT ---------------- */
 document.getElementById("appVersion").textContent="v"+APP_VERSION;
-loadLS();
+const bootWeekKey=loadLocalState();
 runMigrations();
+useHistoryBucket(bootWeekKey);
 persist();
 fillPersonSelects();
 initControls();
@@ -2486,6 +2714,7 @@ document.getElementById("weekLabel").value=state.label||"";
 document.getElementById("weekStart").value=state.weekStart||"";
 renderMini();
 render();
+renderWeekSwitcher();
 undoStack.length=0;redoStack.length=0;syncUndoRedoButtons(); // el armado inicial (reglas semilla, etc.) no cuenta como "cambio" deshacible
 if(sessionStorage.getItem(AUTH_KEY)==="ok")showApp();
 </script>
