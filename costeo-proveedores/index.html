@@ -251,7 +251,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-09-04 15:59";
+const APP_VERSION = "2026-09-04 16:34";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -4258,13 +4258,20 @@ function calcCostoProducto(producto) {
   }
   // Sin receta armada: usamos el costo estimado a mano, si lo cargaron (útil para catálogos
   // grandes importados donde no es realista armar una receta ingrediente por ingrediente para todo).
+  // Si ya cargaron el costo sin IVA (formulario completo o "Insumos que son productos"), ese es el
+  // dato más nuevo y confiable — hay que preferirlo sobre un costoManual viejo, si no, esta columna
+  // quedaba mostrando un costo desactualizado que nunca se movía aunque el otro campo sí.
+  if (producto.costoSinIva !== undefined && producto.costoSinIva !== null && Number(producto.costoSinIva) > 0) {
+    const ivaPctBase = producto.ivaPct === undefined || producto.ivaPct === null ? RETAIL_IVA_PCT : Number(producto.ivaPct) || 0;
+    return Number(producto.costoSinIva) * (1 + ivaPctBase / 100);
+  }
   return Number(producto.costoManual) || 0;
 }
 
 function costoProductoFuente(producto) {
   if (producto.receta && Object.keys(producto.receta).length) return "receta";
   if (producto.insumoVinculadoId && state.insumos[producto.insumoVinculadoId]) return "insumo";
-  if (producto.costoManual > 0) return "manual";
+  if (producto.costoManual > 0 || Number(producto.costoSinIva) > 0) return "manual";
   return "sin_datos";
 }
 
@@ -4289,17 +4296,26 @@ const RETAIL_IVA_OPCIONES = [10.5, 21, 24];
 function calcPrecioRetail(producto, costoSinIvaOverride) {
   const p = producto || {};
   const ivaPctBase = p.ivaPct === undefined || p.ivaPct === null ? RETAIL_IVA_PCT : Number(p.ivaPct) || 0;
+  const gananciaPct = p.gananciaPct === undefined || p.gananciaPct === null ? RETAIL_GANANCIA_PCT : Number(p.gananciaPct) || 0;
+  // Producto vinculado a un insumo (caso "también se vende al público": la leche que se compra
+  // para producción y además se vende el sachet suelto). Ese costo se actualiza solo con cada
+  // factura nueva — sin esto, esos productos jamás sugerían cambiar el precio de venta por más
+  // que el insumo se encareciera. Ojo: precioEfectivoInsumo YA es el costo final tal cual se usa
+  // en calcCostoProducto (la columna "Costo actual" de la tabla) — ahí NO se le suma IVA aparte,
+  // así que acá tampoco: sumarlo de nuevo infla el sugerido en vez de arreglarlo.
+  if (costoSinIvaOverride === undefined && !(Number(p.costoSinIva) > 0) && p.insumoVinculadoId && state.insumos[p.insumoVinculadoId]) {
+    const costoTotal = precioEfectivoInsumo(p.insumoVinculadoId) * (Number(p.insumoVinculadoCantidad) || 1);
+    const ganancia = costoTotal * (gananciaPct / 100);
+    return { costoSinIva: costoTotal, ivaPct: 0, impuestos: 0, costoTotal, gananciaPct, ganancia, precioSugerido: costoTotal + ganancia };
+  }
   // Hay dos campos de costo por razones históricas: costoManual (el de siempre, con IVA incluido)
   // y costoSinIva (el neto, que llena la lista de precios). Si solo está el viejo, se deriva el
   // neto de ahí en vez de quedarse sin precio sugerido — que era el motivo por el que editar un
   // producto de retail a mano no devolvía ninguna sugerencia.
   const costoSinIva = costoSinIvaOverride !== undefined && costoSinIvaOverride !== null
     ? Number(costoSinIvaOverride) || 0
-    : (p.costoSinIva !== undefined && p.costoSinIva !== null && Number(p.costoSinIva) > 0
-        ? Number(p.costoSinIva)
-        : (Number(p.costoManual) || 0) / (1 + ivaPctBase / 100));
+    : (Number(p.costoSinIva) > 0 ? Number(p.costoSinIva) : (Number(p.costoManual) || 0) / (1 + ivaPctBase / 100));
   const ivaPct = ivaPctBase;
-  const gananciaPct = p.gananciaPct === undefined || p.gananciaPct === null ? RETAIL_GANANCIA_PCT : Number(p.gananciaPct) || 0;
   const impuestos = costoSinIva * (ivaPct / 100);
   const costoTotal = costoSinIva + impuestos;
   const ganancia = costoTotal * (gananciaPct / 100);
@@ -4693,11 +4709,20 @@ function renderProductosTable() {
     const { costo, margen, perdida, margenBajo, costoActualizado, alertaSuba } = a;
     const fuente = costoProductoFuente(p);
     const tieneReceta = Object.keys(p.receta || {}).length > 0;
+    // Dos modelos de precio, según cómo se obtiene el producto:
+    //  · Elaborado (tiene receta): modelo de producción 28/37/20/15.
+    //  · Reventa (se compra hecho): cadena de la hoja PLU — costo s/IVA + impuestos + % ganancia.
+    // Se calculan ACÁ (antes de armar costoCell) porque retail.costoSinIva da el valor efectivo
+    // para precargar el campo editable de costo, ya resuelto (venga de costoSinIva, de costoManual
+    // o del insumo vinculado) — así el campo siempre muestra el costo que realmente se está usando.
+    const esRetail = usaPrecioRetail(p);
+    const retail = esRetail ? calcPrecioRetail(p) : null;
+    const modelo = esRetail ? null : calcModeloCosteo(p);
     const costoCell = tieneReceta
       ? `<span class="${alertaSuba ? "precio-subio" : ""}">${fmtMoney(costo)}</span> <span class="text-muted" style="font-size:11px">(receta)</span>`
       : fuente === "insumo"
         ? `<span class="${alertaSuba ? "precio-subio" : ""}">${fmtMoney(costo)}</span> <div class="text-muted" style="font-size:11px">🔗 ${escapeHtml(state.insumos[p.insumoVinculadoId]?.nombre || "")}</div>`
-        : `<input type="number" step="0.01" min="0" class="form-input ${alertaSuba ? "precio-subio" : ""}" style="max-width:120px" value="${p.costoManual ?? ""}" placeholder="Costo manual" onchange="guardarCostoManualRapido('${id}', this.value)">`;
+        : `<input type="number" step="0.01" min="0" class="form-input ${alertaSuba ? "precio-subio" : ""}" style="max-width:120px" value="${retail && retail.costoSinIva > 0 ? retail.costoSinIva : ""}" placeholder="Costo sin IVA" onchange="guardarCostoSinIvaRapido('${id}', this.value)">`;
     const alertaSubaBadge = alertaSuba
       ? `<div><span class="badge ${alertaSuba.abrupta ? "badge-suba-abrupta" : "badge-suba"}">${alertaSuba.abrupta ? "🚨 SUBA ABRUPTA" : "🔺 Subió"} ${fmtPct(alertaSuba.pct)}</span></div>`
       : "";
@@ -4707,12 +4732,6 @@ function renderProductosTable() {
     const recetaAbierta = state.viewingProductoRecetaId === id;
     const esVersionMesa = p.nombre.toLowerCase().includes("(mesas)");
     const clasificacion = clasificarProducto(p);
-    // Dos modelos de precio, según cómo se obtiene el producto:
-    //  · Elaborado (tiene receta): modelo de producción 28/37/20/15.
-    //  · Reventa (se compra hecho): cadena de la hoja PLU — costo s/IVA + impuestos + % ganancia.
-    const esRetail = usaPrecioRetail(p);
-    const retail = esRetail ? calcPrecioRetail(p) : null;
-    const modelo = esRetail ? null : calcModeloCosteo(p);
     const sugeridoCrudo = retail && retail.costoSinIva > 0 ? retail.precioSugerido : (modelo ? modelo.precioSugerido : null);
     const precioSugeridoRedondeado = sugeridoCrudo !== null ? Math.round(sugeridoCrudo / 100) * 100 : null;
     const desgloseRetail = retail && retail.costoSinIva > 0
@@ -5063,12 +5082,15 @@ window.setRecetasBasesBusqueda = function(val) {
   render();
 };
 
-window.guardarCostoManualRapido = async function(id, val) {
-  const costoManual = val ? parseFloat(val) : null;
-  await update(ref(db, `costeo/productos/${id}`), { costoManual });
-  state.productos[id] = { ...state.productos[id], costoManual };
+window.guardarCostoSinIvaRapido = async function(id, val) {
+  const costoSinIva = val ? parseFloat(val) : null;
+  await update(ref(db, `costeo/productos/${id}`), { costoSinIva });
+  state.productos[id] = { ...state.productos[id], costoSinIva };
   showToast("✅ Costo guardado.", "success");
-  renderProductosTable();
+  // render() completo, no solo renderProductosTable(): igual que al editar el precio de venta, este
+  // cambio puede meter o sacar al producto de "🔄 Precios a actualizar", que se recalcula en la
+  // vista de afuera y no se refrescaba solo.
+  render();
 };
 
 // ── Precios editados, pendientes de pasar a FUDO ─────────────────────────────
