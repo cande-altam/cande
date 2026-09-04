@@ -251,7 +251,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-09-04 16:42";
+const APP_VERSION = "2026-09-04 17:04";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -3772,7 +3772,19 @@ function mantenimientoBases() {
 }
 function mantenimientoCostosProductos() {
   programarMantenimiento("costosProductos", async () => {
-    for (const [id, p] of Object.entries(state.productos)) {
+    for (let [id, p] of Object.entries(state.productos)) {
+      // Un producto vinculado a un insumo tiene que costear SIEMPRE con el precio de ese insumo —
+      // es la garantía de "un solo lugar" del botón "🛒 También se vende al público". Si además
+      // quedó con costoManual/costoSinIva cargado (de antes de vincularlo, o del formulario
+      // completo que permite cargar los dos campos a la vez), ese valor no se usa para nada pero
+      // puede confundir — y si el día de mañana se lo desvincula del insumo, resucitaría un costo
+      // viejo de la nada. Se limpia una sola vez por sesión, así el dato en la base siempre
+      // refleja lo que realmente se está usando.
+      if (p.insumoVinculadoId && state.insumos[p.insumoVinculadoId] && (p.costoManual != null || p.costoSinIva != null)) {
+        const limpio = { costoManual: null, costoSinIva: null };
+        await update(ref(db, `costeo/productos/${id}`), limpio);
+        state.productos[id] = p = { ...p, ...limpio };
+      }
       if (calcCostoProducto(p) > 0) await actualizarCostoHistorialProducto(id, p);
     }
   });
@@ -4299,13 +4311,16 @@ function calcPrecioRetail(producto, costoSinIvaOverride) {
   const p = producto || {};
   const ivaPctBase = p.ivaPct === undefined || p.ivaPct === null ? RETAIL_IVA_PCT : Number(p.ivaPct) || 0;
   const gananciaPct = p.gananciaPct === undefined || p.gananciaPct === null ? RETAIL_GANANCIA_PCT : Number(p.gananciaPct) || 0;
-  // Producto vinculado a un insumo (caso "también se vende al público": la leche que se compra
-  // para producción y además se vende el sachet suelto). Ese costo se actualiza solo con cada
-  // factura nueva — sin esto, esos productos jamás sugerían cambiar el precio de venta por más
-  // que el insumo se encareciera. Ojo: precioEfectivoInsumo YA es el costo final tal cual se usa
-  // en calcCostoProducto (la columna "Costo actual" de la tabla) — ahí NO se le suma IVA aparte,
-  // así que acá tampoco: sumarlo de nuevo infla el sugerido en vez de arreglarlo.
-  if (costoSinIvaOverride === undefined && !(Number(p.costoSinIva) > 0) && p.insumoVinculadoId && state.insumos[p.insumoVinculadoId]) {
+  // Producto vinculado a un insumo (caso "también se vende al público" y el de fiambres: la leche
+  // o el jamón cocido que se compran para producción y además se venden sueltos). Este chequeo va
+  // PRIMERO, antes que costoSinIva, a propósito y sin excepciones — igual que en calcCostoProducto
+  // y costoProductoFuente: es la garantía de "el costo se mantiene en un solo lugar" que promete
+  // el botón "🛒 También se vende al público". Si en algún momento el producto quedó con un
+  // costoSinIva/costoManual cargado además de estar vinculado (ej. se cargó a mano antes de
+  // vincularlo), ese valor queda viejo y NO tiene que ganarle al insumo — si le ganara, el precio
+  // sugerido se quedaría congelado para siempre por más que el insumo se encareciera con cada
+  // factura nueva, exactamente el bug que se busca evitar acá.
+  if (costoSinIvaOverride === undefined && p.insumoVinculadoId && state.insumos[p.insumoVinculadoId]) {
     const costoTotal = precioEfectivoInsumo(p.insumoVinculadoId) * (Number(p.insumoVinculadoCantidad) || 1);
     const ganancia = costoTotal * (gananciaPct / 100);
     return { costoSinIva: costoTotal, ivaPct: 0, impuestos: 0, costoTotal, gananciaPct, ganancia, precioSugerido: costoTotal + ganancia };
@@ -4544,8 +4559,13 @@ window.guardarProducto = async function() {
   const retailCalc = costoSinIva ? calcPrecioRetail({ ivaPct, gananciaPct }, costoSinIva) : null;
   const data = {
     nombre, precioVenta, receta,
-    costoManual: retailCalc ? retailCalc.costoTotal : costoManual,
-    costoSinIva, ivaPct, gananciaPct,
+    // Vinculado a un insumo: el costo se mantiene en UN solo lugar (el insumo), así que estos dos
+    // campos se fuerzan a null en vez de guardar lo que haya quedado escrito en el formulario — si
+    // no, un costo cargado antes de vincularlo (o cargado por error con el insumo ya elegido)
+    // queda ahí sin usarse, listo para confundir a cualquiera que mire el dato crudo.
+    costoManual: insumoVinculadoId ? null : (retailCalc ? retailCalc.costoTotal : costoManual),
+    costoSinIva: insumoVinculadoId ? null : costoSinIva,
+    ivaPct, gananciaPct,
     categoria, insumoVinculadoId, insumoVinculadoCantidad
   };
   try {
