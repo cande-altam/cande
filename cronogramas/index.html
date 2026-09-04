@@ -836,6 +836,17 @@ function peopleFor(role,loc){
 
 /* ---------------- STATE ---------------- */
 function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{},expertos:[],expertoTurno:{},stickyNotes:[]};}
+// múltiples semanas en simultáneo: se puede tener septiembre entero cargado, cada semana con sus
+// propias asignaciones/ausencias/refuerzos, y saltar de una a otra sin que se pisen entre sí. Lo que
+// SÍ es común a todas las semanas (quién trabaja acá, sus puestos, reglas fijas, incompatibilidades,
+// quién es Experto Candela) vive aparte, en la "config" — cambiarlo se ve reflejado en todas las
+// semanas, como corresponde a un dato de la persona/local y no de una semana puntual.
+const WEEK_FIELDS=["label","weekStart","assign","abs","ex","rules","comments","expertoTurno"];
+const FALLBACK_WEEK_KEY="sin-fecha";
+function weekKeyOf(s){return (s&&s.weekStart||"").trim()||FALLBACK_WEEK_KEY;}
+function weekPart(s){const o={};WEEK_FIELDS.forEach(k=>o[k]=s[k]);return o;}
+function configPart(s){const o={};Object.keys(defaultState()).forEach(k=>{if(!WEEK_FIELDS.includes(k))o[k]=s[k];});return o;}
+function blankWeek(weekStart){return {label:"",weekStart:weekStart||"",assign:{},abs:[],ex:[],rules:[],comments:{},expertoTurno:{}};}
 // las reglas "semilla" (seedFixedRules, seedCocinaComprasCajero) se cargan una sola vez por tag.
 // Antes se detectaba "ya cargada" mirando si quedaba algún turno fijo con ese tag — pero si borrabas
 // el grupo ENTERO, no quedaba ninguno, y el sistema lo tomaba como "todavía no cargada" y lo volvía a
