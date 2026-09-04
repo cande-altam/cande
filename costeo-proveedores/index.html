@@ -251,7 +251,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-09-04 16:34";
+const APP_VERSION = "2026-09-04 16:42";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -318,6 +318,8 @@ const state = {
   mostrarCambiosPrecio: false,
   mostrarPendientesFudo: false,
   pendientesFudo: {},
+  mostrarUnificarProductos: false,
+  gruposProductosDescartados: new Set(),
   proveedoresBusqueda: "",
   insumosBusqueda: "",
   recetasBasesBusqueda: "",
@@ -4344,6 +4346,133 @@ function calcModeloCosteo(producto) {
   };
 }
 
+// =============================================================
+// UNIFICAR PRODUCTOS DE RETAIL SIMILARES (variantes de sabor / familias de marca)
+// =============================================================
+// El catálogo de retail (bebidas, lácteos, almacén) suele terminar con un producto por cada
+// sabor/variante cargado por separado (ej. "Ades de manzana x 200" y "Ades de naranja x 200 cc")
+// o por cada marca de una misma familia de gaseosas (Coca Cola, Coca Cola Zero, Fanta, Fanta
+// Light, Sprite, Sprite Zero), cuando conviene un solo producto por medida. Igual que con los
+// insumos, esto NUNCA fusiona solo: solo detecta candidatos, se revisan y se confirman a mano.
+
+// Familias de marca conocidas: variantes que a igual medida se agrupan bajo un nombre canónico
+// aunque no compartan ninguna palabra entre sí (a diferencia de buscarVariantesMarca, que agrupa
+// por una base de nombre compartida).
+const FAMILIAS_RETAIL_PROD = [
+  { canonico: "Coca Cola", patrones: [/coca[\s-]*cola/i, /\bfanta\b/i, /\bsprite\b/i] }
+];
+
+// Extrae la medida de un nombre de producto ("x 200", "x 200 cc", "1500cc", "1,5 L", "1 kg").
+// Devuelve null si no se detectó ninguna: sin medida no hay con qué comparar "misma medida", y
+// "siempre respetando la medida" es una condición explícita del pedido. Ojo: muchos nombres reales
+// solo traen "x 200" sin aclarar la unidad — se acepta igual (con esPeso=false por default) y se
+// agrupa por el número solo, no por la unidad, así "x 200" y "x 200 cc" caen en el mismo grupo.
+const MEDIDA_UNIDAD_RE = "(litros?|lts?|kgs?|grs?|cc|ml|l|g)";
+function extraerMedidaProducto(nombre) {
+  const texto = String(nombre || "");
+  let m = texto.match(new RegExp(`x\\s*(\\d+(?:[.,]\\d+)?)\\s*(?:${MEDIDA_UNIDAD_RE})?\\b`, "i"));
+  if (!m) m = texto.match(new RegExp(`(\\d+(?:[.,]\\d+)?)\\s*${MEDIDA_UNIDAD_RE}\\b`, "i"));
+  if (!m) return null;
+  let valor = parseFloat(m[1].replace(",", "."));
+  const unidad = String(m[2] || "").toLowerCase();
+  const esPeso = /^(kg|kgs|gr|grs|g)/.test(unidad);
+  if (/^(l|lt|lts|litro|litros|kg|kgs)$/.test(unidad)) valor *= 1000;
+  return { valor, esPeso, texto: m[0] };
+}
+
+function medidaTextoProducto(medida) {
+  if (medida.esPeso) return medida.valor % 1000 === 0 ? `${medida.valor / 1000} kg`.replace(".", ",") : `${medida.valor} gr`;
+  return medida.valor % 1000 === 0 ? `${medida.valor / 1000} L`.replace(".", ",") : `${medida.valor} cc`;
+}
+
+// Reutiliza PALABRAS_TIPO_NO_MARCA (ya probada con insumos: mantiene separadas "Leche entera" y
+// "Leche descremada") para no agrupar como "variante de sabor" dos productos que en realidad son
+// distintos. Se descartan los conectores (PALABRAS_VACIAS) porque esos SÍ aparecen en casi
+// cualquier nombre ("Ades DE manzana") y no delatan nada.
+function tieneDescriptorDistinto(nombreSinMedida) {
+  const palabras = stripAccentsCosteo(nombreSinMedida).toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean);
+  return palabras.some(w => PALABRAS_TIPO_NO_MARCA.has(w) && !PALABRAS_VACIAS.has(w));
+}
+
+function buscarProductosParaUnificar() {
+  const entries = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
+    .filter(([, p]) => clasificarProducto(p) === "retail");
+  const grupos = {};
+  for (const [id, p] of entries) {
+    const medida = extraerMedidaProducto(p.nombre);
+    if (!medida) continue;
+    const familia = FAMILIAS_RETAIL_PROD.find(f => f.patrones.some(re => re.test(p.nombre)));
+    if (familia) {
+      const key = `familia:${familia.canonico}:${medida.valor}`;
+      (grupos[key] ||= { canonico: `${familia.canonico} ${medidaTextoProducto(medida)}`, items: [] }).items.push({ id, p });
+      continue;
+    }
+    const sinMedida = p.nombre.replace(medida.texto, " ").trim();
+    if (tieneDescriptorDistinto(sinMedida)) continue;
+    const primera = stripAccentsCosteo(p.nombre.trim().split(/\s+/)[0] || "").toLowerCase();
+    if (primera.length < 3) continue;
+    const key = `variante:${primera}:${medida.valor}`;
+    const nombreBase = primera.charAt(0).toUpperCase() + primera.slice(1);
+    (grupos[key] ||= { canonico: `${nombreBase} ${medidaTextoProducto(medida)}`, items: [] }).items.push({ id, p });
+  }
+  return Object.entries(grupos)
+    .filter(([, g]) => g.items.length >= 2)
+    .map(([clave, g]) => ({ clave, ...g }));
+}
+
+window.toggleUnificarProductos = function() {
+  state.mostrarUnificarProductos = !state.mostrarUnificarProductos;
+  render();
+};
+
+window.descartarGrupoUnificar = function(clave) {
+  state.gruposProductosDescartados.add(clave);
+  render();
+};
+
+// Lee el grupo directo del DOM (nombre final elegido y qué radio quedó marcado como base), igual
+// que el resto de los formularios inline de esta pantalla — evita mantener un estado de selección
+// aparte para algo que se arma y se resuelve en el momento.
+window.confirmarFusionProducto = function(btn) {
+  const cont = btn.closest("[data-grupo]");
+  if (!cont) return;
+  const clave = cont.dataset.grupo;
+  const nombreFinal = cont.querySelector('[data-role="nombre-final"]')?.value || "";
+  const radios = [...cont.querySelectorAll("input[type=radio]")];
+  const ids = radios.map(r => r.value);
+  const survivorId = radios.find(r => r.checked)?.value;
+  if (!survivorId) return;
+  return window.fusionarProductosGrupo(ids, survivorId, nombreFinal, clave);
+};
+
+// Fusiona 2+ productos de retail candidatos a ser el mismo producto: el que queda conserva su
+// propio costo y precio de venta (los del producto elegido como base), los demás se eliminan.
+// A diferencia de fusionarInsumos, acá no hay precios por proveedor/historial que combinar ni
+// recetas que remapear (nada referencia productos por id), así que alcanza con renombrar el que
+// queda y borrar el resto.
+window.fusionarProductosGrupo = async function(idsSeleccionados, survivorId, nombreFinal, clave) {
+  const ids = idsSeleccionados.filter(id => state.productos[id]);
+  if (ids.length < 2 || !ids.includes(survivorId)) return;
+  const survivor = state.productos[survivorId];
+  const nombre = String(nombreFinal || "").trim() || survivor.nombre;
+  const others = ids.filter(id => id !== survivorId);
+  if (!confirm(`¿Unificar ${ids.length} productos en "${nombre}"? Los otros ${others.length} se eliminan. El costo y precio de venta que va a quedar son los de "${survivor.nombre}" — revisalos después si hace falta.`)) return;
+
+  await update(ref(db, `costeo/productos/${survivorId}`), { nombre });
+  state.productos[survivorId] = { ...survivor, nombre };
+  for (const id of others) {
+    await remove(ref(db, `costeo/productos/${id}`));
+    delete state.productos[id];
+    if (state.pendientesFudo[id]) {
+      await remove(ref(db, `costeo/pendientesFudo/${id}`));
+      delete state.pendientesFudo[id];
+    }
+  }
+  if (clave) state.gruposProductosDescartados.add(clave);
+  showToast(`✅ Unificados en "${nombre}".`, "success");
+  render();
+};
+
 // Snapshots a producto's computed cost into costoHistorial (like insumo price historial),
 // so the Análisis view can compare cost variation over time — at most once per day, and only
 // when the cost actually moved, since this piggybacks on viewing Análisis rather than a cron.
@@ -4508,6 +4637,7 @@ function renderProductosView(container) {
   mantenimientoCostosProductos();
   const cambiosPrecio = productosConCambioDePrecio();
   const pendientesFudo = pendientesFudoOrdenados();
+  const gruposUnificar = buscarProductosParaUnificar().filter(g => !state.gruposProductosDescartados.has(g.clave));
 
   container.innerHTML = `
     <div class="section-header">
@@ -4518,9 +4648,38 @@ function renderProductosView(container) {
       ${!editing ? `<div class="row-actions">
         <button class="btn ${pendientesFudo.length ? "btn-primary" : "btn-ghost"}" onclick="togglePendientesFudo()" title="Los precios de venta que editaste, para copiarlos fácil en FUDO">📤 Precios editados${pendientesFudo.length ? ` (${pendientesFudo.length})` : ""}</button>
         <button class="btn btn-turq" onclick="toggleCambiosPrecio()" title="Los productos cuyo precio de venta quedó distinto del sugerido, para ir a actualizarlos en la caja">🔄 Precios a actualizar${cambiosPrecio.length ? ` (${cambiosPrecio.length})` : ""}</button>
+        <button class="btn ${gruposUnificar.length ? "btn-primary" : "btn-ghost"}" onclick="toggleUnificarProductos()" title="Productos de retail que probablemente sean el mismo (variante de sabor o familia de marca), para revisar y unificar">🧃 Unificar similares${gruposUnificar.length ? ` (${gruposUnificar.length})` : ""}</button>
         <button class="btn btn-primary" onclick="abrirFormProducto()">+ Nuevo producto</button>
       </div>` : ""}
     </div>
+    ${!editing && state.mostrarUnificarProductos ? `
+    <div class="section-block" style="border-color:var(--terra)">
+      <div class="section-header">
+        <div>
+          <div class="section-title">🧃 Unificar productos similares</div>
+          <div class="text-muted" style="font-size:12px">Productos de retail que probablemente sean el mismo con distinto sabor (ej. "Ades de manzana" y "Ades de naranja") o la misma familia de gaseosas (Coca Cola, Fanta, Sprite y sus variantes Zero/Light), agrupados por igual medida. Elegí cuál queda como base — su costo y precio de venta son los que se conservan —, ajustá el nombre final si hace falta y confirmá. Nada se fusiona sin que lo confirmes acá.</div>
+        </div>
+      </div>
+      ${gruposUnificar.length ? gruposUnificar.map(g => `
+        <div class="section-block" data-grupo="${escapeHtml(g.clave)}" style="margin-top:10px">
+          <div class="form-row">
+            <div class="form-group" style="max-width:280px"><label class="form-label">Nombre final</label><input class="form-input" data-role="nombre-final" value="${escapeHtml(g.canonico)}"></div>
+          </div>
+          <div class="data-table-wrap"><table class="data-table">
+            <thead><tr><th>Usar como base</th><th>Producto</th><th>Precio venta</th><th>Costo actual</th></tr></thead>
+            <tbody>${g.items.map(({ id, p }, idx) => `<tr>
+              <td><input type="radio" name="survivor-${escapeHtml(g.clave)}" value="${id}" ${idx === 0 ? "checked" : ""}></td>
+              <td>${escapeHtml(p.nombre)}</td>
+              <td>${fmtMoney(p.precioVenta || 0)}</td>
+              <td>${fmtMoney(calcCostoProducto(p))}</td>
+            </tr>`).join("")}</tbody>
+          </table></div>
+          <div class="row-actions" style="margin-top:8px">
+            <button class="btn btn-primary btn-sm" onclick="confirmarFusionProducto(this)">🔀 Fusionar</button>
+            <button class="btn btn-ghost btn-sm" onclick="descartarGrupoUnificar('${escapeHtml(g.clave)}')">No son lo mismo</button>
+          </div>
+        </div>`).join("") : `<div class="empty-state">✅ No hay grupos para revisar por ahora.</div>`}
+    </div>` : ""}
     ${!editing && state.mostrarPendientesFudo ? `
     <div class="section-block" style="border-color:var(--terra)">
       <div class="section-header">
