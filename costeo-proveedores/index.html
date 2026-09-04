@@ -251,7 +251,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-09-04 14:02";
+const APP_VERSION = "2026-09-04 15:59";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -4534,7 +4534,7 @@ function renderProductosView(container) {
       <div class="section-header">
         <div>
           <div class="section-title">🔄 Precios pendientes de actualizar en la caja</div>
-          <div class="text-muted" style="font-size:12px">Cambió el costo, así que el precio sugerido se movió — pero el precio de venta sigue como estaba hasta que lo cambies en FUDO. Esta es la lista de lo que hay que tocar.</div>
+          <div class="text-muted" style="font-size:12px">Cambió el costo, así que el precio sugerido se movió — pero el precio de venta sigue como estaba hasta que lo cambies en FUDO. Esta es la lista de lo que hay que tocar. El campo "Precio nuevo" ya viene precargado con el sugerido: tocá <strong>✓</strong> para aceptarlo tal cual, o escribí otro valor vos y guardalo con Tab/Enter.</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="descargarCambiosPrecio()" title="Descarga un CSV que se abre en Excel">📤 Descargar CSV</button>
       </div>
@@ -4544,7 +4544,12 @@ function renderProductosView(container) {
           <td>${escapeHtml(f.nombre)}<div class="text-muted" style="font-size:11px">${escapeHtml(f.tipo)}${f.costoSinIva !== null ? ` · ${fmtMoney(f.costoSinIva)} + IVA + ${f.gananciaPct}%` : ""}</div></td>
           <td>${fmtMoney(f.costo)}</td>
           <td>${fmtMoney(f.precioActual)}</td>
-          <td><strong>${fmtMoney(f.precioSugerido)}</strong></td>
+          <td>
+            <div style="display:flex;gap:4px;align-items:center">
+              <input type="number" step="1" min="0" class="form-input" style="max-width:100px" value="${f.precioSugerido}" onchange="guardarPrecioVentaRapido('${f.id}', this.value)" title="Precio que se va a guardar — viene precargado con el sugerido, pero podés poner otro">
+              <button type="button" class="btn btn-turq btn-sm btn-icon" onclick="guardarPrecioVentaRapido('${f.id}', ${f.precioSugerido})" title="Aplicar el precio sugerido tal cual, sin escribir nada">✓</button>
+            </div>
+          </td>
           <td><span class="badge ${f.diferencia > 0 ? "badge-suba" : "badge-baja"}">${f.diferencia > 0 ? "🔺" : "🔻"} ${fmtMoney(Math.abs(f.diferencia))} (${fmtPct(f.pct)})</span></td>
         </tr>`).join("")}</tbody>
       </table></div>` : `<div class="empty-state">✅ No hay precios pendientes: todos los precios de venta coinciden con el sugerido.</div>`}
@@ -5101,7 +5106,11 @@ window.guardarPrecioVentaRapido = async function(id, val) {
   await update(ref(db, `costeo/productos/${id}`), { precioVenta });
   state.productos[id] = { ...state.productos[id], precioVenta };
   showToast("✅ Precio de venta guardado.", "success");
-  renderProductosTable();
+  // render() completo, no solo renderProductosTable(): el precio editado puede sacar (o meter) a
+  // este producto de "🔄 Precios a actualizar", que se calcula en la vista de afuera y no se
+  // refrescaba solo. Sin esto, editar el precio DESDE ese panel dejaba la fila vieja a la vista
+  // hasta que se cambiaba de pestaña y se volvía — parecía que no había guardado nada.
+  render();
 };
 
 window.quitarPendienteFudo = async function(id) {
