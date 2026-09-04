@@ -1036,6 +1036,7 @@ let state = {
   localTab: 0,
   areaTab: 'panaderia',
   pedidos: {},
+  pedidosTs: {},   // { [fecha]: { [localKey]: { [area]: { [pid]: tsMillis } } } } — hora de carga por producto
   productos: {},
   productActive: {},
   updatedProducts: {},
@@ -1141,6 +1142,7 @@ function safeRender(){
 async function saveQty(local, area, pid, val) {
   const numVal = parseFloat(val);
   const path = `pedidos/${todayKey()}/${fbKey(local)}/${area}/${pid}`;
+  const tsPath = `pedidosTs/${todayKey()}/${fbKey(local)}/${area}/${pid}`;
   console.log(`💾 Guardando: ${path} = ${val} (num: ${numVal})`);
 
   // Lock granular: el listener onValue no pisará este path mientras esté guardando
@@ -1164,8 +1166,10 @@ async function saveQty(local, area, pid, val) {
         await remove(ref(db, path));
         console.log(`🗑 Eliminado: ${path}`);
       }
+      await remove(ref(db, tsPath));   // sin cantidad → sin marca de hora
     } else {
       await set(ref(db, path), numVal);
+      await set(ref(db, tsPath), Date.now());   // registrar la hora de carga
       console.log(`✅ Guardado: ${path} = ${numVal}`);
       if (isClosed(area)) {
         await set(ref(db, `alertas/${area}/${pid}`), { ts: Date.now(), local });
@@ -1246,6 +1250,14 @@ function subscribeDateListeners() {
   }));
   state._dateUnsubs.push(onValue(ref(db, `pedidos/${yKey}`), snap => {
     state.pedidos[yKey] = snap.val() || {};
+    if (!state.loading) safeRender();
+  }));
+  state._dateUnsubs.push(onValue(ref(db, `pedidosTs/${tKey}`), snap => {
+    state.pedidosTs[tKey] = snap.val() || {};
+    if (!state.loading) safeRender();
+  }));
+  state._dateUnsubs.push(onValue(ref(db, `pedidosTs/${yKey}`), snap => {
+    state.pedidosTs[yKey] = snap.val() || {};
     if (!state.loading) safeRender();
   }));
   state._dateUnsubs.push(onValue(ref(db, `insumosPedidos/${tKey}`), snap => {
@@ -2011,14 +2023,18 @@ function renderHistorialFecha(dateKey) {
   );
   if (!hasData) return `<div class="empty-state">No hay pedidos registrados para esta fecha.</div>`;
 
+  const tsDate = state.pedidosTs?.[dateKey] || {};
+  const fmtHora = ts => ts ? new Date(Number(ts)).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}) : '';
   let html = '';
   LOCALES.forEach(local => {
     const localData = pedidosDate[fbKey(local)] || {};
+    const localTs = tsDate[fbKey(local)] || {};
     const localHasData = Object.values(localData).some(a => a && Object.keys(a).length > 0);
     if (!localHasData) return;
     html += `<div class="section-block" style="margin-bottom:16px"><div style="font-size:16px;font-weight:500;margin-bottom:16px">${local}</div>`;
     AREAS.forEach(area => {
       const areaData = localData[area.key] || {};
+      const areaTs = localTs[area.key] || {};
       const catalogProds = state.productos[area.key] || [];
       const catalogIds = new Set(catalogProds.map(p => p.id));
       // Incluye productos del catálogo (activos o no) + productos pedidos que ya no están en catálogo
@@ -2028,10 +2044,18 @@ function renderHistorialFecha(dateKey) {
       const allProds = [...catalogProds, ...extraItems];
       const items = allProds.filter(p => Number(areaData[p.id]) > 0);
       if (items.length === 0) return;
-      html += `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--gray);margin-bottom:6px">${area.icon} ${area.label}</div>`;
+      // Rango horario de carga del pedido de esta área/local
+      const tsVals = items.map(p => Number(areaTs[p.id])).filter(t => t > 0);
+      let horaTxt = '';
+      if (tsVals.length) {
+        const min = Math.min(...tsVals), max = Math.max(...tsVals);
+        horaTxt = (fmtHora(min) === fmtHora(max)) ? `🕐 ${fmtHora(max)}` : `🕐 ${fmtHora(min)}–${fmtHora(max)}`;
+      }
+      html += `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--gray);margin-bottom:6px;display:flex;justify-content:space-between;gap:8px"><span>${area.icon} ${area.label}</span>${horaTxt?`<span style="color:var(--terra)">${horaTxt}</span>`:''}</div>`;
       html += `<div style="display:flex;flex-wrap:wrap;gap:6px">`;
       items.forEach(p => {
-        html += `<span style="background:var(--cream);border:1px solid var(--cream-dark);border-radius:6px;padding:4px 10px;font-size:12px">${p.name}: <strong>${fmtQty(Number(areaData[p.id]))}</strong> ${p.unit}</span>`;
+        const h = fmtHora(areaTs[p.id]);
+        html += `<span title="${h?'Cargado '+h:'Sin hora registrada'}" style="background:var(--cream);border:1px solid var(--cream-dark);border-radius:6px;padding:4px 10px;font-size:12px">${p.name}: <strong>${fmtQty(Number(areaData[p.id]))}</strong> ${p.unit}${h?` <span style="color:var(--gray)">· ${h}</span>`:''}</span>`;
       });
       html += `</div></div>`;
     });
@@ -2527,10 +2551,12 @@ window.copiarDeAyer = async function(local, area) {
 window.setHistorialDate = function(dateKey) {
   state.historialDate = dateKey;
   const needsPedidos = !state.pedidos[dateKey];
+  const needsTs = !state.pedidosTs[dateKey];
   const needsInsumos = !state.historialInsumos[dateKey];
-  if (needsPedidos || needsInsumos) {
+  if (needsPedidos || needsInsumos || needsTs) {
     const fetches = [];
     if (needsPedidos) fetches.push(get(ref(db, `pedidos/${dateKey}`)).then(s => { state.pedidos[dateKey] = s.val() || {}; }));
+    if (needsTs) fetches.push(get(ref(db, `pedidosTs/${dateKey}`)).then(s => { state.pedidosTs[dateKey] = s.val() || {}; }));
     if (needsInsumos) fetches.push(get(ref(db, `insumosPedidos/${dateKey}`)).then(s => { state.historialInsumos[dateKey] = s.val() || {}; }));
     Promise.all(fetches).then(() => render());
   } else {
