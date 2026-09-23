@@ -1,180 +1,176 @@
-# Herramientas digitales — Candela Café & Patisserie
+# Herramientas digitales
 
-> **Documento común.** Esta es la fuente única de verdad para URLs, PINs y horarios
-> límite. Si algo cambia, se cambia **acá primero** y después en los manuales que
-> lo repiten.
+*Versión 1.1 · Septiembre 2026 · Aplica a todos los roles que registran ventas o cargan pedidos*
 
----
+## Para qué sirve
 
-## Las tres herramientas
+Es **el único lugar** donde está el paso a paso de cada herramienta. Los manuales de
+cada rol dicen qué herramienta usa ese rol y remiten acá.
 
-| # | Herramienta | Para qué sirve | Quién la usa |
-|---|---|---|---|
-| 1 | **FUDO** | Punto de venta: ventas, caja, stock, cuentas corrientes | Cajeros, Vendedores, Mozos, Baristas |
-| 2 | **Web Pedidos de Clientes**<br>`pedidos-de-clientes-cc.netlify.app` | Encargues y pedidos a futuro (tortas, catering, eventos) | Cajeros, Vendedores, Mozos |
-| 3 | **Web Pedidos de Producción**<br>`pedidos-produccion.netlify.app` | Dos cosas distintas: el **pedido de producción** (qué hay que producir) y el **pedido de insumos** (qué hay que comprar) | **Todas las áreas y los dos locales** |
-
-> **Baristas:** la Web de Pedidos de Clientes **no es de tu área** — esa la usan
-> caja y ventas.
+> [!regla]
+> ### Lo que no está en el sistema, no existe.
+> - **Nada se entrega sin registrar en FUDO.** Ninguna venta, ningún producto.
+> - **Los pedidos van a la web.** No se usan papeles ni WhatsApp para esto.
+> - **Un pedido con seña deja dos registros:** el pedido en la Web de Pedidos de
+>   Clientes y el cobro en FUDO. Los dos son obligatorios.
 
 ---
 
-## Horarios límite — Pedidos de Producción
+## 1. Las herramientas
 
-Se carga **una vez por turno**, antes del horario límite de cada área.
-
-| Área | Cargar antes de |
-|---|---|
-| Panadería | **9:00 hs** |
-| Pastelería | **16:00 hs** |
-| Especialidades | **21:00 hs** |
-| Facturería | **21:00 hs** |
-| Sandwiches | **21:00 hs** |
-| Cocina San Luis | **21:00 hs** |
-
-> ℹ️ **Sobre Cocina San Luis:** forma parte del local San Luis, no es un área de
-> producción aparte. Funciona de forma independiente **solo para pedir insumos** —
-> por eso aparece en esta lista con su propio horario. No tiene cuadra de producción
-> ni personal propio: la operación es del local San Luis.
-
-> ⚠️ **Si no cargás a tiempo, producción no puede cumplir.**
-> El pedido es para el **día siguiente**, salvo que el Experto del turno indique otra cosa.
-> Si te olvidaste, avisá al Experto del turno **inmediatamente** — no lo dejes pasar.
-
----
-
-## Pedidos de insumos
-
-> ### 🔑 Todas las áreas hacen su propio pedido de insumos, todos los días.
-> No hay excepciones. **Lo que un área no carga, nadie lo compra.**
-
-No confundir con el pedido de producción: son **dos cosas distintas dentro de la misma
-web**.
-
-| | **Pedido de producción** | **Pedido de insumos** |
+| Herramienta | Para qué sirve | Quién la usa |
 |---|---|---|
-| **Para qué** | Decirle a producción **cuánto preparar** | Decirle a Compras **qué falta comprar** |
-| **Quién lo carga** | Los locales de venta | **Todas las áreas y los dos locales** |
-| **Qué se pide** | Productos terminados | Insumos, materias primas y elementos |
-| **Cada cuánto** | Una vez por turno | **Todos los días** |
+| **FUDO** | Punto de venta: ventas, caja, stock, cuentas corrientes, gastos | Cajeros, vendedores, mozos, baristas, cocina |
+| **Web de Pedidos de Producción** — `pedidos-produccion.netlify.app` | Pedido diario a cada área de producción, pedido de insumos, guía de producción y guía de envío | Todos los roles de venta, cocina, producción y Compras |
+| **Web de Pedidos de Clientes** — `pedidos-de-clientes-cc.netlify.app` | Encargos y pedidos a futuro: tortas, catering, eventos. Sección Envíos | Cajeros, vendedores, mozos, cocina, producción, Compras, ayudante de cocina |
+| **PedidosYa** — `web.restaurant-partners.com` | Pedidos de delivery | Cajeros, cocina |
+| **Cheaf** — `admin.cheaf.com/dashboard` | Venta de surtido económico y pedidos por la app | Cajeros, cocina |
 
-### Paso a paso
+---
 
-1. Ingresá a **`pedidos-produccion.netlify.app`** → **Pedido de insumos**
-2. Seleccioná **el local o el área** que corresponda
-3. Cargá **todos los insumos, elementos o materias que falten**
-4. Por cada insumo indicá **cantidad** y **prioridad**. También podés agregar
-   **comentarios aclaratorios**
+## 2. Horarios límite
 
-### Las tres prioridades
-
-| Color | Prioridad | Qué significa |
+| Pedido | Hora límite | Aclaración |
 |---|---|---|
-| 🔴 **Rojo** | **Urgente** | Se necesita **hoy**. Compras tiene que conseguirlo sí o sí |
-| 🟡 **Amarillo** | **Media** | Se está por acabar. Se compra si el recorrido lo permite |
-| 🟢 **Verde** | **Baja** | Reposición normal. Puede esperar al próximo recorrido |
+| **Panadería** | **9:00 hs** | |
+| **Pastelería** | **16:00 hs** | |
+| **Especialidades · Facturería · Sándwiches** | **21:00 hs** | |
+| **Cocina de los locales** (producción e insumos) | **21:00 hs** | |
+| **Pedido de insumos** de cualquier área | **9:00 hs** del día de compra | A las 9:00 Compras arma el recorrido. Lo ideal es cargarlo **al cierre de tu turno** |
 
-> ℹ️ **En la pantalla los colores aparecen con otro nombre:** verde figura como
-> *"Stock OK"*, amarillo como *"Stock bajo"* y rojo como *"Urgente"*. Es la misma
-> escala — el color es lo que manda.
+> [!atencion]
+> ### El horario límite es el tope, no la hora de hacerlo.
+> Los pedidos de las 21:00 se pueden cargar hasta el final del turno. Conviene hacerlo
+> en el momento más tranquilo, no en plena salida de comandas: **un pedido cargado
+> apurado es un pedido mal cargado.**
 
-### Los comentarios
-
-Sirven para aclararle algo **a la persona de Compras**: una marca específica, un
-tamaño, un proveedor preferido, cualquier condición particular.
-
-> **Usalos.** Un comentario a tiempo evita que vuelva la compra equivocada.
-
-### Importante
-
-- **Cargá el pedido antes de las 9:00 hs** — a esa hora Compras revisa el pedido
-  completo y arma el recorrido del día. Lo que entre después, probablemente quede
-  para mañana.
-- **Un insumo en rojo no puede quedar sin cargar.** Si te olvidaste y lo necesitás
-  hoy, avisá directamente a Compras además de cargarlo.
-- Lo que Compras no llega a comprar queda como **pendiente** y aparece solo en el
-  pedido del día siguiente.
-
-> 📖 Qué hace Compras con esto: **[Manual de Compras](../produccion/compras.md)**.
+**El pedido es para el día siguiente**, salvo que el Experto del turno indique otra
+cosa. Si te olvidaste de cargarlo, **avisale al Experto del turno en ese momento**.
 
 ---
 
-## PINs por área — Web Pedidos de Clientes
+## 3. Cargar un pedido de producción
 
-Al cargar productos, el sistema pide un PIN por cada área:
+**Qué es:** le dice a cada área de la cuadra cuánto tiene que producir para tu local.
 
-| Área | PIN |
+1. Entrá a `pedidos-produccion.netlify.app` → **Carga de pedidos**.
+2. Elegí el local: **San Luis** o **SLA 5.0**.
+3. Elegí el área (por ejemplo, Panadería).
+4. Cargá la cantidad de cada producto.
+5. Revisá el pedido.
+6. Tocá **Confirmar pedido**. Producción lo ve en ese momento.
+
+### Cómo calcular las cantidades
+
+No se pide de memoria. Antes de cargar, mirá en FUDO:
+
+| Qué mirás | Dónde |
 |---|---|
-| Panadería | `1111` |
-| Pastelería | `2222` |
-| Facturería | `3333` |
-| Especialidades | `4444` |
-| Sandwiches | `5555` |
-| **PIN maestro** (ver todo) | `1412` |
+| **Lo que se vendió** el día anterior y el mismo día de la semana pasada | FUDO → Reportes |
+| **Lo que sobró o se tiró** | FUDO → Movimientos de stock |
 
----
+Y ajustá según el día:
 
-## Paso a paso — Cargar un Pedido de Producción
-
-1. Abrí el navegador e ingresá a **`pedidos-produccion.netlify.app`**
-2. Seleccioná el local: **SLA 5.0** o **San Luis**
-3. Seleccioná el área (ej: Panadería)
-4. Ingresá las cantidades de cada producto
-5. Revisá el pedido
-6. Tocá **"Confirmar pedido"**
-
-✅ Producción puede ver el pedido de inmediato desde su pantalla.
-
-### Guía de envío
-
-Dice **qué mercadería va a qué local** y **en qué cantidad**. La usa quien prepara y
-traslada mercadería entre la cuadra de producción y los locales de venta.
-
-1. Ingresá a **`pedidos-produccion.netlify.app`**
-2. Tocá **"Guía de envío"** en el menú
-
-> ⚠️ **Las cantidades se chequean acá, no de memoria.** Es lo que evita que un local
-> se quede corto y el otro con sobrante.
+| Momento | Criterio |
+|---|---|
+| **Martes y miércoles** | Demanda moderada. Pedido estándar según el historial |
+| **Lunes, jueves y viernes** | Más movimiento. Más cantidad en los productos de alta rotación |
+| **Sábados y domingos** | Pico de ventas. Pedido ampliado, sobre todo panadería y cafetería |
+| **Temporada alta** (verano, fiestas) | Revisarlo con Gerencia |
+| **Temporada baja** | Bajar cantidades para no desperdiciar |
+| **Feriados, clima, lluvia, frío o calor** | Cambian la demanda: tenelos en cuenta |
+| **Fechas especiales** (Día de la Madre, Pascua) | La demanda puede ser mucho mayor |
 
 ### Ver la guía de producción
 
-1. Ingresá a **`pedidos-produccion.netlify.app`**
-2. Seleccioná el local
-3. Tocá **"Guía"** o **"Cuadra"** en el menú
-4. Podés imprimir o consultar desde la pantalla
+1. Entrá a `pedidos-produccion.netlify.app`.
+2. Elegí el local.
+3. Tocá **Guía** o **Cuadra** en el menú. Se puede imprimir o mirar en pantalla.
 
 ---
 
-## Paso a paso — Cargar un Pedido de Cliente
+## 4. Cargar un pedido de insumos
 
-1. Abrí el navegador e ingresá a **`pedidos-de-clientes-cc.netlify.app`**
-2. Tocá **"Ventas"** en el menú
-3. Completá los datos del cliente:
-   - Nombre completo
-   - Teléfono
-   - Fecha de entrega
-   - Local (SLA 5.0 o San Luis)
-4. Agregá los productos por área — el sistema pide el **PIN del área** (ver tabla arriba)
-5. Ingresá el PIN → elegí productos y cantidades
-6. Repetí para cada área que corresponda
-7. Revisá el pedido completo
-8. Tocá **"Confirmar"**
+**Qué es:** la lista de lo que tu área necesita que Compras consiga: materias primas,
+descartables, productos de limpieza, herramientas.
 
-✅ El pedido queda registrado y llega automáticamente al área de producción.
+> [!regla]
+> ### Compras solo compra lo que está cargado.
+> Cada área hace **su propio** pedido de insumos. Lo que no cargues, nadie lo compra.
 
-### Errores frecuentes
+1. Entrá a `pedidos-produccion.netlify.app` → **Pedido de insumos**.
+2. Elegí tu local o tu área.
+3. Cargá todo lo que falte.
+4. Poné **cantidad** y **prioridad** a cada ítem, y si hace falta un comentario (marca,
+   tamaño, proveedor).
 
-| Error | Cómo evitarlo |
+| Color | Prioridad | Cuándo usarlo |
+|---|---|---|
+| **Rojo** | Urgente | Lo necesitás **hoy** |
+| **Amarillo** | Media | Se está por acabar |
+| **Verde** | Baja | Reposición normal |
+
+---
+
+## 5. Cargar un pedido de cliente
+
+**Qué es:** todo pedido para retirar otro día u otra hora: tortas de cumpleaños,
+encargos, catering.
+
+1. Entrá a `pedidos-de-clientes-cc.netlify.app` → **Ventas**.
+2. **Buscá si el cliente ya existe** antes de crearlo.
+3. Completá los datos: nombre completo, teléfono, **fecha de entrega** y local (San
+   Luis o SLA 5.0).
+4. Agregá los productos por área. El sistema pide el **PIN de cada área**.
+5. Repetí para cada área que corresponda.
+6. Revisá el pedido completo.
+7. Tocá **Confirmar**. El pedido llega solo a producción.
+
+Si el cliente deja seña, **además** se registra el cobro en FUDO (ver *Cajeros*).
+
+| Error frecuente | Cómo evitarlo |
 |---|---|
-| ❌ Fecha mal cargada | Verificá en el calendario antes de confirmar |
-| ❌ PIN incorrecto | Consultá la tabla de PINs de arriba |
-| ❌ Pedido sin confirmar | Siempre tocá **"Confirmar"** al final |
+| Fecha mal cargada | Mirá el calendario antes de confirmar |
+| Producto o cantidad equivocada | Revisá el pedido antes de confirmar |
+| Pedido sin confirmar | Siempre tocá **Confirmar** al final |
+| Cliente duplicado | Buscá antes de crear uno nuevo |
 
 ---
 
-## Reglas que no se negocian
+## 6. PedidosYa y Cheaf
 
-- **Nada se entrega sin registrar en FUDO.** Ninguna venta, ningún producto.
-- **Los pedidos de mercadería van a la web.** No se usan papeles ni WhatsApp para esto.
-- **Un pedido con seña deja dos registros:** el pedido en la web y el cobro en FUDO.
-  Los dos son necesarios.
+| | PedidosYa | Cheaf |
+|---|---|---|
+| **Dónde** | `web.restaurant-partners.com` | `admin.cheaf.com/dashboard` |
+| **Horario** | Lunes a sábados, 9:00 a 21:00 hs | Lunes a sábados, 9:00 a 21:00 hs |
+| **Qué se vende** | Carta de delivery | Surtido económico del día |
+
+1. Iniciá sesión al abrir el turno. **Mientras la ventana esté abierta, el local recibe
+   pedidos.**
+2. **Mantené el stock actualizado.** Si figura algo que ya no hay, entra un pedido que
+   no se puede cumplir.
+3. Cada pedido que entra se carga en FUDO y va a cocina o a mostrador como cualquier
+   otro, **con prioridad de take away**.
+
+> [!prohibido]
+> **Queda prohibido cancelar o rechazar pedidos.** Si hay un problema con un pedido,
+> avisá al Experto del turno antes de tocar nada.
+
+---
+
+## Pendientes de definición
+
+- [ ] **PINs de cada área** para la Web de Pedidos de Clientes: quién los da y quién
+      los cambia. **No se escriben en este manual.**
+- [ ] **Confirmar la dirección de la Web de Pedidos de Clientes.** En algunos manuales
+      figuraba `pedidos-de-clientes.netlify.app`, sin "-cc".
+- [ ] **Qué se hace si una app pide cancelar** por falta de stock que no se actualizó.
+- [ ] **Horario de PedidosYa y Cheaf los domingos.**
+
+---
+
+## Documentos relacionados
+
+- Cajeros — FUDO paso a paso: caja, señas, cuentas corrientes, stock
+- Compras — cómo se usa el pedido de insumos del otro lado
+- Atención al cliente y reclamos

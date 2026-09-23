@@ -1,247 +1,340 @@
-# Manual de Procedimientos — Pastelería
+# Pastelería
 
-**Candela Café & Patisserie**
-*Versión 0.5 — FÓRMULAS | Agosto 2026*
+*Versión 1.0 · Septiembre 2026 · Aplica al área de Pastelería de la cuadra de producción*
 
----
+## Objetivo del área
 
-> ## 🚧 Este manual tiene las fórmulas, no el proceso
->
-> Lo que sigue son las **recetas**: qué lleva cada producto y en qué cantidad.
-> Salen del módulo de Costeo, así que están verificadas contra lo que se compra.
->
-> **Todavía NO tiene** lo que hace que un manual sirva para enseñar el puesto:
-> tiempos, temperaturas, orden de los pasos, cómo se sabe que algo está en su punto.
-> Eso se releva con el
-> [cuestionario de áreas de producción](_cuestionario-areas-produccion.md).
->
-> Tal como está, sirve como **recetario de referencia** — no todavía para formar a
-> alguien que entra.
+Producir **tortas, tartas, budines y cupcakes** para los dos locales, y **las tortas de
+los pedidos de clientes**, con la misma calidad y el mismo armado sin importar quién las
+haga.
 
----
-
-## 🎯 El área
-
-Pastelería produce tortas, budines y cupcakes. **Corte: 16:00 hs.**
+| | |
+|---|---|
+| **Horario** | 16:00 a 23:00 hs |
+| **Corte del pedido** | **16:00 hs** |
+| **Responsable** | El maestro de Pastelería (ver *Maestro de área*) |
 
 Es el área de **más variedad** y la que trabaja sobre **bases**: casi ninguna torta se
-hace de cero, se arma con bizcochuelo, chantilly, almíbar y crema pastelera preparados
-aparte. Por eso las bases tienen su propio documento.
+hace de cero. Se arma con bizcochuelo, chantilly, almíbar y crema pastelera preparados
+aparte (ver *Bases y preparaciones*).
 
-También es la que absorbe los **pedidos de clientes** — tortas de cumpleaños, encargues
-y catering entran por la web de Pedidos de Clientes.
+> [!regla]
+> ### Dos personas distintas tienen que sacar la misma torta.
+> Por eso cada torta se arma **según su ficha**: orden de las capas, gramos por piso y
+> terminación. No según la costumbre de quien la hace.
 
 ---
 
-## 📋 Tu pedido de insumos diario
+## Tus herramientas digitales
 
-> ### 🔑 Esta área carga su propio pedido de insumos, todos los días.
-> **Lo que no cargues, nadie lo compra.** Compras no adivina ni repone por su cuenta.
+- **Web de Pedidos de Producción:** pedido consolidado, estados, guía de envío, pedido
+  de insumos.
+- **Web de Pedidos de Clientes:** tortas, encargos y catering con fecha de entrega.
 
-1. Entrá a **`pedidos-produccion.netlify.app`** → **Pedido de insumos**
-2. Seleccioná **el área**
-3. Cargá **todo lo que falte**: insumos, materias primas, elementos
-4. Por cada uno, poné **cantidad** y **prioridad**:
+Paso a paso en *Herramientas digitales*.
 
-| Color | Prioridad | Cuándo usarlo |
+---
+
+## 1. Tu turno de un vistazo
+
+| Momento | Qué se hace |
+|---|---|
+| **Al entrar** | Normas de la cuadra; heladeras y freezer a temperatura |
+| **16:00 hs** | Pedido de los locales cerrado + **pedidos de clientes** de los próximos días. Se arma el orden y se marca **En producción** |
+| **Primero** | Lo que necesita enfriar o asentar: bases, cheesecakes, tortas con gelatina |
+| **Después** | Horneados (budines, cupcakes, bizcochuelos) y armado de tortas |
+| **Al final** | Terminación, rotulado, separación por local y **Listo para despacho** |
+| **Antes de irte** | Bases del día siguiente, área limpia, pedido de insumos |
+
+---
+
+## 2. Los pedidos de clientes
+
+Son los que tienen **nombre, fecha y, muchas veces, un mensaje escrito.** Un error acá
+no se arregla con otra torta de la vitrina.
+
+1. **Revisá la Web de Pedidos de Clientes todos los días**, con las entregas de hoy y de
+   los próximos dos días.
+2. **Producí según la fecha de entrega**, no según el orden en que entraron.
+3. **Copiá el texto exacto** de la inscripción desde la web. Si hay una duda, se
+   pregunta antes, no se interpreta.
+4. **Cada pedido va en su caja**, con un rótulo: **nombre del cliente, fecha de entrega
+   y local.**
+5. En el local va al **último piso de la heladera de tortas**, en caja, para que quede
+   claro que no está a la venta.
+
+---
+
+## 3. Así se trabaja cada familia de productos
+
+Los tiempos, temperaturas y gramos de cada producto están en su **ficha** (sección 6).
+
+### Tortas armadas (duraznos y las que llevan bizcochuelo)
+
+| Paso | Qué se hace | Cuidado |
 |---|---|---|
-| 🔴 **Rojo** | Urgente | Lo necesitás **hoy** |
-| 🟡 **Amarillo** | Media | Se está por acabar |
-| 🟢 **Verde** | Baja | Reposición normal |
+| **1. Nivelar y cortar** | El bizcochuelo, frío, se nivela y se corta en capas **del mismo espesor** | Bizcochuelo tibio se desarma |
+| **2. Almibarar** | Con pincel, en cada capa | Humedece, no empapa |
+| **3. Rellenar** | Capa por capa, **pesando** el relleno de cada piso | El mismo gramaje en todos los pisos |
+| **4. Cubrir** | Cobertura pareja en lados y superficie | |
+| **5. Asentar en frío** | Heladera antes de decorar y cortar | Se corta limpia |
+| **6. Terminar** | Decoración según la ficha | |
 
-Usá los **comentarios** para aclarar marca, tamaño o proveedor preferido.
+### Tortas frías con gelatina (Oreo, cheesecake de frutos rojos)
 
-> ⚠️ **Cargalo antes de las 9:00 hs.** A esa hora Compras revisa el pedido completo y
-> arma el recorrido del día. Lo que entre después queda para mañana.
+1. **Base:** galletas procesadas con manteca derretida, bien compactadas en el molde.
+2. **Gelatina:** se hidrata en el agua fría de la fórmula y se disuelve **sin hervir**.
+3. Se integra a la crema y se vuelca sobre la base.
+4. **Heladera hasta que esté firme** antes de desmoldar o cortar.
 
-> 📖 Detalle completo en
-> **[Herramientas digitales](../comunes/herramientas-digitales.md)**.
+### Tortas cocidas (cheesecake cocido, torta de turrón salteño)
 
+- Horno a la temperatura de la ficha. **Está lista cuando el centro apenas tiembla.**
+- Enfriado **gradual**: si pasa del horno caliente a la heladera, se agrieta.
 
-## Fórmulas
+### Budines y cupcakes
 
-> **Las cantidades están en kilogramos**, salvo las que son por unidad
-> (se aclara en cada caso). Cada fórmula es un **batch completo**, no una porción:
-> son las cantidades que se mezclan de una vez.
+1. **Cremar** la margarina con el azúcar hasta que esté clara y liviana.
+2. **Huevos de a poco**, integrando cada uno antes del siguiente.
+3. **Secos tamizados**, sin batir de más.
+4. Moldes o tulipas **a dos tercios** de su capacidad.
+5. **Prueba del palillo:** sale limpio.
+6. Desmoldar tibio y enfriar sobre rejilla.
 
+---
 
-## Tortas
+## 4. Rotulado, vida útil y despacho
 
+> [!regla]
+> ### Toda torta, tarta y porción sale con su fecha de elaboración.
+> La pastelería dura **6 días como máximo**, bien conservada. Sin fecha, el local no
+> tiene forma de saberlo.
 
-Cantidades **por torta**. Las líneas marcadas ⬅️ *base* son preparaciones que se hacen
-aparte — ver [Bases y preparaciones](bases.md).
+- Se separa **por local** según la guía de envío, en **cajones**, y **las tortas viajan
+  solas y arriba** (ver *Vehículo y traslado de mercadería*).
+- Se marca **Listo para despacho**.
+- Todo lo que lleva crema, gelatina o queso **viaja y se guarda en frío**.
 
-### Torta de Duraznos
+---
 
-*Precio de venta de referencia: **$28.000***
+## 5. Limpieza y seguridad
+
+| Cada cuánto | Qué |
+|---|---|
+| **Al terminar cada producto** | Batidora, bowls, mangas, espátulas y mesada |
+| **Al cerrar** | Heladeras ordenadas, bases tapadas y rotuladas, piso limpio, horno apagado |
+| **Una vez por semana** | Heladeras por dentro, horno, repisas |
+
+**Seguridad:** ver las normas de la cuadra en *Maestro de área*. En Pastelería, lo más
+peligroso es **la batidora en marcha** y **los moldes calientes**.
+
+---
+
+## 6. Fichas de producto
+
+Las fórmulas están cargadas (sección 7). **Falta el armado y el proceso de cada ficha**:
+es la receta que queda pendiente.
+
+| Producto | Fórmula | Armado y proceso |
+|---|---|---|
+| Torta de duraznos | Cargada, por torta | *pendiente* |
+| Torta Oreo | Cargada, por torta | *pendiente* |
+| Torta Tiramisú | Cargada, por torta | *pendiente* |
+| Cheesecake de frutos rojos | Cargada, por torta | *pendiente* |
+| Cheesecake cocido de frutos rojos | Cargada, por torta | *pendiente* |
+| Torta de turrón salteño | Cargada, por torta | *pendiente* |
+| Tarta Cabsha | Cargada, por tarta | *pendiente* |
+| Budín x kg | Cargada, por batch | *pendiente* |
+| Budín con dulce de leche y nuez | Solo costeo, por kilo | *pendiente* |
+| Cupcake de chocolate | Cargada, por batch | *pendiente* |
+
+**Qué lleva cada ficha de torta:** diámetro del molde, cuántas capas, **gramos de cada
+relleno por piso**, cobertura, decoración, cuántas porciones salen y cómo se corta. El
+modelo está en *Plantilla de manual*.
+
+---
+
+## 7. Fórmulas
+
+> [!nota]
+> **Las cantidades están en kilogramos.** Las tortas están **por torta**; budines y
+> cupcakes, **por batch**. Las líneas marcadas **(base)** se preparan aparte: ver
+> *Bases y preparaciones*.
+
+### Tortas
+Cantidades **por torta**. Las líneas marcadas (base) son preparaciones que se hacen aparte — ver *Bases y preparaciones*.
+
+**Torta de duraznos**
 
 | Ingrediente | Marca / detalle | Cantidad |
 |---|---|---|
-| Bizcochuelo de Vainilla ⬅️ *base* | — | **0.2648** |
-| Crema Chantilly ⬅️ *base* | — | **0.2648** |
-| Durazno al natural | — | **0.2119** |
-| Dulce de leche repostero | — | **0.2053** |
-| Almibar Para Tortas ⬅️ *base* | — | **0.1059** |
+| Bizcochuelo de vainilla (base) | — | **0,2648** |
+| Crema chantilly (base) | — | **0,2648** |
+| Durazno al natural | — | **0,2119** |
+| Dulce de leche repostero | — | **0,2053** |
+| Almíbar para tortas (base) | — | **0,1059** |
 
-### Torta Oreo
-
-| Ingrediente | Marca / detalle | Cantidad |
-|---|---|---|
-| Galletas oreo | — | **0.282** |
-| Manteca Teodoro | — | **0.094** |
-| Crema Chantilly ⬅️ *base* | — | **0.4136** |
-| Gelatina S/Sabor | — | **0.0047** |
-| Agua | — | **0.0235** |
-| Dulce de leche repostero | — | **0.2349** |
-
-### Torta Tiramisu
+**Torta Oreo**
 
 | Ingrediente | Marca / detalle | Cantidad |
 |---|---|---|
-| Galletas vainillas | — | **0.2471** |
-| Crema de leche Cosalta | — | **0.3222** |
-| Queso crema La Paulina | — | **0.3222** |
-| Almibar Para Tortas ⬅️ *base* | — | **0.1612** |
+| Galletas Oreo | — | **0,282** |
+| Manteca Teodoro | — | **0,094** |
+| Crema chantilly (base) | — | **0,4136** |
+| Gelatina S/Sabor | — | **0,0047** |
+| Agua | — | **0,0235** |
+| Dulce de leche repostero | — | **0,2349** |
 
-### CheeseCake Frutos R
-
-| Ingrediente | Marca / detalle | Cantidad |
-|---|---|---|
-| Galletas lincoln | — | **0.2289** |
-| Manteca | — | **0.0954** |
-| Gelatina S/Sabor | — | **0.0096** |
-| Queso crema La Paulina | — | **0.4294** |
-| Crema de leche Cosalta | — | **0.4294** |
-| Azucar Rio Grande | — | **0.1432** |
-| Agua | — | **0.0478** |
-| Variegato Frutos del bosque | — | **0.1432** |
-
-### Torta Cheescake Cocido Frutos Rojos
+**Torta Tiramisú**
 
 | Ingrediente | Marca / detalle | Cantidad |
 |---|---|---|
-| Queso crema La Paulina | — | **0.4301** |
-| Crema de leche Cosalta | — | **0.215** |
-| Azucar Rio Grande | — | **0.1792** |
-| Huevos | — | **0.1433** |
-| Variegato Frutos del bosque | — | **0.1433** |
+| Galletas vainillas | — | **0,2471** |
+| Crema de leche Cosalta | — | **0,3222** |
+| Queso crema La Paulina | — | **0,3222** |
+| Almíbar para tortas (base) | — | **0,1612** |
 
-### Torta Turron Salteño
-
-| Ingrediente | Marca / detalle | Cantidad |
-|---|---|---|
-| Harina 000 x25kg Radiante | — | **0.1999** |
-| Huevos | — | **0.1999** |
-| Agua | — | **0.0533** |
-| Margarina masa Mtk | — | **0.0333** |
-| Dulce de leche repostero | — | **0.1999** |
-| Nueces | — | **0.0666** |
-| Azucar Rio Grande | — | **0.1333** |
-| Miel de caña | — | **0.1665** |
-
-### Tarta Cabsha
+**Cheesecake frutos rojos**
 
 | Ingrediente | Marca / detalle | Cantidad |
 |---|---|---|
-| Masa Frola ⬅️ *base* | — | **0.3469** |
-| Dulce de leche repostero | — | **0.4626** |
-| licor | — | **0.0231** |
-| Chocolate especial | — | **0.1156** |
-| Crema Vegetal | — | **0.0867** |
-| Nueces | — | **0.0289** |
+| Galletas Lincoln | — | **0,2289** |
+| Manteca | — | **0,0954** |
+| Gelatina S/Sabor | — | **0,0096** |
+| Queso crema La Paulina | — | **0,4294** |
+| Crema de leche Cosalta | — | **0,4294** |
+| Azúcar Río Grande | — | **0,1432** |
+| Agua | — | **0,0478** |
+| Variegato Frutos del bosque | — | **0,1432** |
 
+**Torta cheesecake cocido frutos rojos**
 
-## Budines y cupcakes
+| Ingrediente | Marca / detalle | Cantidad |
+|---|---|---|
+| Queso crema La Paulina | — | **0,4301** |
+| Crema de leche Cosalta | — | **0,215** |
+| Azúcar Río Grande | — | **0,1792** |
+| Huevos | — | **0,1433** |
+| Variegato Frutos del bosque | — | **0,1433** |
 
-### Budin x Kg
+**Torta turrón salteño**
 
-*Precio de venta de referencia: **$14.000***
+| Ingrediente | Marca / detalle | Cantidad |
+|---|---|---|
+| Harina 000 x25kg Radiante | — | **0,1999** |
+| Huevos | — | **0,1999** |
+| Agua | — | **0,0533** |
+| Margarina masa Mtk | — | **0,0333** |
+| Dulce de leche repostero | — | **0,1999** |
+| Nueces | — | **0,0666** |
+| Azúcar Río Grande | — | **0,1333** |
+| Miel de caña | — | **0,1665** |
+
+**Tarta Cabsha**
+
+| Ingrediente | Marca / detalle | Cantidad |
+|---|---|---|
+| Masa frola (base) | — | **0,3469** |
+| Dulce de leche repostero | — | **0,4626** |
+| Licor | — | **0,0231** |
+| Chocolate especial | — | **0,1156** |
+| Crema Vegetal | — | **0,0867** |
+| Nueces | — | **0,0289** |
+
+### Budines y cupcakes
+**Budín x kg**
 
 | Ingrediente | Marca / detalle | Cantidad |
 |---|---|---|
 | Harina 0000 | — | **1** |
-| Azucar blanca | — | **0.7** |
-| Leches | — | **0.25** |
-| Huevo (kg) | — | **0.5** |
-| Margarina masa | Premium | **0.7** |
-| Polvo para hornear | — | **0.04** |
-| Nueces (1) | — | **0.25** |
-| Emulsionante en pasta | — | **0.02** |
+| Azúcar blanca | — | **0,7** |
+| Leches | — | **0,25** |
+| Huevo (kg) | — | **0,5** |
+| Margarina masa | Premium | **0,7** |
+| Polvo para hornear | — | **0,04** |
+| Nueces (1) | — | **0,25** |
+| Emulsionante en pasta | — | **0,02** |
 
-> Batch de **3.46 kg** de masa/mezcla total.
+*Batch de 3,46 kg de masa total.*
 
 **Versión de costeo** (por kg, con dulce de leche y nuez):
 
-### Budin Con dulce y nuez x kg
-
-*Precio de venta de referencia: **$18.000***
+**Budín con dulce de leche y nuez x kg**
 
 | Ingrediente | Marca / detalle | Cantidad |
 |---|---|---|
-| Harina 000 x25kg Radiante | — | **0.2667** |
-| Azucar Rio Grande | — | **0.1867** |
-| Leche entera | — | **0.0667** |
-| Huevos | — | **0.1334** |
-| Margarina masa | — | **0.1867** |
-| Polvo para hornear | — | **0.0107** |
-| Nueces | — | **0.0667** |
-| Emulsionante en pasta | — | **0.0053** |
-| Dulce de leche repostero | — | **0.2134** |
+| Harina 000 x25kg Radiante | — | **0,2667** |
+| Azúcar Río Grande | — | **0,1867** |
+| Leche entera | — | **0,0667** |
+| Huevos | — | **0,1334** |
+| Margarina masa | — | **0,1867** |
+| Polvo para hornear | — | **0,0107** |
+| Nueces | — | **0,0667** |
+| Emulsionante en pasta | — | **0,0053** |
+| Dulce de leche repostero | — | **0,2134** |
 
-### Cupcake de Choco con Premez
-
-*Precio de venta de referencia: **$1.700***
+**Cupcake de chocolate con premezcla**
 
 | Ingrediente | Marca / detalle | Cantidad |
 |---|---|---|
 | Premezcla muffin | — | **1** |
-| Agua | — | **0.26** |
-| Margarina masa | Premium | **0.25** |
-| Huevo (kg) | — | **0.35** |
-| Chocolate chip | — | **0.2325** |
-| Dulce de Leche | — | **0.465** |
-| Tulipas | — | **23.25** |
+| Agua | — | **0,26** |
+| Margarina masa | Premium | **0,25** |
+| Huevo (kg) | — | **0,35** |
+| Chocolate chip | — | **0,2325** |
+| Dulce de Leche | — | **0,465** |
+| Tulipas | unidades | **23,25** |
 
-> Batch de **25.808 kg** de masa/mezcla total.
-
+*La fórmula de costeo suma las 23,25 tulipas como si fueran kilos: el total del batch no se puede usar. Ver "Pendientes".*
 
 ---
 
-## 🚧 Lo que falta relevar
+## Indicadores de desempeño
 
-> **Prioridad para Pastelería:** el armado de cada torta (orden de las capas, cantidad
-> por piso, terminación) no está en ninguna receta. Es lo que hace que dos personas
-> distintas saquen la misma torta.
->
-> **Además:** ninguna torta tiene precio de venta cargado salvo la de Duraznos ($28.000).
+| Indicador | Meta |
+|---|---|
+| **Pedidos de clientes** | 100% entregados en fecha, con el texto correcto |
+| **Pedido de las 16:00** | 100% producido |
+| **Rotulado con fecha** | 100% de lo despachado |
+| **Producto rechazado por el local** | 0 |
+| **Pedido de insumos** | Cargado antes de las 9:00 hs del día de compra |
 
-Para cada producto de arriba:
+---
 
-- [ ] **Pasos en orden** — desde que se pesa hasta que sale
-- [ ] **Tiempos** de amasado, reposo, fermentado, horneado
-- [ ] **Temperaturas** — horno, cámara, masa
-- [ ] **Cómo se sabe que está listo** — color, textura, punto
-- [ ] **Rendimiento**: cuántas unidades salen de cada batch
-- [ ] **Qué sale mal seguido** y cómo se detecta a tiempo
+## Checklist — Pastelería
 
-Además:
+### Al entrar
 
-- [ ] **Tandas del día**: cuántas, a qué hora tiene que estar lista cada una
-- [ ] **Qué se deja preparado** para el día siguiente
-- [ ] **Limpieza** diaria y semanal del área
-- [ ] **Sobrantes**: qué se guarda, qué se tira, dónde se registra
+- ☐ Heladeras y freezer a temperatura
+- ☐ Pedido de las 16:00 y pedidos de clientes de los próximos días revisados
+- ☐ Bases disponibles para el armado del día
+- ☐ Estado **En producción** marcado
 
-> 📄 Todo esto está en el
-> [cuestionario de áreas de producción](_cuestionario-areas-produccion.md), listo para
-> reenviar a quien está en el puesto.
+### Al cerrar
 
+- ☐ Pedidos de clientes en caja, rotulados con nombre, fecha y local
+- ☐ Todo rotulado con fecha, separado por local y marcado **Listo para despacho**
+- ☐ Bases del día siguiente hechas, tapadas y rotuladas
+- ☐ Equipos, mesadas y piso limpios; horno apagado
+- ☐ Pedido de insumos cargado; descartes anotados
+
+---
+
+## Pendientes de definición
+
+- [ ] **Ficha de armado de cada torta** (sección 6): son las recetas que faltan.
+- [ ] **Cupcake de chocolate:** la fórmula de costeo suma las tulipas como si fueran
+      kilos. Confirmar el rendimiento real del batch.
+- [ ] **Con cuántos días de anticipación** se aceptan pedidos de tortas, y hasta qué
+      hora del día anterior se pueden cambiar.
+- [ ] **Qué día** se hace la limpieza semanal del área.
 
 ---
 
 ## Documentos relacionados
 
-- [Cuestionario de áreas de producción](_cuestionario-areas-produccion.md)
-- [Bases y preparaciones](bases.md)
-- [Manual de Compras](compras.md)
-- [Herramientas digitales](../comunes/herramientas-digitales.md)
-- [Higiene y presentación](../comunes/higiene-y-presentacion.md)
+- Bases y preparaciones
+- Maestro de área — normas de la cuadra
+- Vendedores y mozos — la heladera de tortas
+- Herramientas digitales — Web de Pedidos de Clientes
+- Plantilla de manual — modelo de ficha de producto

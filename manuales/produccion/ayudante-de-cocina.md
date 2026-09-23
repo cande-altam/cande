@@ -1,279 +1,198 @@
-# Manual de Procedimientos — Ayudante de Cocina
+# Ayudante de cocina
 
-**Candela Café & Patisserie**
-*Versión 1.0 | Agosto 2026*
+*Versión 1.1 · Septiembre 2026 · Aplica al local San Luis*
 
----
-
-## 🎯 Objetivo del rol
+## Objetivo del rol
 
 Sostener la operación de la cocina y **mover la mercadería entre la cuadra de
-producción y el local de ventas**, en tiempo y en condiciones.
+producción y el local**, en tiempo y en condiciones.
 
-> ### 📍 Este puesto trabaja siempre en **San Luis**.
+> [!regla]
+> ### Este puesto trabaja siempre en San Luis.
+> Y **no hace lo mismo a la mañana que a la tarde.** Es lo primero que hay que entender.
 
----
-
-## Las tareas cambian según el turno
-
-Este es el punto que hay que entender antes que nada: **el ayudante de cocina no hace
-lo mismo a la mañana que a la tarde.**
-
-| | 🌅 **Turno mañana** | 🌇 **Turno tarde** |
+| | Turno mañana | Turno tarde |
 |---|---|---|
-| **Se arranca con** | El cruce de mercadería al local de ventas | La preparación de la mercadería de la tarde |
-| **Lo que cierra el turno** | — | El traslado de lo que se hornea **mañana** |
+| **Se arranca con** | El cruce de mercadería de la mañana al local | La preparación y el traslado de la mercadería de la tarde |
+| **Se cierra con** | — | El traslado de lo que se hornea **mañana** |
 
-Hay tareas que se hacen en **los dos turnos** — están al final, en
-[Tareas de todos los turnos](#tareas-de-todos-los-turnos).
+Hay tareas que se hacen **en los dos turnos**: están en la sección 6.
 
 ---
 
-# 🌅 TURNO MAÑANA
+## Tus herramientas digitales
 
-## 1. El cruce de mercadería — Lo primero del día
+| Herramienta | Sección | Para qué |
+|---|---|---|
+| **Web de Pedidos de Producción** | **Guía de envío** | Cuántas facturas llevar y **a qué local va cada mercadería** |
+| **Web de Pedidos de Producción** | **Pedido de insumos** | Cargar lo que falte en tu sector |
+| **Web de Pedidos de Clientes** | **Envíos** | Qué pedidos de clientes hay que llevar a cada local |
 
-Antes que cualquier otra cosa, se ayuda con el **cruce de mercadería de la cuadra de
-producción al local de ventas**.
+Paso a paso en *Herramientas digitales*.
 
-### Paso a paso
+---
 
-1. **Trasvasá** el pan horneado (**miñón**) y los productos de pastelería a **cajones
-   aptos para el transporte**
-2. **Cargá** los cajones en el
-   **[vehículo de traslado](../comunes/vehiculo-de-transporte.md)**
-3. **Llevá** la mercadería al **local de ventas**
+## Turno mañana
 
-### Qué va en los primeros minutos de la mañana
+## 1. El cruce de mercadería — lo primero del día
 
-Esto es lo que el local necesita para abrir:
+Antes que cualquier otra cosa, se hace el **cruce de mercadería de la cuadra de
+producción al local**.
 
-| | |
+1. **Trasvasá con cuidado** el pan horneado (miñón) y la pastelería a **latas y cajones
+   aptos para el transporte**.
+2. **Cargá** los cajones en el vehículo.
+3. **Llevá** la mercadería al local.
+
+| Área | Lo que el local necesita para abrir |
 |---|---|
-| 🥖 **Panadería** | Pan francés horneado |
-| 🍰 **Pastelería** | Porciones · Tartas · Tortas |
-| 🧁 **Pastelería** | Masas · Budines |
+| **Panadería** | Pan francés horneado |
+| **Pastelería** | Porciones · tartas · tortas |
+| **Especialidades** | Masas · budines |
 
-> ⚠️ **Esto va primero.** El local no puede abrir sin su mercadería — el resto de las
-> tareas del turno esperan.
+> [!regla]
+> **Esto va primero.** El local no puede abrir sin su mercadería: el resto de las tareas
+> del turno esperan.
+
+> [!prohibido]
+> **Es mercadería frágil.** No se arroja, no se aplasta y no se apila fuera de su
+> cajón. Cómo se carga y cómo se maneja está en *Vehículo y traslado de mercadería*.
 
 ---
 
 ## 2. Asistencia al jefe de cocina
 
 Terminado el cruce, el rol pasa a ser **ayudante de cocina** propiamente dicho:
-**asistir al jefe de cocina** en lo que necesite.
-
-- **Bases**
-- **Comandas**
-- **Elaboraciones**
-
-> 📖 Las fórmulas de las bases están en
-> **[Bases y preparaciones](bases.md)**.
+asistir al jefe de cocina en **bases, comandas y elaboraciones**.
 
 ---
 
-## 3. Vajilla y sector de bacha
+## Turno tarde
 
-> ### 🔑 Esto es tuyo, y es permanente.
+## 3. Preparar la mercadería de la tarde
 
-En paralelo a todo lo demás, el ayudante de cocina es **el responsable** de:
+Es la primera tarea del turno.
 
-- La **limpieza de la vajilla sucia**
-- Mantener el **orden en el sector de bacha de cocina**
-
-No es una tarea de cierre: se sostiene durante todo el turno.
-
----
-
-## 4. Recepción de mercadería
-
-Durante la mañana, **asistí cuando llegue mercadería** de:
-
-- **Compras** — el reparto del día
-- **Un proveedor** — entrega directa en el local
-
-> 📖 Qué se controla al recibir, en el
-> **[Manual de Compras](compras.md)**.
-
----
-
-## 5. Traslado de insumos a la cuadra
-
-El ayudante es **el encargado de llevar a la cuadra de producción** lo que haga falta:
-
-- Insumos
-- Herramientas
-- Descartables
-- Elementos de trabajo
-
----
-
-# 🌇 TURNO TARDE
-
-## 6. Preparar la mercadería de la tarde
-
-La primera tarea del turno:
-
-| Tipo de mercadería | Dónde va |
+| Mercadería | Cómo viaja |
 |---|---|
 | **Ya horneada** | Se **trasvasa a canastos** |
-| **Productos crudos** | Se trasladan **en latas** |
+| **Productos crudos** | **En latas** |
+| **Especialidades de panadería** | **En canastos.** Se embolsan en el local |
 
 ---
 
-## 7. Antes de terminar la jornada — Lo de mañana
+## 4. Antes de terminar — lo de mañana
 
-> ### 🔑 Este es el paso que define si mañana el local abre con producto.
+> [!regla]
+> ### Este es el paso que define si mañana el local abre con producto.
 
-Se repite el proceso anterior, pero ahora trasladando de la cuadra de producción al
-local de ventas **la mercadería que se hornea al día siguiente**:
+Se repite el proceso, pero trasladando de la cuadra al local **la mercadería que se
+hornea al día siguiente**:
 
 | Qué | De dónde se saca |
 |---|---|
-| 🥐 **Facturas crudas** | De un **frizer específico** |
-| 🍞 **Pan surtido** | De la **estufa de fermentación** |
+| **Facturas crudas** | De su **freezer** |
+| **Pan surtido** | De la **estufa de fermentación** |
 
-### ¿Cuántas facturas hay que llevar?
-
-**Se chequea en la web.** No se calcula de memoria:
-
-> **`pedidos-produccion.netlify.app`** → **Guía de envío**
-
-Ahí figura **cuántas** facturas se necesitan y **a qué local pertenece** cada
-mercadería elaborada.
+**¿Cuántas facturas hay que llevar?** **Se mira en la web, no se calcula de memoria:**
+`pedidos-produccion.netlify.app` → **Guía de envío.** Ahí figuran cuántas se necesitan
+y a qué local pertenece cada mercadería.
 
 ---
 
-## 8. Cómo se almacena lo que se hornea mañana
+## 5. Cómo se guarda lo que se hornea mañana
 
-> ### ⚠️ Todo lo que sea para hornear al día siguiente tiene que quedar correctamente almacenado.
-
-Tres cosas, y las tres:
-
-| # | Qué | Detalle |
-|---|---|---|
-| 1 | **Latero** | Todo va en los **lateros pertinentes** |
-| 2 | **Plástico protector** | **Cada lata** lleva el suyo |
-| 3 | **Poncho de resguardo** | **Cada latero** lleva el suyo |
-
-> Si falta el plástico o el poncho, el producto se reseca o se contamina durante la
-> noche. **No es un paso opcional.**
+> [!prohibido]
+> ### Tres cosas, y las tres.
+> 1. Todo va en el **latero** que corresponde.
+> 2. **Cada lata**, con su **plástico protector**.
+> 3. **Cada latero**, con su **poncho**.
+>
+> Sin plástico o sin poncho, el producto se reseca o se contamina durante la noche.
+> **No es un paso opcional.**
 
 ---
 
-## Tareas de todos los turnos
+## Los dos turnos
 
-El resto de las tareas **se comparten con el ayudante del turno mañana**:
+## 6. Tareas de todos los turnos
 
-- [Asistencia al jefe de cocina](#2-asistencia-al-jefe-de-cocina)
-- [Vajilla y sector de bacha](#3-vajilla-y-sector-de-bacha)
-- [Recepción de mercadería](#4-recepción-de-mercadería)
-- [Traslado de insumos a la cuadra](#5-traslado-de-insumos-a-la-cuadra)
+### Vajilla y sector de bacha
 
----
+> [!regla]
+> ### La vajilla es tuya, y es permanente.
+> Sos **el responsable** del lavado de la vajilla y del orden del sector de bacha. No es
+> una tarea de cierre: se sostiene durante todo el turno (ver *Manejo y lavado de
+> vajilla*).
 
-## 🖥️ Tu herramienta digital
+### Recepción de mercadería
 
-**Web Pedidos de Producción** — `pedidos-produccion.netlify.app`
+Asistí cuando llega mercadería de **Compras** o de **un proveedor** que entrega directo.
+Qué se controla al recibir, en *Mercadería para cambio*.
 
-| Sección | Para qué la usás |
-|---|---|
-| **Guía de envío** | Cuántas facturas llevar y **a qué local va cada mercadería** |
-| **Pedido de insumos** | Cargar lo que falte en tu sector |
+### Traslado de insumos a la cuadra
 
-> 📖 Detalle completo en
-> **[Herramientas digitales](../comunes/herramientas-digitales.md)**.
+Llevás a la cuadra de producción lo que haga falta: **insumos, herramientas,
+descartables y elementos de trabajo.**
 
----
+### El vehículo
 
-## 📦 Tu pedido de insumos
-
-> ### 🔑 Compras solo consigue lo que se pide por la web.
-> Lo que no cargues, nadie lo compra.
-
-1. Entrá a **`pedidos-produccion.netlify.app`** → **Pedido de insumos**
-2. Seleccioná **Cocina San Luis**
-3. Cargá **todo lo que falte**
-4. Poné **cantidad** y **prioridad**:
-
-| Color | Prioridad | Cuándo usarlo |
-|---|---|---|
-| 🔴 **Rojo** | Urgente | Lo necesitás **hoy** |
-| 🟡 **Amarillo** | Media | Se está por acabar |
-| 🟢 **Verde** | Baja | Reposición normal |
-
-> ⚠️ **Cargalo antes de las 9:00 hs.** A esa hora Compras arma el recorrido del día.
+A la tarde el vehículo es tuyo. **Revisión, carga, manejo, multas y entrega** están en
+*Vehículo y traslado de mercadería*. Al terminar: interior barrido, vehículo en la cuadra
+y **llave devuelta en San Luis**.
 
 ---
 
-## 📊 Indicadores de desempeño (KPIs)
+## Indicadores de desempeño
 
 | Indicador | Meta |
 |---|---|
-| **Cruce de mañana** | El local abre **con su mercadería completa** |
-| **Cantidades** | Chequeadas en la Guía de envío, no de memoria |
-| **Almacenamiento de lo de mañana** | **100%** con plástico protector y poncho |
-| **Bacha y vajilla** | Sin acumulación durante el turno |
-| **Pedido de insumos** | Cargado antes de las 9:00 hs |
+| **Cruce de la mañana** | El local abre **con su mercadería completa** |
+| **Cantidades** | Tomadas de la Guía de envío, no de memoria |
+| **Lo de mañana** | **100%** con plástico protector y poncho |
+| **Bacha y vajilla** | Sin acumulación en el turno |
+| **Pedido de insumos** | Cargado antes de las 9:00 hs del día de compra |
 
 ---
 
-## ✅ Checklist — Turno mañana
+## Checklist — Turno mañana
 
-- ☐ Pan horneado (miñón) y pastelería **trasvasados a cajones de transporte**
-- ☐ Cajones **cargados en el vehículo**
-- ☐ Mercadería **entregada en el local de ventas**
-- ☐ Pan francés, porciones, tartas, tortas, masas y budines — entregados en los
-      primeros minutos
-- ☐ Asistencia al jefe de cocina (bases, comandas, elaboraciones)
+- ☐ Pan (miñón) y pastelería trasvasados a cajones de transporte
+- ☐ Mercadería entregada en el local en los primeros minutos: pan francés, porciones,
+  tartas, tortas, masas y budines
+- ☐ Asistencia al jefe de cocina: bases, comandas, elaboraciones
 - ☐ Vajilla al día y bacha ordenada
-- ☐ Mercadería de Compras o proveedores recibida
+- ☐ Mercadería de Compras o de proveedores recibida
 - ☐ Insumos, herramientas y descartables llevados a la cuadra
-- ☐ Pedido de insumos cargado si faltó algo
+- ☐ Canastos de traslado limpios
+- ☐ Pedido de insumos cargado, si faltó algo
 
-## ✅ Checklist — Turno tarde
+## Checklist — Turno tarde
 
-- ☐ Mercadería horneada **trasvasada a canastos**
-- ☐ Productos crudos trasladados **en latas**
-- ☐ **Guía de envío consultada** — cantidad de facturas y local de destino
-- ☐ **Facturas crudas** retiradas del frizer específico
-- ☐ **Pan surtido** retirado de la estufa de fermentación
-- ☐ Todo en **lateros pertinentes**
-- ☐ **Cada lata con su plástico protector**
-- ☐ **Cada latero con su poncho de resguardo**
+- ☐ Mercadería horneada en canastos; crudos en latas
+- ☐ Guía de envío consultada: cantidad de facturas y local de destino
+- ☐ Facturas crudas del freezer y pan surtido de la estufa, en sus lateros
+- ☐ **Cada lata con su plástico; cada latero con su poncho**
+- ☐ Vehículo barrido y canastos limpios
 - ☐ Vajilla al día y bacha ordenada
-- ☐ Incidencias del turno reportadas al Experto del turno
+- ☐ Incidencias informadas al jefe de cocina o al Experto del turno
+- ☐ **Una vez por semana:** canastos de traslado lavados
 
 ---
 
-## 🚧 Pendientes de definición
+## Pendientes de definición
 
-- [ ] **Horarios del puesto.** No están definidos: a qué hora entra y sale cada turno,
-      y si los dos turnos se superponen en algún momento.
-- [ ] **Cuántas personas.** Si hay un ayudante por turno o una sola persona que cubre
-      los dos.
-- [ ] **El cruce y el reparto de Compras.** Compras también lleva mercadería a los
-      locales (a primera hora y antes de las 13:00). Falta aclarar **qué mueve cada
-      uno** para que no se dupliquen ni se pisen — sobre todo en San Luis.
-- [ ] **Entrega del vehículo.** El utilitario es **compartido con Compras**, que lo usa
-      a la mañana. El protocolo de traslado ya está escrito, pero falta definir dónde
-      queda, quién tiene las llaves y si se deja constancia — ver
-      [Vehículo y traslado de mercadería](../comunes/vehiculo-de-transporte.md).
-- [ ] **Control de lo que se entrega.** Hoy el local recibe y revisa, pero no se firma
-      nada. Si falta algo del cruce, no queda registro de qué salió.
-- [ ] **Temperatura del frizer y de la estufa de fermentación.** No figuran. Si el pan
-      surtido o las facturas se guardan fuera de rango, se pierde la tanda del día
-      siguiente.
-- [ ] **Jefe de cocina.** El rol se menciona pero **no tiene manual propio**. Conviene
-      escribirlo — es quien define lo que el ayudante ejecuta.
+- [ ] **Qué día de la semana** se lavan los canastos de traslado.
+- [ ] **Qué cambia el fin de semana**, cuando en San Luis la cocina queda a cargo de un
+      ayudante por turno: si también hace el cruce y el traslado de la tarde.
 
 ---
 
 ## Documentos relacionados
 
-- [Bases y preparaciones](bases.md)
-- [Manual de Compras](compras.md) — reparto y recepción de mercadería
-- [Herramientas digitales](../comunes/herramientas-digitales.md)
-- [Higiene y presentación](../comunes/higiene-y-presentacion.md)
-- [Jornada de trabajo y presentismo](../comunes/jornada-y-presentismo.md)
+- Vehículo y traslado de mercadería
+- Manejo y lavado de vajilla
+- Cocina de locales · Jefe de cocina
+- Compras — reparto y recepción de mercadería
+- Bases y preparaciones
+- Herramientas digitales

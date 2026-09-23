@@ -1,136 +1,92 @@
-# Manual de Procedimientos — [NOMBRE DEL ÁREA / ROL]
+# Plantilla de manual
 
-**Candela Café & Patisserie**
-*Versión 1.0 | [MES AÑO]*
+*Versión 1.1 · Septiembre 2026 · Guía interna: estructura vacía para un manual nuevo*
 
-> 🚧 **Plantilla.** Copiá este archivo, renombralo y completá cada sección.
-> Borrá esta nota y todos los `[corchetes]` cuando termines.
-> Si una sección no aplica al área, eliminala en vez de dejarla vacía.
+## Cómo usarla
 
----
-
-## 🎯 Objetivo del rol
-
-*Una o dos frases: qué produce o garantiza esta persona. Escribilo en positivo —
-qué logra, no qué evita.*
-
-[…]
+> [!nota]
+> Copiá esta plantilla, renombrala y completá cada sección. Borrá esta nota y todos los
+> [corchetes] cuando termines. **Si una sección no aplica, se elimina**; no se deja
+> vacía. El tono, los nombres y el formato están en la *Guía de estilo*.
 
 ---
 
-## 🖥️ Tus herramientas digitales
+## Parte A — Modelo de manual de un puesto
 
-*Listá solo las que usa este rol. Si no usa ninguna, eliminá la sección.*
+**Título:** `# [Nombre del puesto]`
 
-- **[Herramienta]** — `[url]` — *[para qué]*
+**Línea de versión:** *Versión 1.0 · [Mes año] · Aplica a [locales o áreas]*
 
-> 📖 Paso a paso completo, PINs y horarios límite en
-> **[Herramientas digitales](comunes/herramientas-digitales.md)**.
+### Objetivo del rol
+
+Una o dos frases: qué logra esta persona. En positivo: qué garantiza, no qué evita.
+
+### Tus herramientas digitales
+
+Solo las que usa este rol. Remití a *Herramientas digitales* para el paso a paso.
+
+### 1. Apertura
+
+Qué hace esta persona en los primeros 15 minutos, en orden. Terminá con la condición
+que impide arrancar, en un cuadro `> [!prohibido]`. Por ejemplo: "No arranques a
+producir si el horno no llegó a temperatura".
+
+### 2. [Proceso principal]
+
+El corazón del manual. Dividilo por producto o por etapa. Usá tablas **Parámetro |
+Estándar** para los números.
+
+### 3. [Segundo proceso]
+
+### 4. Durante el turno
+
+### 5. Cierre
+
+### 6. Coordinación con otras áreas
+
+Tabla **Con quién | Qué se coordina | Cuándo**.
+
+### Indicadores de desempeño
+
+Entre 4 y 6. Cada uno, medible y verificable en el turno.
+
+### Checklist
+
+Apertura · Durante el turno · Cierre. **Como máximo 10 ítems por momento**, escritos
+como resultado ("Caja contada y registrada"), con los innegociables primero.
+
+### Pendientes de definición
+
+Lo que no se sabe, **marcado, no inventado**.
+
+### Documentos relacionados
 
 ---
 
-## 1. Apertura
+## Parte B — Modelo de ficha de producto
 
-*Qué hace esta persona en los primeros 15 minutos del turno, en orden.*
+Una ficha por producto. **Es lo que convierte una fórmula en una receta.**
 
-1. […]
-2. […]
+**Nombre del producto:** [Nombre] · **Área:** [Área] · **Última revisión:** [fecha]
 
-> ⚠️ *[La condición que impide arrancar. Ej: "No arranques a producir si el horno
-> no llegó a temperatura."]*
-
----
-
-## 2. [Proceso principal del área]
-
-*El corazón del manual. Dividilo en subsecciones por producto o por etapa.*
-
-### [Subproceso]
-
-| Parámetro | Estándar |
+| Campo | Valor |
 |---|---|
-| […] | […] |
+| **Fórmula** | La del manual del área, sección Fórmulas |
+| **Rendimiento del batch** | [cantidad de piezas o kilos] |
+| **Peso por pieza** | [g] |
+| **Temperatura final de la masa** | [°C] (si aplica) |
+| **Fermentación o reposo** | [tiempo] a [°C] |
+| **Horneado o cocción** | [°C] · [minutos] · vapor sí/no |
+| **Cómo se sabe que está listo** | [color, textura, prueba] |
+| **Cómo se enfría y se guarda** | [rejilla, heladera, freezer] |
+| **Cuánto dura** | [días] |
+| **Alérgenos** | [gluten, huevo, lácteos, frutos secos] |
+| **Errores frecuentes** | [qué sale mal y cómo se detecta] |
 
----
+**Pasos, en orden:**
 
-## 3. [Segundo proceso]
+1. [Paso con su tiempo y su punto de control]
+2. [Paso]
+3. [Paso]
 
-[…]
-
----
-
-## 4. Mantenimiento durante el turno
-
-- […]
-
----
-
-## 5. Cierre
-
-1. […]
-
----
-
-## 6. Higiene y seguridad
-
-*Lo específico del área. Lo general ya está en el documento común.*
-
-- […]
-
-> 📖 Estándares generales en
-> **[Higiene y presentación](comunes/higiene-y-presentacion.md)**.
-
----
-
-## 7. Coordinación con otras áreas
-
-| Con quién | Qué se coordina | Cuándo |
-|---|---|---|
-| […] | […] | […] |
-
----
-
-## 8. Indicadores de desempeño (KPIs)
-
-*Entre 4 y 6. Cada uno tiene que ser medible y verificable en el turno.*
-
-| Indicador | Meta |
-|---|---|
-| […] | […] |
-
----
-
-## 9. Faltas y consecuencias
-
-*Opcional. Solo si el área lo necesita.*
-
-| Falta | Consecuencia |
-|---|---|
-| […] | […] |
-
----
-
-## ✅ Checklist diario — [ROL]
-
-*Imprimí o revisá este checklist en cada turno.*
-
-### Apertura
-
-- ☐ […]
-
-### Durante el turno
-
-- ☐ […]
-
-### Cierre
-
-- ☐ […]
-- ☐ Incidencias del turno reportadas al Experto del turno
-
----
-
-## Documentos relacionados
-
-- [Herramientas digitales](comunes/herramientas-digitales.md)
-- [Atención al cliente y reclamos](comunes/atencion-y-reclamos.md)
-- [Higiene y presentación](comunes/higiene-y-presentacion.md)
+**Foto de cómo tiene que verse:** [foto]

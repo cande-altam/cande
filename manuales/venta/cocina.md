@@ -1,163 +1,144 @@
-# Manual de Procedimientos — Cocina de Locales
+# Cocina de locales
 
-**Candela Café & Patisserie**
-*Versión 1.0 | Agosto 2026*
+*Versión 1.1 · Septiembre 2026 · Aplica a las cocinas de San Luis y SLA 5.0. No aplica a la cuadra de producción*
 
-> **Aplica a las cocinas de los dos locales de venta: San Luis y SLA 5.0.**
-> No aplica a la cuadra de producción, que tiene sus propios manuales por área.
+## Objetivo del rol
 
----
+Que salga **todo lo que la carta promete, en tiempo y con la misma calidad**, y que el
+turno siguiente encuentre la cocina lista para trabajar.
 
-## La regla que ordena todo este manual
-
-Hay **un solo jefe de cocina para los dos locales**, y está a la mañana en San Luis.
-
-> ### De las cuatro guardias diarias de cocina, tres funcionan sin él.
-> Este manual **no está escrito como respaldo del jefe de cocina**. Está escrito para
-> la persona que abre la cocina sola y tiene que resolver el turno completo.
+> [!regla]
+> ### De las cuatro guardias diarias de cocina, tres funcionan sin el jefe de cocina.
+> Hay **un solo jefe de cocina para los dos locales**, a la mañana en San Luis. Este
+> manual está escrito para **la persona que abre la cocina sola** y tiene que resolver
+> el turno completo.
 
 Si algo de acá parece obvio, es porque está escrito para el día en que la persona que
 lo sabía no vino.
 
 ### Quién cubre cuando falta alguien
 
-> ### El jefe de cocina es el respaldo de las dos cocinas.
-> **Cubre los descansos de los cocineros**, y en los días restantes **es quien
-> reemplaza si falta un cocinero.**
-
-Esto tiene una consecuencia que conviene tener presente: **el respaldo de las cuatro
-guardias es una sola persona.** Por eso las reglas de este manual — el rotulado, la
-producción que se deja hecha, la previsión del leudado — no son formalidades. Son lo
-que permite que alguien entre a una cocina que no es la suya y pueda trabajar.
+**El jefe de cocina es el respaldo de las dos cocinas:** cubre los descansos de los
+cocineros y reemplaza si falta uno. Es decir, **el respaldo de las cuatro guardias es
+una sola persona.** Por eso el rotulado, la producción que se deja hecha y la previsión
+del leudado no son formalidades: son lo que permite que alguien entre a una cocina que
+no es la suya y pueda trabajar.
 
 ---
 
-## Las dos cocinas no son iguales
+## 1. Las dos cocinas no son iguales
 
-Son dos procedimientos distintos, no uno con excepciones. **Leé la columna de tu local.**
+Son dos procedimientos distintos. **Leé la columna de tu local.**
 
-| | **San Luis** | **SLA 5.0** |
+| | San Luis | SLA 5.0 |
 |---|---|---|
-| **Mañana** | Jefe de cocina + ayudante (sándwiches exclusivamente) | 1 cocinero |
+| **Mañana** | Jefe de cocina + ayudante | 1 cocinero |
 | **Tarde** | 1 cocinero | 1 cocinero |
 | **Fin de semana** | 1 ayudante por turno | 1 cocinero ayudante |
 | **Cámara de fermentación** | **Sí** | **No** |
 | **Leudado** | **~40 minutos** + horneado | **~2 horas** + horneado |
-| **Hornea** | Panes y facturas para panadería, según demanda + medialunas y chipá | **Solo medialunas y chipá**, para el servicio |
+| **Hornea** | Panes y facturas para la panadería, según demanda, más medialunas y chipá | **Solo medialunas y chipá**, para el servicio |
 | **Sándwiches de miga y ciabatta** | **Los elabora y abastece a SLA** | Los **recibe** de San Luis |
+| **Bagels, mini baguettes y focaccias** | Los elabora | Los elabora |
 | **Cocción** | Sartenes y tostador | Plancha *carlitera* |
 
 ---
 
-## Qué elabora cocina
-
-### De la carta
+## 2. Qué elabora cocina
 
 | Es de cocina | No es de cocina |
 |---|---|
-| **Todos los combos** (1 al 6) | Bebidas con café — son de **barra** |
-| **Elaborados**: tostadas francesas, croissants rellenos, omelette | Chocolatada, submarino, infusiones — **barra** |
-| **Sanguchazos**: focaccias, bagels, mini baguettes, sándwiches de miga y ciabatta | Gaseosa, agua, agua saborizada — **mostrador** |
-| **Bebidas preparadas sin café**: licuados, smoothies, jugos exprimidos, limonadas, pomelada | Budines, donas, alfajores, cookies, porciones y tartas — **mostrador** |
+| **Todos los combos** (1 al 6) | Bebidas con café: son de **barra** |
+| **Elaborados**: tostadas francesas, croissants rellenos, omelette | Chocolatada, submarino, infusiones: **barra** |
+| **Sanguchazos**: focaccias, bagels, mini baguettes, sándwiches de miga y ciabatta | Gaseosa, agua, agua saborizada: **mostrador** |
+| **Bebidas preparadas sin café**: licuados, smoothies, jugos exprimidos, limonadas, pomelada | Budines, donas, alfajores, cookies, porciones y tartas: **mostrador** |
 | **Frappuccino** | |
+| **Lo de vitrina que se sirve caliente**: medialunas, chipá, croissants, rol de canela | |
 
-> ### La regla corta
+> [!regla]
 > **Si lleva café, es de barra. Si no lleva café y hay que prepararla, es de cocina.**
-> El **Frappuccino** es la única excepción: lleva café y aun así se prepara en cocina.
-
-### De vitrina
-
-> ### Si hay que calentarlo, entra por comanda a cocina.
-
-**Medialunas, chipá, croissants y rol de canela** pasan por cocina. Todo lo que se sirve
-frío sale directo del mostrador a la mesa.
+> El Frappuccino es la única excepción. **Y si hay que calentarlo, entra por comanda a
+> cocina.**
 
 ---
 
-# 1. Antes del servicio
+## 3. Antes del servicio
 
-**Se ingresa 15 minutos antes del inicio del servicio.** No es un margen de cortesía:
-es el tiempo de las tres cosas que siguen.
+**Se entra 15 minutos antes del inicio del servicio.** No es un margen de cortesía: es
+el tiempo de lo que sigue.
 
 | # | Qué | Por qué |
 |---|---|---|
-| 1 | **Chequeá que las heladeras y el freezer funcionen** | Se hace al inicio de **todos** los turnos. Ver Higiene y presentación |
-| 2 | **Verificá los pedidos pendientes de clientes** | Un pedido para las 10:00 que se ve a las 10:00 ya está tarde |
-| 3 | **Chequeá qué hay leudando y qué falta poner a leudar** | Es la decisión más temprana del día y la que no se puede recuperar después |
-| 4 | **Arrancá la mise en place** | |
+| 1 | **Heladeras y freezer funcionando y a temperatura** | Se hace al inicio de **todos** los turnos (ver *Higiene, manipulación y presentación*) |
+| 2 | **Pedidos de clientes pendientes** | Un pedido para las 10:00 que se ve a las 10:00 ya está tarde |
+| 3 | **Qué hay leudando y qué falta poner a leudar** | Es la decisión más temprana del día y la que no se puede recuperar después |
+| 4 | **Mise en place** | |
 
-> **En SLA, el punto 3 es el más importante del turno.** Sin cámara de fermentación,
-> lo que no se pone a leudar en los primeros minutos **no está listo hasta dentro de
-> dos horas y media**.
+> [!atencion]
+> **En SLA, el punto 3 es el más importante del turno.** Sin cámara de fermentación, lo
+> que no se pone a leudar en los primeros minutos **no está listo hasta dentro de dos
+> horas y media**.
 
 ---
 
-# 2. Durante el servicio
+## 4. Durante el servicio — las comandas
 
-## Las comandas
-
+> [!regla]
 > ### La comanda llega a cocina. Cocina coordina los tiempos con barra.
 
-Cada área elabora su parte, **la deja en la barra**, y el **mozo lleva el pedido
+Cada área elabora su parte y **la deja en la barra**, y el **mozo lleva el pedido
 completo**. La barra es el punto de encuentro del pedido, no el final de un área.
 
-**Esto significa que el cocinero no solo cocina: marca el ritmo del servicio.** Es quien
-avisa a barra cuándo arrancar la bebida para que salga junto con la comida.
+**El cocinero no solo cocina: marca el ritmo del servicio.** Es quien avisa a barra
+cuándo arrancar la bebida para que salga junto con la comida.
 
-### El caso del combo partido
+### El combo partido
 
-Un combo es **bebida a elección + comida**. Si el cliente pide un combo con latte, ese
-combo se parte: **la bebida la hace barra, la comida la hace cocina**. Si pide un combo
-con licuado, **el combo entero es de cocina**.
-
-> El mismo ítem de la carta a veces involucra un área y a veces dos. **Coordinarlo es
-> tarea de cocina.**
+Un combo es **bebida a elección + comida**. Si el cliente pide un combo con latte, se
+parte: **la bebida la hace barra y la comida la hace cocina**. Si lo pide con licuado,
+**el combo entero es de cocina**. Coordinarlo es tarea de cocina.
 
 ### Prioridad
 
 | Regla | |
 |---|---|
-| **General** | Las comandas se hacen **por orden de llegada** |
-| **Excepción** | **Delivery y take away van primero** |
-| **Permitido** | Si hay varias comandas con **productos similares**, se pueden **elaborar juntas** para ganar tiempo |
+| **General** | Por **orden de llegada** |
+| **Excepción** | **Delivery (PedidosYa y demás apps) y take away van primero** |
+| **Permitido** | Si hay varias comandas con **productos parecidos**, se pueden **elaborar juntas** |
 
-Los pedidos de **delivery** — PedidosYa y las demás apps — entran como comanda y
-tienen la misma prioridad que un take away.
+### Lo demás que pasa durante el turno
 
-## Lo demás que pasa durante el turno
-
-- **Leudar y hornear** los panificados que hagan falta (ver Sección 3).
-- **Recibir mercadería** para guardar: panes, e insumos como fiambres, verduras y
-  lácteos (ver Sección 5).
-- **Bacha y baño interno**, si no hay ayudante de cocina (ver Sección 8).
+- **Leudar y hornear** los panificados que hagan falta (sección 5).
+- **Recibir mercadería** y guardarla (sección 7).
+- **Bacha y baño interno**, si no hay ayudante de cocina (sección 10).
 
 ---
 
-# 3. Panificados — Leudado y horneado
+## 5. Panificados — leudado y horneado
 
-## En qué estado llega cada cosa
-
-| Llega cocido | Llega crudo, en latas con plásticos protectores |
+| Llega cocido | Llega crudo, en latas con plástico protector |
 |---|---|
 | Panes de tostadas | Medialunas y chipá — **en los dos locales** |
 | Panes para sándwich | Productos de panadería y pastelería del mostrador — **solo San Luis** |
 
-## San Luis — con cámara de fermentación
+### San Luis — con cámara de fermentación
 
 | | |
 |---|---|
 | **Leudado** | **~40 minutos** |
 | **Horneado** | Según el producto |
-| **Quién pide la reposición** | **El área de ventas** |
+| **Quién pide la reposición** | **Ventas** |
 
+> [!regla]
 > ### Ventas pide con una hora de anticipación, como mínimo.
-> Esa hora es leudado más horneado. **Un pedido de reposición hecho sobre la vitrina
+> Esa hora es leudado más horneado. **Un pedido de reposición hecho con la vitrina
 > vacía llega tarde por definición.**
 
-## SLA 5.0 — sin cámara de fermentación
+### SLA 5.0 — sin cámara de fermentación
 
-El leudado se hace **en lateros, en la cocina**, y demora **aproximadamente 2 horas**.
+El leudado se hace **en lateros, en la cocina**, y demora **unas 2 horas**.
 
+> [!regla]
 > ### En SLA nadie te va a avisar. Lo prevé el cocinero.
 > **Leudar no es reponer: es prever.** Si esperás a que la vitrina esté vacía para
 > empezar, el producto llega dos horas después de que se necesitaba.
@@ -166,167 +147,144 @@ El leudado se hace **en lateros, en la cocina**, y demora **aproximadamente 2 ho
 
 ---
 
-# 4. Sándwiches
-
-## Quién elabora qué
+## 6. Sándwiches
 
 | Producto | Quién lo hace |
 |---|---|
 | **Sándwiches de miga y ciabattas** | **Solo San Luis**, que envía stock a SLA |
 | **Bagels, mini baguettes y focaccias** | **Cada local elabora los suyos** |
 
-## El envío de San Luis a SLA
+### El envío de San Luis a SLA
 
 | | |
 |---|---|
-| **Horarios de envío** | **8:00 / 9:00** o **al mediodía** |
-| **Cómo viaja** | A través de **Compras** |
+| **Horario** | **8:00 o 9:00 hs**, o **al mediodía** |
+| **Cómo viaja** | Con **Compras** |
 | **Quién define variedades y cantidades** | **El jefe de cocina**, según el stock del día |
 
-**En SLA:** al recibir el envío, **controlá contra lo que llegó**, guardalo según la
-Sección 6 y avisá si faltó algo. Lo que llegue a la mañana tiene que alcanzar para el
-turno tarde, así que **el turno mañana no dispone de todo el stock**.
+**En SLA:** al recibir el envío, **controlalo contra lo que llegó**, guardalo según la
+sección 8 y avisá si faltó algo. Lo que llega a la mañana tiene que alcanzar para el
+turno tarde: **el turno mañana no dispone de todo el stock.**
+
+### Cómo se arma cada sándwich
+
+Cada sanguchazo tiene su **ficha**: pan, untable, fiambres y quesos con su gramaje,
+vegetales, cocción, corte y presentación. Las fichas están en *Sándwiches* y **son lo
+único que manda**: no se arma de memoria.
 
 ---
 
-# 5. Recepción de mercadería
+## 7. Recepción de mercadería
 
 Durante el turno pueden llegar **panes** e **insumos**: fiambres, verduras, lácteos,
 huevos.
 
 1. **Controlá contra lo que se pidió.**
-2. **Guardá en el momento**, según la Sección 6. Lo que queda sobre la mesada se
+2. **Guardá en el momento**, según la sección 8. Lo que queda sobre la mesada se
    arruina o se pierde.
-3. Si algo llegó **en mal estado, vencido, roto o equivocado**, apartalo y seguí el
-   procedimiento de **Mercadería para cambio**.
+3. Si algo llegó **en mal estado, vencido, roto o equivocado**, apartalo y seguí
+   *Mercadería para cambio*.
 4. Si faltó algo, **reclamalo en el momento** y avisá al Experto del turno.
 
 ---
 
-# 6. Conservación y rotulado
-
-## Dónde va cada cosa
+## 8. Conservación y rotulado
 
 | Producto | Cómo se guarda |
 |---|---|
 | **Panes** | Contenedores de plástico **con tapa** |
 | **Cremas y emulsiones** | Bowls de plástico **con papel film** |
 | **Frutas** | Canastos |
-| **Verduras** | **Lavadas y preparadas para usar**, en heladera |
+| **Verduras** | **Lavadas y listas para usar**, en la heladera |
 
-## El rótulo
-
+> [!regla]
 > ### Todo lo que se guarda lleva etiqueta con fecha.
-> La fecha no es un trámite administrativo: **es lo que dice qué se usa primero.**
+> La fecha no es un trámite: **es lo que dice qué se usa primero.** Sin fecha, se
+> termina usando lo de adelante, que casi siempre es lo más nuevo.
 
-Sin fecha, la única forma de decidir qué usar es adivinar — y se termina usando lo de
-adelante, que casi siempre es lo más nuevo.
-
-## Cuánto dura
-
-| | |
+| Cuánto dura | |
 |---|---|
 | **Máximo absoluto** | **2 o 3 días**, según el producto |
-| **El criterio de todos los días** | **Se usa en el día, o a lo sumo al día siguiente** |
+| **El criterio de todos los días** | **Se usa en el día o, a lo sumo, al día siguiente** |
 
-> ### La rotación es la regla, no la conservación.
-> Si algo se está acumulando en la heladera, el problema no es la heladera: **es el
-> pedido**. Corregilo en el pedido del día siguiente.
+> [!nota]
+> **La rotación es la regla, no la conservación.** Si algo se acumula en la heladera,
+> el problema no es la heladera: **es el pedido.** Corregilo en el pedido del día
+> siguiente.
 
 ---
 
-# 7. Alérgenos
+## 9. Alérgenos
 
 Es el único punto de este manual que puede terminar en una urgencia médica.
 
 | | |
 |---|---|
-| **Sin TACC** | Son productos **elaborados por una empresa externa**. **Se sirven sin quitar el envoltorio original** |
-| **Frutos secos y lácteos** | **Vendedores, mozos y cocina conocen los ingredientes de cada preparación** |
+| **Sin TACC** | Productos de un **elaborador externo**. **Se sirven sin sacar el envoltorio original**: abierto, pierde su condición |
+| **Frutos secos y lácteos** | **Cocina, vendedores y mozos conocen los ingredientes de cada preparación** |
 
-> ### Saber qué lleva cada preparación es parte del puesto.
-> No es un plus ni un dato de quien lleva más tiempo. En la carta hay **pistacho,
-> almendras, nueces, queso azul y crudo**: quien no sepa qué lleva un plato **no lo
-> puede afirmar**.
-
+> [!prohibido]
 > ### Ante la duda, no adivines.
-> Si no estás seguro de si una preparación lleva un ingrediente, **decilo y averigualo**.
-> "Creo que no lleva" no es una respuesta que se le pueda dar a alguien con alergia.
-
-**El producto sin TACC pierde su condición si se abre.** Por eso se sirve cerrado: el
-envoltorio original es la garantía, no una formalidad de presentación.
+> En la carta hay **pistacho, almendras, nueces, queso azul y crudo**. "Creo que no
+> lleva" no es una respuesta que se le pueda dar a alguien con alergia: **decilo y
+> averigualo.**
 
 ---
 
-# 8. Bacha y baño interno
+## 10. Bacha y baño interno
 
-**Cuando no hay ayudante de cocina, la bacha y el baño interno son de cocina.** Funciona
-igual que en barra y en salón: cada área se hace cargo de su sector.
-
-No es una tarea que se agrega cuando sobra tiempo. **Es parte del turno**, y entra en
-la Sección 9.
+**Cuando no hay ayudante de cocina, la bacha y el baño interno son de cocina.** Igual que
+en barra y en salón, cada área se hace cargo de su sector. No es una tarea para cuando
+sobra tiempo: **es parte del turno.**
 
 ---
 
-# 9. Antes de terminar el turno
+## 11. Antes de terminar el turno
 
 Son dos cosas, y las dos son obligatorias.
 
-## Dejar producción hecha para el turno siguiente
+### Dejar producción hecha para el turno siguiente
 
-| Ejemplos |
-|---|
-| **Jugo de naranja exprimido** |
-| **Paltas pisadas** |
-| **Fiambre cortado** |
+Por ejemplo: **jugo de naranja exprimido, paltas pisadas, fiambre cortado.** Todo
+guardado y rotulado según la sección 8.
 
-> ### La producción para el turno siguiente se deja hecha, no se avisa que falta.
-> El turno que entra tiene que arrancar cocinando, no preparando lo del turno anterior.
+> [!regla]
+> **La producción para el turno siguiente se deja hecha, no se avisa que falta.** El
+> turno que entra tiene que arrancar cocinando, no preparando lo del anterior.
 
-Todo lo que se deja **va guardado y rotulado según la Sección 6**.
+### Dejar la cocina limpia y ordenada
 
-## Dejar la cocina limpia y ordenada
-
-**Todos los días, al cerrar:**
-
-- **Herramientas pequeñas y utensilios** — se lavan **después de cada uso**, no al final.
+- **Herramientas y utensilios**: se lavan **después de cada uso**, no al final.
 - **Mesada de trabajo** limpia y despejada.
-- **Sartenes / plancha carlitera** limpias.
-- **Licuadora, exprimidor y tostador** limpios y desarmados si corresponde.
-- **Todo lo que quedó guardado, rotulado.**
+- **Sartenes o plancha carlitera** limpias.
+- **Licuadora, exprimidor y tostador** limpios, desarmados si corresponde.
+- **Todo lo guardado, rotulado.**
+
+### Limpieza profunda — los lunes
+
+> [!regla]
+> **La limpieza profunda de cocina se hace los lunes.** Una tarea semanal sin día fijo
+> se hace cuando alguien se acuerda.
+
+- Heladeras por dentro
+- Horno
+- Paredes: remoción de grasa
+- Repisas y espacios de almacenamiento ordenados
 
 ---
 
-## Limpieza semanal — los lunes
+## 12. Pedidos de cocina
 
-> ### La limpieza profunda de cocina se hace los lunes.
-> Tiene día fijo por la misma razón que lo tiene la limpieza del local: **una tarea
-> semanal sin día asignado se hace cuando alguien se acuerda.**
+**Cocina hace sus propios pedidos, igual que todas las áreas.** Son dos:
 
-- Limpieza de **heladeras por dentro**
-- Limpieza del **horno**
-- Limpieza de **paredes** — remoción de grasa
-- **Orden de repisas y espacios de almacenado**
-
----
-
-# 10. Pedidos de cocina
-
-**Cocina hace sus propios pedidos, igual que todas las áreas.** Son dos, y son distintos.
-
-| | Qué se pide | A quién |
+| Pedido | Qué se pide | A quién |
 |---|---|---|
-| **Pedido de producción** | Latas de medialunas, chipá, panes, facturas | Cuadra de producción, panadería y pastelería |
-| **Pedido de insumos** | Fiambres, verduras, lácteos, huevos | Compras |
+| **De producción** | Latas de medialunas, chipá, panes, facturas | Cuadra de producción |
+| **De insumos** | Fiambres, verduras, lácteos, huevos | Compras |
 
-**Horario límite: 21:00**, en los dos locales.
-
-> ### El horario límite no es la hora de hacerlo.
-> Las 21:00 es el tope para asegurar que el pedido se haga. **Se puede cargar hasta el
-> final del turno**, y conviene hacerlo en el momento más tranquilo del turno, no en
-> plena salida de comandas.
-
-Un pedido cargado apurado entre comandas es un pedido mal cargado.
+**Horario límite: 21:00 hs**, en los dos locales. Es el tope, no la hora de hacerlo:
+**se puede cargar hasta el final del turno**, en el momento más tranquilo. Un pedido
+cargado apurado entre comandas es un pedido mal cargado.
 
 ---
 
@@ -337,9 +295,10 @@ Un pedido cargado apurado entre comandas es un pedido mal cargado.
 | **Ingreso** | 15 minutos antes del servicio, **siempre** |
 | **Panificados** | La vitrina **no se queda sin producto** por falta de previsión |
 | **Comandas** | Delivery y take away **primero**; el resto por orden de llegada |
+| **Tiempo de entrega** | Sándwiches y platos de cocina en 8 a 12 minutos |
 | **Rotulado** | **100%** de lo guardado, con fecha |
 | **Producción para el turno siguiente** | Dejada hecha, **todos los turnos** |
-| **Pedidos** | Producción e insumos, cargados **todos los días** |
+| **Pedidos** | Producción e insumos cargados **todos los días** |
 
 ---
 
@@ -347,62 +306,56 @@ Un pedido cargado apurado entre comandas es un pedido mal cargado.
 
 ### Al entrar (15 minutos antes)
 
-- ☐ **Heladeras y freezer funcionando**
-- ☐ Revisé los **pedidos de clientes** de este turno
-- ☐ Vi **qué hay leudando** y **puse a leudar lo que falta**
-- ☐ Arranqué la **mise en place**
+- ☐ Heladeras y freezer funcionando y a temperatura
+- ☐ Pedidos de clientes de este turno revisados
+- ☐ Lo que está leudando, visto; lo que falta, puesto a leudar
+- ☐ Mise en place arrancada
 
 ### Durante el turno
 
 - ☐ Delivery y take away salieron **primero**
-- ☐ Coordiné con **barra** los tiempos de los combos
-- ☐ La mercadería que llegó quedó **controlada y guardada**
-- ☐ Repuse panificados **antes** de que se vaciara la vitrina
+- ☐ Tiempos de los combos coordinados con barra
+- ☐ Mercadería que llegó, controlada y guardada
+- ☐ Panificados repuestos **antes** de que se vacíe la vitrina
 
 ### Al cerrar
 
-- ☐ **Producción hecha** para el turno siguiente
-- ☐ Todo lo guardado, **rotulado con fecha**
-- ☐ Utensilios y mesada **limpios**
-- ☐ **Bacha** y **baño interno**, si no hubo ayudante
-- ☐ **Pedido de producción** y **pedido de insumos** cargados
+- ☐ Producción hecha para el turno siguiente
+- ☐ Todo lo guardado, rotulado con fecha
+- ☐ Utensilios, mesada y equipos limpios
+- ☐ Bacha y baño interno, si no hubo ayudante
+- ☐ Pedido de producción y pedido de insumos cargados
 
 ### Los lunes
 
-- ☐ Heladeras por dentro
-- ☐ Horno
-- ☐ Paredes — remoción de grasa
-- ☐ Repisas y espacios de almacenado ordenados
+- ☐ Heladeras por dentro · horno · paredes · repisas
 
 ---
 
 ## Pendientes de definición
 
-- [ ] **Si el chequeo de heladeras queda registrado en algún lado.** El chequeo ya es
-      obligatorio al inicio de cada turno, pero hoy no deja rastro: si una heladera
-      falla, no hay forma de saber cuándo fue el último turno que la vio bien.
-- [ ] **El pedido de sándwiches de SLA.** Hoy las variedades y cantidades las decide el
-      jefe de cocina según el stock del día. Lo ideal es que **SLA cargue su propio
-      pedido** para que San Luis lo elabore y envíe al día siguiente. Funciona, pero
-      depende del criterio de una sola persona y no sobrevive a que esa persona falte.
-- [ ] **Tiempos de horneado por producto.** El leudado ya está medido — 40 minutos en
-      San Luis, 2 horas en SLA — pero falta el horneado de cada producto. Sin ese dato,
-      "una hora de anticipación" es una estimación y no un estándar.
-- [ ] **Recetas y gramajes de los sanguchazos.** SLA elabora sus propios bagels,
-      baguettes y focaccias, así que necesita las recetas escritas y no la memoria de
-      quien las hizo la última vez.
-- [ ] **Cada cuánto se limpia el baño interno** durante el turno: una vez al cierre o
-      con revisiones intermedias.
+- [ ] **Registro del chequeo de heladeras.** Es obligatorio, pero hoy no deja rastro:
+      si una heladera falla, no hay forma de saber cuándo fue la última vez que
+      funcionaba bien.
+- [ ] **El pedido de sándwiches de SLA.** Hoy lo decide el jefe de cocina según el
+      stock del día. Lo ideal es que **SLA cargue su propio pedido** para que San Luis
+      lo elabore y lo envíe al día siguiente.
+- [ ] **Tiempos de horneado por producto.** El leudado ya está medido; falta el
+      horneado de cada producto para que "una hora de anticipación" sea un estándar.
+- [ ] **Fichas de los sanguchazos y de los elaborados** (ver *Sándwiches*). Son las
+      recetas que faltan.
+- [ ] **Cada cuánto se limpia el baño interno** durante el turno.
 
 ---
 
 ## Documentos relacionados
 
-- Manual de Jefe de Cocina
-- Manual de Ayudante de Cocina
-- Manual de Baristas
-- Manual de Vendedores y Mozos
-- Manual de Experto del Turno
+- Jefe de cocina
+- Ayudante de cocina
+- Sándwiches — fichas de los sanguchazos
+- Baristas
+- Vendedores y mozos
+- Experto del turno
 - Mercadería para cambio
-- Higiene y presentación
+- Higiene, manipulación y presentación
 - Herramientas digitales

@@ -1,472 +1,415 @@
-# Manual de Procedimientos — Vendedores y Mozos
+# Vendedores y mozos
 
-**Candela Café & Patisserie**
-*Versión 2.0 | Junio 2026*
+*Versión 2.1 · Septiembre 2026 · Aplica a San Luis y SLA 5.0*
 
----
+## Objetivo del rol
 
-## 📖 Cómo usar este manual
-
-Este manual es para vos, que según el día trabajás en el **mostrador como
-Vendedor/a** o en el **salón como Mozo/a**. Los dos roles son del mismo equipo —
-la atención, la calidad y los estándares son los mismos.
+Este manual es para vos, que según el día trabajás en el **mostrador como vendedor** o
+en el **salón como mozo**. Es el mismo equipo: la atención, la calidad y los estándares
+son los mismos.
 
 | Si tu turno es… | Leé |
 |---|---|
-| 🛍️ **En mostrador** | Parte 1 |
-| 🪑 **En salón** | Parte 2 |
-| 🖥️ **Herramientas digitales** (ambos roles) | Parte 3 |
+| **Vendedor** | Parte 1 |
+| **Mozo** | Parte 2 |
+| **Los dos** | Parte 3 |
+
+> [!atencion]
+> **En momentos de mucho movimiento, puede tocarte alternar** entre vendedor y mozo
+> según lo que pidan los clientes.
 
 ---
 
-## 🖥️ Tus herramientas digitales
+## Tus herramientas digitales
 
-1. **FUDO** — Sistema de ventas. Para registrar todo.
-2. **Web Pedidos de Clientes** — `pedidos-de-clientes-cc.netlify.app`
-   Para cargar encargues y pedidos a futuro.
-3. **Web Pedidos de Producción** — `pedidos-produccion.netlify.app`
-   Para cargar el pedido diario de cada área.
+- **FUDO**: para registrar todo.
+- **Web de Pedidos de Clientes**: encargos y pedidos a futuro.
+- **Web de Pedidos de Producción**: pedido diario a cada área y pedido de insumos.
 
-> 📖 Paso a paso completo, PINs y horarios límite en
-> **[Herramientas digitales](../comunes/herramientas-digitales.md)**.
+Paso a paso y horarios límite en *Herramientas digitales*.
 
 ---
 
-# PARTE 1 — Cuando trabajás en mostrador (Vendedor/a)
+## Parte 1 — Vendedores
 
-## 🎯 Objetivo
+**Objetivo:** atender con excelencia, asesorar sobre los productos y registrar cada
+venta en FUDO.
 
-Brindar una atención de excelencia, asesorar al cliente sobre los productos y
-**registrar cada venta en FUDO**.
+## 1. La atención en mostrador
 
----
+Seguís los **7 pasos de la atención** de *Atención al cliente y reclamos*. En mostrador,
+el paso 6 es así: **chequeás el pedido en FUDO, lo entregás en mano y derivás al
+cliente a caja.**
 
-## 1. Atención al cliente — 7 pasos
-
-1. **Saludar** — Con una sonrisa y contacto visual: *"¡Hola! ¿Te puedo ayudar?"*
-2. **Escuchar** — Dejá que el cliente se exprese sin interrumpir.
-3. **Asesorar** — Describí los productos con entusiasmo. Destacá los favoritos del día.
-4. **Ofrecer más** — Sugerí un complemento (ver Sección 2).
-5. **Confirmar el pedido** — Repetí lo que el cliente eligió antes de cobrar.
-6. **Cobrar y registrar** — Registrá en FUDO. Entregá el comprobante.
-7. **Despedir** — *"¡Que lo disfrutes! Hasta la próxima."*
+> [!regla]
+> ### La venta termina cuando el cliente se va del local, no antes.
 
 ---
 
-## 2. Técnicas de venta — Upselling en mostrador
+## 2. Stock diario y despacho
 
-El upselling es **ofrecer algo más que mejore la experiencia** del cliente.
-No es presionar — es asesorar.
+- **Antes de sacar un producto a la venta, se calcula y se carga su stock en FUDO.**
+  Vale para panadería, pastelería, especialidades, facturería y sándwiches. Es un paso
+  **muy importante**: sin él, no hay control de lo que se vende.
+- **Todos los panes se despachan con pinza o guantes**, nunca con la mano.
+- **Verificá siempre la frescura y la calidad.** Pan viejo o en mal estado no sale.
+- **Cuando un producto está por agotarse, pedí la reposición a cocina con una hora de
+  anticipación**, como mínimo: es lo que tarda en leudar y hornearse. En SLA la cocina
+  lo prevé sola, pero avisá igual si ves que se acaba.
+- **Pan económico:** cada bolsa lleva hasta **500 g** de facturas o de surtido salado.
+  Se vende en el local y por Cheaf. **No se toman reservas ni pedidos.**
 
-| Si el cliente pide… | Ofrecé… |
+---
+
+## 3. Empaque
+
+- **Caja, bolsa o bandeja del tamaño del producto.**
+- **No aplastes la decoración** (cremas, merengues, frutas).
+- **Cajas:** producto centrado y bien cerrado con cinta.
+- **Bolsas:** sin sobrecargar. Si pesa o abulta mucho, dividí.
+- **El cliente ve el producto antes de que lo cierres.**
+- **Avisale si necesita algún cuidado especial** (frío, posición, tiempo).
+
+| Producto | Packaging |
 |---|---|
-| Un café | *"¿Lo acompañás con unas medialunas? Hoy salieron recién."* |
-| Una porción | *"¿Querés llevar una caja también? Tenemos descuento para llevar."* |
-| Algo para llevar | *"¿Te armamos una cajita mixta?"* |
-
-> ℹ️ **Ofrecé una vez, con naturalidad. Si el cliente dice que no, no insistas.**
-
----
-
-## 3. Reclamos en mostrador — Método LAST
-
-Cuando un cliente tiene un problema, seguí estos 4 pasos:
-
-1. **L — Listen (Escuchar)**: Dejá que el cliente cuente todo sin interrumpir.
-2. **A — Apologize (Disculparse)**: *"Lamentamos mucho esto, no debería haber pasado."*
-3. **S — Solve (Resolver)**: Ofrecé una solución concreta — reponer, cambiar, devolver.
-4. **T — Thanks (Agradecer)**: *"Gracias por avisarnos, eso nos ayuda a mejorar."*
-
-> ⚠️ **Nunca discutas con el cliente. Nunca niegues el problema. Siempre avisá al
-> Experto del turno si el reclamo es grande.**
+| **Tortas enteras, tartas, mini cakes** | Caja específica de cada tipo, o faja de cartón y papel kraft |
+| **Masas, facturas, porciones de budín, donas, croissants** | Bolsa de papel kraft o bandeja de cartón con papel |
+| **Porción de torta al corte, hasta 300 g** | Folex y bolsa de papel kraft |
+| **Porción de torta al corte, más de 300 g** | Bandeja de cartón con folex y papel kraft |
+| **Productos muy frágiles** (merengues, hojaldre) | Base de cartón firme y papel kraft |
+| **Sándwich por unidad** | Papel parafinado |
+| **Sándwiches por docena** | Caja de cartón tipo pizza, o bandeja con folex y papel kraft |
+| **Surtido salado y miñón** | Bolsa de plástico según tamaño |
+| **Croissants de dulce de leche, crema o Nutella** | Bandeja con folex y papel kraft |
+| **Pan de Viena, de hamburguesa, de papa, prepizzas, panes lactales** | Bolsa BD, celofán o PP, cerrada con cinta o precinto de metal |
+| **Fiambres** | Folex y papel parafinado |
+| **Pan económico** | Bolsa BD |
 
 ---
 
-## 4. Despacho de pan
+## 4. Vitrinas y reposición
 
-- Todos los panes se despachan **con pinza y papel — nunca con la mano**.
-- **Verificá siempre la frescura.** Pan viejo no sale.
-- Si una bandeja está baja, avisá a producción o reponé desde el depósito.
-- Cuando un producto se agota → **avisá al Experto del turno de inmediato**.
-
----
-
-## 5. Empaque de pastelería
-
-- Usá siempre la **caja, bolsa o bandeja correspondiente** al tamaño del producto.
-- **Separar productos húmedos de secos** en el empaque.
-- Tortas y piezas delicadas → entregar con cuidado y bolsa firme.
-- **Verificá que el cliente vea el producto** antes de cerrarlo.
-
----
-
-## 6. Vitrinas y reposición
-
-- Las vitrinas **siempre limpias y ordenadas**.
-- Los productos con **etiqueta de precio visible** en todo momento.
-- Revisá la vitrina **al inicio del turno, a la mitad y antes del cierre**.
+- **Las vitrinas están siempre limpias y ordenadas**, con precio visible.
+- **Lo más fresco adelante**, a la vista del cliente y lejos de la mano del vendedor.
+  **Lo más viejo atrás**, que es lo que tiene que salir primero.
+- **Revisá la vitrina tres veces:** al inicio del turno, a la mitad y antes del cierre.
 
 ### Qué sale del mostrador y qué pasa por cocina
 
-> ### La regla: si hay que calentarlo, va por comanda a cocina.
+> [!regla]
+> ### Si hay que calentarlo, va por comanda a cocina.
 
 | Sale directo del mostrador a la mesa | Va por comanda a cocina |
 |---|---|
 | Budines · donas · alfajores · cookies | Medialunas · chipá · croissants · rol de canela |
 | Porciones de torta y tartas | Todo lo que se sirva caliente |
 
-**No calientes vos un producto de vitrina.** Aunque el horno esté al lado y parezca
-más rápido: si va caliente, entra por comanda.
+**No calientes vos un producto de vitrina**, aunque el horno esté al lado y parezca más
+rápido.
 
----
+### La heladera de tortas
 
-## 6.1 La heladera de tortas — Tiene un orden
-
-No se acomoda como entre. **Cada piso tiene lo suyo:**
+No se acomoda como entra. **Cada piso tiene lo suyo:**
 
 | Piso | Qué va |
 |---|---|
-| **Superior** | Porciones — mini cakes |
-| **Pisos del medio** | Tortas |
-| **Último piso** | Tartas y **pedidos** |
+| **Superior** | Porciones y mini cakes |
+| **Del medio** | Tortas |
+| **Último** | Tartas y **pedidos** |
 
-### Dentro de cada piso
-
-**Se ordena por sabor.** Todo lo del mismo sabor, junto.
-
-### Y dentro de cada sabor — la regla que hace circular la mercadería
-
-> ### Lo más fresco adelante, lo más viejo atrás.
-> **Adelante** es el lado del cliente. **Atrás** es el lado del vendedor.
-
-Puesto así, **lo primero que agarra el vendedor es lo más viejo**, que es justo lo que
-tiene que salir primero. La mercadería rota sola, sin que nadie tenga que acordarse.
-
-> ⚠️ **Cuidado con el reflejo de reponer adelante.** Es lo cómodo y lo natural: llega
-> mercadería fresca y se pone al frente porque es donde hay lugar. Hecho así, lo viejo
-> queda atrás hasta que se vence.
-
-### Los pedidos
-
-**Los pedidos van en cajas siempre que haya**, en el último piso, junto a las tartas.
-
-Guardarlos en caja los protege y —sobre todo— **deja claro que no están a la venta**.
+- **Dentro de cada piso, por sabor**: todo lo del mismo sabor, junto.
+- **Dentro de cada sabor, lo más fresco adelante** (lado del cliente) **y lo más viejo
+  atrás** (lado del vendedor). Así, lo primero que agarra el vendedor es lo más viejo,
+  y la mercadería rota sola.
+- **Los pedidos van en cajas siempre que haya.** Los protege y **deja claro que no
+  están a la venta.**
 
 ---
 
-> ### La heladera de tortas no puede estar vacía a la mañana.
-> Una heladera vacía cuando abre el local es venta perdida directa, y lo primero que ve
-> el cliente que entra a comprar algo dulce.
+## 5. Fiambres, lácteos y bebidas
+
+- **Fecha de vencimiento revisada** al inicio del turno. Lo vencido se retira y se
+  avisa al Experto del turno.
+- **Primero entra, primero sale**: lo más nuevo atrás, lo más viejo adelante.
+- **No se rompe la cadena de frío**: nada fuera de la heladera sin necesidad.
+- **Fiambres:** siempre refrigerados en su heladera. Durante el turno pueden estar
+  descubiertos, con la heladera ordenada y limpia.
+- **Bebidas:** las heladeras, **siempre llenas**.
 
 ---
 
-## 7. Fiambres y lácteos
-
-- **Verificá la fecha de vencimiento** al inicio del turno.
-- Mantené la heladera limpia y organizada.
-- **Productos vencidos** → retirá y avisá al Experto del turno de inmediato.
-- **No rompas la cadena de frío** — no dejes productos fuera de la heladera sin
-  necesidad.
-
----
-
-## 8. Apertura y cierre del mostrador
+## 6. Apertura y cierre del mostrador
 
 ### Apertura
 
-1. **Chequear que las heladeras estén funcionando correctamente.** Se hace al inicio de
-   **todos** los turnos, igual que en cocina y en barra.
-2. Limpieza general del mostrador y vitrina.
-3. Reposición de productos (pan, pastelería, bebidas).
-4. Verificar etiquetas de precios.
-5. Encender equipos y verificar que todo funciona.
-6. **Cargar pedido de Panadería en la web (antes de las 9:00 hs).**
+1. Limpieza general del mostrador y la vitrina.
+2. Reposición de productos: pan, pastelería, bebidas.
+3. Equipos encendidos y funcionando; heladeras a temperatura.
+4. Stock de productos del día cargado en FUDO.
 
 ### Cierre
 
-1. Guardar y cubrir los productos restantes.
-2. Limpiar vitrina, mostrador y heladera.
-3. Apagar equipos.
-4. **Cargar pedidos de producción para el turno siguiente**
-   (Especialidades, Facturería, Sandwiches — antes de las 21:00 hs).
-5. Dejar el área lista para el turno siguiente.
+1. Productos sobrantes guardados y cubiertos (ver abajo).
+2. Vitrina, mostrador y heladeras limpios.
+3. Equipos apagados.
+4. Pedido de insumos cargado para el día siguiente.
+5. Área lista para el turno que viene.
 
----
+### Cómo se guardan los sobrantes
 
-## 9. Higiene y orden en mostrador
-
-- **Lavarse las manos** antes de manipular alimentos y después de cobrar.
-- **Uniforme limpio y completo** en todo momento.
-- **No comer ni tomar** en el área de atención.
-- Mantener el mostrador **libre de objetos personales**.
-
----
-
-# PARTE 2 — Cuando trabajás en salón (Mozo/a)
-
-## 🎯 Objetivo
-
-Asegurar que cada cliente que se siente en el salón tenga una experiencia
-excelente: **bienvenida cálida, servicio rápido y despedida amable**.
-
----
-
-## 10. Apertura del salón
-
-1. Revisá que todas las **mesas y sillas** estén limpias y alineadas.
-2. Verificá que la **vajilla, servilleteros y azucareros** estén completos en cada mesa.
-3. Limpiá los **vidrios y vitrinas** del salón.
-4. Revisá la **carta**: que esté limpia, completa y sin faltantes.
-5. **Sincronizate con barra** sobre lo que hay disponible y lo que falta.
-
----
-
-## 11. Recibir al cliente
-
-1. Recibí al cliente en la entrada en **menos de 30 segundos**.
-2. Saludá con una sonrisa: *"¡Hola! ¿Cuántos son?"*
-3. **Acompañalos a la mesa personalmente.**
-4. Entregá la carta.
-5. Acercate en **máximo 2 minutos** para tomar el pedido.
-
----
-
-## 12. Toma de pedidos en mesa — 7 pasos
-
-1. **Acercate** a la mesa con energía y contacto visual.
-2. **Escuchá** sin interrumpir lo que el cliente quiere.
-3. **Asesorá** si el cliente tiene dudas — describí los platos con detalle.
-4. **Sugerí algo más** — hacé upselling de forma natural (ver Sección 13).
-5. **Repetí el pedido** antes de alejarte para confirmar que anotaste bien.
-6. **Registrá en FUDO** inmediatamente.
-7. **Avisá a barra/cocina** y confirmá los tiempos.
-
-> ### 🔑 Regla de oro
-> **Tiempo máximo para acercarte a la mesa = 2 minutos.**
-
----
-
-## 13. Upselling en mesa
-
-| Si el cliente pide… | Ofrecé… |
+| Producto | Cómo |
 |---|---|
-| Café | *"¿Te lo acompañamos con algo dulce? Hoy tenemos X."* |
-| Torta | *"¿La querés con helado? Le suma mucho."* |
-| Sandwich | *"¿Querés una bebida con eso?"* |
-| (Es un grupo) | *"¿Compartimos una tabla para empezar?"* |
+| **Miñón** | Se hace secar para pan rallado: **en bolsas de papel** (de harina), cajas de cartón o canastos. **Nunca en bolsa de plástico** |
+| **Facturas** | En bolsas de plástico, para armar pan económico al día siguiente. **Las medialunas sobrantes van a la cocina** para usarse al día siguiente |
+| **Surtido salado** | En bolsas de plástico, para pan económico |
+| **Masas y especialidades de pastelería** | En sus bandejas, **con bolsa de plástico**, dentro de la vitrina |
+| **Tortas, tartas, mini cakes y sándwiches** | En sus heladeras, cerradas |
+| **Fiambres** | Cubiertos con papel film |
 
-> ℹ️ **Ofrecé una vez, con naturalidad. Si el cliente dice que no, no insistas.**
+> [!atencion]
+> **Pastelería: 6 días como máximo**, bien conservada. **Panadería: solo se vende el
+> día en que se elaboró.**
 
 ---
 
-## 14. Servicio de mesa — Tiempos y estándares
+## 7. Cómo se reparten las tareas entre vendedores
 
-### Tiempos de entrega esperados
-
-| Categoría | Tiempo máximo |
+| Vendedor 1 | Vendedor 2 |
 |---|---|
-| Bebidas (café, infusiones) | **3 a 5 minutos** |
-| Pastelería | **1 a 2 minutos** |
-| Sandwiches / Cocina | **8 a 12 minutos** |
-
-### Estándares de servicio
-
-- **Llevá los pedidos completos** — si falta algo, avisá antes de ir a la mesa.
-- **Verificá que el pedido sea correcto** antes de servirlo.
-- **Revisá la mesa cada 5 minutos** para ver si necesitan algo más.
-- Si un pedido se va a demorar, **avisá al cliente proactivamente**.
-
----
-
-## 15. Cobro y cierre de mesa
-
-1. Cuando el cliente pida la cuenta, **cerrala en FUDO inmediatamente**.
-2. Llevá el ticket a la mesa.
-3. Esperá que el cliente pague.
-4. Si paga con tarjeta o transferencia → **verificá la confirmación** antes de
-   liberar la mesa.
-5. Agradecé y despedí: *"¡Muchas gracias! Hasta la próxima."*
-6. **Limpiá y prepará la mesa** para el próximo cliente en menos de 2 minutos.
+| Arma los canastos con la panadería del día | Arma las bandejas de pastelería y facturería del día |
+| Carga el stock de panadería en FUDO | Carga el stock de pastelería y facturería en FUDO |
+| Revisa y carga el pedido de insumos del área | Limpia el baño de uso interno |
+| Ordena las vitrinas de panadería y pastelería | Ordena las heladeras de fiambres y gaseosas |
+| Pide el horneado de lo que falta | Barre y limpia el frente y el lateral del local |
+| Limpia vidrios, heladeras expositoras y vitrinas | Ordena y limpia cajones, repisas y muebles |
+| Controla, empaca y despacha los pedidos de clientes | Empaca y saca a la venta productos y especialidades |
+| Controla y carga el stock de bebidas, fiambres y lácteos | Ordena y guarda los productos para reposición; pesa y carga el stock de fiambres |
+| Limpia polvo y telarañas de rincones y techos del exterior | Limpia paredes y piso del salón |
+| Riega las plantas del exterior | Limpia los vidrios de las aberturas |
 
 ---
 
-## 16. Cierre del salón
+## Parte 2 — Mozos
 
-1. Limpiar todas las **mesas, sillas y el piso** del salón.
-2. Guardar la **vajilla seca y limpia**.
-3. Limpiar **vidrios y vitrinas** del salón.
-4. Revisar **baños** y dejarlos limpios.
-5. Apagar **luces y equipos**.
-6. **Reportar al Experto del turno** cualquier incidencia del turno.
+**Objetivo:** que cada cliente que se sienta en el salón tenga una experiencia
+excelente: bienvenida cálida, servicio rápido y despedida amable.
 
----
+## 8. Apertura del salón
 
-## 17. Reclamos en salón — Método LAST
-
-1. **L — Listen (Escuchar)**: Dejá que el cliente cuente sin interrumpir.
-2. **A — Apologize (Disculparse)**: *"Lamentamos mucho esto, no debería haber pasado."*
-3. **S — Solve (Resolver)**: Ofrecé una solución — reponer, cambiar, no cobrar el ítem.
-4. **T — Thanks (Agradecer)**: *"Gracias por avisarnos, eso nos ayuda a mejorar."*
-
-> ⚠️ **Nunca discutas con el cliente. Para reclamos grandes, llamá al Experto del turno de
-> inmediato.**
+1. Mesas y sillas **limpias y alineadas**, sin polvo ni restos.
+2. **Servilleteros y azucareros completos** en cada mesa; vajilla lista.
+3. **Vidrios y vitrinas del salón**, limpios.
+4. **Carta** limpia y completa.
+5. **Sincronizate con barra y cocina**: qué hay disponible y qué falta.
 
 ---
 
-# PARTE 3 — Herramientas digitales (ambos roles)
+## 9. Recibir al cliente
 
-## 18. 🖥️ Web — Pedidos de Clientes
-
-`pedidos-de-clientes-cc.netlify.app`
-
-**¿Para qué sirve?** Para cargar pedidos de clientes a futuro: tortas de
-cumpleaños, encargues especiales, catering.
-
-### Paso a paso
-
-1. Ingresá a `pedidos-de-clientes-cc.netlify.app`
-2. Tocá **"Ventas"** en el menú
-3. Completá los datos del cliente: nombre completo, teléfono, fecha de entrega,
-   local (SLA 5.0 o San Luis)
-4. Agregá los productos por área — el sistema pide un **PIN** por área:
-
-   | Área | PIN |
-   |---|---|
-   | Panadería | `1111` |
-   | Pastelería | `2222` |
-   | Facturería | `3333` |
-   | Especialidades | `4444` |
-   | Sandwiches | `5555` |
-   | PIN maestro (ver todo) | `1412` |
-
-5. Ingresá el PIN del área → elegí los productos y cantidades
-6. Repetí para cada área que corresponda
-7. Revisá el pedido completo
-8. Tocá **"Confirmar"**
-
-✅ El pedido llega automáticamente a producción.
-
-### Errores frecuentes
-
-- ❌ **Fecha mal cargada** → verificá en el calendario.
-- ❌ **PIN incorrecto** → consultá la tabla.
-- ❌ **No confirmaste el pedido** → siempre tocá "Confirmar" al final.
+1. Recibilo en la puerta **en menos de 30 segundos**.
+2. Saludá con una sonrisa: *"¡Hola! Bienvenidos. ¿Cuántos son?"*
+3. **Acompañalos a la mesa.**
+4. Entregá la carta y el llamador de mozos, si corresponde.
+5. Volvé a tomar el pedido **en 2 minutos como máximo**.
 
 ---
 
-## 19. 🖥️ Web — Pedidos de Producción
+## 10. Tomar el pedido
 
-`pedidos-produccion.netlify.app`
+1. Acercate con energía y contacto visual.
+2. **Escuchá sin interrumpir.**
+3. **Asesorá** si hay dudas: describí los platos con detalle.
+4. **Sugerí algo más**, una vez (ver *Atención al cliente y reclamos*).
+5. **Repetí el pedido** antes de irte.
+6. **Cargalo en FUDO en ese momento.**
+7. Avisá a barra y cocina y **confirmá los tiempos**.
+8. **Serví agua o soda de cortesía** mientras esperan, y prepará la mesa.
 
-**¿Para qué sirve?** Para avisar a producción cuánto necesita preparar. Se carga
-**una vez por turno**, antes del horario límite.
+> [!regla]
+> ### Tiempo máximo para acercarte a la mesa: 2 minutos.
 
-### Horarios límite
+### Cómo se prepara la mesa
 
-| Área | Cargar antes de |
+Antes de servir el pedido, cada mesa tiene lo mismo:
+
+- **Agua o soda de cortesía.** Cuando se termina, **se repone antes de que la pidan**.
+- **Como mínimo:** una cucharita, una servilleta y un vaso por persona.
+- **Cada taza con su platillo** o posavasos.
+
+| Cubierto | Para qué |
 |---|---|
-| Panadería | **9:00 hs** |
-| Pastelería | **16:00 hs** |
-| Especialidades | **21:00 hs** |
-| Facturería | **21:00 hs** |
-| Sandwiches | **21:00 hs** |
-| Cocina San Luis | **21:00 hs** |
-
-### Paso a paso
-
-1. Ingresá a `pedidos-produccion.netlify.app`
-2. Seleccioná el local: **SLA 5.0** o **San Luis**
-3. Seleccioná el área
-4. Ingresá las cantidades de cada producto
-5. Revisá el pedido
-6. Tocá **"Confirmar pedido"**
-
-✅ Producción puede ver el pedido de inmediato.
-
-> ⚠️ **Si te olvidaste de cargar a tiempo, avisá al Experto del turno inmediatamente.**
+| **Tenedor y cuchillo** | Porciones de torta, combos de tostadas, sándwiches de focaccia, ciabatta o baguette |
+| **Untador** | Combos con mermelada o palta: **uno por cada dip** |
+| **Cuchara de submarino** | Submarinos, licuados, smoothies, frappuccinos y jarras |
+| **Sorbete** | Bebidas frías con hielo: cafés fríos, licuados, smoothies |
 
 ---
 
-# PARTE 4 — Indicadores y checklist
+## 11. Servicio de mesa
 
-## 20. Indicadores de desempeño (KPIs)
-
-### Como Vendedor/a
-
-| Indicador | Meta |
+| Categoría | Tiempo máximo de entrega |
 |---|---|
-| Ventas registradas en FUDO | **100%** |
-| Vitrina repuesta y limpia | Durante **todo** el turno |
-| Tiempo de atención en mostrador | **< 3 minutos** |
-| Pedido de Producción | Cargado **antes del horario límite** |
+| **Bebidas de barra** (café, infusiones) | 3 a 5 minutos |
+| **Pastelería** | 1 a 2 minutos |
+| **Sándwiches y cocina** | 8 a 12 minutos |
 
-### Como Mozo/a
-
-| Indicador | Meta |
-|---|---|
-| Primer contacto con el cliente | **< 2 minutos** |
-| Tiempos de entrega | Café 3-5 min · Pastelería 1-2 min · Sandwich 8-12 min |
-| Mesa preparada para el próximo cliente | **< 2 minutos** |
-| Pedido de Producción | Cargado **antes del horario límite** |
+- **Llevá los pedidos completos.** Si falta algo, avisá antes de ir a la mesa.
+- **Verificá que el pedido sea el correcto** antes de servirlo.
+- **Revisá cada mesa cada 7 minutos** para ver si necesitan algo más.
+- Si un pedido se va a demorar, **avisá antes de que pregunten**, y llevá agua o soda.
+- **Ubicate frente a la barra**, con la mayor visión posible de las mesas, siempre en
+  posición activa.
 
 ---
 
-## ✅ Checklist diario — Vendedor/a y Mozo/a
+## 12. Cobrar y liberar la mesa
 
-### Apertura — Mostrador (Vendedor/a)
+1. Cuando pidan la cuenta, **cerrala en FUDO en ese momento**.
+2. Llevá el ticket a la mesa y esperá que paguen.
+3. **Tarjeta, QR o transferencia: verificá la confirmación** antes de liberar la mesa.
+4. Agradecé y despedí: *"¡Muchas gracias! Hasta la próxima."*
+5. **Mesa limpia y lista para el próximo cliente en menos de 2 minutos.**
 
-- ☐ Mesas y sillas del mostrador limpias y ordenadas
-- ☐ Vitrina limpia y con productos repuestos
-- ☐ Vajilla, servilleteros y azucareros completos
-- ☐ Carta limpia y completa
-- ☐ **Heladeras funcionando correctamente**
-- ☐ Heladera revisada (vencimientos, limpieza)
-- ☐ Uniforme correcto
-- ☐ Pedido de **Panadería** cargado en la web (antes de las **9:00 hs**)
-- ☐ Web Pedidos de Clientes disponible
+---
 
-### Apertura — Salón (Mozo/a)
+## 13. Cierre del salón
 
-- ☐ Mesas y sillas alineadas y limpias
-- ☐ Vidrios y vitrinas del salón limpios
-- ☐ Vajilla completa en mesas
-- ☐ Carta disponible en cada mesa
-- ☐ Servilleteros y azucareros completados
-- ☐ Uniforme correcto
-- ☐ Coordinación con barra (disponibilidad del día)
-- ☐ Depósito revisado y ordenado
-- ☐ Pedido de **Panadería** cargado en la web (antes de las **9:00 hs**)
+1. Mesas, sillas y piso del salón limpios.
+2. Vajilla seca y guardada.
+3. Vidrios y vitrinas del salón limpios.
+4. Azucareros y servilleteros repuestos.
+5. Baños revisados y limpios.
+6. Luces y equipos apagados.
+7. **Incidencias del turno informadas al Experto del turno.**
+
+---
+
+## 14. Cómo se reparten las tareas entre mozos
+
+| Mozo 1 | Mozo 2 |
+|---|---|
+| Limpieza profunda de mesas y sillas, interior y exterior | Limpieza de paredes y piso del salón |
+| Baño de clientes (en SLA, baño de uso interno) | Riego de las plantas del exterior |
+| Polvo de sombrillas, sillas de tela y almohadones | Lavado de las sillas plásticas del interior |
+| Revisa y carga el pedido de insumos del sector | Polvo y telarañas de rincones, esquinas y techos |
+| Revisa y pide la panadería y pastelería que falta | Vidrios de las aberturas |
+| Orden y reposición de azucareros, saleros y servilleteros | Orden y limpieza de cajones, repisas y muebles |
+| Abre y cierra los toldos en horario | |
+
+**Los dos:** retiran la vajilla sucia enseguida, mantienen pisos y mesas durante el
+turno, cobran bien las ventas digitales y, **si no está el ayudante de cocina, lavan y
+fajinan la vajilla** (ver *Manejo y lavado de vajilla*).
+
+---
+
+## Parte 3 — Los dos roles
+
+## 15. Reclamos
+
+Se resuelven con el **método LAST** (ver *Atención al cliente y reclamos*). Si el
+reclamo es grande, **llamá al Experto del turno** en ese momento o pedile a un
+compañero que te reemplace. **Nunca discutas con el cliente.**
+
+## 16. Lo que está en otros manuales
+
+| Tema | Dónde |
+|---|---|
+| Pedidos de producción, de insumos y de clientes | *Herramientas digitales* |
+| Consumo del personal | *Jornada, presentismo y consumo del personal* |
+| Mercadería que llega mal | *Mercadería para cambio* |
+| Higiene, cadena de frío y heladeras | *Higiene, manipulación y presentación* |
+
+---
+
+## Indicadores de desempeño
+
+| Como vendedor | Meta |
+|---|---|
+| Ventas registradas en FUDO | 100% |
+| Vitrina repuesta y limpia | Todo el turno |
+| Atención en mostrador | Menos de 3 minutos |
+| Pedido de producción | Antes del horario límite |
+
+| Como mozo | Meta |
+|---|---|
+| Primer contacto con el cliente | Menos de 2 minutos |
+| Tiempos de entrega | Café 3 a 5 min · Pastelería 1 a 2 min · Sándwich 8 a 12 min |
+| Mesa lista para el próximo cliente | Menos de 2 minutos |
+| Pedido de producción | Antes del horario límite |
+
+---
+
+## Checklist — Vendedores
+
+### Apertura
+
+- ☐ Heladeras a temperatura y fechas de fiambres y lácteos revisadas
+- ☐ **Vendedor 1:** canastos de panadería armados y su stock cargado en FUDO
+- ☐ **Vendedor 2:** bandejas de pastelería y facturería armadas y su stock cargado en FUDO
+- ☐ Vitrinas ordenadas, lo más fresco adelante, precios visibles
+- ☐ Frente y lateral del local barridos
+- ☐ Herramientas digitales funcionando
 
 ### Durante el turno
 
-- ☐ Clientes recibidos en menos de 2 minutos
-- ☐ Upselling aplicado en cada atención
-- ☐ Vajilla sucia retirada rápidamente
-- ☐ Limpieza de piso y mesas en curso
-- ☐ Limpieza de vidrios y vitrinas
-- ☐ Reposición de utensilios cuando es necesario
-- ☐ Pedido de **Pastelería** cargado en la web (antes de las **16:00 hs**)
-- ☐ Pedidos de Clientes cargados inmediatamente al recibirlos
-- ☐ Ventas digitales cobradas correctamente
-- ☐ Pedidos verificados antes de entregar
+- ☐ Cada venta cargada en FUDO
+- ☐ Reposición pedida a cocina con una hora de anticipación
+- ☐ Pedidos de clientes cargados al recibirlos y verificados antes de entregar
+- ☐ Pinzas, espátulas y cuchillos limpios
+- ☐ Luces del exterior encendidas y apagadas a tiempo
+- ☐ Tareas del reparto (sección 7) hechas
 
 ### Cierre
 
-- ☐ Mesas/sillas limpias y ordenadas
-- ☐ Salón limpio para el turno siguiente
-- ☐ Vajilla seca y guardada para el próximo turno
-- ☐ Vitrina y heladera ordenadas
-- ☐ Baño personal en orden
-- ☐ Depósito ordenado
-- ☐ Pedidos de Producción noche cargados
-      (Especialidades / Facturería / Sandwiches / Cocina San Luis — antes de las **21:00 hs**)
-- ☐ Pedidos de Clientes: ninguno pendiente
-- ☐ Incidencias del turno reportadas al Experto del turno
+- ☐ Sobrantes guardados según la tabla de la sección 6
+- ☐ Mostrador, vitrinas, heladeras, vidrios y puertas limpios
+- ☐ Fiambres guardados cubiertos
+- ☐ Pedido de insumos cargado
+- ☐ Baño interno limpio para el turno siguiente
+
+## Checklist — Mozos
+
+### Apertura
+
+- ☐ Heladeras a temperatura
+- ☐ Mesas, sillas y sombrillas limpias y alineadas; salón y exterior barridos
+- ☐ Vidrios, espejos y puertas limpios
+- ☐ Servilleteros y azucareros completos; carta disponible
+- ☐ Coordinado con barra y cocina qué hay disponible
+
+### Durante el turno
+
+- ☐ Clientes recibidos en menos de 30 segundos y atendidos en menos de 2 minutos
+- ☐ Vajilla sucia retirada enseguida
+- ☐ Baño de clientes revisado cada una hora
+- ☐ Ventas digitales cobradas y confirmadas
+- ☐ Tareas del reparto (sección 14) hechas
+
+### Cierre
+
+- ☐ Mesas, sillas y salón limpios y ordenados
+- ☐ Vajilla seca y guardada
+- ☐ Baños limpios para el turno siguiente
+- ☐ Ningún pedido de cliente pendiente
+- ☐ Incidencias informadas al Experto del turno
+
+---
+
+## Pendientes de definición
+
+- [ ] **Tiempo de entrega de sándwiches y cocina.** Una versión decía 8 a 15 minutos y
+      otra 8 a 12. Quedó **8 a 12**: confirmar.
+- [ ] **Cuándo se abren y se cierran los toldos**, y cuándo se encienden las luces del
+      exterior.
+- [ ] **Quién limpia el baño de clientes en SLA**, si el mozo 1 limpia el interno.
 
 ---
 
 ## Documentos relacionados
 
-- [Herramientas digitales](../comunes/herramientas-digitales.md)
-- [Atención al cliente y reclamos](../comunes/atencion-y-reclamos.md)
-- [Higiene y presentación](../comunes/higiene-y-presentacion.md)
+- Atención al cliente y reclamos
+- Herramientas digitales
+- Higiene, manipulación y presentación
+- Manejo y lavado de vajilla
+- Cocina de locales
+- Experto del turno

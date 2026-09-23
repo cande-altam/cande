@@ -1,14 +1,15 @@
-# Organigrama — Candela Café & Patisserie
+# Organigrama
 
-*Versión 1.0 | Agosto 2026*
+*Versión 1.1 · Septiembre 2026 · Aplica a todo el equipo*
 
-> **Documento común.** Sirve para saber **a quién recurrir** ante cada situación, no
-> para marcar jerarquías. Un organigrama en un negocio de este tamaño es un mapa, no
-> una pirámide.
+## Para qué sirve
+
+Para saber **a quién recurrir** ante cada situación, no para marcar jerarquías. En un
+negocio de este tamaño, el organigrama es un mapa, no una pirámide.
 
 ---
 
-## La estructura
+## 1. La estructura
 
 ```
                             DIRECCIÓN
@@ -24,56 +25,61 @@
                              Vendedores  (uno para los     de área
                              Mozos        dos locales)     (uno por área)
                              Baristas    Cocineros
-                                         Ayudantes
+                                         Ayudante
 
-                      LIMPIEZA  —  atraviesa los tres locales
+            LIMPIEZA  —  local San Luis y cuadra de producción
 ```
 
 ---
 
-## Quién es quién
+## 2. Quién es quién
 
 | Nivel | Quién | De qué responde |
 |---|---|---|
 | **Dirección** | El dueño | La conducción del negocio |
-| **Gerencia** | Está por encima de todos los puestos, por debajo de Dirección | Personas, decisiones e informes de turno |
-| **Administración** | | Dinero, caja, proveedores, sobres de depósito |
-| **Compras** | | Insumos, reparto y vehículo |
-| **Locales de venta** | SLA 5.0 y San Luis | Atención al público |
-| **Cocina de locales** | **Un jefe de cocina para los dos locales**, más cocineros y ayudantes | Las cocinas de San Luis y de SLA 5.0 |
-| **Cuadra de producción** | Un maestro por área | Panadería, Pastelería, Facturería, Especialidades, Sandwiches |
-| **Limpieza** | | Los tres locales |
+| **Gerencia** | Cande. Está por encima de todos los puestos y por debajo de Dirección | Personas, decisiones e informes de turno |
+| **Administración** | | Dinero, pagos a proveedores, sobres de depósito, diferencias de caja |
+| **Compras** | Una persona | Insumos, reparto de mercadería y vehículo |
+| **Locales de venta** | San Luis y SLA 5.0 | Atención al público: caja, mostrador, salón y barra |
+| **Cocina de locales** | **Un jefe de cocina para los dos locales**, cocineros y ayudante de cocina | Las cocinas de San Luis y de SLA 5.0 |
+| **Cuadra de producción** | Un maestro por área | Panadería, Pastelería, Facturería, Especialidades, Sándwiches |
+| **Limpieza** | | Local San Luis y cuadra de producción |
 
 ---
 
-## El Experto del Turno no es un nivel
+## 3. El Experto del turno no es un nivel
 
-Esto es importante y suele confundirse:
-
+> [!regla]
 > ### El Experto no está "arriba" de sus compañeros.
 > Es un **rol dentro del turno**, no un escalón del organigrama. Rota, lo ocupa gente
 > de distintos puestos, y **hoy es uno y mañana otro**.
 
 Sigue siendo cajero, vendedor, mozo o barista. Lo que tiene es **la responsabilidad de
-que ese turno salga bien** — y por eso es a quien se recurre primero.
+que ese turno salga bien**, y por eso es a quien se recurre primero. Lo elige Gerencia
+por desempeño y cobra un bono aparte.
+
+En la cuadra de producción no hay Experto del turno: cada área tiene su **maestro**.
 
 ---
 
-## A quién recurrir
+## 4. A quién recurrir
 
 | Si necesitás… | Andá a |
 |---|---|
 | Resolver algo del turno · una duda · un conflicto con un cliente | **Experto del turno** |
-| Autorizar una devolución · devolver dinero | **Gerencia** |
+| Autorizar una devolución · devolver dinero a un cliente | **Gerencia** |
 | Algo sobre tu turno, tu franco o tu sueldo | **Gerencia** |
-| Plantear un problema con un compañero o con el Experto | **Gerencia** |
+| Plantear un problema con un compañero | **Experto del turno** |
+| Plantear un problema con el Experto | **Administración**, directamente (ver Código de ética) |
+| Acoso, discriminación o maltrato | **Administración**, directamente (ver Código de ética) |
 | Dinero para pagar un proveedor · una diferencia de caja | **Administración** |
-| Un insumo que falta | **Cargalo en la web.** Lo compra **Compras** |
+| Un insumo que falta | **Cargalo en la Web de Pedidos de Producción.** Lo compra **Compras** |
 | Algo que se rompió o no funciona | **Experto del turno**, que lo pasa al informe |
+| Algo del vehículo | **Compras**, que es responsable del vehículo |
 
 ---
 
-## Cómo circula la información
+## 5. Cómo circula la información
 
 ```
   El equipo  -->  Experto del turno  -->  informe diario  -->  GERENCIA
@@ -91,13 +97,12 @@ que ese turno salga bien** — y por eso es a quien se recurre primero.
 
 ## Pendientes de definición
 
-- [ ] **Confirmar el nombre de Dirección.** La propuesta es llamar **Dirección** al
-      dueño, para no confundirlo con **Gerencia**. *"Gerencia General"* y *"Gerencia"*
-      se parecen demasiado: cuando un manual diga *"avisá a Gerencia"*, alguien va a
-      dudar de cuál de las dos.
-- [ ] **Quién ocupa Administración y Compras**, y si son la misma persona o distintas.
-- [ ] **A quién reporta el maestro de área.** Está puesto directo a Gerencia; confirmar
-      si es así o si pasa por Administración.
+- [ ] **Confirmar el nombre de Dirección** para el dueño, para no confundirlo con
+      Gerencia. Si un manual dice "avisá a Gerencia", nadie tiene que dudar de a quién.
+- [ ] **Quién ocupa Administración**, y si es la misma persona que Gerencia en algún
+      momento del día.
+- [ ] **A quién reporta el maestro de área:** directo a Gerencia o a través de
+      Administración.
 - [ ] **Si hay más de un turno en la cuadra de producción**, y si cada turno tiene su
       maestro.
 
@@ -105,8 +110,8 @@ que ese turno salga bien** — y por eso es a quien se recurre primero.
 
 ## Documentos relacionados
 
-- Manual de Experto del Turno
-- Manual de Compras
-- Manual de Maestro de Área
-- Manual de Jefe de Cocina
-- Código de Ética y Convivencia
+- Experto del turno
+- Código de ética y convivencia
+- Jefe de cocina
+- Maestro de área
+- Compras

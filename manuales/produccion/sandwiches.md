@@ -1,130 +1,174 @@
-# Manual de Procedimientos — Sandwiches
+# Sándwiches
 
-**Candela Café & Patisserie**
-*Versión 0.5 — FÓRMULAS | Agosto 2026*
+*Versión 1.0 · Septiembre 2026 · Aplica a quien elabora sándwiches: el área de Sándwiches de la cuadra y las cocinas de los locales*
 
----
+## Objetivo del área
 
-> ## 🚧 Este manual tiene las fórmulas, no el proceso
->
-> Lo que sigue son las **recetas**: qué lleva cada producto y en qué cantidad.
-> Salen del módulo de Costeo, así que están verificadas contra lo que se compra.
->
-> **Todavía NO tiene** lo que hace que un manual sirva para enseñar el puesto:
-> tiempos, temperaturas, orden de los pasos, cómo se sabe que algo está en su punto.
-> Eso se releva con el
-> [cuestionario de áreas de producción](_cuestionario-areas-produccion.md).
->
-> Tal como está, sirve como **recetario de referencia** — no todavía para formar a
-> alguien que entra.
+Que **cada sándwich tenga el mismo pan, el mismo gramaje y el mismo armado**, lo haga
+quien lo haga y en el local que sea. Es lo que hace que el cliente reciba siempre lo
+mismo y que el costo se pueda calcular.
+
+> [!regla]
+> ### El sándwich se arma con la ficha y con la balanza, no de memoria.
+> El fiambre y el queso **se pesan**. Un sándwich con 20 g de más, repetido cien veces
+> por semana, es un producto que se vende a pérdida.
 
 ---
 
-## 🎯 El área
+## 1. Quién elabora qué
 
-Sandwiches arma los sandwiches de mostrador y salón. **Corte: 21:00 hs.**
-
-> ⚠️ **Es el área con menos recetas cargadas: solo dos**, y las dos son preparaciones
-> auxiliares (manteca y mayonesa saborizadas), no sandwiches.
->
-> **No hay ninguna ficha de sandwich cargada**: ni el armado, ni el gramaje de fiambre,
-> ni qué pan lleva cada uno. Es el área que más relevamiento necesita.
-
----
-
-## 📋 Tu pedido de insumos diario
-
-> ### 🔑 Esta área carga su propio pedido de insumos, todos los días.
-> **Lo que no cargues, nadie lo compra.** Compras no adivina ni repone por su cuenta.
-
-1. Entrá a **`pedidos-produccion.netlify.app`** → **Pedido de insumos**
-2. Seleccioná **el área**
-3. Cargá **todo lo que falte**: insumos, materias primas, elementos
-4. Por cada uno, poné **cantidad** y **prioridad**:
-
-| Color | Prioridad | Cuándo usarlo |
+| Producto | Quién lo elabora | Corte del pedido |
 |---|---|---|
-| 🔴 **Rojo** | Urgente | Lo necesitás **hoy** |
-| 🟡 **Amarillo** | Media | Se está por acabar |
-| 🟢 **Verde** | Baja | Reposición normal |
+| **Sándwiches de miga** | Cocina de San Luis, que abastece a SLA | 21:00 hs |
+| **Ciabattas** | Cocina de San Luis, que abastece a SLA | 21:00 hs |
+| **Bagels, mini baguettes y focaccias** (sanguchazos) | **Cada local, en su cocina** | — (se arman por comanda) |
+| **Panes de bagel, baguette y focaccia** | **Cada local elabora los suyos** | — |
 
-Usá los **comentarios** para aclarar marca, tamaño o proveedor preferido.
+> [!pendiente]
+> **Confirmar dónde se elaboran los sándwiches de miga.** El organigrama y la web tienen
+> un área de **Sándwiches en la cuadra de producción**, con corte a las 21:00, y el
+> manual de *Cocina de locales* dice que **los elabora la cocina de San Luis**. Este
+> manual sirve para los dos casos, pero hay que definir cuál es el real.
 
-> ⚠️ **Cargalo antes de las 9:00 hs.** A esa hora Compras revisa el pedido completo y
-> arma el recorrido del día. Lo que entre después queda para mañana.
+---
 
-> 📖 Detalle completo en
-> **[Herramientas digitales](../comunes/herramientas-digitales.md)**.
+## 2. Reglas de armado
 
+Valen para todos los sándwiches.
 
-## Fórmulas
+1. **Manos lavadas y guantes**: el sándwich no se cocina después, así que lo que toca
+   la mano llega a la boca del cliente.
+2. **Mise en place:** pan, untable, fiambres, quesos y vegetales listos antes de
+   empezar.
+3. **Untable de borde a borde**, en capa fina y pareja (manteca o mayonesa para
+   sándwiches, sección 4). Es lo que evita que el pan se seque.
+4. **Fiambre y queso pesados**, según la ficha.
+5. **Vegetales lavados y secos**: el agua humedece el pan.
+6. **Corte limpio**, con cuchillo de sierra, en la forma de la ficha.
+7. **Envuelto y rotulado** con fecha de elaboración.
+8. **A la heladera enseguida**, a 4 °C o menos.
 
-> **Las cantidades están en kilogramos**, salvo las que son por unidad
-> (se aclara en cada caso). Cada fórmula es un **batch completo**, no una porción:
-> son las cantidades que se mezclan de una vez.
+### Sándwiches de miga
 
-### Manteca p/ sandwiches
+- **Pan de miga de LAS FLORES**, que llega lunes, miércoles y viernes (ver *Pedidos y
+  pagos a proveedores*).
+- Las planchas se arman completas, se **prensan tapadas** para que asienten y **recién
+  después** se cortan.
+- Se guardan **tapados con film**: el pan de miga se seca muy rápido.
+
+### Sanguchazos (focaccias, bagels, mini baguettes)
+
+- Se arman **por comanda**, en la cocina de cada local.
+- El pan puede ir **tostado** según la ficha, en sartén o tostador (San Luis) o plancha
+  carlitera (SLA).
+- Se sirven con tenedor y cuchillo (ver *Vendedores y mozos*).
+
+---
+
+## 3. Conservación y envío a SLA
+
+| | |
+|---|---|
+| **Dónde** | Heladera, tapados, rotulados con fecha |
+| **Rotación** | Primero entra, primero sale |
+| **Cuánto dura** | *pendiente* — va en la ficha de cada sándwich |
+| **Envío a SLA** | 8:00 o 9:00 hs, o al mediodía, con Compras. Variedades y cantidades las define el jefe de cocina (ver *Cocina de locales*) |
+
+---
+
+## 4. Untables
+
+> [!nota]
+> **Las cantidades están en kilogramos, por batch.** Se preparan aparte, se guardan
+> tapados y rotulados en la heladera.
+
+**Manteca para sándwiches**
 
 | Ingrediente | Marca / detalle | Cantidad |
 |---|---|---|
-| Manteca | Milkaut | **1.7** |
+| Manteca | Milkaut | **1,7** |
 | Leches | — | **1** |
 
-> Batch de **2.7 kg** de masa/mezcla total.
+*Batch de 2,7 kg de masa total.*
 
-### Mayonesa p/ sandwiches
+**Mayonesa para sándwiches**
 
 | Ingrediente | Marca / detalle | Cantidad |
 |---|---|---|
-| Mayonesa | paquete 1 kg | **1.7** |
-| Leches | — | **0.6** |
+| Mayonesa | paquete 1 kg | **1,7** |
+| Leches | — | **0,6** |
 
-> Batch de **2.3 kg** de masa/mezcla total.
-
+*Batch de 2,3 kg de masa total.*
 
 ---
 
-## 🚧 Lo que falta relevar
+## 5. Fichas de producto
 
-> **🔴 Falta todo el catálogo.** Las dos recetas de abajo son las únicas cargadas.
-> Hay que relevar, para **cada sandwich que se vende**:
->
-> - Qué pan lleva
-> - Gramaje de cada fiambre y del queso
-> - Qué untable lleva (manteca o mayonesa de las de abajo)
-> - Cómo se corta y cómo se presenta
-> - Cuánto dura armado en vitrina
->
-> Sin eso, cada persona arma el sandwich como le parece — y el costo real no se puede
-> calcular.
+**Es la receta que falta en todo el negocio.** No hay ninguna ficha de sándwich cargada:
+ni el pan, ni el gramaje, ni el armado. Hoy cada persona lo arma como le parece.
 
-Para cada producto de arriba:
+Cada ficha lleva:
 
-- [ ] **Pasos en orden** — desde que se pesa hasta que sale
-- [ ] **Tiempos** de amasado, reposo, fermentado, horneado
-- [ ] **Temperaturas** — horno, cámara, masa
-- [ ] **Cómo se sabe que está listo** — color, textura, punto
-- [ ] **Rendimiento**: cuántas unidades salen de cada batch
-- [ ] **Qué sale mal seguido** y cómo se detecta a tiempo
+| Campo | Ejemplo de lo que se completa |
+|---|---|
+| **Pan** | Tipo y tamaño |
+| **Untable** | Manteca o mayonesa para sándwiches, y cuántos gramos |
+| **Fiambres y quesos** | Cada uno con sus gramos |
+| **Vegetales y otros** | Cada uno con sus gramos o unidades |
+| **Cocción** | Frío, tostado, a la plancha; tiempo |
+| **Corte y presentación** | En triángulos, al medio; con qué se sirve |
+| **Packaging** | Para llevar y para delivery |
+| **Cuánto dura** | En heladera, armado |
+| **Alérgenos** | Frutos secos, lácteos, gluten |
+| **Foto** | Cómo tiene que verse |
 
-Además:
+| Producto | Ficha |
+|---|---|
+| Cada variedad de **sándwich de miga** | *pendiente* |
+| Cada variedad de **ciabatta** | *pendiente* |
+| Cada **focaccia** de la carta | *pendiente* |
+| Cada **bagel** de la carta | *pendiente* |
+| Cada **mini baguette** de la carta | *pendiente* |
+| **Pan de bagel, baguette y focaccia** que elabora cada local | *pendiente* |
 
-- [ ] **Tandas del día**: cuántas, a qué hora tiene que estar lista cada una
-- [ ] **Qué se deja preparado** para el día siguiente
-- [ ] **Limpieza** diaria y semanal del área
-- [ ] **Sobrantes**: qué se guarda, qué se tira, dónde se registra
+---
 
-> 📄 Todo esto está en el
-> [cuestionario de áreas de producción](_cuestionario-areas-produccion.md), listo para
-> reenviar a quien está en el puesto.
+## Indicadores de desempeño
 
+| Indicador | Meta |
+|---|---|
+| **Gramaje** | Igual al de la ficha |
+| **Rotulado** | 100% con fecha |
+| **Envío a SLA** | Completo y en horario |
+| **Tiempo de un sanguchazo por comanda** | 8 a 12 minutos |
+
+---
+
+## Checklist — Sándwiches
+
+- ☐ Heladera a temperatura; fechas de fiambres y quesos revisadas
+- ☐ Untables preparados, tapados y rotulados
+- ☐ Balanza a mano: fiambre y queso pesados
+- ☐ Todo lo armado, envuelto y rotulado con fecha
+- ☐ Envío a SLA controlado antes de salir
+
+---
+
+## Pendientes de definición
+
+- [ ] **Fichas de todos los sándwiches y de los panes propios** (sección 5): son las
+      recetas que faltan.
+- [ ] **Dónde se elaboran los sándwiches de miga** (sección 1).
+- [ ] **Cuánto dura cada sándwich armado** en la heladera y en la vitrina.
+- [ ] **El pedido de sándwiches de SLA:** que SLA cargue su propio pedido para que San
+      Luis lo elabore y envíe al día siguiente.
 
 ---
 
 ## Documentos relacionados
 
-- [Cuestionario de áreas de producción](_cuestionario-areas-produccion.md)
-- [Bases y preparaciones](bases.md)
-- [Manual de Compras](compras.md)
-- [Herramientas digitales](../comunes/herramientas-digitales.md)
-- [Higiene y presentación](../comunes/higiene-y-presentacion.md)
+- Cocina de locales
+- Jefe de cocina
+- Maestro de área — normas de la cuadra
+- Higiene, manipulación y presentación
+- Plantilla de manual — modelo de ficha de producto

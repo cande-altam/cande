@@ -31,6 +31,8 @@ HEAD = CELL + ';background-color:#e5e1cc'
 BOX  = 'border-spacing:0;border-collapse:collapse;margin-right:auto;width:100%'
 BOXC = 'padding:9pt 11pt;vertical-align:top'
 MONO = "Consolas,'Courier New',monospace"
+# Párrafo vacío chico después de tablas y cuadros: Docs no respeta márgenes de tabla
+AIRE = f'<p style="{BASE};font-size:6pt">&nbsp;</p>'
 
 # Fondos, tomados de los que ya existen en el documento
 FONDOS = [
@@ -40,6 +42,20 @@ FONDOS = [
     (r'✅|Resuelto|vigente y en uso',                     '#f7f5ea'),   # confirmación
     (r'🚧|A definir|falta|Pendiente|Borrador',            '#f0eee2'),   # pendiente
 ]
+# Marca explícita al inicio del cuadro: > [!regla] · [!prohibido] · [!atencion] · [!pendiente] · [!nota]
+TIPOS = {
+    'regla':     '#f9ddd8',
+    'prohibido': '#fdecea',
+    'atencion':  '#fffbe6',
+    'pendiente': '#f0eee2',
+    'nota':      '#f7f5ea',
+}
+def tipo_cuadro(t):
+    m = re.match(r'^\s*\[!(\w+)\]\s*\n?', t)
+    if m and m.group(1).lower() in TIPOS:
+        return TIPOS[m.group(1).lower()], t[m.end():]
+    return None, t
+
 def fondo(t):
     for pat, bg in FONDOS:
         if re.search(pat, t):
@@ -51,7 +67,6 @@ EMOJI = re.compile(
     "\U00002460-\U000024FF\U000025A0-\U000027BF\U00002B00-\U00002BFF"
     "\U0000FE00-\U0000FE0F\U0001F1E6-\U0001F1FF]")
 def sin_emoji(s):
-    s = EMOJI.sub('', s)
     s = s.replace('☐', '\x01').replace('☑', '\x02')   # preservar casillas
     s = EMOJI.sub('', s)
     s = s.replace('\x01', '☐').replace('\x02', '☑')
@@ -111,14 +126,16 @@ def convert(md, tight=False, hshift=0):
                 t.append('<tr>' + ''.join(
                     f'<td style="{CELL}"><p style="{STY["cell"]}">{inline(c) or "&nbsp;"}</p></td>'
                     for c in cells) + '</tr>'); i += 1
-            out.append(''.join(t) + '</table>'); continue
+            out.append(''.join(t) + '</table>' + AIRE); continue
         if re.match(r'^>\s?', ln):                                  # cuadro destacado
             buf = []
             while i < len(L) and re.match(r'^>\s?', L[i]):
                 buf.append(re.sub(r'^>\s?', '', L[i])); i += 1
             inner = '\n'.join(buf)
-            out.append(f'<table style="{BOX}"><tr><td style="{BOXC};background-color:{fondo(inner)}">'
-                       f'{convert(inner, tight=True, hshift=hshift+1)}</td></tr></table>')
+            bg, inner = tipo_cuadro(inner)
+            bg = bg or fondo(inner)
+            out.append(f'<table style="{BOX}"><tr><td style="{BOXC};background-color:{bg}">'
+                       f'{convert(inner, tight=True, hshift=hshift+1)}</td></tr></table>' + AIRE)
             continue
         if re.match(r'^\s*[-*]\s+\[[ xX]\]', ln) or re.match(r'^\s*[-*]\s*☐', ln):   # checklist
             while i < len(L) and (re.match(r'^\s*[-*]\s+\[[ xX]\]', L[i]) or re.match(r'^\s*[-*]\s*☐', L[i])):
@@ -156,7 +173,10 @@ def convert(md, tight=False, hshift=0):
             n = min(len(m.group(1)) + hshift, 6)
             txt = inline(m.group(2))
             if txt:
-                out.append(f'<h{n} style="{STY[f"h{n}"]}">{txt}</h{n}>')
+                st = STY[f"h{n}"]
+                if tight:   # título dentro de un cuadro: sin aire arriba
+                    st = re.sub(r'padding-top:[\d.]+pt', 'padding-top:0', st)
+                out.append(f'<h{n} style="{st}">{txt}</h{n}>')
             i += 1; continue
         if not ln.strip(): i += 1; continue
         p = []                                                      # párrafo

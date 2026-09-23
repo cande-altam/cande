@@ -1,261 +1,195 @@
-# Manual de Procedimientos — Baristas
+# Baristas
 
-**Candela Café & Patisserie**
-*Versión 2.0 | Junio 2026*
+*Versión 2.1 · Septiembre 2026 · Aplica a San Luis y SLA 5.0*
 
----
+## Objetivo del rol
 
-## 🎯 Objetivo del rol
+Preparar y servir las bebidas de barra con **calidad constante, rapidez y una atención
+amable en cada taza**.
 
-Preparar y servir bebidas y productos de barra con **calidad constante, rapidez y
-una atención amable en cada taza**.
+**La barra es tu espacio de trabajo**, igual que el mostrador lo es del vendedor y la
+cocina del cocinero. No es un puesto: es el lugar.
 
----
+> [!regla]
+> ### Si lleva café, es de barra. Si no lleva café y hay que prepararla, es de cocina.
+> El **Frappuccino** es la única excepción: lleva café y aun así se prepara en cocina.
 
-## Qué es la barra y qué preparás
-
-**La barra es tu espacio físico de trabajo**, igual que el mostrador lo es del
-vendedor y la cocina del cocinero. No es un puesto ni un rol: es el lugar.
-
-> ### Todas las bebidas con café son tuyas, frías o calientes.
-> Más las **chocolatadas, submarinos e infusiones**.
-
-| Tuyo — barra | De cocina |
+| Es tuyo — barra | Es de cocina |
 |---|---|
-| Espresso, doppio, cortadito, americano, flat white, capuccino, latte y lattes saborizados, mocaccino, lágrima, filtrado | **Frappuccino** |
+| Espresso, doppio, cortado, americano, flat white, capuccino, latte y lattes saborizados, mocaccino, lágrima, filtrado | **Frappuccino** |
 | Cold brew, café tónico, americano frío, latte frío y lattes dulces fríos | **Licuados y smoothies** |
-| **Chocolatada, submarino** | **Jugos naturales exprimidos** — vaso y 1 L |
+| **Chocolatada y submarino** | **Jugos exprimidos**, en vaso y de 1 litro |
 | **Té e infusiones** | **Limonada, limonada rosa, pomelada** y demás bebidas preparadas sin café |
 
-> ### La regla corta: si lleva café, es de barra. Si no lleva café y hay que prepararla, es de cocina.
-> El **Frappuccino** es la excepción: lleva café y aun así **se prepara en cocina**.
-
-Las bebidas que no se preparan — **gaseosa, agua, agua saborizada** — salen del
+Las bebidas que no se preparan —**gaseosa, agua, agua saborizada**— salen del
 mostrador.
 
 ---
 
-## 🖥️ Tu herramienta digital
+## Tus herramientas digitales
 
-Usás una herramienta digital en tu turno:
+- **FUDO**: cuenta abierta y disponible todo el turno.
+- **Web de Pedidos de Producción**: pedido de insumos del sector.
 
-- **Web Pedidos de Producción** — `pedidos-produccion.netlify.app`
-  Para cargar el pedido diario de insumos y avisarle a cada área cuánto producir.
-
-> ℹ️ La **Web de Pedidos de Clientes no es de tu área** — esa la usan caja y ventas.
-
-> 📖 Paso a paso completo y horarios límite en
-> **[Herramientas digitales](../comunes/herramientas-digitales.md)**.
+Paso a paso y horarios límite en *Herramientas digitales*.
 
 ---
 
 ## 1. Apertura de barra
 
-1. **Chequeá que las heladeras estén funcionando correctamente.** Se hace al inicio de
-   **todos** los turnos, igual que en cocina y en mostrador.
-2. **Encendé los equipos**: cafetera, vaporizador, molinos.
-3. Verificá que haya **insumos suficientes**: café, leche, azúcar, vasos, servilletas.
-4. **Limpiá la barra y los utensilios** antes de empezar.
-5. **Calibrá la molienda** del café (según el clima o el lote).
-6. Preparate un **café de prueba** — verificá sabor, temperatura y extracción.
-7. **Avisá al Experto del turno** si algo no está en condiciones.
+1. **Encendé los equipos**: cafetera, vaporizador y molinos.
+2. **Verificá los insumos**: café, leche, azúcar, vasos, servilletas.
+3. **Limpiá la barra y los utensilios** antes de empezar.
+4. **Calibrá la molienda** y hacé un café de prueba: sabor, temperatura y extracción.
+5. **Avisá al Experto del turno** si algo no está en condiciones.
 
-> ⚠️ **No arranques a atender si la cafetera no está a temperatura y la molienda no
-> está correcta.**
+> [!prohibido]
+> **No arranques a atender si la cafetera no está a temperatura y la molienda no está
+> calibrada.** Este proceso puede llevar hasta **40 minutos**: se empieza apenas llegás.
 
 ---
 
 ## 2. Toma de pedidos
 
 1. **Escuchá el pedido completo** antes de empezar a preparar.
-2. Si hay dudas, preguntá: *"¿Solo o con leche?"* / *"¿Grande o chico?"*
-3. **Repetí el pedido** antes de prepararlo para confirmar.
-4. **Registrá en FUDO** si estás atendiendo en barra directamente.
+2. Si hay dudas, preguntá: *"¿Solo o con leche?"*, *"¿Grande o chico?"*
+3. **Repetí el pedido** antes de prepararlo.
+4. **Cargalo en FUDO** si estás atendiendo directo en la barra.
 
 ---
 
-## 3. Servicio de bebidas
+## 3. Estándares de preparación
 
-### Espresso y derivados
+### Espresso
 
 | Parámetro | Estándar |
 |---|---|
-| Temperatura del agua | **90–94 °C** |
-| Extracción (espresso doble) | **25–30 segundos** |
-| Crema | Color **avellana uniforme** |
+| **Temperatura del agua** | **90 a 96 °C** |
+| **Tiempo de extracción** (espresso doble) | **20 a 30 segundos** |
+| **Crema** | Color avellana, espesa y uniforme |
 
 ### Leche vaporizada
 
 | Parámetro | Estándar |
 |---|---|
-| Temperatura final | **65–70 °C** |
-| Textura | Cremosa y sedosa, **sin burbujas grandes** |
-| Para latte art | Leche con **microespuma** |
+| **Temperatura final** | **60 a 65 °C. Nunca más de 70 °C**: se quema y pierde dulzor |
+| **Textura** | Cremosa y sedosa, **sin burbujas grandes** |
+| **Para latte art** | Leche con **microespuma** |
+| **Bebidas vegetales** | Un poco menos de temperatura: **55 a 60 °C** |
+
+> [!pendiente]
+> **Los valores de esta tabla son los de referencia de la Specialty Coffee Association**
+> y de guías de barismo. La versión anterior decía 85 a 90 °C, 18 a 22 segundos y leche
+> a 65 a 75 °C, que queda por debajo (café) y por encima (leche) de esas referencias.
+> **Confirmar la receta de la casa** con el café y la máquina que se usan: dosis en
+> gramos, rendimiento en la taza y tiempo.
 
 ### Bebidas frías con café
 
-**Cold brew, café tónico, americano frío, latte frío y lattes dulces fríos.**
-
-- Usar siempre **hielo limpio**.
-- Servir en **vaso frío**.
-- Respetar las **proporciones de la receta estándar**.
-
-> **Licuados, smoothies, jugos exprimidos y limonadas no son de barra: van a cocina.**
-> El **Frappuccino** también, aunque lleve café.
+- **Hielo limpio**, siempre.
+- **Vaso frío.**
+- **Las proporciones de la receta estándar**, siempre.
 
 ### Tiempos de entrega
 
-- Bebidas de barra (café, té, chocolate): **máximo 3 a 5 minutos**.
-- Si hay demora, **avisale al cliente o al mozo proactivamente**.
+| Pedido | Tiempo máximo |
+|---|---|
+| **Bebida de barra** (café, té, chocolate) | 3 a 5 minutos |
+| **Bebida que sale junto con un plato de cocina** | 5 a 8 minutos, coordinada con cocina |
+
+- **PedidosYa y take away tienen prioridad** sobre las mesas.
+- Si hay demora, **avisale al cliente o al mozo antes de que pregunte**.
+- En un combo con bebida de barra, **cocina te avisa cuándo arrancar** para que todo
+  salga junto (ver *Cocina de locales*).
 
 ---
 
 ## 4. Mantenimiento durante el turno
 
-- **Limpiar el portafiltro** después de cada espresso.
-- **Limpiar la lanza vaporizadora inmediatamente** después de usar.
-- **Reponer insumos antes de que se acaben** — no esperes a quedarte sin nada.
-- Mantener la barra **seca y ordenada** en todo momento.
-- **Lavar los utensilios** entre preparaciones.
+- **Portafiltro limpio** después de cada espresso.
+- **Lanza vaporizadora limpia** inmediatamente después de cada uso.
+- **Knock box** vaciado y limpio.
+- **Insumos repuestos antes de que se acaben.**
+- **Barra seca y ordenada** en todo momento.
+- **Utensilios lavados** entre preparaciones.
 
 ---
 
 ## 5. Cierre de barra
 
-1. **Descargá y limpiá el portafiltro** y los grupos de la cafetera.
-2. **Limpiá la lanza vaporizadora a fondo.**
-3. Limpiá la **bandeja escurridora** y la **pileta de barra**.
-4. **Guardá los insumos correctamente** (café sellado, leche en heladera).
-5. **Apagá los equipos en el orden correcto**: molino → vaporizador → cafetera.
-6. Dejá la barra **limpia y lista para el turno siguiente**.
+1. **Portafiltro y grupos** de la cafetera descargados y limpios.
+2. **Lanza vaporizadora** limpia a fondo.
+3. **Bandeja escurridora y pileta** de barra limpias.
+4. **Insumos guardados**: café sellado, leche en la heladera.
+5. **Equipos apagados en orden**: molino → vaporizador → cafetera.
+6. **Heladera limpia y cargada** con lácteos para el turno siguiente.
 
 ---
 
-## 6. Manejo de caja en barra
+## 6. Reclamos
 
-- **Registrá todo en FUDO antes de preparar.**
-- **No cerrés una mesa o venta sin que esté registrada.**
-- Si hay un pedido de salón, **coordiná con el mozo** antes de empezar a preparar.
-
----
-
-## 7. Reclamos — Método LAST
-
-Cuando un cliente tiene un problema con su bebida:
-
-1. **L — Listen (Escuchar)**: Dejá que el cliente cuente sin interrumpir.
-2. **A — Apologize (Disculparse)**: *"Lamentamos mucho esto, lo resolvemos ahora."*
-3. **S — Solve (Resolver)**: Ofrecé **rehacer la bebida** o una alternativa.
-4. **T — Thanks (Agradecer)**: *"Gracias por decírnoslo, nos ayuda a mejorar."*
-
-> ⚠️ **Para problemas grandes, llamá al Experto del turno. Nunca discutas con el cliente.**
+Se resuelven con el **método LAST** (ver *Atención al cliente y reclamos*). En barra, la
+solución habitual es **rehacer la bebida**: *"Lamentamos mucho esto, lo resolvemos
+ahora."* Si el problema es grande, **llamá al Experto del turno**. Nunca discutas con el
+cliente.
 
 ---
 
-## 8. 🖥️ Web — Pedidos de Producción
-
-`pedidos-produccion.netlify.app`
-
-### ¿Para qué sirve?
-
-Para cargar cuánto necesita producción preparar de cada producto. También podés
-**ver los pedidos del día y la guía de producción** desde esta web.
-
-### ¿Cuándo se usa?
-
-**Una vez por turno**, antes del horario límite de cada área.
-Si no cargás a tiempo, producción no puede cumplir.
-
-### Horarios límite
-
-| Área | Cargar antes de |
-|---|---|
-| Panadería | **9:00 hs** |
-| Pastelería | **16:00 hs** |
-| Especialidades | **21:00 hs** |
-| Facturería | **21:00 hs** |
-| Sandwiches | **21:00 hs** |
-| Cocina San Luis | **21:00 hs** |
-
-### Paso a paso — cómo cargar el pedido
-
-1. Abrí el navegador e ingresá a `pedidos-produccion.netlify.app`
-2. Seleccioná el local: **SLA 5.0** o **San Luis**
-3. Seleccioná el área (ej: Panadería)
-4. Ingresá las cantidades de cada producto
-5. Revisá el pedido
-6. Tocá **"Confirmar pedido"**
-
-✅ Producción puede ver el pedido de inmediato.
-
-### Paso a paso — cómo ver la guía de producción
-
-1. Ingresá a `pedidos-produccion.netlify.app`
-2. Seleccioná el local
-3. Tocá **"Guía"** o **"Cuadra"** en el menú
-4. Podés **imprimir** o consultar desde la pantalla
-
-### Importante
-
-- Cargá **antes del horario límite** de cada área.
-- El pedido es para el **día siguiente** (salvo que el Experto del turno indique otra cosa).
-- Si te olvidaste, **avisá al Experto del turno inmediatamente**.
-
----
-
-## 9. Indicadores de desempeño (KPIs)
+## Indicadores de desempeño
 
 | Indicador | Meta |
 |---|---|
-| **Calidad de bebidas** | Espresso con crema uniforme, leche a temperatura correcta |
-| **Tiempo de entrega** | Máximo **3 a 5 minutos** por bebida de barra |
-| **Barra limpia** | Siempre ordenada y sin residuos visibles |
-| **Pedido de Producción** | Cargado **antes del horario límite** de cada área |
-| **Sin desperdicios** | Insumos repuestos a tiempo, sin cortes de stock evitables |
+| **Calidad** | Espresso con crema uniforme; leche a la temperatura correcta |
+| **Tiempo de entrega** | 3 a 5 minutos por bebida de barra |
+| **Barra** | Siempre ordenada, sin residuos a la vista |
+| **Pedido de insumos** | Cargado antes de las 9:00 hs del día de compra |
+| **Stock** | Sin cortes de insumos evitables |
 
 ---
 
-## ✅ Checklist diario — Barista
-
-*Imprimí o revisá este checklist en cada turno.*
+## Checklist — Barista
 
 ### Apertura
 
-- ☐ Cafetera encendida y a temperatura
-- ☐ Molino calibrado y funcionando
-- ☐ Café de prueba realizado — sabor y extracción correctos
+- ☐ Cafetera encendida y a temperatura, molino calibrado
+- ☐ Café de prueba: sabor y extracción correctos
 - ☐ Insumos disponibles: café, leche, azúcar, vasos, servilletas
 - ☐ Barra y utensilios limpios
-- ☐ **Heladeras del sector funcionando correctamente**
-- ☐ Heladera con leche suficiente
-- ☐ Web Pedidos de Producción disponible (abrir y verificar)
-- ☐ Pedido de **Panadería** cargado en la web (antes de las **9:00 hs**)
+- ☐ Heladera a temperatura, con leche suficiente
 
 ### Durante el turno
 
-- ☐ Portafiltro limpiado después de cada preparación
-- ☐ Lanza vaporizadora limpiada inmediatamente después de usar
-- ☐ Barra seca y ordenada en todo momento
+- ☐ Portafiltro y lanza limpios después de cada uso
+- ☐ Knock box vaciado
+- ☐ Stock de leches y bebidas vegetales controlado y cargado en FUDO
 - ☐ Insumos repuestos antes de que se agoten
-- ☐ Utensilios lavados entre preparaciones
-- ☐ Pedido de **Pastelería** cargado en la web (antes de las **16:00 hs**)
+- ☐ Vajilla lavada y fajinada si no está el ayudante de cocina
 
 ### Cierre
 
-- ☐ Portafiltro y grupos de cafetera limpios a fondo
-- ☐ Lanza vaporizadora limpiada a fondo
-- ☐ Bandeja escurridora y pileta limpias
-- ☐ Insumos guardados correctamente (café sellado, leche en heladera)
-- ☐ Equipos apagados en orden correcto (molino → vaporizador → cafetera)
-- ☐ Barra lista para el turno siguiente
-- ☐ Pedidos de Producción noche cargados
-      (Especialidades / Facturería / Sandwiches / Cocina San Luis — antes de las **21:00 hs**)
-- ☐ Incidencias del turno reportadas al Experto del turno
+- ☐ Portafiltro, grupos, lanza, bandeja y pileta limpios a fondo
+- ☐ Café sellado y leche en la heladera
+- ☐ Equipos apagados en orden: molino → vaporizador → cafetera
+- ☐ Pedido de insumos cargado
+- ☐ Incidencias informadas al Experto del turno
+
+---
+
+## Pendientes de definición
+
+- [ ] **Receta de la casa del espresso**: dosis, rendimiento y tiempo con el café actual.
+- [ ] **Recetas estándar de cada bebida de la carta**: gramos de café, mililitros de
+      leche, jarabes, hielo y tamaño de vaso.
+- [ ] **Limpieza profunda de la máquina** (retrolavado con detergente): con qué
+      frecuencia y quién.
+- [ ] **Quién calibra la molienda** cuando cambia el lote de café.
 
 ---
 
 ## Documentos relacionados
 
-- [Herramientas digitales](../comunes/herramientas-digitales.md)
-- [Atención al cliente y reclamos](../comunes/atencion-y-reclamos.md)
-- [Higiene y presentación](../comunes/higiene-y-presentacion.md)
+- Atención al cliente y reclamos
+- Cocina de locales — bebidas de cocina y coordinación de combos
+- Herramientas digitales
+- Higiene, manipulación y presentación
+- Manejo y lavado de vajilla

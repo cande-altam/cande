@@ -1,193 +1,154 @@
-# Pedidos y pagos a proveedores — Candela Café & Patisserie
+# Pedidos y pagos a proveedores
 
-*Versión 1.0 | Junio 2026*
+*Versión 1.1 · Septiembre 2026 · Aplica a cajeros, vendedores, Compras y Administración*
 
-> **Documento común.** Aplica a **Compras**, **Administración** y a los **locales de
-> venta**. Es la fuente única de verdad del calendario de pedidos y pagos.
+## Para qué sirve
 
-> ### 📌 A qué proveedores aplica este calendario
-> A los que **entregan la mercadería directamente en los locales**. Para ellos,
-> Administración hace llegar el dinero al local, de modo que **ningún local tenga que
-> tocar el efectivo de su caja para pagar**.
->
-> Las compras que **Compras hace en su recorrido** van por otro circuito: estimado de
-> gasto → efectivo de Administración → pago en el momento. Ver
-> **[Manual de Compras, Sección 3](../produccion/compras.md#3-el-dinero-del-día)**.
->
-> ✅ **Este circuito está vigente y en uso.**
+Reúne en un solo lugar **qué se le pide a cada proveedor, qué día, cómo se le paga y
+quién lo registra.** Antes estaba repartido entre Cajeros, Compras y Administración, y
+las copias no coincidían.
+
+> [!regla]
+> ### Los locales no pagan con la caja del local.
+> **Ningún pago a proveedor sale de la caja. Nunca.** Todo pago lo autoriza y lo
+> financia Administración.
 
 ---
 
-## Las tres reglas
+## 1. Los dos caminos de un pedido
 
-> ### 1. Los pedidos a proveedores solo se hacen en los días indicados.
-> El calendario de abajo no es una sugerencia.
-
-> ### 2. Todo pago se informa y se autoriza. Sin excepción.
-> Al hacer un pedido, hay que avisar a **Administración** para que:
-> - **autorice el pago** del día siguiente, si es por transferencia; o
-> - **envíe el dinero en efectivo** al local que corresponda.
-
-> ### 3. ⛔ Los locales NO pagan con la caja del local.
-> Ningún pago a proveedor sale de la caja. Nunca.
+| Camino | Quién pide | Cómo |
+|---|---|---|
+| **Preventista** | **Cajeros y vendedores** del local | El preventista pasa por el local o toma el pedido por WhatsApp |
+| **Pedido de insumos** | **Cada área**, en la Web de Pedidos de Producción | Compras lo compra en su recorrido |
 
 ---
 
-## Calendario por proveedor
+## 2. Las reglas
 
-| Proveedor | Día de pedido | Día de pago / Llegada | Método de pago | Forma de compra |
+1. **Se pide solo en el día que le corresponde a cada proveedor**, y por los medios de
+   comunicación oficiales del local. El calendario de abajo no es una sugerencia.
+2. **No se hacen pedidos desde celulares particulares.**
+3. **Todo pago se informa y se autoriza.** Al hacer el pedido, se avisa a
+   Administración para que:
+   - autorice el pago del día siguiente, si es por transferencia, o
+   - envíe el efectivo al local que corresponda.
+4. **Ningún pago sale de la caja del local.**
+
+---
+
+## 3. Calendario por proveedor
+
+| Proveedor | Día de pedido | Día de pago y llegada | Cómo se paga | Forma de compra |
 |---|---|---|---|---|
 | **CALSA** | Lunes, miércoles y viernes | Lunes, miércoles y viernes | Efectivo o transferencia | Pedido de insumos |
-| **CARFILA** | Viernes | Lunes | Efectivo o transferencia | Preventista en local |
+| **CARFILA** | Viernes | Lunes | Efectivo o transferencia | Preventista en el local |
 | **LAS FLORES** (pan de miga) | Lunes, miércoles y viernes | Lunes, miércoles y viernes | Solo efectivo | Pedido de insumos |
-| **COCA COLA** | Lunes y viernes | Martes y sábado | Efectivo o transferencia | Preventista en local |
-| **COSALTA** | Lunes y jueves | Martes y viernes | Efectivo o transferencia | Preventista en local |
-| **GALOPPO** | Lunes y viernes | Lunes y viernes | Efectivo o transferencia | Preventista en local |
+| **COCA-COLA** | Lunes y viernes | Martes y sábado | Efectivo o transferencia | Preventista en el local |
+| **COSALTA** | Lunes y jueves | Martes y viernes | Efectivo o transferencia | Preventista en el local |
+| **GALOPPO** | Lunes y viernes | Lunes y viernes | Efectivo o transferencia | Preventista en el local |
 | **QUESO DE CABRA** | Jueves | Viernes | Solo transferencia | Preventista por WhatsApp |
 | **SALTA PLAST** | Martes | Miércoles | Solo transferencia | Preventista por WhatsApp |
 | **SERENÍSIMA** | Viernes | Lunes | Solo efectivo | Preventista por WhatsApp |
 | **NUECES** | Martes y jueves | Miércoles y viernes | Solo efectivo | Preventista por WhatsApp |
 | **YOGUR GRIEGO** | Lunes y jueves | Martes y viernes | Efectivo o transferencia | Preventista por WhatsApp |
-| **CAMPO QUIJANO (DDL)** | Martes y jueves | Miércoles y viernes | Solo efectivo | Pedido de insumos |
+| **CAMPO QUIJANO** (dulce de leche) | Martes y jueves | Miércoles y viernes | Solo efectivo | Pedido de insumos |
 | **LA ROTONDA LÁCTEOS** | Lunes y jueves | Martes y viernes | Solo efectivo | Pedido de insumos |
 | **LA FRANCISCA** | Lunes y jueves | Martes y viernes | Solo efectivo | Pedido de insumos |
 | **FRUTOS CONGELADOS** | Lunes y jueves | Martes y viernes | Solo efectivo | Pedido de insumos |
 | **FRUTOS SECOS** | Lunes y jueves | Martes y viernes | Solo efectivo | Pedido de insumos |
 | **TÉCNICOS Y ARREGLOS** | Avisar a Administración | Avisar a Administración | Efectivo o transferencia | Por WhatsApp |
 
----
-
-## Vista por día — Qué pedir hoy
-
-*La misma información, ordenada como se usa en el día a día.*
-
-### 🔵 Lunes — 10 proveedores *(día pesado)*
-
-CALSA · LAS FLORES · COCA COLA · COSALTA · GALOPPO · YOGUR GRIEGO · LA ROTONDA LÁCTEOS ·
-LA FRANCISCA · FRUTOS CONGELADOS · FRUTOS SECOS
-
-### 🟢 Martes — 3 proveedores
-
-SALTA PLAST · NUECES · CAMPO QUIJANO (DDL)
-
-### 🟢 Miércoles — 2 proveedores
-
-CALSA · LAS FLORES
-
-### 🔵 Jueves — 9 proveedores *(día pesado)*
-
-COSALTA · QUESO DE CABRA · NUECES · YOGUR GRIEGO · CAMPO QUIJANO (DDL) ·
-LA ROTONDA LÁCTEOS · LA FRANCISCA · FRUTOS CONGELADOS · FRUTOS SECOS
-
-### 🟢 Viernes — 6 proveedores
-
-CALSA · LAS FLORES · CARFILA · COCA COLA · GALOPPO · SERENÍSIMA
-
-### ⚪ Sábado y domingo — Sin pedidos
+**Técnicos y arreglos** no tienen día fijo. Siempre se avisa a Administración **antes**
+de contratar o pagar cualquier reparación, sin importar el monto.
 
 ---
 
-## Vista por día — Qué se paga hoy
+## 4. El circuito completo
 
-*Para Administración: cuánto efectivo hay que tener listo y qué transferencias salen.*
+```
+1. Se hace el pedido       ->  solo en el día de pedido del proveedor
+2. Se avisa a Administración ->  en el momento de hacer el pedido
+        - si es transferencia: Administración autoriza el pago
+        - si es efectivo: Administración envía el dinero al local
+3. Llega la mercadería     ->  quien recibe, la controla (ver Mercadería para cambio)
+4. Se paga                 ->  en el día de pago del proveedor
+5. Se rinde la factura     ->  a Administración
+```
 
-| Día | Proveedores a pagar | Cantidad |
+---
+
+## 5. Cómo se registra en FUDO
+
+### Paso 1 — El gasto
+
+1. **Gastos → + Nuevo gasto.**
+2. Completá los campos obligatorios: fecha, importe, medio de pago (efectivo o cuenta
+   corriente), proveedor, tipo y número de comprobante.
+3. Si el dinero salió del efectivo que Administración envió al local, marcá **"Usar en
+   arqueo"**.
+4. En **Productos recibidos**, cargá cada producto con su cantidad. Así se actualiza el
+   stock.
+
+### Paso 2 — El pago al proveedor
+
+Solo cuando **el dinero no pasó por el local**, sino que lo pagó Administración:
+
+1. **Proveedores → Cuenta corriente → Nueva transacción.**
+2. Cargá proveedor, monto, medio de pago y el comentario *"Pago a [proveedor]"*.
+
+---
+
+## 6. Para Administración — qué se paga cada día
+
+Sale del calendario de arriba. Sirve para saber cuánto efectivo tener listo y qué
+transferencias salen.
+
+| Día | Proveedores a pagar | Cuántos |
 |---|---|---|
 | **Lunes** | CALSA · CARFILA · LAS FLORES · GALOPPO · SERENÍSIMA | 5 |
-| **Martes** | COCA COLA · COSALTA · YOGUR GRIEGO · LA ROTONDA · LA FRANCISCA · FRUTOS CONGELADOS · FRUTOS SECOS | 7 |
+| **Martes** | COCA-COLA · COSALTA · YOGUR GRIEGO · LA ROTONDA · LA FRANCISCA · FRUTOS CONGELADOS · FRUTOS SECOS | 7 |
 | **Miércoles** | CALSA · LAS FLORES · SALTA PLAST · NUECES · CAMPO QUIJANO | 5 |
 | **Jueves** | — | 0 |
-| **Viernes** | CALSA · LAS FLORES · COSALTA · GALOPPO · QUESO DE CABRA · NUECES · YOGUR GRIEGO · CAMPO QUIJANO · LA ROTONDA · LA FRANCISCA · FRUTOS CONGELADOS · FRUTOS SECOS | **12** |
-| **Sábado** | COCA COLA | 1 |
+| **Viernes** | CALSA · LAS FLORES · COSALTA · GALOPPO · QUESO DE CABRA · NUECES · YOGUR GRIEGO · CAMPO QUIJANO · LA ROTONDA · LA FRANCISCA · FRUTOS CONGELADOS · FRUTOS SECOS | 12 |
+| **Sábado** | COCA-COLA | 1 |
 
-> ⚠️ **El viernes es el día más pesado de pagos: 12 proveedores**, siete de ellos
-> **solo en efectivo**. El efectivo del viernes hay que preverlo el jueves.
+> [!atencion]
+> **El viernes es el día más pesado: 12 proveedores**, y 7 de ellos cobran solo en
+> efectivo. El efectivo del viernes se prevé el jueves.
 
-> 🚧 **Ojo — esta tabla no coincidía con el calendario.** La versión de Drive listaba
-> 10 proveedores el viernes y ponía FRUTOS SECOS y FRUTOS CONGELADOS los lunes y
-> jueves, cuando el calendario dice **martes y viernes**. Acá está recalculada desde el
-> calendario. **Confirmá cuál de las dos es la correcta** — de esto depende cuánto
-> efectivo hay que tener el viernes.
+### Solo efectivo
 
----
+LAS FLORES · SERENÍSIMA · NUECES · CAMPO QUIJANO · LA ROTONDA · LA FRANCISCA · FRUTOS
+CONGELADOS · FRUTOS SECOS. **Administración hace llegar el dinero al local antes del día
+de pago.**
 
-## Proveedores que solo cobran en efectivo
+### Solo transferencia
 
-Estos **no aceptan transferencia**. Administración tiene que hacer llegar el dinero
-al local antes del día de pago:
-
-| Proveedor | Se paga |
-|---|---|
-| LAS FLORES | Lunes, miércoles y viernes |
-| SERENÍSIMA | Lunes |
-| NUECES | Miércoles y viernes |
-| CAMPO QUIJANO (DDL) | Miércoles y viernes |
-| LA ROTONDA LÁCTEOS | Martes y viernes |
-| LA FRANCISCA | Martes y viernes |
-| FRUTOS CONGELADOS | Martes y viernes |
-| FRUTOS SECOS | Martes y viernes |
-
-## Proveedores que solo aceptan transferencia
-
-| Proveedor | Se paga |
-|---|---|
-| QUESO DE CABRA | Viernes |
-| SALTA PLAST | Miércoles |
+QUESO DE CABRA (viernes) · SALTA PLAST (miércoles).
 
 ---
 
-## El circuito completo
+## Pendientes de definición
 
-```
-1. Se hace el pedido al proveedor  ──►  solo en su día de pedido
-                │
-                ▼
-2. Se avisa a Administración        ──►  en el momento de hacer el pedido
-                │
-                ├──► Si es transferencia → Administración autoriza el pago
-                │
-                └──► Si es efectivo → Administración envía el dinero al local
-                │
-                ▼
-3. Llega la mercadería              ──►  quien recibe, verifica
-                │
-                ▼
-4. Se paga                          ──►  en el día de pago del proveedor
-                │
-                ▼
-5. Se rinde la factura              ──►  a Administración
-```
-
----
-
-## Técnicos y arreglos
-
-No tienen día fijo. **Siempre se avisa a Administración** antes de contratar o pagar
-cualquier reparación, sin importar el monto.
-
----
-
-## 🚧 Pendientes de definición
-
-- [ ] **Quién hace el pedido al proveedor.** El documento no lo dice: puede ser
-      Compras, el Experto del turno del local o Administración. Falta definirlo por escrito.
-- [ ] **Cómo se avisa a Administración.** ¿WhatsApp, planilla, llamada? Hoy no está
-      especificado y es el paso del que depende todo el circuito.
-- [ ] **Qué insumo compra cada proveedor.** El calendario no lo dice. Sin eso, quien
-      arma el pedido tiene que saberlo de memoria. Conviene sumar una columna.
-- [ ] **Relación con el campo "proveedor" de la app.** La web de Pedidos de Producción
-      guarda un proveedor por producto y permite ordenar el recorrido por proveedor.
-      Habría que verificar que esos nombres coincidan con los de esta lista.
-- [ ] **Qué pasa si se necesita algo fuera del día de pedido.** Ver el circuito de
-      urgencias en el [Manual de Compras](../produccion/compras.md#7-faltantes-y-urgencias).
-- [ ] **Autoría del documento original.** El PDF de origen figura firmado por
-      *"Olivia Wilson"* — es el texto de ejemplo de la plantilla de Canva, no una
-      persona real. Corregirlo antes de repartir el documento.
+- [ ] **Confirmar el calendario.** Esta versión arma la vista de Administración a
+      partir de la tabla por proveedor. La tabla vieja de Administración decía otra
+      cosa: FRUTOS SECOS y FRUTOS CONGELADOS figuraban pagándose lunes y jueves,
+      GALOPPO no figuraba el lunes, y el viernes sumaba 10 proveedores en vez de 12.
+- [ ] **Qué insumo compra cada proveedor.** Sin esa columna, quien arma el pedido tiene
+      que saberlo de memoria.
+- [ ] **Cómo se avisa a Administración** al hacer un pedido: WhatsApp, planilla o
+      llamada. Es el paso del que depende todo el circuito.
+- [ ] **Que los nombres coincidan con la Web de Pedidos de Producción**, que guarda un
+      proveedor por producto para armar el recorrido de Compras.
+- [ ] **Qué pasa si hace falta algo fuera del día de pedido.** Hoy se resuelve como
+      urgencia de Compras.
 
 ---
 
 ## Documentos relacionados
 
-- [Manual de Compras](../produccion/compras.md)
-- [Manual de Cajeros](../venta/cajeros.md)
-- [Herramientas digitales](herramientas-digitales.md)
+- Cajeros
+- Compras
+- Mercadería para cambio
+- Herramientas digitales — pedido de insumos

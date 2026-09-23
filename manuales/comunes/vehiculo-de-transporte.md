@@ -1,418 +1,215 @@
-# Vehículo y traslado de mercadería — Candela Café & Patisserie
+# Vehículo y traslado de mercadería
 
-*Versión 1.0 | Agosto 2026*
+*Versión 1.1 · Septiembre 2026 · Aplica a Compras y al ayudante de cocina, que usan el vehículo y trasladan la mercadería*
 
-> **Documento común.** Aplica a **Compras** y al **Ayudante de Cocina**, que son
-> quienes usan el vehículo y trasladan la mercadería.
+## Para qué sirve
 
----
-
-## El vehículo
-
-**Un utilitario de la empresa**, que se usa **todos los días**.
-
-> ### 🔑 Es compartido. Dos personas por día.
+Hay **un utilitario de la empresa** que se usa todos los días, por dos personas
+distintas. Este documento dice cómo se cuida, cómo se carga y qué se hace si pasa algo.
+Antes estaba copiado entero dentro de *Compras* y de *Ayudante de cocina*; ahora vive
+solo acá.
 
 | Turno | Quién lo usa | Para qué |
 |---|---|---|
-| 🌅 **Mañana** | **Compras** | Reparto de mercadería a los locales y recorrido de compras |
-| 🌇 **Tarde** | **Ayudante de Cocina** | Cruce de mercadería de la cuadra al local de ventas |
-
-### Antes de usarlo — Revisión
-
-Todos los días, antes de salir:
-
-| Qué se revisa |
-|---|
-| ⛽ **Estado del combustible** |
-| 🛞 **Estado de las cubiertas** |
-
-> ⚠️ **Si algo no está bien, avisá antes de salir** — no al volver. Un problema
-> detectado en el playón se resuelve; el mismo problema en la calle deja la mercadería
-> parada.
+| **Mañana** | **Compras** | Reparto de mercadería a los locales y recorrido de compras |
+| **Tarde** | **Ayudante de cocina** | Cruce de mercadería de la cuadra al local de ventas |
 
 ---
 
-## Dónde está todo
+## 1. Dónde está todo
 
 | Qué | Dónde |
 |---|---|
-| 🚐 **El vehículo** | Estacionado en la **cuadra de producción** |
-| 🔑 **La llave** | Siempre en el **local de venta San Luis** |
-| 📄 **Los documentos** | Dentro del vehículo |
+| **El vehículo** | Estacionado en la **cuadra de producción** |
+| **La llave** | Siempre en el **local San Luis** |
+| **Los documentos** | Dentro del vehículo |
 
-> ℹ️ **La llave y el vehículo no están en el mismo lugar.** Tenelo en cuenta al
-> arrancar el turno: primero se pasa por San Luis por la llave.
+> [!atencion]
+> **La llave y el vehículo no están en el mismo lugar.** Al arrancar el turno, primero
+> se pasa por San Luis a buscar la llave.
 
 ---
 
-## Cuidado del vehículo — Quién hace qué
+## 2. Antes de salir
+
+Todos los días, antes de salir, se revisa:
+
+1. **El combustible.**
+2. **Las cubiertas.**
+
+> [!regla]
+> **Si algo no está bien, avisá antes de salir, no al volver.** Un problema detectado en
+> el playón se resuelve; el mismo problema en la calle deja la mercadería parada.
+
+---
+
+## 3. Cuidado del vehículo
 
 | Tarea | Cada cuánto | Quién |
 |---|---|---|
-| 🧹 **Barrido y limpieza superficial del interior** — restos de pan y suciedad | **Todos los días** | **Compras** y **Ayudante de Cocina**, cada uno en su turno |
-| ⛽ **Reposición de combustible** | Cuando sea necesario | **Compras** |
-| 🚿 **Lavado del vehículo** | **Cada 10 días** | **Compras** |
-| 📄 **Control de seguro y VTV** | Permanente | **Compras** |
-| 🔧 **Verificación y service** | Cuando corresponda | **Compras** |
+| **Barrido y limpieza del interior** — restos de pan y suciedad | **Todos los días** | Compras y ayudante de cocina, **cada uno en su turno** |
+| **Carga de combustible** | Cuando haga falta | Compras |
+| **Lavado** | **Cada 10 días** | Compras |
+| **Seguro y VTV al día** | Permanente | Compras |
+| **Service y verificación** | Cuando corresponda | Compras |
 
-> ### 🔑 La limpieza diaria del interior es de los dos.
-> No es "del que lo ensució": **cada turno barre y limpia lo suyo antes de entregarlo**.
+> [!regla]
+> ### La limpieza diaria del interior es de los dos.
+> No es "del que lo ensució": **cada turno barre y limpia lo suyo antes de entregarlo.**
 > Ahí viajan alimentos.
 
-### El dinero del combustible
-
-**Compras le pide el dinero a Administración durante su recorrido diario**, igual que
-el resto de las compras del día.
-
-> 📖 Es el mismo circuito del estimado de gasto —
-> **[Manual de Compras, Sección 3](../produccion/compras.md)**.
+**El dinero del combustible** lo pide Compras a Administración durante su recorrido,
+igual que el resto de las compras del día.
 
 ---
 
-## Por qué esto necesita reglas escritas
+## 4. Traslado de mercadería
 
-Un vehículo con **dos responsables por día** y sin protocolo de entrega es donde la
-responsabilidad se diluye. La frase que hay que evitar es **"así me lo dejaron"**.
-
-- Si aparece un daño, **no se sabe de qué turno es**
-- Si queda sin combustible, **el del turno siguiente pierde tiempo**
-- Si queda sucio, **el que carga alimentos arranca con el problema**
-
-> ### 🔑 El vehículo se entrega como te gustaría recibirlo.
-
----
-
-# 📦 PROTOCOLO DE TRASLADO DE MERCADERÍA
-
-> ### 🔑 La mercadería viaja como se vende.
+> [!regla]
+> ### La mercadería viaja como se vende.
 > Si llega golpeada, aplastada o volcada, **no se vende**. El traslado no es un trámite
 > entre dos puntos: es parte de la calidad del producto.
 
----
+### La caja de carga es una superficie de contacto con alimentos
 
-## 1. La caja de carga es una superficie de contacto con alimentos
+Antes de cargar cualquier cosa, la caja tiene que estar **limpia y seca**, **sin
+restos** del traslado anterior (harina, migas, envoltorios) y **sin olores**, porque la
+mercadería los toma. **Si está sucia, se limpia primero.**
 
-Antes de cargar cualquier cosa:
-
-- La caja tiene que estar **limpia y seca**
-- **Sin restos** del traslado anterior — harina, migas, envoltorios
-- **Sin olores** — la mercadería los toma
-
-> ⛔ **No se carga sobre una caja sucia.** Si está sucia, se limpia primero.
-
----
-
-## 2. Cada producto en su contenedor
+### Cada producto en su contenedor
 
 | Mercadería | Va en | Cuándo |
 |---|---|---|
-| 🥖 **Pan horneado y pastelería** | **Cajones** aptos para transporte | Cruce de la mañana |
-| 🍞 **Mercadería ya horneada** | **Canastos** | Turno tarde |
-| 🥐 **Productos crudos** | **Latas** | Turno tarde |
-| ❄️ **Facturas crudas y pan surtido** | **Latas** con plástico protector, en **latero** con poncho | Para hornear al día siguiente |
+| **Pan horneado y pastelería** | **Cajones** aptos para transporte | Cruce de la mañana |
+| **Mercadería ya horneada** | **Canastos** | Turno tarde |
+| **Productos crudos** | **Latas** | Turno tarde |
+| **Facturas crudas y pan surtido** | **Latas** con plástico protector, en **latero** con poncho | Para hornear al día siguiente |
 
-> ⛔ **Nada viaja suelto.** Ni una bandeja, ni una caja de tortas sin su contenedor.
+> [!prohibido]
+> **Nada viaja suelto.** Ni una bandeja, ni una caja de tortas sin su contenedor.
 
----
+### Cómo se carga
 
-## 3. Cómo se carga
+- **Cajones: si encastran, se apilan**, hasta el techo. **Si no encastran, no se
+  apilan**: un cajón mal encastrado es una torre que se cae en la primera frenada.
+- **Latas: siempre en el latero del utilitario.** Nunca sueltas en el piso de la caja
+  ni apiladas fuera del latero.
 
-### Los cajones
+### Orden de carga — de lo que aguanta a lo que no
 
-> **Son encastrables: se pueden apilar hasta el techo.**
-
-El encastre es **lo que los hace seguros**. De ahí sale la regla:
-
-- ✅ **Si encastran, se apilan** — hasta el techo, sin problema
-- ⛔ **Si no encastran, no se apilan.** Un cajón mal encastrado es una torre que se cae
-  en la primera frenada
-
-### Las latas
-
-> **Las latas van siempre en el latero del propio utilitario.**
-
-El utilitario tiene su latero: para eso está.
-
-- ⛔ **Nunca sueltas en el piso** de la caja
-- ⛔ **Nunca apiladas fuera del latero**
-
----
-
-## 4. Orden de carga — De lo que aguanta a lo que no
-
-> 🚧 **Este orden lo propuse a partir de los productos que figuran en los manuales.
-> Confirmalo con quien carga todos los días.**
-
-De **más resistente** a **más delicado**:
-
-| | Producto | Puede llevar peso encima |
+| # | Producto | Puede llevar peso encima |
 |---|---|---|
-| 1 | **Pan de mesa** (miñón, francés) | ✅ Sí |
-| 2 | **Facturas y masas** | ✅ Sí, con cuidado |
-| 3 | **Budines** | ⚠️ Poco |
-| 4 | **Porciones y tartas** | ⛔ No |
-| 5 | **Tortas** | ⛔ **Nada encima. Nunca.** |
+| 1 | **Pan de mesa** (miñón, francés) | Sí |
+| 2 | **Facturas** | Sí, con cuidado |
+| 3 | **Budines y masas** | Poco |
+| 4 | **Porciones y tartas** | No |
+| 5 | **Tortas** | **Nada encima. Nunca.** |
 
-**La regla práctica:** lo pesado abajo, lo delicado arriba, **las tortas siempre
-últimas y solas**.
+**Lo pesado abajo, lo delicado arriba, las tortas siempre últimas y solas.**
 
----
+### Al manejar
 
-## 5. Antes de arrancar
-
-- ☐ **Nada suelto** — todo encastrado o en el latero
-- ☐ **Nada sobresaliendo** de su contenedor
-- ☐ **Puertas cerradas** y trabadas
-
----
-
-## 6. Al manejar
-
-Esto no es prudencia vial genérica: **atrás llevás cajones apilados hasta el techo**.
+Atrás llevás cajones apilados hasta el techo.
 
 | Situación | Cómo |
 |---|---|
 | **Arrancar y frenar** | Suave. La carga se mueve con vos |
-| **Curvas** | Despacio — es donde se vuelca una torre de cajones |
+| **Curvas** | Despacio: es donde se vuelca una torre de cajones |
 | **Lomos de burro y pozos** | Casi detenido |
 
-> ⚠️ **Una frenada brusca puede costar la producción de la mañana.** Se sale con tiempo
+> [!atencion]
+> **Una frenada brusca puede costar la producción de la mañana.** Se sale con tiempo
 > para no tener que apurarse.
 
----
+### Al descargar
 
-## 7. Al descargar
-
-- **No apoyes los cajones en el piso.** Van directo del vehículo a su lugar
-- **Descargá en orden inverso** — lo delicado sale primero
-- **Revisá que no quede nada** en la caja de carga
-- Si algo llegó dañado, **avisá en el momento**, no después
+- **No apoyes los cajones en el piso.** Van directo del vehículo a su lugar.
+- **Descargá en orden inverso**: lo delicado sale primero.
+- **Revisá que no quede nada** en la caja de carga.
+- Si algo llegó dañado, **avisá en el momento**, no después.
 
 ---
 
-# 🚨 SI PASA ALGO EN LA CALLE
+## 5. Accidentes y desperfectos mecánicos
 
-Vale lo mismo para un **accidente** y para un **desperfecto mecánico**:
+Vale lo mismo para un accidente que para un desperfecto:
 
-> ### 1. Primero, las personas.
-> **Verificá que no haya víctimas.** Antes que el vehículo, antes que la mercadería,
-> antes que cualquier otra cosa.
+1. **Primero, las personas.** Verificá que no haya heridos, antes que el vehículo y
+   antes que la mercadería. Si los hay, **llamá al 107**.
+2. **Avisá a Administración de inmediato.** No esperes a volver y no lo resuelvas por
+   tu cuenta. **Si vas con mercadería, decilo**: se sigue echando a perder mientras se
+   resuelve el problema.
 
-> ### 2. Avisá a Administración inmediatamente.
-> No esperes a volver, no lo resuelvas por tu cuenta.
-
-| Orden | Qué hacés |
-|---|---|
-| **1** | Verificar que **no haya víctimas** |
-| **2** | Dar aviso a **Administración**, de inmediato |
-
-> 📄 **Los documentos del vehículo están dentro del vehículo.** Ahí los tenés si te los
-> piden.
-
-> ⚠️ **Si vas con mercadería, decilo en el aviso.** Lo que va arriba se sigue echando a
-> perder mientras se resuelve el problema — cuanto antes lo sepa Administración, más
-> chance hay de rescatarla.
+**Los documentos del vehículo están dentro del vehículo.** Ahí los tenés si te los
+piden.
 
 ---
 
-# 🎫 MULTAS
+## 6. Multas
 
-> ### 🔑 Las multas están a nombre del vehículo.
-> Por eso **cada persona es responsable de las multas aplicadas durante sus días y
-> horarios de trabajo**, y puede tener que hacerse cargo económicamente.
-
-Esto quiere decir algo muy concreto: **una multa se asigna por fecha y hora**.
+Las multas están a nombre del vehículo, y **se asignan por fecha y hora**:
 
 | Cuándo se cometió | De quién es |
 |---|---|
 | Turno mañana | **Compras** |
-| Turno tarde | **Ayudante de Cocina** |
+| Turno tarde | **Ayudante de cocina** |
 
-> ⚠️ **Una multa llega semanas después.** Para entonces nadie se acuerda de quién tenía
-> el vehículo ese martes a las 10:40. **Por eso hace falta el registro de uso** — es lo
-> que permite asignarla con justicia, y lo que te protege si no era tuya.
+Cada persona es responsable de las multas aplicadas durante sus días y horarios de
+trabajo.
 
----
-
-# 🔄 LA ENTREGA ENTRE TURNOS
-
-## Al terminar tu turno
-
-- ☐ **Interior barrido** — restos de pan y suciedad
-- ☐ **Caja de carga limpia** y sin restos
-- ☐ **Sin mercadería ni cajones olvidados**
-- ☐ **Combustible y cubiertas** — si notaste algo, avisalo
-- ☐ **Vehículo estacionado** en la cuadra de producción
-- ☐ **Llave devuelta** al local de venta San Luis
-- ☐ **Novedades avisadas al Experto del turno** (un ruido nuevo, un golpe, una luz encendida)
-
-> Lo que no se avisa, aparece en el turno del otro.
+> [!pendiente]
+> **A revisar con asesoramiento laboral:** si la persona "puede tener que hacerse cargo
+> económicamente" de la multa, y cómo. La Ley de Contrato de Trabajo (art. 131) limita
+> los descuentos sobre el sueldo.
 
 ---
 
----
+## 7. La entrega entre turnos
 
-# 📓 REGISTRO DE USO
+Al terminar tu turno, el vehículo queda:
 
-> 🚧 **Propuesta — todavía no está implementado.** Elegí una de las opciones de abajo
-> y arrancá; después se puede cambiar.
-
-## Por qué hace falta
-
-Con **dos personas por día** y **multas que se cobran a quien manejaba**, el registro
-deja de ser una prolijidad: **es lo que protege a la persona.**
-
-Sin registro, cualquiera de estas preguntas termina en "yo creo que…":
-
-| Pregunta | Cuándo aparece |
-|---|---|
-| ¿Quién lo manejaba el martes a las 10:40? | Cuando llega una multa, **semanas después** |
-| ¿Cuándo apareció este golpe? | Cuando alguien lo nota |
-| ¿Cuándo se cargó combustible por última vez? | Cuando queda vacío |
-| ¿Cuándo fue el último lavado? | A los 10 días |
-| ¿Cuándo vence la VTV? | Cuando ya venció |
+- **Interior barrido** y **caja de carga limpia**, sin restos
+- **Sin mercadería ni cajones olvidados**
+- **Estacionado en la cuadra de producción**
+- Con la **llave devuelta al local San Luis**
+- Con las **novedades avisadas**: un ruido nuevo, un golpe, una luz encendida en el
+  tablero. El ayudante le avisa a **Compras**; Compras, a **Administración**
 
 ---
 
-## La regla del registro
-
-> ### 🔑 Si tarda más de un minuto, no se llena.
-> Un registro que nadie completa es peor que no tener ninguno: da una falsa sensación
-> de control.
-
-**Menos campos, completados siempre**, le gana a muchos campos completados a veces.
-
----
-
-## Qué se anota — Lo mínimo
-
-| Campo | Por qué |
-|---|---|
-| **Fecha y turno** | Es lo que asigna una multa |
-| **Quién lo usó** | Idem |
-| **Kilometraje al salir y al volver** | Detecta usos no previstos y sirve para el service |
-| **Combustible cargado** | Monto y litros, si se cargó |
-| **Novedades** | Un golpe, un ruido nuevo, una luz encendida. **Si no hay, se escribe "sin novedades"** |
-
-Y aparte, un lugar donde queden las **fechas que no cambian todos los días**:
-último lavado, último service, vencimiento de VTV y de seguro.
-
----
-
-## Opciones para arrancar
-
-| | Opción | Esfuerzo de armado | Esfuerzo diario | Se puede consultar a distancia |
-|---|---|---|---|---|
-| **A** | **Cuaderno en la guantera** | Ninguno | Bajo | ❌ Hay que ir al vehículo |
-| **B** | **Formulario de Google** | 15 minutos | Muy bajo | ✅ |
-| **C** | **Planilla de Google Sheets** | 10 minutos | Bajo | ✅ |
-| **D** | **Módulo en la web de Pedidos** | Desarrollo | Muy bajo | ✅ |
-| **E** | **Grupo de WhatsApp** | Ninguno | Muy bajo | ⚠️ Se pierde en el scroll |
-
-### A — Cuaderno en la guantera
-
-Un cuaderno y una birome atados adentro del vehículo.
-
-- ✅ **Arranca mañana**, sin depender de nada
-- ✅ Nadie necesita celular ni datos
-- ❌ Si se pierde o se moja, **se perdió todo**
-- ❌ Administración **tiene que ir al vehículo** para verlo
-- ❌ No sirve para buscar: encontrar un martes de hace dos meses es hojear
-
-### B — Formulario de Google ⭐ *(la que recomiendo para empezar)*
-
-Un formulario corto, con el link guardado en el celular de los dos.
-
-- ✅ **La fecha y la hora quedan solas** — que es justo lo que resuelve las multas
-- ✅ Se llena en **30 segundos** desde el celular
-- ✅ Cae solo en una planilla que **Administración mira sin pedirle nada a nadie**
-- ✅ Permite **subir una foto** — sirve para dejar constancia del estado al entregar
-- ✅ Se puede migrar después sin perder lo cargado
-- ❌ Hace falta señal en el momento (se puede completar al llegar)
-
-### C — Planilla de Google Sheets
-
-La misma idea, pero escribiendo directo en la planilla.
-
-- ✅ Se ve todo el historial de una
-- ❌ **Editar una planilla desde el celular es incómodo** — se pisan celdas
-- ❌ La fecha hay que escribirla a mano, y ahí se cuela el error
-
-### D — Módulo en la web de Pedidos de Producción
-
-Una sección más en `pedidos-produccion.netlify.app`, donde ya entran todos los días.
-
-- ✅ **Un solo lugar** para todo
-- ✅ Puede **avisar solo** cuando se acerca el service, el lavado o la VTV
-- ✅ Queda junto al resto de los datos del negocio
-- ❌ Hay que desarrollarlo — conviene **recién cuando el registro ya demostró que se usa**
-
-### E — Grupo de WhatsApp
-
-Un grupo con Compras, Ayudante y Administración: foto y mensaje al entregar.
-
-- ✅ **Cero fricción** — ya lo usan todos los días
-- ❌ **No se puede consultar**: buscar algo de hace dos meses es imposible
-- ❌ Sin estructura, cada uno anota distinto
-- ⚠️ Sirve **como complemento** para avisar una novedad urgente, no como registro
-
----
-
-## La recomendación
-
-1. **Arrancá con el Formulario de Google (B).** Se arma en 15 minutos y resuelve lo
-   más importante: que la fecha y la hora queden solas.
-2. **Dale un mes.** Si se llena todos los días, el registro ya es un hábito.
-3. **Recién ahí evaluá el módulo en la web (D)**, que agrega los avisos automáticos de
-   service y vencimientos.
-
-> ⚠️ **Lo que no funciona: empezar por el sistema más completo.** Si el hábito no
-> existe, la herramienta no lo crea.
-
----
-
-## ✅ Checklist — Uso del vehículo
+## Checklist — Uso del vehículo
 
 ### Antes de salir
 
-- ☐ Llave retirada del local de venta San Luis
-- ☐ Combustible revisado
-- ☐ Cubiertas revisadas
+- ☐ Llave retirada del local San Luis
+- ☐ Combustible y cubiertas revisados
 - ☐ Caja de carga limpia y seca
-- ☐ Mercadería en su contenedor — cajones, canastos o latas
-- ☐ Latas en el latero del utilitario
-- ☐ Cajones encastrados
-- ☐ Lo delicado arriba, tortas solas y últimas
-- ☐ Nada suelto ni sobresaliendo
-- ☐ Puertas cerradas
+- ☐ Todo en su contenedor: cajones encastrados, latas en el latero, latero asegurado
+- ☐ Lo delicado arriba, tortas solas y últimas, nada suelto ni sobresaliendo
+- ☐ Puertas cerradas y trabadas
 
 ### Al volver
 
 - ☐ Todo descargado, nada olvidado en la caja
-- ☐ Caja de carga limpia
-- ☐ Novedades avisadas al Experto del turno
-- ☐ Vehículo en condiciones para el turno siguiente
+- ☐ Interior barrido y caja de carga limpia
+- ☐ Vehículo en la cuadra y llave en San Luis
+- ☐ Novedades avisadas
 
 ---
 
-## 🚧 Lo que falta definir
+## Pendientes de definición
 
-- [ ] **🔴 Elegir e implementar el registro de uso.** Es lo que falta para que la regla
-      de multas funcione en la práctica. Ver [Registro de uso](#-registro-de-uso).
-- [ ] **Quién puede manejarlo.** ¿Solo estas dos personas? ¿Hace falta algún requisito?
-- [ ] **Copia de los documentos fuera del vehículo.** Los originales van adentro, que
-      está bien para tenerlos a mano — pero **si el utilitario no está, los papeles
-      tampoco**. Conviene una copia en Administración.
-- [ ] **Cada cuánto corresponde el service.** Compras es quien lo lleva, pero falta el
-      criterio: por kilometraje, por tiempo, o lo que indique el fabricante.
-- [ ] **Orden de fragilidad.** Confirmar la tabla de la Sección 4 con quien carga.
+- [ ] **Registro de uso del vehículo** (quién lo tuvo, de qué hora a qué hora, con
+      cuánto combustible). Es lo que permite asignar una multa con justicia semanas
+      después, y lo que protege a quien no la cometió. Puede ser un formulario de
+      Google que se llena desde el celular.
+- [ ] **Quién paga las multas y cómo**, revisado con asesoramiento laboral.
+- [ ] **Qué hacer con la mercadería** si el vehículo queda parado en la calle.
 
 ---
 
 ## Documentos relacionados
 
-- [Manual de Compras](../produccion/compras.md) — reparto de la mañana
-- [Manual de Ayudante de Cocina](../produccion/ayudante-de-cocina.md) — cruce de la tarde
-- [Manual de Limpieza](../limpieza.md)
-- [Higiene y presentación](higiene-y-presentacion.md)
+- Compras
+- Ayudante de cocina
+- Emergencias y seguridad
