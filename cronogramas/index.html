@@ -786,7 +786,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-09-10 fix-perdida-de-datos-semana-nueva";
+const APP_VERSION="2026-09-26 refuerzo-mozo2-sla-manana";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -808,7 +808,10 @@ function maxTurnoFor(loc,shift,role){
     if(role==="ayudante")return 1;
     if(role==="atencion")return 3;
   }
-  if(loc==="SLA"&&role==="atencion")return 2;
+  if(loc==="SLA"&&role==="atencion"){
+    if(shift==="M")return 3; // Mozo 1 + Mozo 2(refuerzo) + un cupo más para medios turnos, sin fila de margen de más
+    return 2; // tarde: Mozo 1 + como mucho 1 refuerzo (Mozo 2), sin fila de margen de más
+  }
   return MAX_TURNO[role];
 }
 // Feriados nacionales de Argentina (Ley 27.399): "feriado" es de pago obligatorio si se trabaja;
@@ -1682,12 +1685,12 @@ function extraCellHTML(e){
 }
 // nombre a mostrar para la fila de refuerzo de un puesto: en San Luis los refuerzos de atención se
 // llaman "Refuerzo" (no "Mozo X", para no repetir el nombre de una fila base que ya existe) — en
-// SLA turno tarde, como "Mozo 1" ya es la fila base fija, el refuerzo se llama "Mozo 2" — en el
+// SLA, como "Mozo 2" ya es la fila base de refuerzo (mañana) o la única fila de refuerzo posible
+// (tarde), el refuerzo extra (para medios turnos, por ejemplo) también se llama "Mozo 2" — en el
 // resto de los casos se usa el nombre de la primera fila base de ese puesto.
 function extraLabelFor(loc,role,shift,defaultLabel){
   if(loc==="SL"&&role==="atencion")return"Refuerzo";
-  if(loc==="SLA"&&role==="atencion"&&shift==="M")return"Refuerzo";
-  if(loc==="SLA"&&role==="atencion"&&shift==="T")return"Mozo 2";
+  if(loc==="SLA"&&role==="atencion")return"Mozo 2";
   return defaultLabel;
 }
 function locTable(loc,title,worked){
