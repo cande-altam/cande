@@ -786,7 +786,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-09-26 refuerzo-mozo2-sla-manana";
+const APP_VERSION="2026-09-26 sacar-mozo2-base-sla-manana";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -808,10 +808,9 @@ function maxTurnoFor(loc,shift,role){
     if(role==="ayudante")return 1;
     if(role==="atencion")return 3;
   }
-  if(loc==="SLA"&&role==="atencion"){
-    if(shift==="M")return 3; // Mozo 1 + Mozo 2(refuerzo) + un cupo más para medios turnos, sin fila de margen de más
-    return 2; // tarde: Mozo 1 + como mucho 1 refuerzo (Mozo 2), sin fila de margen de más
-  }
+  // SLA: Mozo 1 de base + un cupo de refuerzo ("Mozo 2 +", para medios turnos u otro refuerzo
+  // puntual), igual en mañana y tarde — sin fila de margen de más.
+  if(loc==="SLA"&&role==="atencion")return 2;
   return MAX_TURNO[role];
 }
 // Feriados nacionales de Argentina (Ley 27.399): "feriado" es de pago obligatorio si se trabaja;
@@ -915,7 +914,7 @@ function rowsFor(loc,shift){
     {role:"cocina",idx:0,label:"Cocina"},{role:"ayudante",idx:0,label:"Envíos"}];
   if(loc==="SLA"&&shift==="M")return[
     {role:"barista",idx:0,label:"Barista"},{role:"atencion",idx:0,label:"Mozo 1"},
-    {role:"atencion",idx:1,label:"Mozo 2",wk:true},{role:"cocina",idx:0,label:"Cocina"}];
+    {role:"cocina",idx:0,label:"Cocina"}];
   return[
     {role:"barista",idx:0,label:"Barista"},{role:"atencion",idx:0,label:"Mozo 1"},
     {role:"cocina",idx:0,label:"Cocina"}];
