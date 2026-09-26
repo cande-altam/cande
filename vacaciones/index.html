@@ -106,6 +106,10 @@
   .mini-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:7px 9px;font-size:12.5px;flex-wrap:wrap}
   .mini-row .x{margin-left:auto;cursor:pointer;color:var(--ink-soft);border:none;background:none;font-size:15px;line-height:1;padding:2px 4px}
   .mini-row .x:hover{color:var(--crit)}
+  .rowActions{margin-left:auto;display:flex;align-items:center;gap:2px}
+  .rowActions .x{margin-left:0}
+  .confirmIcon{border:none;background:transparent;color:var(--ok);cursor:pointer;font-size:14px;font-weight:800;padding:1px 3px;opacity:.75}
+  .confirmIcon:hover{opacity:1}
   .pill{display:inline-block;padding:1px 7px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.3px}
   .pill.conf{background:var(--ok-soft);color:var(--ok)}
   .pill.pend{background:var(--warn-soft);color:var(--warn)}
@@ -229,6 +233,7 @@
           </div>
           <div class="field"><label for="vNota">Nota (opcional)</label><input type="text" id="vNota" placeholder="Ej: se adelantan 2 días"></div>
           <button class="btn primary" id="btnAddVac" style="margin-top:11px;width:100%">+ Agregar vacación</button>
+          <button class="btn ghost" id="btnCancelEditVac" style="margin-top:7px;width:100%;display:none">Cancelar edición</button>
           <div class="mini-list" id="vacList"></div>
         </div>
       </section>
@@ -377,7 +382,7 @@ window.SolicitudesSync = {
 
 <script>
 "use strict";
-const APP_VERSION="2026-08-07 leandro-villagra";
+const APP_VERSION="2026-09-26 confirmar-editar-rechazar-a-confirmar";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -692,16 +697,67 @@ function renderBalance(){
   }));
 }
 
+// edición en el formulario de "Cargar vacaciones tomadas": reutiliza los mismos campos para
+// cargar una nueva o editar una ya cargada (confirmada o a confirmar) — igual que el resto de la
+// app, no hay un formulario aparte para cada caso.
+let editandoVacId=null;
+function iniciarEdicionVac(id){
+  const t=state.taken.find(x=>String(x.id)===id);
+  if(!t)return;
+  editandoVacId=id;
+  document.getElementById("vPerson").value=t.n;
+  syncPeriodoOptions();
+  document.getElementById("vDesde").value=t.desde;
+  document.getElementById("vHasta").value=t.hasta;
+  document.getElementById("vPeriodo").value=String(t.periodo);
+  document.getElementById("vEstado").value=t.estado;
+  document.getElementById("vNota").value=t.nota||"";
+  document.getElementById("btnAddVac").textContent="💾 Guardar cambios";
+  document.getElementById("btnCancelEditVac").style.display="";
+  toast(`Editando la vacación de ${t.n} — corregí lo que haga falta y tocá "Guardar cambios"`);
+}
+function cancelarEdicionVac(){
+  editandoVacId=null;
+  document.getElementById("vDesde").value="";document.getElementById("vHasta").value="";document.getElementById("vNota").value="";
+  document.getElementById("vEstado").value="confirmada";
+  document.getElementById("btnAddVac").textContent="+ Agregar vacación";
+  document.getElementById("btnCancelEditVac").style.display="none";
+}
 function renderVacList(){
   const el=document.getElementById("vacList");
   const sorted=state.taken.slice().sort((a,b)=>a.desde<b.desde?-1:1);
   el.innerHTML=sorted.length?sorted.map((t)=>{
     const dias=rangoDias(t.desde,t.hasta);
-    return`<div class="mini-row"><span class="pill ${t.estado==="confirmada"?"conf":"pend"}">${t.estado==="confirmada"?"✓":"?"}</span> <b>${t.n}</b> · ${fmtFecha(t.desde)} al ${fmtFecha(t.hasta)} (${dias}d) · período ${t.periodo}${t.nota?` · <i>${t.nota}</i>`:""} <button class="x" data-id="${t.id}" title="Borrar">×</button></div>`;
+    const pendiente=t.estado==="pendiente";
+    // las "a confirmar" se pueden confirmar, editar o rechazar de una; las ya confirmadas solo se
+    // editan o se borran (no tiene sentido "confirmar" ni "rechazar" algo que ya está aprobado).
+    const acciones=pendiente
+      ?`<span class="rowActions"><button type="button" class="confirmIcon" data-confirmvac="${t.id}" title="Confirmar">✓</button><button type="button" class="editIcon" data-editvac="${t.id}" title="Editar">✎</button><button type="button" class="x" data-rejectvac="${t.id}" title="Rechazar pedido">×</button></span>`
+      :`<span class="rowActions"><button type="button" class="editIcon" data-editvac="${t.id}" title="Editar">✎</button><button type="button" class="x" data-id="${t.id}" title="Borrar">×</button></span>`;
+    return`<div class="mini-row"><span class="pill ${t.estado==="confirmada"?"conf":"pend"}">${t.estado==="confirmada"?"✓":"?"}</span> <b>${t.n}</b> · ${fmtFecha(t.desde)} al ${fmtFecha(t.hasta)} (${dias}d) · período ${t.periodo}${t.nota?` · <i>${t.nota}</i>`:""} ${acciones}</div>`;
   }).join(""):`<p class="sub" style="padding:0">Todavía no cargaste ninguna vacación tomada.</p>`;
-  el.querySelectorAll(".x").forEach(b=>b.addEventListener("click",()=>{
+  el.querySelectorAll("[data-editvac]").forEach(b=>b.addEventListener("click",()=>iniciarEdicionVac(b.dataset.editvac)));
+  el.querySelectorAll("[data-confirmvac]").forEach(b=>b.addEventListener("click",()=>{
+    const t=state.taken.find(x=>String(x.id)===b.dataset.confirmvac);
+    if(!t)return;
+    t.estado="confirmada";
+    persist();render();
+    toast(`Vacación de ${t.n} confirmada ✓`);
+  }));
+  el.querySelectorAll("[data-rejectvac]").forEach(b=>b.addEventListener("click",()=>{
+    const idx=state.taken.findIndex(x=>String(x.id)===b.dataset.rejectvac);
+    if(idx<0)return;
+    const t=state.taken[idx];
+    if(!confirm(`¿Rechazar la vacación de ${t.n} del ${fmtFecha(t.desde)} al ${fmtFecha(t.hasta)}? Se borra, no queda guardada.`))return;
+    if(editandoVacId===String(t.id))cancelarEdicionVac();
+    state.taken.splice(idx,1);
+    persist();render();
+    toast("Pedido rechazado");
+  }));
+  el.querySelectorAll("[data-id]").forEach(b=>b.addEventListener("click",()=>{
     const idx=state.taken.findIndex(t=>String(t.id)===b.dataset.id);
     if(idx<0)return;
+    if(editandoVacId===b.dataset.id)cancelarEdicionVac();
     state.taken.splice(idx,1);
     persist();render();
     toast("Vacación borrada");
@@ -845,11 +901,21 @@ function initControls(){
     const periodo=+document.getElementById("vPeriodo").value;
     const estado=document.getElementById("vEstado").value;
     const nota=document.getElementById("vNota").value.trim();
+    if(editandoVacId){
+      const t=state.taken.find(x=>String(x.id)===editandoVacId);
+      if(!t)return;
+      Object.assign(t,{n,desde,hasta,periodo,estado,nota});
+      cancelarEdicionVac();
+      persist();render();
+      toast(`Vacación de ${n} actualizada`);
+      return;
+    }
     state.taken.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),n,desde,hasta,periodo,estado,nota});
     document.getElementById("vDesde").value="";document.getElementById("vHasta").value="";document.getElementById("vNota").value="";
     persist();render();
     toast(`Vacación de ${n} agregada`);
   });
+  document.getElementById("btnCancelEditVac").addEventListener("click",cancelarEdicionVac);
 
   document.getElementById("calPrev").addEventListener("click",()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();});
   document.getElementById("calNext").addEventListener("click",()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();});
