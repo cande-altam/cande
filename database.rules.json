@@ -1,0 +1,52 @@
+{
+  "rules": {
+    "catalogo":            { ".read": "auth == null", ".write": "auth == null" },
+    "pedidos":             { ".read": "auth == null", ".write": "auth == null" },
+    "pedidosTs":           { ".read": "auth == null", ".write": "auth == null" },
+    "insumosPedidos":      { ".read": "auth == null", ".write": "auth == null" },
+    "comprados":           { ".read": "auth == null", ".write": "auth == null" },
+    "confirmados":         { ".read": "auth == null", ".write": "auth == null" },
+    "alertas":             { ".read": "auth == null", ".write": "auth == null" },
+    "ventasCustomInsumos": { ".read": "auth == null", ".write": "auth == null" },
+    "prodCustomInsumos":   { ".read": "auth == null", ".write": "auth == null" },
+    "proveedores":         { ".read": "auth == null", ".write": "auth == null" },
+    "proveedorProducto":   { ".read": "auth == null", ".write": "auth == null" },
+    "stock":               { ".read": "auth == null", ".write": "auth == null" },
+    "stockHistory":        { ".read": "auth == null", ".write": "auth == null" },
+    "anuncios":            { ".read": "auth == null", ".write": "auth == null" },
+
+    "recetario": {
+      "miembros": {
+        "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": false }
+      },
+      "lectores": {
+        "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": false }
+      },
+      "ingredientes": {
+        ".read":  "auth != null && (root.child('recetario/miembros/' + auth.uid).exists() || root.child('recetario/lectores/' + auth.uid).val() === true)",
+        ".write": "auth != null && root.child('recetario/miembros/' + auth.uid).exists()",
+        "$id": {
+          ".validate": "newData.hasChildren(['nombre', 'tipo'])",
+          "nombre": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" }
+        }
+      },
+      "areas": {
+        ".read": "auth != null && root.child('recetario/lectores/' + auth.uid).val() === true",
+        "$area": {
+          ".read":  "auth != null && root.child('recetario/miembros/' + auth.uid + '/areas/' + $area).val() === true",
+          ".write": "auth != null && root.child('recetario/miembros/' + auth.uid + '/areas/' + $area).val() === true",
+          "recetas": {
+            "$id": {
+              ".validate": "newData.hasChildren(['nombre', 'tipo', 'actualizada'])",
+              "nombre": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 150" },
+              "tipo":   { ".validate": "newData.val() === 'plato' || newData.val() === 'subreceta'" }
+            }
+          },
+          "fotos": {
+            "$id": { ".validate": "newData.isString() && newData.val().length < 400000" }
+          }
+        }
+      }
+    }
+  }
+}

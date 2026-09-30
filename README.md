@@ -4,6 +4,8 @@ Sistema interno de pedidos para las dos sucursales (SLA 5.0 y San Luis) hacia la
 
 ---
 
+> 📖 **Recetario** (fichas técnicas privadas de Cocina): ver [RECETARIO.md](RECETARIO.md) para habilitar cuentas y publicar las reglas.
+
 ## Configuración rápida
 
 ### 1. Crear proyecto en Firebase

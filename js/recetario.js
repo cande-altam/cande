@@ -1,0 +1,1180 @@
+// =============================================================
+// recetario.js — Recetario privado por área de producción.
+//
+// • Acceso con usuario y contraseña (Firebase Auth, instancia propia
+//   "recetario": no toca la sesión del resto del sistema).
+// • Cada cuenta se habilita en recetario/miembros/{uid}/areas/{area} = true
+// • Datos:
+//     recetario/areas/{area}/recetas/{id}   → ficha técnica
+//     recetario/areas/{area}/fotos/{id}     → foto (JPEG comprimido, dataURL)
+//     recetario/ingredientes/{id}           → catálogo compartido de ingredientes
+//   El sistema de Costeos lee estos nodos (ver RECETARIO.md).
+// =============================================================
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, set, update, remove, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// ── Configuración ────────────────────────────────────────────
+// Áreas con recetario. Para sumar un área nueva alcanza con agregarla acá
+// y habilitar a sus cuentas en recetario/miembros/{uid}/areas/{clave}.
+export const AREAS_RECETARIO = {
+  cocina: { label: "Cocina", icon: "🍳" },
+};
+
+// Si el usuario escribe un nombre sin "@", se completa con este dominio.
+// Ej: "cocina" → cocina@recetario-candela.app (así se crea en Firebase).
+const DOMINIO_USUARIOS = "recetario-candela.app";
+
+// Alérgenos de declaración obligatoria — Código Alimentario Argentino,
+// art. 235 séptimo (ANMAT).
+export const ALERGENOS = [
+  { k: "gluten",       l: "Cereales con gluten (TACC)", d: "Trigo, avena, cebada, centeno" },
+  { k: "crustaceos",   l: "Crustáceos" },
+  { k: "huevo",        l: "Huevo" },
+  { k: "pescado",      l: "Pescado" },
+  { k: "mani",         l: "Maní" },
+  { k: "soja",         l: "Soja" },
+  { k: "leche",        l: "Leche", d: "Incluida lactosa" },
+  { k: "frutos_secos", l: "Frutos secos", d: "Almendra, avellana, nuez, castaña, pistacho…" },
+  { k: "sulfitos",     l: "Sulfitos", d: "≥ 10 mg/kg" },
+];
+
+const UNIDADES = [
+  { k: "g", l: "g" }, { k: "kg", l: "kg" },
+  { k: "ml", l: "ml" }, { k: "l", l: "l" },
+  { k: "u", l: "u" }, { k: "porcion", l: "porción" },
+];
+
+const TIPOS = { plato: "Plato", subreceta: "Subreceta" };
+
+// ── Estado ───────────────────────────────────────────────────
+let fb = null;               // { app, db, auth }
+let toast = (m) => console.log(m);
+let authListo = false;
+let user = null;
+let miembro = null;          // { nombre, areas: {cocina:true} }
+let errorAcceso = "";
+let area = null;
+let recetas = {};            // id → receta
+let ingredientes = {};       // id → { nombre, unidad, tipo }
+let datosListos = false;
+let unsubs = [];
+let fotos = {};              // cache id → dataURL | null
+
+let vista = "lista";         // lista | detalle | editar
+let actualId = null;
+let draft = null;            // receta en edición
+let draftBase = 0;           // "actualizada" de la receta al empezar a editar
+let dirty = false;
+let guardando = false;
+const filtros = { q: "", tipo: "todos", grupo: "" };
+
+let rootEl = null;
+
+// ── Inicio ───────────────────────────────────────────────────
+export function init(firebaseConfig, opts = {}) {
+  if (fb) return;
+  if (opts.toast) toast = opts.toast;
+  const app = initializeApp(firebaseConfig, "recetario");
+  fb = { app, db: getDatabase(app), auth: getAuth(app) };
+  inyectarCss();
+  window.addEventListener("beforeunload", ev => {
+    if (vista === "editar" && dirty) { ev.preventDefault(); ev.returnValue = ""; }
+  });
+  onAuthStateChanged(fb.auth, async u => {
+    authListo = true;
+    user = u;
+    miembro = null; errorAcceso = "";
+    detenerDatos();
+    if (user) {
+      try {
+        miembro = (await get(ref(fb.db, `recetario/miembros/${user.uid}`))).val();
+      } catch (err) {
+        console.error(err);
+        errorAcceso = "reglas";
+      }
+      const areas = areasDelMiembro();
+      if (areas.length) elegirArea(areas.includes(area) ? area : areas[0]);
+    }
+    pintar();
+  });
+}
+
+// El sistema principal llama a mount() cada vez que dibuja la vista.
+export function mount(el) {
+  rootEl = el;
+  if (!el) return;
+  if (!el.dataset.recMontado) {
+    el.dataset.recMontado = "1";
+    el.addEventListener("click", onClick);
+    el.addEventListener("input", onInput);
+    el.addEventListener("change", onChange);
+    el.addEventListener("submit", onSubmit);
+  }
+  pintar();
+}
+
+function areasDelMiembro() {
+  return Object.keys(miembro?.areas || {}).filter(k => miembro.areas[k] === true);
+}
+
+function elegirArea(a) {
+  area = a;
+  vista = "lista"; actualId = null; draft = null; dirty = false;
+  filtros.q = ""; filtros.tipo = "todos"; filtros.grupo = "";
+  escucharDatos();
+}
+
+function escucharDatos() {
+  detenerDatos();
+  datosListos = false;
+  let pendientes = 2;
+  const listo = () => { if (--pendientes === 0) datosListos = true; };
+  let r1 = true, r2 = true;
+  unsubs.push(onValue(ref(fb.db, `recetario/areas/${area}/recetas`), s => {
+    const antes = recetas;
+    recetas = s.val() || {};
+    Object.entries(recetas).forEach(([id, r]) => {
+      r.id = id; normalizar(r);
+      // Si la receta cambió en otro dispositivo, la foto guardada en memoria puede estar vieja.
+      if (antes[id] && antes[id].actualizada !== r.actualizada) delete fotos[id];
+    });
+    if (r1) { r1 = false; listo(); }
+    refrescar();
+  }, err => { console.error(err); errorAcceso = "reglas"; pintar(); }));
+  unsubs.push(onValue(ref(fb.db, "recetario/ingredientes"), s => {
+    ingredientes = s.val() || {};
+    if (r2) { r2 = false; listo(); }
+    refrescar();
+  }, err => { console.error(err); if (r2) { r2 = false; listo(); } }));
+}
+
+function detenerDatos() {
+  unsubs.forEach(u => u());
+  unsubs = [];
+  recetas = {}; ingredientes = {}; fotos = {};
+  datosListos = false;
+}
+
+function normalizar(r) {
+  r.ingredientes = aArray(r.ingredientes);
+  r.empaque = aArray(r.empaque);
+  r.pasos = aArray(r.pasos);
+  r.alergenos = r.alergenos || {};
+  return r;
+}
+function aArray(v) { return !v ? [] : Array.isArray(v) ? v.filter(Boolean) : Object.values(v); }
+
+// Llegaron datos nuevos: redibujar sin pisar lo que se está escribiendo.
+function refrescar() {
+  if (!rootEl || !rootEl.isConnected) return;
+  if (vista === "editar") return;            // el borrador es independiente
+  if (vista === "detalle" && !recetas[actualId]) { vista = "lista"; actualId = null; }
+  if (vista === "lista" && document.activeElement?.id === "rec-q") return pintarTabla();
+  pintar();
+}
+
+// ── Utilidades ───────────────────────────────────────────────
+function esc(s) {
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function num(v) {
+  if (v === "" || v == null) return null;
+  const n = parseFloat(String(v).replace(",", "."));
+  return isNaN(n) ? null : n;
+}
+function fmt(n, dec = 3) {
+  if (n == null || isNaN(n)) return "";
+  return Number(n).toLocaleString("es-AR", { maximumFractionDigits: dec });
+}
+function unidadLabel(k) { return UNIDADES.find(u => u.k === k)?.l || k || ""; }
+function fmtCant(c, u) { return c == null ? "c/n" : `${fmt(c)} ${unidadLabel(u)}`; }
+function fmtFecha(ms) {
+  return ms ? new Date(ms).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+}
+function clave(s) {
+  return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
+}
+// Cantidad bruta: lo que hay que tomar para que, después de la merma, quede la neta.
+export function cantidadBruta(neta, merma) {
+  if (neta == null) return null;
+  const m = num(merma) || 0;
+  return m > 0 && m < 100 ? neta / (1 - m / 100) : neta;
+}
+function areaLabel(a) { return AREAS_RECETARIO[a]?.label || (a ? a[0].toUpperCase() + a.slice(1) : ""); }
+function areaIcon(a) { return AREAS_RECETARIO[a]?.icon || "📖"; }
+
+function listaRecetas() {
+  return Object.values(recetas).sort((a, b) => (a.nombre || "").localeCompare(b.nombre || "", "es"));
+}
+function grupos() {
+  return [...new Set(Object.values(recetas).map(r => (r.grupo || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+}
+function recetasFiltradas() {
+  const q = clave(filtros.q);
+  return listaRecetas().filter(r =>
+    (filtros.tipo === "todos" || r.tipo === filtros.tipo) &&
+    (!filtros.grupo || (r.grupo || "").trim() === filtros.grupo) &&
+    (!q || clave(r.nombre).includes(q) || clave(r.codigo).includes(q)));
+}
+// Recetas que usan (directa o indirectamente) a `id` como subreceta.
+function usadaPor(id, directas = false) {
+  const res = new Set();
+  const buscar = (objetivo) => {
+    Object.values(recetas).forEach(r => {
+      if (res.has(r.id)) return;
+      if (r.ingredientes.some(l => l.tipo === "subreceta" && l.recetaId === objetivo)) {
+        res.add(r.id);
+        if (!directas) buscar(r.id);
+      }
+    });
+  };
+  buscar(id);
+  return res;
+}
+// Alérgenos propios + los heredados de sus subrecetas.
+function alergenosEfectivos(r, visitados = new Set()) {
+  const out = {};
+  if (!r || visitados.has(r.id)) return out;
+  visitados.add(r.id);
+  Object.keys(r.alergenos || {}).forEach(k => { if (r.alergenos[k]) out[k] = true; });
+  (r.ingredientes || []).forEach(l => {
+    if (l.tipo === "subreceta" && recetas[l.recetaId]) Object.assign(out, alergenosEfectivos(recetas[l.recetaId], visitados));
+  });
+  return out;
+}
+function alergenosHeredados(r) {
+  const out = {};  // k → [nombres de subrecetas]
+  (r.ingredientes || []).forEach(l => {
+    const sub = l.tipo === "subreceta" && recetas[l.recetaId];
+    if (!sub) return;
+    Object.keys(alergenosEfectivos(sub, new Set([r.id]))).forEach(k => { (out[k] = out[k] || []).push(sub.nombre); });
+  });
+  return out;
+}
+function nombreLinea(l) {
+  if (l.tipo === "subreceta") return recetas[l.recetaId]?.nombre || l.nombre || "(subreceta eliminada)";
+  return ingredientes[l.ingredienteId]?.nombre || l.nombre || "";
+}
+function siguienteCodigo(tipo) {
+  const pre = tipo === "subreceta" ? "SUB" : "PLA";
+  let max = 0;
+  Object.values(recetas).forEach(r => {
+    const m = String(r.codigo || "").toUpperCase().match(new RegExp(`^${pre}(\\d+)$`));
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  });
+  return pre + String(max + 1).padStart(3, "0");
+}
+function descRendimiento(r) {
+  const partes = [];
+  if (r.rendimiento != null) partes.push(`Rinde ${fmtCant(r.rendimiento, r.unidadRendimiento)}`);
+  if (r.porciones) partes.push(`${fmt(r.porciones)} ${r.porciones == 1 ? "porción" : "porciones"}`);
+  return partes.join(" · ");
+}
+function porPorcion(r) {
+  if (r.rendimiento == null || !r.porciones || r.porciones <= 1) return "";
+  if (["porcion", "u"].includes(r.unidadRendimiento) && r.porciones == r.rendimiento) return "";
+  return fmtCant(r.rendimiento / r.porciones, r.unidadRendimiento);
+}
+async function cargarFoto(id) {
+  if (id in fotos) return fotos[id];
+  try { fotos[id] = (await get(ref(fb.db, `recetario/areas/${area}/fotos/${id}`))).val() || null; }
+  catch (err) { console.error(err); fotos[id] = null; }
+  return fotos[id];
+}
+
+// ── Render principal ─────────────────────────────────────────
+function pintar() {
+  const c = rootEl;
+  if (!c || !c.isConnected) return;
+  if (!fb) { c.innerHTML = cardMsg("El recetario no está disponible."); return; }
+  if (!authListo) { c.innerHTML = cardMsg("Cargando…"); return; }
+  if (!user) return pintarLogin(c);
+  if (errorAcceso === "reglas") return pintarErrorReglas(c);
+  if (!areasDelMiembro().length) return pintarNoHabilitado(c);
+  if (!datosListos) { c.innerHTML = barra() + cardMsg("Cargando recetas…"); return; }
+  if (vista === "editar" && draft) return pintarEditor(c);
+  if (vista === "detalle" && recetas[actualId]) return pintarDetalle(c);
+  vista = "lista";
+  pintarLista(c);
+}
+
+function cardMsg(t) { return `<div class="section-block" style="text-align:center;color:var(--gray)">${t}</div>`; }
+
+function barra() {
+  const areas = areasDelMiembro();
+  return `
+    <div class="rec-bar">
+      <div>
+        <div class="page-title">${areaIcon(area)} Recetario · ${esc(areaLabel(area))}</div>
+        <div class="page-sub" style="margin-bottom:0">Fichas técnicas del equipo. Solo visible para cuentas habilitadas.</div>
+      </div>
+      <div class="rec-user">
+        ${areas.length > 1 ? `<div class="cat-tabs" style="margin:0">${areas.map(a =>
+          `<button class="cat-tab ${a === area ? "active" : ""}" data-act="area" data-v="${esc(a)}">${areaIcon(a)} ${esc(areaLabel(a))}</button>`).join("")}</div>` : ""}
+        <button class="btn btn-ghost btn-sm" data-act="salir" title="${esc(user?.email || "")}">Salir (${esc(miembro?.nombre || usuarioCorto())})</button>
+      </div>
+    </div>`;
+}
+function usuarioCorto() {
+  const em = user?.email || "";
+  return em.endsWith("@" + DOMINIO_USUARIOS) ? em.split("@")[0] : em;
+}
+
+function pintarLogin(c) {
+  c.innerHTML = `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-title">📖 Recetario</div>
+        <div class="login-sub">Acceso exclusivo del equipo. Ingresá con tu usuario y contraseña.</div>
+        <form class="admin-form" id="rec-login">
+          <div class="form-group"><label class="form-label" for="rec-user">Usuario</label>
+            <input class="form-input" id="rec-user" autocomplete="username" autocapitalize="none" required></div>
+          <div class="form-group"><label class="form-label" for="rec-pass">Contraseña</label>
+            <input class="form-input" id="rec-pass" type="password" autocomplete="current-password" required></div>
+          <div id="rec-login-err" style="color:#b83a25;font-size:13px;min-height:18px"></div>
+          <button class="btn btn-primary" id="rec-login-btn" type="submit" style="justify-content:center">Ingresar</button>
+        </form>
+      </div>
+    </div>`;
+}
+
+function pintarNoHabilitado(c) {
+  c.innerHTML = `
+    <div class="login-wrap"><div class="login-card">
+      <div class="login-title">Cuenta no habilitada</div>
+      <div class="login-sub">La cuenta <b>${esc(user.email)}</b> todavía no tiene acceso al recetario. Un administrador tiene que agregar este nodo en Firebase → Realtime Database:</div>
+      <div class="form-input" style="font-family:monospace;font-size:12px;word-break:break-all;user-select:all">recetario/miembros/${esc(user.uid)}/areas/cocina = true</div>
+      <div class="rec-actions" style="margin-top:16px">
+        <button class="btn btn-ghost btn-sm" onclick="location.reload()">Ya está, reintentar</button>
+        <button class="btn btn-ghost btn-sm" data-act="salir">Salir</button>
+      </div>
+    </div></div>`;
+}
+
+function pintarErrorReglas(c) {
+  c.innerHTML = `
+    <div class="login-wrap"><div class="login-card">
+      <div class="login-title">No se pudo abrir el recetario</div>
+      <div class="login-sub">La base de datos rechazó la lectura. Revisá que las reglas de <b>database.rules.json</b> estén publicadas en Firebase (ver RECETARIO.md).</div>
+      <div class="rec-actions">
+        <button class="btn btn-ghost btn-sm" onclick="location.reload()">Reintentar</button>
+        <button class="btn btn-ghost btn-sm" data-act="salir">Salir</button>
+      </div>
+    </div></div>`;
+}
+
+// ── 1. Listado ───────────────────────────────────────────────
+function pintarLista(c) {
+  const gs = grupos();
+  if (filtros.grupo && !gs.includes(filtros.grupo)) filtros.grupo = "";
+  c.innerHTML = `
+    ${barra()}
+    <div class="rec-actions" style="margin:20px 0 16px">
+      <button class="btn btn-primary" data-act="nueva">＋ Nueva receta</button>
+      <button class="btn btn-ghost" data-act="imprimir-todo">🖨️ Imprimir recetario</button>
+    </div>
+    <div class="section-block">
+      <div class="rec-filtros">
+        <div class="form-group" style="flex:2"><label class="form-label" for="rec-q">Buscar</label>
+          <input class="form-input" id="rec-q" data-filtro="q" placeholder="Nombre o código de la receta" value="${esc(filtros.q)}"></div>
+        <div class="form-group"><label class="form-label" for="rec-ftipo">Tipo</label>
+          <select class="form-select" id="rec-ftipo" data-filtro="tipo">
+            <option value="todos" ${filtros.tipo === "todos" ? "selected" : ""}>Platos y subrecetas</option>
+            <option value="plato" ${filtros.tipo === "plato" ? "selected" : ""}>Solo platos</option>
+            <option value="subreceta" ${filtros.tipo === "subreceta" ? "selected" : ""}>Solo subrecetas</option>
+          </select></div>
+        <div class="form-group"><label class="form-label" for="rec-fgrupo">Grupo</label>
+          <select class="form-select" id="rec-fgrupo" data-filtro="grupo">
+            <option value="">Todos los grupos</option>
+            ${gs.map(g => `<option ${g === filtros.grupo ? "selected" : ""}>${esc(g)}</option>`).join("")}
+          </select></div>
+      </div>
+      <div id="rec-tabla"></div>
+    </div>`;
+  pintarTabla();
+}
+
+function pintarTabla() {
+  const t = document.getElementById("rec-tabla");
+  if (!t) return;
+  const total = Object.keys(recetas).length;
+  const rs = recetasFiltradas();
+  if (!total) {
+    t.innerHTML = `<div class="rec-vacio"><div style="font-size:34px">📖</div><b>Todavía no hay recetas</b><div>Empezá con “Nueva receta”. Conviene cargar primero las subrecetas (masas, salsas, rellenos) para después usarlas en los platos.</div></div>`;
+    return;
+  }
+  if (!rs.length) { t.innerHTML = `<div class="rec-vacio">Ninguna receta coincide con la búsqueda.</div>`; return; }
+  t.innerHTML = `
+    <div class="rec-tablewrap"><table class="rec-tabla">
+      <thead><tr><th>Receta</th><th>Tipo</th><th class="num">Líneas</th><th class="num">Produce</th><th class="num">Actualizada</th></tr></thead>
+      <tbody>${rs.map(r => `
+        <tr data-act="ver" data-id="${esc(r.id)}">
+          <td><div class="rec-nom">${esc(r.nombre)}</div><div class="rec-sub">${esc([r.codigo, r.grupo].filter(Boolean).join(" · "))}</div></td>
+          <td><span class="rec-badge rec-${esc(r.tipo)}">${esc(TIPOS[r.tipo] || r.tipo)}</span></td>
+          <td class="num">${r.ingredientes.length}<div class="rec-sub">${r.empaque.length} de empaque</div></td>
+          <td class="num">${r.rendimiento != null ? esc(fmtCant(r.rendimiento, r.unidadRendimiento)) : "—"}<div class="rec-sub">${r.porciones ? `${fmt(r.porciones)} ${r.porciones == 1 ? "porción" : "porciones"}` : ""}</div></td>
+          <td class="num rec-sub">${fmtFecha(r.actualizada)}</td>
+        </tr>`).join("")}
+      </tbody></table></div>
+    <div class="rec-sub" style="margin-top:10px">${rs.length} de ${total} receta${total === 1 ? "" : "s"}</div>`;
+}
+
+// ── 3. Detalle ───────────────────────────────────────────────
+function pintarDetalle(c) {
+  const r = recetas[actualId];
+  const efectivos = alergenosEfectivos(r);
+  const usos = [...usadaPor(r.id, true)].map(id => recetas[id]).filter(Boolean);
+  const pp = porPorcion(r);
+  c.innerHTML = `
+    ${barra()}
+    <div class="rec-detalle-head">
+      <div>
+        <div class="rec-titulo">${esc(r.nombre)}</div>
+        <div class="rec-chips">
+          <span class="rec-badge rec-${esc(r.tipo)}">${esc(TIPOS[r.tipo] || r.tipo)}</span>
+          ${r.codigo ? `<span class="rec-chip">${esc(r.codigo)}</span>` : ""}
+          ${r.grupo ? `<span class="rec-chip">${esc(r.grupo)}</span>` : ""}
+          <span class="rec-sub">${esc(descRendimiento(r))}${pp ? ` · ${esc(pp)} por porción` : ""}</span>
+        </div>
+      </div>
+      <div class="rec-actions">
+        <button class="btn btn-primary btn-sm" data-act="pdf" data-id="${esc(r.id)}">⬇️ Descargar ficha (PDF)</button>
+        <button class="btn btn-turq btn-sm" data-act="editar" data-id="${esc(r.id)}">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" data-act="eliminar" data-id="${esc(r.id)}">Eliminar</button>
+        <button class="btn btn-ghost btn-sm" data-act="volver">← Volver</button>
+      </div>
+    </div>
+
+    <div class="section-block rec-hero">
+      <div class="rec-foto" id="rec-foto-det">${r.tieneFoto ? `<span class="rec-sub">Cargando foto…</span>` : `<span class="rec-sub">Sin foto</span>`}</div>
+      <div style="flex:1;min-width:240px">
+        <div class="section-title" style="margin-bottom:10px">Preparación</div>
+        ${r.pasos.length ? `<ol class="rec-pasos">${r.pasos.map(p => `<li>${esc(p)}</li>`).join("")}</ol>` : `<div class="rec-sub">Sin pasos cargados.</div>`}
+        <div class="section-title" style="margin:18px 0 8px">Alérgenos <span class="rec-sub" style="font-weight:400">(ANMAT)</span></div>
+        ${Object.keys(efectivos).length
+          ? `<div class="rec-chips">${ALERGENOS.filter(a => efectivos[a.k]).map(a => `<span class="rec-aler">${esc(a.l)}</span>`).join("")}</div>`
+          : `<div class="rec-sub">No contiene alérgenos de declaración obligatoria.</div>`}
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:12px">Ingredientes</div>
+      ${tablaLineas(r.ingredientes, true)}
+      ${r.empaque.length ? `<div class="section-title" style="margin:20px 0 12px">Empaque</div>${tablaLineas(r.empaque, false)}` : ""}
+    </div>
+
+    ${r.observaciones ? `<div class="section-block"><div class="section-title" style="margin-bottom:8px">Observaciones</div><div class="rec-pre">${esc(r.observaciones)}</div></div>` : ""}
+
+    <div class="section-block rec-meta">
+      <div><span>Margen de seguridad (costeo)</span><b>${fmt(r.margenSeguridad || 0)} %</b></div>
+      <div><span>Costeo por unidad de rendimiento</span><b>${r.costearPorUnidad ? "Sí" : "No"}</b></div>
+      <div><span>Última actualización</span><b>${fmtFecha(r.actualizada)}</b>${r.actualizadaPor ? `<small>${esc(r.actualizadaPor)}</small>` : ""}</div>
+      ${r.tipo === "subreceta" ? `<div><span>Se usa en</span>${usos.length ? usos.map(u => `<a href="#" data-act="ver" data-id="${esc(u.id)}">${esc(u.nombre)}</a>`).join("") : "<b>—</b>"}</div>` : ""}
+    </div>`;
+  if (r.tieneFoto) cargarFoto(r.id).then(src => {
+    const el = document.getElementById("rec-foto-det");
+    if (el && actualId === r.id) el.innerHTML = src ? `<img src="${src}" alt="">` : `<span class="rec-sub">Sin foto</span>`;
+  });
+}
+
+function tablaLineas(lineas, conMerma) {
+  if (!lineas.length) return `<div class="rec-sub">Sin líneas cargadas.</div>`;
+  return `<div class="rec-tablewrap"><table class="rec-tabla rec-tabla-det">
+    <thead><tr><th>${conMerma ? "Componente" : "Envase / etiqueta"}</th><th class="num">Cant. neta</th>${conMerma ? `<th class="num">Merma</th><th class="num">Cant. bruta</th>` : ""}</tr></thead>
+    <tbody>${lineas.map(l => {
+      const sub = l.tipo === "subreceta";
+      const nombre = esc(nombreLinea(l));
+      return `<tr>
+        <td>${sub && recetas[l.recetaId] ? `<a href="#" data-act="ver" data-id="${esc(l.recetaId)}">${nombre}</a>` : nombre}<div class="rec-sub">${sub ? "Subreceta" : conMerma ? "Ingrediente" : "Empaque"}</div></td>
+        <td class="num">${esc(fmtCant(l.cantidad, l.unidad))}</td>
+        ${conMerma ? `<td class="num">${l.merma ? fmt(l.merma) + " %" : "—"}</td><td class="num">${esc(fmtCant(cantidadBruta(l.cantidad, l.merma), l.unidad))}</td>` : ""}
+      </tr>`;
+    }).join("")}</tbody></table></div>`;
+}
+
+// ── 3. Editor ────────────────────────────────────────────────
+function nuevoDraft() {
+  return {
+    id: null, nombre: "", tipo: "plato", codigo: "", grupo: "",
+    rendimiento: 1, unidadRendimiento: "porcion", porciones: 1,
+    margenSeguridad: 0, costearPorUnidad: false,
+    ingredientes: [lineaVacia("ingrediente")], empaque: [],
+    pasosTexto: "", observaciones: "", alergenos: {},
+    tieneFoto: false, foto: null, fotoCambiada: false,
+  };
+}
+function lineaVacia(tipo) {
+  return tipo === "empaque" ? { nombre: "", cantidad: null, unidad: "u" }
+       : tipo === "subreceta" ? { tipo: "subreceta", recetaId: "", cantidad: null, unidad: "g", merma: null }
+       : { tipo: "ingrediente", nombre: "", cantidad: null, unidad: "g", merma: null };
+}
+
+async function abrirEditor(id) {
+  if (id) {
+    const r = recetas[id];
+    if (!r) return;
+    draft = JSON.parse(JSON.stringify(r));
+    draft.ingredientes = r.ingredientes.map(l => ({ ...l, nombre: l.tipo === "subreceta" ? l.nombre : nombreLinea(l) }));
+    draft.empaque = r.empaque.map(l => ({ ...l, nombre: ingredientes[l.ingredienteId]?.nombre || l.nombre || "" }));
+    draft.pasosTexto = r.pasos.join("\n");
+    draft.foto = null; draft.fotoCambiada = false;
+    draftBase = r.actualizada || 0;
+  } else {
+    draft = nuevoDraft();
+    draftBase = 0;
+  }
+  dirty = false;
+  vista = "editar";
+  pintar();
+  window.scrollTo(0, 0);
+  if (id && draft.tieneFoto) {
+    const src = await cargarFoto(id);
+    if (draft && draft.id === id && !draft.fotoCambiada) { draft.foto = src; pintarFotoEditor(); }
+  }
+}
+
+function pintarEditor(c) {
+  const d = draft;
+  const esNueva = !d.id;
+  const gs = grupos();
+  const heredados = alergenosHeredados(d.id ? { ...d, id: d.id } : { ...d, id: "__nueva__" });
+  const nomsIng = [...new Set(Object.values(ingredientes).filter(i => i.tipo !== "empaque").map(i => i.nombre))].sort((a, b) => a.localeCompare(b, "es"));
+  const nomsEmp = [...new Set(Object.values(ingredientes).filter(i => i.tipo === "empaque").map(i => i.nombre))].sort((a, b) => a.localeCompare(b, "es"));
+  c.innerHTML = `
+    ${barra()}
+    <div class="rec-detalle-head">
+      <div class="rec-titulo">${esNueva ? "Nueva receta" : `Editar · ${esc(recetas[d.id]?.nombre || d.nombre)}`}</div>
+      <div class="rec-actions">
+        <button class="btn btn-ghost btn-sm" data-act="cancelar">Cancelar</button>
+        <button class="btn btn-primary btn-sm" data-act="guardar" ${guardando ? "disabled" : ""}>${guardando ? "Guardando…" : "💾 Guardar"}</button>
+      </div>
+    </div>
+    <datalist id="rec-dl-ing">${nomsIng.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+    <datalist id="rec-dl-emp">${nomsEmp.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+    <datalist id="rec-dl-grupo">${gs.map(g => `<option value="${esc(g)}">`).join("")}</datalist>
+
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:14px">Datos generales</div>
+      <div class="rec-grid">
+        <div class="form-group rec-span2"><label class="form-label">Nombre *</label>
+          <input class="form-input" data-f="nombre" value="${esc(d.nombre)}" placeholder="Ej: Croquetas de jamón (6 u.)"></div>
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select class="form-select" data-f="tipo" data-redibujar>
+            ${Object.entries(TIPOS).map(([k, l]) => `<option value="${k}" ${d.tipo === k ? "selected" : ""}>${l}</option>`).join("")}
+          </select>
+          <small class="rec-help">${d.tipo === "subreceta" ? "Preparación base (masa, salsa, relleno) que se usa en otras recetas." : "Producto que se sirve o se vende."}</small></div>
+        <div class="form-group"><label class="form-label">Código</label>
+          <input class="form-input" data-f="codigo" value="${esc(d.codigo)}" placeholder="${esc(siguienteCodigo(d.tipo))}">
+          ${d.codigo ? "" : `<small class="rec-help">Si lo dejás vacío se asigna ${esc(siguienteCodigo(d.tipo))}.</small>`}</div>
+        <div class="form-group"><label class="form-label">Grupo</label>
+          <input class="form-input" data-f="grupo" list="rec-dl-grupo" value="${esc(d.grupo)}" placeholder="Ej: Entradas, Masas, Salsas"></div>
+        <div class="form-group"><label class="form-label">Rendimiento</label>
+          <div class="rec-inline">
+            <input class="form-input" type="number" step="any" min="0" data-f="rendimiento" data-num value="${d.rendimiento ?? ""}">
+            <select class="form-select" data-f="unidadRendimiento">${opcionesUnidad(d.unidadRendimiento)}</select>
+          </div>
+          <small class="rec-help">Cuánto produce la receta completa.</small></div>
+        <div class="form-group"><label class="form-label">Porciones</label>
+          <input class="form-input" type="number" step="any" min="0" data-f="porciones" data-num value="${d.porciones ?? ""}"></div>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:4px">Ingredientes y subrecetas</div>
+      <div class="rec-help" style="margin-bottom:14px">La <b>cantidad neta</b> es lo que efectivamente entra en la receta. La <b>merma</b> es lo que se pierde al limpiar o preparar (cáscaras, huesos, recortes). La cantidad bruta se calcula sola.</div>
+      <div class="rec-lineas">
+        <div class="rec-linea rec-linea-head"><span>Tipo</span><span>Componente</span><span>Cant. neta</span><span>Unidad</span><span>Merma %</span><span>Bruta</span><span></span></div>
+        ${d.ingredientes.map((l, i) => lineaIngrediente(l, i)).join("")}
+      </div>
+      <div class="rec-actions" style="margin-top:12px">
+        <button class="btn btn-ghost btn-sm" data-act="agregar" data-row="ingredientes" data-v="ingrediente">＋ Ingrediente</button>
+        <button class="btn btn-ghost btn-sm" data-act="agregar" data-row="ingredientes" data-v="subreceta">＋ Subreceta</button>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:4px">Empaque</div>
+      <div class="rec-help" style="margin-bottom:14px">Envases, bolsas, cajas o etiquetas que forman parte del producto terminado.</div>
+      ${d.empaque.length ? `<div class="rec-lineas">
+        <div class="rec-linea rec-linea-emp rec-linea-head"><span>Envase / etiqueta</span><span>Cantidad</span><span>Unidad</span><span></span></div>
+        ${d.empaque.map((l, i) => lineaEmpaque(l, i)).join("")}
+      </div>` : ""}
+      <div class="rec-actions" style="margin-top:12px">
+        <button class="btn btn-ghost btn-sm" data-act="agregar" data-row="empaque" data-v="empaque">＋ Empaque</button>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:12px">Para la cocina</div>
+      <div class="form-group" style="margin-bottom:16px"><label class="form-label">Preparación paso a paso</label>
+        <textarea class="form-input rec-textarea" data-f="pasosTexto" rows="8" placeholder="Escribí un paso por línea.">${esc(d.pasosTexto)}</textarea>
+        <small class="rec-help">Un paso por línea. Se numeran solos en la ficha técnica.</small></div>
+      <div class="form-group" style="margin-bottom:16px"><label class="form-label">Foto del plato</label>
+        <div class="rec-foto-edit" id="rec-foto-edit"></div></div>
+      <div class="form-group"><label class="form-label">Observaciones</label>
+        <textarea class="form-input rec-textarea" data-f="observaciones" rows="3" placeholder="Conservación, vida útil, emplatado, puntos críticos…">${esc(d.observaciones)}</textarea></div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:4px">Alérgenos</div>
+      <div class="rec-help" style="margin-bottom:14px">Alérgenos de declaración obligatoria según el Código Alimentario Argentino (art. 235 séptimo, ANMAT). Los que vienen de una subreceta se marcan solos. Aparecen en la ficha y en el PDF.</div>
+      <div class="rec-alergenos">
+        ${ALERGENOS.map(a => {
+          const her = heredados[a.k];
+          const on = !!(d.alergenos[a.k] || her);
+          return `<label class="rec-check ${on ? "on" : ""} ${her ? "heredado" : ""}">
+            <input type="checkbox" data-aler="${a.k}" ${on ? "checked" : ""} ${her ? "disabled" : ""}>
+            <span><b>${esc(a.l)}</b>${a.d ? `<small>${esc(a.d)}</small>` : ""}${her ? `<small>Por: ${esc(her.join(", "))}</small>` : ""}</span>
+          </label>`;
+        }).join("")}
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:4px">Datos para el costeo</div>
+      <div class="rec-help" style="margin-bottom:14px">No se calculan costos acá: estos datos los usa el sistema de Costeos.</div>
+      <div class="rec-grid">
+        <div class="form-group"><label class="form-label">Margen de seguridad %</label>
+          <input class="form-input" type="number" step="any" min="0" max="100" data-f="margenSeguridad" data-num value="${d.margenSeguridad ?? ""}">
+          <small class="rec-help">Se suma al costo total para cubrir variaciones.</small></div>
+        <div class="form-group rec-span2"><label class="rec-check ${d.costearPorUnidad ? "on" : ""}" style="margin-top:18px">
+          <input type="checkbox" data-f="costearPorUnidad" ${d.costearPorUnidad ? "checked" : ""}>
+          <span><b>Calcular el costo por unidad de rendimiento</b><small>Para preparaciones como salsas, masas o fondos que después se usan en otras recetas (costo por kg, por litro…). Si no, se calcula por porción.</small></span>
+        </label></div>
+      </div>
+    </div>
+
+    <div class="rec-actions rec-pie">
+      <button class="btn btn-ghost" data-act="cancelar">Cancelar</button>
+      <button class="btn btn-primary" data-act="guardar" ${guardando ? "disabled" : ""}>${guardando ? "Guardando…" : "💾 Guardar receta"}</button>
+    </div>`;
+  pintarFotoEditor();
+}
+
+function opcionesUnidad(sel) {
+  return UNIDADES.map(u => `<option value="${u.k}" ${u.k === sel ? "selected" : ""}>${u.l}</option>`).join("");
+}
+
+// Subrecetas elegibles: todas menos la propia y las que la usan (evita ciclos).
+function subrecetasElegibles() {
+  const prohibidas = draft?.id ? usadaPor(draft.id) : new Set();
+  if (draft?.id) prohibidas.add(draft.id);
+  return listaRecetas().filter(r => r.tipo === "subreceta" && !prohibidas.has(r.id));
+}
+
+function lineaIngrediente(l, i) {
+  const sub = l.tipo === "subreceta";
+  const subs = sub ? subrecetasElegibles() : [];
+  const bruta = cantidadBruta(l.cantidad, l.merma);
+  return `<div class="rec-linea" data-row="ingredientes" data-i="${i}">
+    <select class="form-select" data-f="tipo" data-redibujar aria-label="Tipo">
+      <option value="ingrediente" ${!sub ? "selected" : ""}>Ingrediente</option>
+      <option value="subreceta" ${sub ? "selected" : ""}>Subreceta</option>
+    </select>
+    ${sub
+      ? `<select class="form-select" data-f="recetaId" data-redibujar aria-label="Subreceta">
+          <option value="">— Elegí una subreceta —</option>
+          ${subs.map(s => `<option value="${esc(s.id)}" ${s.id === l.recetaId ? "selected" : ""}>${esc(s.nombre)}${s.codigo ? ` (${esc(s.codigo)})` : ""}</option>`).join("")}
+          ${l.recetaId && !subs.some(s => s.id === l.recetaId) ? `<option value="${esc(l.recetaId)}" selected>${esc(nombreLinea(l))}</option>` : ""}
+        </select>`
+      : `<input class="form-input" data-f="nombre" list="rec-dl-ing" value="${esc(l.nombre)}" placeholder="Ej: Harina 000" aria-label="Ingrediente">`}
+    <input class="form-input" type="number" step="any" min="0" data-f="cantidad" data-num value="${l.cantidad ?? ""}" placeholder="c/n" aria-label="Cantidad neta">
+    <select class="form-select" data-f="unidad" aria-label="Unidad">${opcionesUnidad(l.unidad)}</select>
+    <input class="form-input" type="number" step="any" min="0" max="99" data-f="merma" data-num value="${l.merma ?? ""}" placeholder="0" aria-label="Merma %">
+    <span class="rec-bruta">${bruta != null ? esc(fmtCant(bruta, l.unidad)) : ""}</span>
+    <button class="rec-quitar" data-act="quitar" data-row="ingredientes" data-i="${i}" title="Quitar" aria-label="Quitar">✕</button>
+  </div>`;
+}
+
+function lineaEmpaque(l, i) {
+  return `<div class="rec-linea rec-linea-emp" data-row="empaque" data-i="${i}">
+    <input class="form-input" data-f="nombre" list="rec-dl-emp" value="${esc(l.nombre)}" placeholder="Ej: Caja kraft 20×20" aria-label="Empaque">
+    <input class="form-input" type="number" step="any" min="0" data-f="cantidad" data-num value="${l.cantidad ?? ""}" aria-label="Cantidad">
+    <select class="form-select" data-f="unidad" aria-label="Unidad">${opcionesUnidad(l.unidad)}</select>
+    <button class="rec-quitar" data-act="quitar" data-row="empaque" data-i="${i}" title="Quitar" aria-label="Quitar">✕</button>
+  </div>`;
+}
+
+function pintarFotoEditor() {
+  const el = document.getElementById("rec-foto-edit");
+  if (!el || !draft) return;
+  const cargando = draft.tieneFoto && !draft.foto && !draft.fotoCambiada;
+  el.innerHTML = `
+    ${draft.foto ? `<img src="${draft.foto}" alt="">` : cargando ? `<div class="rec-foto-vacia">Cargando…</div>` : `<div class="rec-foto-vacia">Sin foto</div>`}
+    <div class="rec-actions">
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer">${draft.foto ? "Cambiar foto" : "📷 Subir foto"}
+        <input type="file" accept="image/*" id="rec-foto-input" hidden></label>
+      ${draft.foto || cargando ? `<button class="btn btn-danger btn-sm" data-act="quitar-foto">Quitar</button>` : ""}
+    </div>`;
+}
+
+// Achica la foto para guardarla en la base (JPEG ~100 KB).
+function comprimirFoto(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const max = 1000;
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const cv = document.createElement("canvas");
+      cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+      let q = 0.75, out = cv.toDataURL("image/jpeg", q);
+      while (out.length > 180000 && q > 0.35) { q -= 0.1; out = cv.toDataURL("image/jpeg", q); }
+      resolve(out);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("imagen")); };
+    img.src = url;
+  });
+}
+
+// ── Guardar / eliminar ───────────────────────────────────────
+async function guardar() {
+  if (guardando) return;
+  const d = draft;
+  const errores = [];
+  const nombre = (d.nombre || "").trim();
+  if (!nombre) errores.push("Poné un nombre a la receta.");
+  let codigo = (d.codigo || "").trim().toUpperCase() || siguienteCodigo(d.tipo);
+  if (Object.values(recetas).some(r => r.id !== d.id && (r.codigo || "").toUpperCase() === codigo))
+    errores.push(`El código ${codigo} ya lo usa otra receta.`);
+
+  const ing = d.ingredientes.filter(l => l.tipo === "subreceta" ? l.recetaId : (l.nombre || "").trim() || l.cantidad != null);
+  ing.forEach((l, i) => {
+    if (l.tipo !== "subreceta" && !(l.nombre || "").trim()) errores.push(`Falta el nombre del ingrediente de la línea ${i + 1}.`);
+    if (l.merma != null && (l.merma < 0 || l.merma >= 100)) errores.push(`La merma de “${nombreLinea(l) || "línea " + (i + 1)}” tiene que estar entre 0 y 99 %.`);
+  });
+  const emp = d.empaque.filter(l => (l.nombre || "").trim());
+  if (d.tipo === "plato" && d.id && usadaPor(d.id, true).size)
+    errores.push("Esta receta se usa como subreceta en otras; no puede pasar a ser Plato.");
+  if (errores.length) { toast(errores[0], "warn"); return; }
+
+  const actual = d.id && recetas[d.id];
+  if (actual && (actual.actualizada || 0) > draftBase &&
+      !confirm(`${actual.actualizadaPor || "Otra persona"} modificó esta receta mientras la editabas.\n¿Guardar igual y reemplazar esos cambios?`)) return;
+
+  guardando = true; pintar();
+  try {
+    // Ingredientes y envases nuevos → catálogo compartido (lo usa Costeos).
+    const porClave = {};
+    Object.entries(ingredientes).forEach(([id, x]) => { porClave[(x.tipo === "empaque" ? "e:" : "i:") + clave(x.nombre)] = id; });
+    const nuevos = {};
+    const idCatalogo = (nombreL, unidad, tipo) => {
+      const k = (tipo === "empaque" ? "e:" : "i:") + clave(nombreL);
+      if (!porClave[k]) {
+        const id = push(ref(fb.db, "recetario/ingredientes")).key;
+        porClave[k] = id;
+        nuevos[id] = { nombre: nombreL.trim(), unidad: unidad || "g", tipo, creado: Date.now() };
+      }
+      return porClave[k];
+    };
+
+    const id = d.id || push(ref(fb.db, `recetario/areas/${area}/recetas`)).key;
+    const receta = {
+      nombre, codigo, tipo: d.tipo,
+      grupo: (d.grupo || "").trim(),
+      rendimiento: d.rendimiento ?? null,
+      unidadRendimiento: d.unidadRendimiento || "porcion",
+      porciones: d.porciones ?? null,
+      margenSeguridad: d.margenSeguridad ?? 0,
+      costearPorUnidad: !!d.costearPorUnidad,
+      ingredientes: ing.map(l => l.tipo === "subreceta"
+        ? { tipo: "subreceta", recetaId: l.recetaId, nombre: recetas[l.recetaId]?.nombre || l.nombre || "", cantidad: l.cantidad ?? null, unidad: l.unidad || "g", merma: l.merma ?? null }
+        : { tipo: "ingrediente", ingredienteId: idCatalogo(l.nombre, l.unidad, "ingrediente"), nombre: l.nombre.trim(), cantidad: l.cantidad ?? null, unidad: l.unidad || "g", merma: l.merma ?? null }),
+      empaque: emp.map(l => ({ ingredienteId: idCatalogo(l.nombre, l.unidad, "empaque"), nombre: l.nombre.trim(), cantidad: l.cantidad ?? null, unidad: l.unidad || "u" })),
+      pasos: (d.pasosTexto || "").split("\n").map(s => s.replace(/^\s*\d+[.)-]\s*/, "").trim()).filter(Boolean),
+      observaciones: (d.observaciones || "").trim(),
+      alergenos: Object.fromEntries(Object.entries(d.alergenos || {}).filter(([, v]) => v)),
+      tieneFoto: d.fotoCambiada ? !!d.foto : !!d.tieneFoto,
+      creada: actual?.creada || Date.now(),
+      actualizada: Date.now(),
+      actualizadaPor: miembro?.nombre || usuarioCorto(),
+    };
+
+    const upd = {};
+    Object.entries(nuevos).forEach(([k, v]) => { upd[`recetario/ingredientes/${k}`] = v; });
+    upd[`recetario/areas/${area}/recetas/${id}`] = receta;
+    if (d.fotoCambiada) upd[`recetario/areas/${area}/fotos/${id}`] = d.foto || null;
+    await update(ref(fb.db), upd);
+    if (d.fotoCambiada) fotos[id] = d.foto || null;
+
+    toast(d.id ? "Receta actualizada" : "Receta creada");
+    draft = null; dirty = false;
+    vista = "detalle"; actualId = id;
+  } catch (err) {
+    console.error(err);
+    toast("No se pudo guardar. Revisá la conexión e intentá de nuevo.", "warn");
+  } finally {
+    guardando = false;
+    pintar();
+  }
+}
+
+async function eliminar(id) {
+  const r = recetas[id];
+  if (!r) return;
+  const usos = [...usadaPor(id, true)].map(u => recetas[u]?.nombre).filter(Boolean);
+  if (usos.length) { alert(`No se puede eliminar “${r.nombre}”: se usa en ${usos.join(", ")}.\nPrimero quitala de esas recetas.`); return; }
+  if (!confirm(`¿Eliminar la receta “${r.nombre}”? No se puede deshacer.`)) return;
+  try {
+    await update(ref(fb.db), {
+      [`recetario/areas/${area}/recetas/${id}`]: null,
+      [`recetario/areas/${area}/fotos/${id}`]: null,
+    });
+    delete fotos[id];
+    vista = "lista"; actualId = null;
+    toast("Receta eliminada");
+    pintar();
+  } catch (err) {
+    console.error(err);
+    toast("No se pudo eliminar.", "warn");
+  }
+}
+
+// ── Eventos ──────────────────────────────────────────────────
+async function onSubmit(ev) {
+  if (ev.target.id !== "rec-login") return;
+  ev.preventDefault();
+  let u = document.getElementById("rec-user").value.trim().toLowerCase();
+  const p = document.getElementById("rec-pass").value;
+  if (u && !u.includes("@")) u = `${u}@${DOMINIO_USUARIOS}`;
+  const btn = document.getElementById("rec-login-btn");
+  const err = document.getElementById("rec-login-err");
+  btn.disabled = true; btn.textContent = "Ingresando…"; err.textContent = "";
+  try {
+    await signInWithEmailAndPassword(fb.auth, u, p);
+  } catch (e) {
+    console.error(e);
+    err.textContent = e.code === "auth/too-many-requests"
+      ? "Demasiados intentos. Esperá unos minutos."
+      : e.code === "auth/network-request-failed" ? "Sin conexión." : "Usuario o contraseña incorrectos.";
+    btn.disabled = false; btn.textContent = "Ingresar";
+  }
+}
+
+function confirmarDescartar() {
+  return !(vista === "editar" && dirty) || confirm("Hay cambios sin guardar. ¿Descartarlos?");
+}
+
+function onClick(ev) {
+  const b = ev.target.closest("[data-act]");
+  if (!b || !rootEl.contains(b)) return;
+  const act = b.dataset.act;
+  if (b.tagName === "A") ev.preventDefault();
+  switch (act) {
+    case "salir":
+      if (!confirmarDescartar()) return;
+      vista = "lista"; draft = null; dirty = false;
+      signOut(fb.auth);
+      break;
+    case "area":
+      if (b.dataset.v === area || !confirmarDescartar()) return;
+      elegirArea(b.dataset.v); pintar();
+      break;
+    case "nueva": abrirEditor(null); break;
+    case "ver":
+      vista = "detalle"; actualId = b.dataset.id; pintar(); window.scrollTo(0, 0);
+      break;
+    case "volver": vista = "lista"; actualId = null; pintar(); break;
+    case "editar": abrirEditor(b.dataset.id); break;
+    case "eliminar": eliminar(b.dataset.id); break;
+    case "cancelar":
+      if (!confirmarDescartar()) return;
+      draft = null; dirty = false;
+      vista = actualId && recetas[actualId] ? "detalle" : "lista";
+      pintar();
+      break;
+    case "guardar": guardar(); break;
+    case "agregar":
+      draft[b.dataset.row].push(lineaVacia(b.dataset.v));
+      dirty = true; pintar();
+      enfocarUltimaLinea(b.dataset.row);
+      break;
+    case "quitar":
+      draft[b.dataset.row].splice(+b.dataset.i, 1);
+      dirty = true; pintar();
+      break;
+    case "quitar-foto":
+      draft.foto = null; draft.fotoCambiada = true; dirty = true; pintarFotoEditor();
+      break;
+    case "pdf": imprimirFichas([b.dataset.id]); break;
+    case "imprimir-todo": {
+      const ids = recetasFiltradas().map(r => r.id);
+      if (!ids.length) return toast("No hay recetas para imprimir", "warn");
+      imprimirFichas(ids);
+      break;
+    }
+  }
+}
+
+function enfocarUltimaLinea(row) {
+  const filas = rootEl.querySelectorAll(`.rec-linea[data-row="${row}"]`);
+  const f = filas[filas.length - 1];
+  const inp = f && (f.querySelector('input[data-f="nombre"]') || f.querySelector('select[data-f="recetaId"]'));
+  if (inp) inp.focus();
+}
+
+function valorCampo(el) {
+  if (el.type === "checkbox") return el.checked;
+  if (el.dataset.num !== undefined) return num(el.value);
+  return el.value;
+}
+
+function onInput(ev) {
+  const el = ev.target;
+  if (el.dataset.filtro) {
+    filtros[el.dataset.filtro] = el.value;
+    if (el.dataset.filtro === "q") pintarTabla();
+    return;
+  }
+  if (vista !== "editar" || !draft) return;
+  if (el.dataset.aler) return;
+  const f = el.dataset.f;
+  if (!f) return;
+  const fila = el.closest("[data-row]");
+  if (fila) {
+    const l = draft[fila.dataset.row][+fila.dataset.i];
+    if (!l) return;
+    l[f] = valorCampo(el);
+    const br = fila.querySelector(".rec-bruta");
+    if (br) { const b = cantidadBruta(l.cantidad, l.merma); br.textContent = b != null ? fmtCant(b, l.unidad) : ""; }
+  } else {
+    draft[f] = valorCampo(el);
+  }
+  dirty = true;
+}
+
+async function onChange(ev) {
+  const el = ev.target;
+  if (el.dataset.filtro) {
+    filtros[el.dataset.filtro] = el.value;
+    return pintarTabla();
+  }
+  if (vista !== "editar" || !draft) return;
+  if (el.id === "rec-foto-input") {
+    const file = el.files && el.files[0];
+    if (!file) return;
+    try {
+      draft.foto = await comprimirFoto(file);
+      draft.fotoCambiada = true; dirty = true;
+      pintarFotoEditor();
+    } catch { toast("No se pudo leer la imagen", "warn"); }
+    return;
+  }
+  if (el.dataset.aler) {
+    draft.alergenos[el.dataset.aler] = el.checked;
+    el.closest(".rec-check")?.classList.toggle("on", el.checked);
+    dirty = true;
+    return;
+  }
+  onInput(ev);
+  if (el.dataset.f === "costearPorUnidad") el.closest(".rec-check")?.classList.toggle("on", el.checked);
+  const fila = el.closest("[data-row]");
+  if (fila && el.dataset.f === "tipo") {
+    draft[fila.dataset.row][+fila.dataset.i] = lineaVacia(el.value);
+  }
+  if (fila && el.dataset.f === "recetaId") {
+    const l = draft[fila.dataset.row][+fila.dataset.i];
+    const sub = recetas[l.recetaId];
+    // Se propone la unidad chica de la subreceta: rinde en kg → se usa en g.
+    const chica = { kg: "g", g: "g", l: "ml", ml: "ml", u: "u" };
+    if (sub) { l.nombre = sub.nombre; if (chica[sub.unidadRendimiento]) l.unidad = chica[sub.unidadRendimiento]; }
+  }
+  if (el.dataset.redibujar !== undefined) {
+    const y = window.scrollY;
+    pintar();
+    window.scrollTo(0, y);
+  }
+}
+
+// ── 4. Ficha técnica (PDF) ───────────────────────────────────
+async function imprimirFichas(ids) {
+  // La ventana se abre en el mismo clic para que el navegador no la bloquee.
+  const win = window.open("", "_blank");
+  if (!win) { toast("Permití las ventanas emergentes para descargar la ficha", "warn"); return; }
+  win.document.write(`<p style="font-family:sans-serif;padding:40px;color:#777">Preparando ficha técnica…</p>`);
+  const rs = ids.map(id => recetas[id]).filter(Boolean);
+  await Promise.all(rs.filter(r => r.tieneFoto).map(r => cargarFoto(r.id)));
+  const logo = document.querySelector(".header .logo img")?.src || "";
+  const hoy = new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const titulo = rs.length === 1 ? `Ficha técnica — ${rs[0].nombre}` : `Recetario ${areaLabel(area)} — ${hoy}`;
+  win.document.open();
+  win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${esc(titulo)}</title>
+    <style>${CSS_FICHA}</style></head><body>
+    ${rs.map(r => fichaHtml(r, logo, hoy)).join("")}
+    </body></html>`);
+  win.document.close();
+  win.focus();
+  const imprimir = () => setTimeout(() => win.print(), 300);
+  if (win.document.readyState === "complete") imprimir(); else win.addEventListener("load", imprimir);
+}
+
+function fichaHtml(r, logo, hoy) {
+  const efectivos = alergenosEfectivos(r);
+  const contiene = ALERGENOS.filter(a => efectivos[a.k]);
+  const foto = r.tieneFoto ? fotos[r.id] : null;
+  const pp = porPorcion(r);
+  const filas = (lineas, conMerma) => lineas.map(l => `<tr>
+      <td>${l.tipo === "subreceta" ? `<span class="tag">Subreceta</span> ` : ""}${esc(nombreLinea(l))}</td>
+      <td class="n">${esc(fmtCant(l.cantidad, l.unidad))}</td>
+      ${conMerma ? `<td class="n">${l.merma ? fmt(l.merma) + " %" : "—"}</td><td class="n">${esc(fmtCant(cantidadBruta(l.cantidad, l.merma), l.unidad))}</td>` : ""}
+    </tr>`).join("");
+  return `<section class="ficha">
+    <header>
+      <div class="marca">${logo ? `<img src="${logo}" alt="">` : ""}<div><b>Candela</b><span>Café &amp; Patisserie</span></div></div>
+      <div class="emi"><b>Recetario · ${esc(areaLabel(area))}</b><span>Impreso ${hoy}</span></div>
+    </header>
+    <h1>${esc(r.nombre)}</h1>
+    <div class="meta">${esc([TIPOS[r.tipo], descRendimiento(r), r.grupo, r.codigo ? `Ref. ${r.codigo}` : ""].filter(Boolean).join(" · "))}</div>
+    <div class="top">
+      <div class="cards">
+        <div class="card dest"><span>Rendimiento</span><b>${r.rendimiento != null ? esc(fmtCant(r.rendimiento, r.unidadRendimiento)) : "—"}</b></div>
+        <div class="card"><span>Porciones</span><b>${r.porciones ? fmt(r.porciones) : "—"}</b></div>
+        <div class="card"><span>Por porción</span><b>${pp ? esc(pp) : "—"}</b></div>
+      </div>
+      ${foto ? `<img class="foto" src="${foto}" alt="">` : ""}
+    </div>
+
+    <h2>Ingredientes</h2>
+    ${r.ingredientes.length ? `<table><thead><tr><th>Componente</th><th class="n">Cant. neta</th><th class="n">Merma</th><th class="n">Cant. bruta</th></tr></thead><tbody>${filas(r.ingredientes, true)}</tbody></table>` : `<p class="vacio">Sin ingredientes cargados.</p>`}
+    ${r.empaque.length ? `<h2>Empaque</h2><table><thead><tr><th>Envase / etiqueta</th><th class="n">Cantidad</th></tr></thead><tbody>${filas(r.empaque, false)}</tbody></table>` : ""}
+
+    <h2>Preparación</h2>
+    ${r.pasos.length ? `<ol class="pasos">${r.pasos.map(p => `<li>${esc(p)}</li>`).join("")}</ol>` : `<p class="vacio">Sin pasos cargados.</p>`}
+
+    ${r.observaciones ? `<h2>Observaciones</h2><p class="obs">${esc(r.observaciones)}</p>` : ""}
+
+    <h2>Alérgenos</h2>
+    <div class="aler">${ALERGENOS.map(a => `<div class="${efectivos[a.k] ? "on" : ""}"><i>${efectivos[a.k] ? "✓" : ""}</i>${esc(a.l)}</div>`).join("")}</div>
+    <p class="contiene">${contiene.length ? `<b>Contiene:</b> ${esc(contiene.map(a => a.l).join(", "))}.` : "No contiene alérgenos de declaración obligatoria."}
+      <span>Según Código Alimentario Argentino, art. 235 séptimo (ANMAT).</span></p>
+
+    <footer><span>Candela · Ficha técnica de ${esc(areaLabel(area).toLowerCase())}</span><span>Actualizada ${fmtFecha(r.actualizada)}${r.actualizadaPor ? ` por ${esc(r.actualizadaPor)}` : ""}</span></footer>
+  </section>`;
+}
+
+const CSS_FICHA = `
+  @page{size:A4;margin:0}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font-family:Helvetica,Arial,sans-serif;color:#22201F;font-size:10.5pt;background:#fff}
+  .ficha{padding:14mm 15mm 12mm;min-height:297mm;position:relative;page-break-after:always;break-after:page}
+  .ficha:last-child{page-break-after:auto;break-after:auto}
+  header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #E15D46;padding-bottom:8px;margin-bottom:16px}
+  .marca{display:flex;align-items:center;gap:8px}.marca img{height:30px}
+  .marca b{display:block;font-size:14pt;letter-spacing:-.2px}.marca span{font-size:8pt;color:#9a9888;text-transform:uppercase;letter-spacing:1.5px}
+  .emi{text-align:right}.emi b{display:block;font-size:9pt}.emi span{font-size:8pt;color:#9a9888}
+  h1{font-size:21pt;letter-spacing:-.4px;margin-bottom:3px}
+  .meta{color:#6b6a5e;font-size:9.5pt;margin-bottom:14px}
+  .top{display:flex;gap:14px;align-items:stretch;margin-bottom:6px}
+  .cards{display:flex;gap:8px;flex:1;align-items:flex-start}
+  .card{flex:1;border:1px solid #e5e1cc;border-radius:6px;padding:8px 10px;background:#faf9f3}
+  .card span{display:block;font-size:7pt;text-transform:uppercase;letter-spacing:.8px;color:#9a9888;margin-bottom:3px}
+  .card b{font-size:12.5pt}
+  .card.dest{background:#E15D46;border-color:#E15D46;color:#fff}.card.dest span{color:#fbe0da}
+  .foto{width:62mm;height:44mm;object-fit:cover;border-radius:6px}
+  h2{font-size:8.5pt;text-transform:uppercase;letter-spacing:1.2px;color:#E15D46;border-bottom:1px solid #e5e1cc;padding-bottom:4px;margin:16px 0 8px}
+  table{width:100%;border-collapse:collapse;font-size:9.5pt}
+  th{text-align:left;font-size:7.5pt;text-transform:uppercase;letter-spacing:.6px;color:#9a9888;font-weight:600;padding:4px 6px;border-bottom:1px solid #dedad8}
+  td{padding:5px 6px;border-bottom:1px solid #f0eee4}
+  tr{page-break-inside:avoid}
+  .n{text-align:right;white-space:nowrap}
+  .tag{font-size:7pt;background:#EEEBD7;border-radius:3px;padding:1px 4px;color:#6b6a5e;text-transform:uppercase;letter-spacing:.4px}
+  .pasos{list-style:none;counter-reset:p}
+  .pasos li{counter-increment:p;position:relative;padding:3px 0 5px 26px;line-height:1.45;page-break-inside:avoid}
+  .pasos li::before{content:counter(p);position:absolute;left:0;top:3px;width:17px;height:17px;border-radius:50%;background:#E15D46;color:#fff;font-size:8pt;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .obs{white-space:pre-wrap;line-height:1.45}
+  .vacio{color:#9a9888;font-style:italic}
+  .aler{display:grid;grid-template-columns:repeat(3,1fr);gap:5px 12px;font-size:9pt;page-break-inside:avoid}
+  .aler div{display:flex;align-items:center;gap:6px;color:#9a9888}
+  .aler div.on{color:#22201F;font-weight:700}
+  .aler i{width:12px;height:12px;border:1.3px solid #ccc9b5;border-radius:2px;font-style:normal;font-size:8pt;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .aler .on i{background:#E15D46;border-color:#E15D46;color:#fff}
+  .contiene{margin-top:8px;font-size:9pt}.contiene span{display:block;color:#9a9888;font-size:7.5pt;margin-top:2px}
+  footer{position:absolute;left:15mm;right:15mm;bottom:8mm;display:flex;justify-content:space-between;font-size:7.5pt;color:#9a9888;border-top:1px solid #e5e1cc;padding-top:4px}
+  @media screen{body{background:#e9e7df}.ficha{background:#fff;width:210mm;margin:12px auto;box-shadow:0 2px 12px rgba(0,0,0,.12)}}
+`;
+
+// ── Estilos de la vista ──────────────────────────────────────
+function inyectarCss() {
+  if (document.getElementById("rec-css")) return;
+  const s = document.createElement("style");
+  s.id = "rec-css";
+  s.textContent = `
+  .rec-bar{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+  .rec-user{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .rec-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .rec-filtros{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .rec-tablewrap{overflow-x:auto;margin:0 -4px}
+  .rec-tabla{width:100%;border-collapse:collapse;font-size:13px}
+  .rec-tabla th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--cream-dark);white-space:nowrap}
+  .rec-tabla td{padding:11px 10px;border-bottom:1px solid var(--cream-mid);vertical-align:top}
+  .rec-tabla tbody tr[data-act]{cursor:pointer}
+  .rec-tabla tbody tr[data-act]:hover td{background:var(--cream)}
+  .rec-tabla .num{text-align:right;white-space:nowrap}
+  .rec-tabla a,.rec-meta a{color:var(--terra);font-weight:600;text-decoration:none}
+  .rec-nom{font-weight:600}
+  .rec-sub{font-size:11px;color:var(--gray);font-weight:400}
+  .rec-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:100px;font-weight:600}
+  .rec-plato{background:var(--turq-pale);color:#1A6B62}
+  .rec-subreceta{background:#FFF8E8;color:#8A5A00}
+  .rec-chip{font-size:11px;padding:3px 10px;border-radius:100px;background:var(--cream);color:var(--black-soft);font-weight:500}
+  .rec-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .rec-aler{font-size:12px;padding:4px 12px;border-radius:100px;background:#fff3ee;color:var(--terra);font-weight:600;border:1px solid var(--terra-pale)}
+  .rec-vacio{text-align:center;padding:40px 20px;color:var(--gray);display:flex;flex-direction:column;gap:6px;align-items:center}
+  .rec-vacio b{color:var(--black);font-size:15px}
+  .rec-vacio div{max-width:460px}
+  .rec-detalle-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin:22px 0 16px}
+  .rec-titulo{font-size:22px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px}
+  .rec-hero{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+  .rec-foto{width:280px;max-width:100%;aspect-ratio:4/3;border-radius:12px;background:var(--cream);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+  .rec-foto img{width:100%;height:100%;object-fit:cover}
+  .rec-pasos{padding-left:20px;display:flex;flex-direction:column;gap:6px;line-height:1.5}
+  .rec-pre{white-space:pre-wrap;line-height:1.5}
+  .rec-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .rec-meta div{background:var(--cream);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+  .rec-meta span{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray);font-weight:600}
+  .rec-meta small{font-size:11px;color:var(--gray)}
+  .rec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .rec-span2{grid-column:span 2}
+  .rec-grid .form-group{min-width:0}
+  .rec-inline{display:flex;gap:6px}.rec-inline>*{min-width:0}.rec-inline input{flex:1.3}.rec-inline select{flex:1}
+  .rec-help{font-size:11.5px;color:var(--gray);font-weight:400;line-height:1.45}
+  .rec-textarea{resize:vertical;font-family:inherit;line-height:1.5}
+  .rec-lineas{display:flex;flex-direction:column;gap:6px}
+  .rec-linea{display:grid;grid-template-columns:128px minmax(160px,2.4fr) 96px 92px 80px minmax(84px,1fr) 32px;gap:6px;align-items:center}
+  .rec-linea-emp{grid-template-columns:minmax(160px,3fr) 96px 92px 32px}
+  .rec-linea>*{min-width:0}
+  .rec-linea .form-input,.rec-linea .form-select{padding:8px 10px}
+  .rec-linea-head span{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray);font-weight:600}
+  .rec-bruta{font-size:12px;color:var(--gray);text-align:right;white-space:nowrap}
+  .rec-quitar{width:32px;height:32px;border-radius:8px;border:none;background:transparent;color:var(--gray-light);cursor:pointer;font-size:15px}
+  .rec-quitar:hover{background:#fdecea;color:var(--terra)}
+  .rec-foto-edit{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .rec-foto-edit img,.rec-foto-vacia{width:200px;aspect-ratio:4/3;border-radius:10px;object-fit:cover;background:var(--cream)}
+  .rec-foto-vacia{display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px}
+  .rec-alergenos{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+  .rec-check{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--cream-dark);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--white);transition:all .15s}
+  .rec-check input{margin-top:2px;accent-color:var(--terra);width:16px;height:16px;flex-shrink:0}
+  .rec-check b{display:block;font-size:13px;font-weight:600}
+  .rec-check small{display:block;font-size:11px;color:var(--gray)}
+  .rec-check.on{border-color:var(--terra);background:#fff7f5}
+  .rec-check.heredado{cursor:default;opacity:.85}
+  .rec-pie{justify-content:flex-end;position:sticky;bottom:0;background:linear-gradient(transparent,var(--cream) 30%);padding:18px 0 14px;margin-top:4px}
+  @media(max-width:760px){
+    .rec-grid{grid-template-columns:1fr 1fr}
+    .rec-span2{grid-column:1/-1}
+    .rec-linea-head{display:none}
+    .rec-linea{grid-template-columns:1fr 1fr 1fr;background:var(--cream);border-radius:10px;padding:8px}
+    .rec-linea:not(.rec-linea-emp)>:nth-child(1),.rec-linea:not(.rec-linea-emp)>:nth-child(2){grid-column:1/-1}
+    .rec-linea .rec-bruta{text-align:left;grid-column:span 2}
+    .rec-linea .rec-quitar{justify-self:end}
+    .rec-linea-emp{grid-template-columns:1fr 1fr 32px}
+    .rec-linea-emp>:first-child{grid-column:1/-1}
+    .rec-foto{width:100%}
+  }
+  `;
+  document.head.appendChild(s);
+}

@@ -799,6 +799,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import * as Recetario from "./js/recetario.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
@@ -812,6 +813,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+// Recetario: login propio (usuario y contraseña) en una instancia separada de Firebase.
+Recetario.init(firebaseConfig, { toast: (msg, type) => showToast(msg, type) });
 
 // ====================== DATOS BASE ======================
 const PRODUCTOS_DEFAULT = {
@@ -1133,6 +1136,8 @@ function showToast(msg,type='success'){
   setTimeout(()=>t.className='',3000);
 }
 function safeRender(){
+  // El recetario se redibuja solo; los cambios de pedidos no deben pisar lo que se está escribiendo.
+  if(state.view==='recetario') return;
   const active=document.activeElement;
   if(active && active.classList.contains('qty-input')) return;
   render();
@@ -1458,6 +1463,7 @@ function renderHeader() {
     {key:'envio', label:'Guía de envío', alert:false},
     {key:'insumos', label:'Pedido de insumos', alert:false},
     {key:'historial', label:'Historial', alert:false},
+    {key:'recetario', label:'Recetario', alert:false},
     {key:'admin', label:'Admin', alert:false},
   ];
   return `<div class="header">
@@ -2192,7 +2198,9 @@ function render() {
   else if (state.view === 'admin') content = renderAdmin();
   else if (state.view === 'insumos') content = renderInsumos();
   else if (state.view === 'historial') content = renderHistorial();
+  else if (state.view === 'recetario') content = '<div id="rec-root"></div>';
   app.innerHTML = renderHeader() + renderAnuncioBanner() + `<div class="main">${content}</div>` + renderAnuncioPopup();
+  if (state.view === 'recetario') Recetario.mount(document.getElementById('rec-root'));
 }
 
 // ====================== HANDLERS GLOBALES ======================
