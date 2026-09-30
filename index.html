@@ -8,6 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="js/vendor/qrcode.js"></script>
+<script src="js/fidelizacion-comun.js"></script>
+<script src="js/club-personal.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -391,6 +395,7 @@ textarea.fc{resize:vertical;min-height:56px}
     <button class="nb" onclick="App.show('envios')">📦 Envíos</button>
     <button class="nb" onclick="App.show('menu')">🔧 Menú</button>
     <button class="nb" id="nb-clientes" onclick="App.showClientes()">👥 Clientes</button>
+    <button class="nb" onclick="App.show('club')">⭐ Club</button>
   </nav>
 </header>
 
@@ -462,6 +467,11 @@ textarea.fc{resize:vertical;min-height:56px}
   </div>
   <div class="stats-row" id="cl-stats"></div>
   <div id="cl-list"></div>
+</div>
+
+<div class="view" id="view-club">
+  <div class="sh"><div class="st">⭐ Club Candela</div><div class="ss">Tarjeta de sellos: atendé clientes, entregá premios y mirá la base de socios</div></div>
+  <div id="club-content"></div>
 </div>
 
 <div id="modal-root"></div>
@@ -1861,6 +1871,8 @@ const App={
     if(v==='menu') renderMenuAdmin();
     if(v==='envios') renderEnvios();
     if(v==='clientes') renderClientes();
+    if(v==='club') Club.render();
+    else Club.detenerEscaner();
   },
   // Clientes view — requires master PIN
   showClientes(){
@@ -2138,6 +2150,7 @@ function printCuadra(){
 // ════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
   initFirebase();
+  Club.init();
   App.show('ventas');
 });
 </script>
