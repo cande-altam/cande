@@ -1,6 +1,6 @@
 # 📖 Recetario — Fichas técnicas por área
 
-Sección **Recetario** del sistema de Pedidos de Producción. Por ahora la usa solo el equipo de **Cocina**, entrando con usuario y contraseña. Está preparada para sumar las demás áreas de producción.
+Sección **Recetario** del sistema de Pedidos de Producción. Por ahora es de **Cocina**: se entra solo con contraseña, la carga el encargado y el equipo trabaja con las fichas impresas. Está preparada para sumar las demás áreas de producción.
 
 ## Qué se puede hacer
 
@@ -29,31 +29,32 @@ Todo se hace en [console.firebase.google.com](https://console.firebase.google.co
 ### 1. Activar el inicio de sesión
 **Build → Authentication → Get started → Sign-in method** → activar **Correo electrónico/contraseña**.
 
-### 2. Crear las cuentas del equipo
-**Authentication → Users → Add user**. Al ingresar, el usuario escribe solo su nombre de usuario y el sistema completa `@recetario-candela.app`:
+### 2. Crear la cuenta del recetario
+Al recetario se entra **solo con contraseña**. Por detrás, cada área usa una cuenta fija de Firebase:
 
-| En el recetario escriben | Se crea en Firebase como |
-|---|---|
-| `cocina` | `cocina@recetario-candela.app` |
-| `juan` | `juan@recetario-candela.app` |
+**Authentication → Users → Add user**
+- Email: `cocina@recetario-candela.app` (a esa dirección no se envía nada; solo identifica la cuenta)
+- Contraseña: la que va a usar el encargado. Que sea segura: es la única llave del recetario.
 
-A esas direcciones no se envía ningún correo; solo sirven de usuario. Si prefieren usar un email real, también se puede: en ese caso se escribe el email completo al ingresar.
+Copiá el **User UID** de la cuenta.
 
-Copiá el **User UID** de cada cuenta.
+> **Para cambiar la contraseña:** borrá la cuenta en **Authentication → Users** y creala de nuevo con el mismo email y la contraseña nueva. Como el UID cambia, actualizalo también en el paso 3. Las recetas no se pierden.
 
-### 3. Habilitar cada cuenta
-**Realtime Database → Data**: agregá este nodo por cada cuenta:
+### 3. Habilitar la cuenta
+**Realtime Database → Data**: agregá este nodo con el UID que copiaste:
 
 ```
 recetario
   └─ miembros
        └─ <UID>
-            ├─ nombre: "Juan"          ← aparece como autor de los cambios
+            ├─ nombre: "Cocina"        ← aparece como autor de los cambios
             └─ areas
                  └─ cocina: true
 ```
 
-Para quitarle el acceso a alguien, borrá su nodo. Si una cuenta todavía no está habilitada, el mismo recetario muestra el UID que hay que cargar.
+Si la cuenta todavía no está habilitada, el mismo recetario muestra el UID que hay que cargar.
+
+> Es importante habilitar por UID y no solo por email: así nadie puede crear una cuenta parecida y entrar.
 
 ### 4. Publicar las reglas de seguridad ⚠️
 Sin este paso, las recetas **no son privadas**.
@@ -73,60 +74,11 @@ Estas reglas dejan el resto del sistema (pedidos, catálogo, insumos, stock, avi
    ```js
    pasteleria: { label: "Pastelería", icon: "🎂" },
    ```
-2. Habilitar a sus cuentas con `recetario/miembros/<UID>/areas/pasteleria: true`.
+2. Crear la cuenta `pasteleria@recetario-candela.app` con su contraseña y habilitarla con `recetario/miembros/<UID>/areas/pasteleria: true`.
 
-Cada área tiene sus propias recetas. Una cuenta con varias áreas elige cuál ver. El catálogo de ingredientes es compartido entre todas las áreas.
+Con más de un área, la pantalla de ingreso muestra botones para elegir el área antes de poner la contraseña. Cada área tiene sus propias recetas y su propia contraseña. El catálogo de ingredientes es compartido entre todas las áreas.
 
 ---
 
 ## Para el sistema de Costeos
-
-### Cómo lee los datos
-1. Crear una cuenta de Firebase (email y contraseña) para Costeos.
-2. Habilitarla como lectora con `recetario/lectores/<UID>: true`. Así puede **leer** todas las áreas y el catálogo de ingredientes, pero no puede modificarlos.
-3. Iniciar sesión con esa cuenta y leer los nodos. Si Costeos corre fuera de la web, puede usar la API REST pasando el token de la sesión: `GET https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com/recetario/areas.json?auth=<ID_TOKEN>`.
-
-### Estructura
-
-```
-recetario/
-  ingredientes/{ingredienteId}        ← catálogo compartido; Costeos le asigna el precio a cada uno
-    nombre:  "Harina 000"
-    unidad:  "g"                       ← unidad con la que se cargó por primera vez
-    tipo:    "ingrediente" | "empaque"
-    creado:  1759276800000
-
-  areas/{area}/recetas/{recetaId}
-    nombre, codigo, tipo ("plato" | "subreceta"), grupo
-    rendimiento: 1.2                   ← cuánto produce la receta completa
-    unidadRendimiento: "kg"            ← g | kg | ml | l | u | porcion
-    porciones: 6
-    margenSeguridad: 10                ← % a sumar al costo total
-    costearPorUnidad: true             ← true: costo por unidad de rendimiento (kg, l…); false: por porción
-    ingredientes: [
-      { tipo: "ingrediente", ingredienteId, nombre, cantidad, unidad, merma },
-      { tipo: "subreceta",   recetaId,      nombre, cantidad, unidad, merma }
-    ]
-    empaque: [ { ingredienteId, nombre, cantidad, unidad } ]
-    pasos: ["…", "…"]
-    observaciones, alergenos: { gluten: true, leche: true, … }   ← solo los marcados a mano
-    tieneFoto, creada, actualizada, actualizadaPor
-
-  areas/{area}/fotos/{recetaId}        ← foto en JPEG (data URL); Costeos no la necesita
-```
-
-- `cantidad` es la **cantidad neta**. Si está en `null`, significa "cantidad necesaria" (c/n), como la sal a gusto, y se costea como 0.
-- `merma` está en % (de 0 a 99) y puede ser `null`.
-- `nombre` en las líneas es una copia para leer más fácil. La referencia que vale es `ingredienteId` o `recetaId`.
-
-### Cálculo sugerido
-```
-bruta(línea)         = cantidad ÷ (1 − merma/100)                 (convertida a la unidad del precio: g↔kg, ml↔l)
-costo(ingrediente)   = bruta × precio unitario del ingrediente
-costo(subreceta)     = bruta × costoUnitario(subreceta)
-costoUnitario(sub)   = costoTotal(sub) ÷ rendimiento               (si costearPorUnidad)
-                     = costoTotal(sub) ÷ porciones                 (si no: la línea se carga en porciones)
-costoTotal(receta)   = (Σ costo(ingredientes) + Σ costo(empaque)) × (1 + margenSeguridad/100)
-costoPorPorción      = costoTotal ÷ porciones
-```
-Las subrecetas nunca forman ciclos (el recetario no lo permite), así que el cálculo recursivo siempre termina.
+Todo lo necesario para conectar Costeos con el recetario está en [`INTEGRACION_COSTEOS.md`](INTEGRACION_COSTEOS.md).

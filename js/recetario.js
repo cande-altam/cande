@@ -22,9 +22,12 @@ export const AREAS_RECETARIO = {
   cocina: { label: "Cocina", icon: "🍳" },
 };
 
-// Si el usuario escribe un nombre sin "@", se completa con este dominio.
-// Ej: "cocina" → cocina@recetario-candela.app (así se crea en Firebase).
+// Se ingresa solo con contraseña: cada área tiene una cuenta fija en Firebase
+// Authentication con el email {área}@recetario-candela.app (ej: cocina@…).
+// A esa dirección no se envía nada; solo identifica la cuenta.
 const DOMINIO_USUARIOS = "recetario-candela.app";
+const emailDeArea = a => `${a}@${DOMINIO_USUARIOS}`;
+let areaLogin = Object.keys(AREAS_RECETARIO)[0];
 
 // Alérgenos de declaración obligatoria — Código Alimentario Argentino,
 // art. 235 séptimo (ANMAT).
@@ -95,7 +98,8 @@ export function init(firebaseConfig, opts = {}) {
         errorAcceso = "reglas";
       }
       const areas = areasDelMiembro();
-      if (areas.length) elegirArea(areas.includes(area) ? area : areas[0]);
+      const preferida = [area, areaLogin].find(a => areas.includes(a));
+      if (areas.length) elegirArea(preferida || areas[0]);
     }
     pintar();
   });
@@ -323,14 +327,16 @@ function usuarioCorto() {
 }
 
 function pintarLogin(c) {
+  const areas = Object.keys(AREAS_RECETARIO);
   c.innerHTML = `
     <div class="login-wrap">
       <div class="login-card">
         <div class="login-title">📖 Recetario</div>
-        <div class="login-sub">Acceso exclusivo del equipo. Ingresá con tu usuario y contraseña.</div>
+        <div class="login-sub">Acceso restringido. Ingresá la contraseña del recetario${areas.length > 1 ? "" : ` de ${esc(areaLabel(areaLogin))}`}.</div>
         <form class="admin-form" id="rec-login">
-          <div class="form-group"><label class="form-label" for="rec-user">Usuario</label>
-            <input class="form-input" id="rec-user" autocomplete="username" autocapitalize="none" required></div>
+          ${areas.length > 1 ? `<div class="cat-tabs" style="margin:0">${areas.map(a =>
+            `<button type="button" class="cat-tab ${a === areaLogin ? "active" : ""}" data-act="area-login" data-v="${esc(a)}">${areaIcon(a)} ${esc(areaLabel(a))}</button>`).join("")}</div>` : ""}
+          <input type="hidden" autocomplete="username" value="${esc(emailDeArea(areaLogin))}">
           <div class="form-group"><label class="form-label" for="rec-pass">Contraseña</label>
             <input class="form-input" id="rec-pass" type="password" autocomplete="current-password" required></div>
           <div id="rec-login-err" style="color:#b83a25;font-size:13px;min-height:18px"></div>
@@ -345,7 +351,7 @@ function pintarNoHabilitado(c) {
     <div class="login-wrap"><div class="login-card">
       <div class="login-title">Cuenta no habilitada</div>
       <div class="login-sub">La cuenta <b>${esc(user.email)}</b> todavía no tiene acceso al recetario. Un administrador tiene que agregar este nodo en Firebase → Realtime Database:</div>
-      <div class="form-input" style="font-family:monospace;font-size:12px;word-break:break-all;user-select:all">recetario/miembros/${esc(user.uid)}/areas/cocina = true</div>
+      <div class="form-input" style="font-family:monospace;font-size:12px;word-break:break-all;user-select:all">recetario/miembros/${esc(user.uid)}/areas/${esc(areaLogin)} = true</div>
       <div class="rec-actions" style="margin-top:16px">
         <button class="btn btn-ghost btn-sm" onclick="location.reload()">Ya está, reintentar</button>
         <button class="btn btn-ghost btn-sm" data-act="salir">Salir</button>
@@ -838,9 +844,8 @@ async function eliminar(id) {
 async function onSubmit(ev) {
   if (ev.target.id !== "rec-login") return;
   ev.preventDefault();
-  let u = document.getElementById("rec-user").value.trim().toLowerCase();
+  const u = emailDeArea(areaLogin);
   const p = document.getElementById("rec-pass").value;
-  if (u && !u.includes("@")) u = `${u}@${DOMINIO_USUARIOS}`;
   const btn = document.getElementById("rec-login-btn");
   const err = document.getElementById("rec-login-err");
   btn.disabled = true; btn.textContent = "Ingresando…"; err.textContent = "";
@@ -850,7 +855,7 @@ async function onSubmit(ev) {
     console.error(e);
     err.textContent = e.code === "auth/too-many-requests"
       ? "Demasiados intentos. Esperá unos minutos."
-      : e.code === "auth/network-request-failed" ? "Sin conexión." : "Usuario o contraseña incorrectos.";
+      : e.code === "auth/network-request-failed" ? "Sin conexión." : "Contraseña incorrecta.";
     btn.disabled = false; btn.textContent = "Ingresar";
   }
 }
@@ -869,6 +874,9 @@ function onClick(ev) {
       if (!confirmarDescartar()) return;
       vista = "lista"; draft = null; dirty = false;
       signOut(fb.auth);
+      break;
+    case "area-login":
+      areaLogin = b.dataset.v; pintar();
       break;
     case "area":
       if (b.dataset.v === area || !confirmarDescartar()) return;
