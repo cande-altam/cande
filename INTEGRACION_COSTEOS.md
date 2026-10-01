@@ -22,9 +22,7 @@ El dato viaja en un solo sentido: **Recetario → Costeo**, solo lectura y en ti
 
 ### 2.1 Pasos manuales (una sola vez, en la consola de Firebase)
 1. **Authentication → Users → Add user**: `costeo@candela-app.com` con una contraseña segura. Ese mail no recibe correo.
-2. Copiar el **User UID**.
-3. **Realtime Database → Data**: `recetario/lectores/<UID>: true`.
-4. Tener publicadas las reglas completas del README: ya contemplan `recetario/lectores`.
+2. Tener publicadas las reglas completas del README: reconocen esta cuenta **por su email** y le dan solo lectura. No hace falta cargar nada en Data.
 
 La cuenta lectora puede **leer** todas las áreas y el catálogo de ingredientes, pero no puede modificar nada.
 
@@ -249,7 +247,7 @@ Más pruebas:
 ---
 
 ## 7. Checklist
-- [ ] **Cuenta `costeo@candela-app.com` creada y habilitada en `recetario/lectores/<UID>`** — paso manual en la consola de Firebase (Authentication → Users → Add user), no se puede hacer desde el código. Pendiente.
+- [ ] **Cuenta `costeo@candela-app.com` creada** — paso manual en la consola de Firebase (Authentication → Users → Add user), no se puede hacer desde el código. Pendiente.
 - [ ] **Reglas completas del README publicadas** — paso manual en la consola de Firebase (Realtime Database → Rules). Pendiente.
 - [x] Instancia `"recetario-lector"` con sesión propia; la instancia por defecto de Costeo queda igual
 - [x] Botón "Conectar con el Recetario" en Configuración; la contraseña no queda en el código

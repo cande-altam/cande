@@ -87,7 +87,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:va
 //   ({área}@recetario-candela.app), igual que Gerencia en informes/: una contraseña escrita
 //   en la página no protege nada, porque la base se lee directo por HTTP. La privacidad la
 //   aplica el servidor con las reglas del README.
-// • La cuenta además tiene que estar habilitada en recetario/miembros/{uid}/areas/{área}.
+// • El área se reconoce por el email de la cuenta; las reglas del servidor hacen lo mismo.
 // • Datos (mismo proyecto pedidos-de-produccion-ee3cb):
 //     recetario/areas/{área}/recetas/{id}   → ficha técnica
 //     recetario/areas/{área}/fotos/{id}     → foto (JPEG comprimido, dataURL)
@@ -101,7 +101,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from
 
 // ── Configuración ────────────────────────────────────────────
 // Áreas con recetario. Para sumar un área nueva alcanza con agregarla acá
-// y habilitar a sus cuentas en recetario/miembros/{uid}/areas/{clave}.
+// crear su cuenta recetario-{clave}@candela-app.com y sumarla a las reglas (ver README).
 const AREAS_RECETARIO = {
   cocina: { label: "Cocina", icon: "🍳" },
 };
@@ -176,12 +176,9 @@ function init(firebaseConfig, opts = {}) {
     miembro = null; errorAcceso = "";
     detenerDatos();
     if (user) {
-      try {
-        miembro = (await get(ref(fb.db, `recetario/miembros/${user.uid}`))).val();
-      } catch (err) {
-        console.error(err);
-        errorAcceso = "reglas";
-      }
+      // La cuenta de cada área es fija (recetario-{área}@candela-app.com): el área sale del email.
+      const a = Object.keys(AREAS_RECETARIO).find(k => emailDeArea(k) === (user.email || "").toLowerCase());
+      if (a) miembro = { nombre: areaLabel(a), areas: { [a]: true } };
       const areas = areasDelMiembro();
       const preferida = [area, areaLogin].find(a => areas.includes(a));
       if (areas.length) elegirArea(preferida || areas[0]);
@@ -435,11 +432,9 @@ function pintarNoHabilitado(c) {
   c.innerHTML = `
     <div class="login-wrap"><div class="login-card">
       <div class="login-title">Cuenta no habilitada</div>
-      <div class="login-sub">La cuenta <b>${esc(user.email)}</b> todavía no tiene acceso al recetario. Un administrador tiene que agregar este nodo en Firebase → Realtime Database:</div>
-      <div class="form-input" style="font-family:monospace;font-size:12px;word-break:break-all;user-select:all">recetario/miembros/${esc(user.uid)}/areas/${esc(areaLogin)} = true</div>
+      <div class="login-sub">La sesión abierta es de <b>${esc(user.email)}</b>, que no es la cuenta del recetario (<b>${esc(emailDeArea(areaLogin))}</b>). Salí y volvé a ingresar.</div>
       <div class="rec-actions" style="margin-top:16px">
-        <button class="btn btn-ghost btn-sm" onclick="location.reload()">Ya está, reintentar</button>
-        <button class="btn btn-ghost btn-sm" data-act="salir">Salir</button>
+        <button class="btn btn-primary btn-sm" data-act="salir">Salir</button>
       </div>
     </div></div>`;
 }

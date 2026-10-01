@@ -339,22 +339,16 @@ Mismo criterio que Gerencia en Informes: una contraseña escrita en la página n
 #### Paso 1 — Habilitar email y contraseña
 Si ya se hizo para Informes, no hace falta repetirlo. Si no: Firebase → **Authentication** → **Sign-in method** → **Correo electrónico/contraseña** → Habilitar.
 
-#### Paso 2 — Crear la cuenta del recetario
-**Authentication → Users → Add user**: email `recetario-cocina@candela-app.com` y la contraseña que va a usar el encargado. Ese mail no recibe correo. Copiá el **User UID**.
+#### Paso 2 — Crear las cuentas
+**Authentication → Users → Add user**, dos veces:
+- `recetario-cocina@candela-app.com` con la contraseña que va a usar el encargado para entrar al recetario.
+- `costeo@candela-app.com` con otra contraseña: es la que pide Costeo en **Configuración → Conectar con el Recetario** (ver [`INTEGRACION_COSTEOS.md`](INTEGRACION_COSTEOS.md)).
 
-#### Paso 3 — Habilitar la cuenta
-**Realtime Database → Data** → agregar:
-```
-recetario
-  └─ miembros
-       └─ <UID de la cuenta>
-            ├─ nombre: "Cocina"        ← aparece como autor de los cambios
-            └─ areas
-                 └─ cocina: true
-```
-Se habilita por UID (y no por email) a propósito: así nadie puede crearse una cuenta con ese mail y entrar. Si falta este paso, el propio recetario muestra el UID que hay que cargar.
+Esos mails no reciben correo. **No hace falta cargar nada en Data**: las reglas reconocen cada cuenta por su email.
 
-**Cambiar la contraseña:** como el mail no existe, "Reset password" no sirve (manda un correo que nadie recibe). Borrá la cuenta en **Users** y creala de nuevo con el mismo mail y la contraseña nueva; como cambia el UID, actualizalo en el paso 3. Las recetas no se pierden.
+> Creá las dos cuentas **antes** de publicar las reglas. Como Firebase no deja repetir un email, una vez creadas nadie más puede usarlas.
+
+**Cambiar la contraseña:** como el mail no existe, "Reset password" no sirve (manda un correo que nadie recibe). Borrá la cuenta en **Users** y creala de nuevo con el mismo mail y la contraseña nueva. Las recetas no se pierden.
 
 #### Reglas de seguridad completas
 
@@ -403,25 +397,19 @@ Este bloque **reemplaza** al del paso 3 de Informes. Hacé antes los pasos de ar
     },
 
     "recetario": {
-      "miembros": {
-        "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": false }
-      },
-      "lectores": {
-        "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": false }
-      },
       "ingredientes": {
-        ".read":  "auth != null && (root.child('recetario/miembros/' + auth.uid).exists() || root.child('recetario/lectores/' + auth.uid).val() === true)",
-        ".write": "auth != null && root.child('recetario/miembros/' + auth.uid).exists()",
+        ".read":  "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'costeo@candela-app.com')",
+        ".write": "auth != null && auth.token.email === 'recetario-cocina@candela-app.com'",
         "$id": {
           ".validate": "newData.hasChildren(['nombre', 'tipo'])",
           "nombre": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" }
         }
       },
       "areas": {
-        ".read": "auth != null && root.child('recetario/lectores/' + auth.uid).val() === true",
+        ".read": "auth != null && auth.token.email === 'costeo@candela-app.com'",
         "$area": {
-          ".read":  "auth != null && root.child('recetario/miembros/' + auth.uid + '/areas/' + $area).val() === true",
-          ".write": "auth != null && root.child('recetario/miembros/' + auth.uid + '/areas/' + $area).val() === true",
+          ".read":  "auth != null && $area === 'cocina' && auth.token.email === 'recetario-' + $area + '@candela-app.com'",
+          ".write": "auth != null && $area === 'cocina' && auth.token.email === 'recetario-' + $area + '@candela-app.com'",
           "recetas": {
             "$id": {
               ".validate": "newData.hasChildren(['nombre', 'tipo', 'actualizada'])",
@@ -442,13 +430,14 @@ Este bloque **reemplaza** al del paso 3 de Informes. Hacé antes los pasos de ar
 Tres cosas a tener en cuenta:
 - **Los nodos de Pedidos de Producción** (`catalogo`, `pedidos`, `stock`, `anuncios`…) están porque ese sistema usa **esta misma base**. Quedan igual de abiertos que hoy. Si en **Data** aparece otra carpeta principal que no está en la lista, hay que agregarla antes de publicar: cualquier nodo que no figure queda bloqueado.
 - **`informes/envios` ahora exige la cuenta de Gerencia**, no cualquier sesión. Con la regla anterior (`auth != null`), la cuenta del recetario —o cualquier cuenta nueva— podía leer los informes. Si Gerencia usa otro mail, cambialo también acá.
-- **`recetario/lectores`** es para la cuenta de solo lectura de Costeo (ver [`INTEGRACION_COSTEOS.md`](INTEGRACION_COSTEOS.md)).
+- **`costeo@candela-app.com`** solo puede **leer** el recetario (lo usa Costeo para calcular costos); solo `recetario-cocina@…` puede escribir.
 
 **Verificar:** en una ventana privada, `https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com/recetario.json` tiene que devolver **`Permission denied`**.
 
 ### Sumar otra área (Pastelería, Panadería…)
 1. En `recetario/index.html`, agregar el área a `AREAS_RECETARIO` (ej. `pasteleria: { label: "Pastelería", icon: "🎂" }`).
-2. Crear la cuenta `recetario-pasteleria@candela-app.com` y habilitarla con `recetario/miembros/<UID>/areas/pasteleria: true`.
+2. Crear la cuenta `recetario-pasteleria@candela-app.com`.
+3. En las reglas, sumar el área donde dice `$area === 'cocina'` (→ `($area === 'cocina' || $area === 'pasteleria')`) y su email en `ingredientes`, y volver a publicarlas.
 
 Con más de un área, la pantalla de ingreso muestra un botón por área antes de pedir la contraseña. Cada área tiene sus recetas y su contraseña; el catálogo de ingredientes es compartido.
 
@@ -457,7 +446,6 @@ Mismo proyecto (`pedidos-de-produccion-ee3cb`), rama `recetario/`:
 - `recetario/areas/{área}/recetas/{id}` — la ficha técnica.
 - `recetario/areas/{área}/fotos/{id}` — la foto, comprimida a JPEG (~30–150 KB). Va aparte para que el listado no descargue imágenes.
 - `recetario/ingredientes/{id}` — catálogo compartido de ingredientes y envases; se crea solo al guardar recetas. Es lo que Costeo vincula con sus insumos.
-- `recetario/miembros/{uid}` y `recetario/lectores/{uid}` — quién puede entrar (se cargan a mano en la consola).
 
 El detalle de cada campo está en [`INTEGRACION_COSTEOS.md`](INTEGRACION_COSTEOS.md).
 

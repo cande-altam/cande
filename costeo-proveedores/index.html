@@ -686,7 +686,7 @@ function mensajeDeErrorRecetario(code) {
   if (code === "auth/network-request-failed")
     return "Sin conexión con Firebase. Revisá la red.";
   if (code === "permission-denied")
-    return "La sesión existe pero no puede leer el Recetario: falta el paso recetario/lectores/<UID>: true, o las reglas completas todavía no se publicaron (ver INTEGRACION_COSTEOS.md, sección 2.1).";
+    return "La sesión existe pero no puede leer el Recetario: las reglas completas del README todavía no se publicaron, o la cuenta no es costeo@candela-app.com (ver INTEGRACION_COSTEOS.md, sección 2.1).";
   return `No se pudo conectar con el Recetario (${code}).`;
 }
 
