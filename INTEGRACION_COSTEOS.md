@@ -249,13 +249,18 @@ Más pruebas:
 ---
 
 ## 7. Checklist
-- [ ] Cuenta `costeo@candela-app.com` creada y habilitada en `recetario/lectores/<UID>`
-- [ ] Reglas completas del README publicadas
-- [ ] Instancia `"recetario-lector"` con sesión propia; la instancia por defecto de Costeo queda igual
-- [ ] Botón "Conectar con el Recetario" en Configuración; la contraseña no queda en el código
-- [ ] Pantalla de vínculos ingrediente ↔ insumo, con `buscarInsumoParaTexto` y confirmación explícita
-- [ ] Producto ↔ plato (`costeo/productos/{id}/recetario`), con fuente de costo `"recetario"`
-- [ ] Cálculo según la sección 5: merma, subrecetas, conversión, margen solo arriba
-- [ ] Avisos de costo incompleto con motivo por línea
-- [ ] La prueba de la sección 6 da exactamente **2345,00 por kg** y **1083,06**
-- [ ] README de Costeo actualizado con la integración
+- [ ] **Cuenta `costeo@candela-app.com` creada y habilitada en `recetario/lectores/<UID>`** — paso manual en la consola de Firebase (Authentication → Users → Add user), no se puede hacer desde el código. Pendiente.
+- [ ] **Reglas completas del README publicadas** — paso manual en la consola de Firebase (Realtime Database → Rules). Pendiente.
+- [x] Instancia `"recetario-lector"` con sesión propia; la instancia por defecto de Costeo queda igual
+- [x] Botón "Conectar con el Recetario" en Configuración; la contraseña no queda en el código
+- [x] Pantalla de vínculos ingrediente ↔ insumo, con `buscarInsumoParaTexto` y confirmación explícita (pestaña "📖 Recetario" en Recetas y Bases)
+- [x] Producto ↔ plato (`costeo/productos/{id}/recetario`), con fuente de costo `"recetario"` — selector en el formulario de producto + atajo "Crear producto" desde la lista de platos
+- [x] Cálculo según la sección 5: merma, subrecetas, conversión, margen solo arriba
+- [x] Avisos de costo incompleto con motivo por línea (badge "⚠️ Costo incompleto" en la tabla de Productos, con el detalle en el título)
+- [x] La prueba de la sección 6 da exactamente **2345,00 por kg** y **1083,06** — cubierto por test automatizado (`run-recetario-calculo.mjs`), reproduce el ejemplo entero y da esos números exactos
+- [x] README de Costeo actualizado con la integración
+
+**Falta lo de arriba (los dos primeros ítems) para que la conexión funcione de verdad en producción.**
+El código ya está — mientras la cuenta no exista, "Conectar con el Recetario" va a fallar con el
+mensaje traducido correspondiente (`auth/invalid-credential` o `permission-denied`) y la app sigue
+funcionando igual que siempre, sin romper nada.

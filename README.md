@@ -136,6 +136,11 @@ El escaneo identifica al proveedor por **razón social o CUIT** (lo que efectiva
 
 En la pestaña **Insumos** hay un botón "Buscar posibles duplicados" que revisa el catálogo (nombres casi idénticos) y sugiere pares para fusionar — no fusiona nada automáticamente, siempre queda a criterio de quien lo revisa.
 
+- **📖 Integración con el Recetario.** Costeo puede leer las recetas del [Recetario](#módulo-recetario) (solo lectura, en tiempo real) y calcular su costo con los precios que ya maneja — fichas técnicas con merma, subrecetas y margen de seguridad, en vez de tener que rearmar cada receta a mano en Costeo. El detalle completo (cómo se conecta, qué datos lee, las fórmulas y la prueba de aceptación) está en [`INTEGRACION_COSTEOS.md`](INTEGRACION_COSTEOS.md).
+  - En **Configuración**, "Conectar con el Recetario" pide la contraseña de una cuenta lectora una sola vez (Firebase recuerda la sesión en ese navegador). Sin conectar, Costeo sigue funcionando igual que siempre: los productos vinculados conservan su último costo conocido y se avisa "📖 Recetario sin conectar".
+  - En **Recetas y Bases → 📖 Recetario** se vincula cada ingrediente/envase del Recetario con un insumo de Costeo (con sugerencias automáticas, pero nunca aplicadas en silencio — siempre se confirman a mano) y se ve la lista de platos, con un atajo para crear el producto de Costeo ya vinculado.
+  - En el formulario de un producto, "📖 Usar receta del Recetario" elige el plato. Una vez vinculado, el costo sale de la ficha técnica (con prioridad sobre receta propia, insumo vinculado y costo manual — esos quedan como respaldo si se desvincula o si el Recetario está desconectado) y se recalcula solo con cada cambio, en la receta o en el precio de cualquier insumo que use.
+
 ---
 
 
