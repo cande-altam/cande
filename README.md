@@ -322,6 +322,7 @@ Ubicado en `recetario/`. Fichas técnicas de **Cocina**: las carga el encargado 
 | **Listado** | Búsqueda por nombre o código, filtros por tipo (plato / subreceta) y grupo. Cada receta muestra líneas, lo que produce y la última actualización. |
 | **Ficha** | Foto, preparación paso a paso, alérgenos, ingredientes con cantidad neta / merma / cantidad bruta, empaque, observaciones, y en qué recetas se usa cada subreceta. |
 | **Editar / Nueva** | Datos generales, ingredientes y subrecetas con merma, empaque, pasos (uno por línea), foto, observaciones, alérgenos y datos para el costeo (margen de seguridad, costeo por unidad de rendimiento). |
+| **📥 Importar bases de Costeo** | Lista las bases (insumos con receta) de Costeo para tildar las del área. Cada una se crea como subreceta que rinde 1 unidad, con sus ingredientes; si usa otra base, esa se importa también. Las que ya están en el recetario no se duplican, y quedan hechos los vínculos ingrediente→insumo en `costeo/vinculosRecetario`. |
 | **PDF** | **⬇️ Descargar ficha (PDF)** abre la ficha lista para imprimir o "Guardar como PDF". **🖨️ Imprimir recetario** junta todas las recetas filtradas, una por hoja, para la carpeta de la cocina. |
 
 Reglas que aplica:

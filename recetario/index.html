@@ -150,7 +150,7 @@ let datosListos = false;
 let unsubs = [];
 let fotos = {};              // cache id → dataURL | null
 
-let vista = "lista";         // lista | detalle | editar
+let vista = "lista";         // lista | detalle | editar | importar
 let actualId = null;
 let draft = null;            // receta en edición
 let draftBase = 0;           // "actualizada" de la receta al empezar a editar
@@ -381,6 +381,7 @@ function pintar() {
   if (!areasDelMiembro().length) return pintarNoHabilitado(c);
   if (!datosListos) { c.innerHTML = barra() + cardMsg("Cargando recetas…"); return; }
   if (vista === "editar" && draft) return pintarEditor(c);
+  if (vista === "importar") return pintarImportar(c);
   if (vista === "detalle" && recetas[actualId]) return pintarDetalle(c);
   vista = "lista";
   pintarLista(c);
@@ -459,6 +460,7 @@ function pintarLista(c) {
     ${barra()}
     <div class="rec-actions" style="margin:20px 0 16px">
       <button class="btn btn-primary" data-act="nueva">＋ Nueva receta</button>
+      <button class="btn btn-ghost" data-act="importar">📥 Importar bases de Costeo</button>
       <button class="btn btn-ghost" data-act="imprimir-todo">🖨️ Imprimir recetario</button>
     </div>
     <div class="section-block">
@@ -973,6 +975,11 @@ function onClick(ev) {
       elegirArea(b.dataset.v); pintar();
       break;
     case "nueva": abrirEditor(null); break;
+    case "importar": abrirImportar(); break;
+    case "imp-toggle": impToggle(b.dataset.id); break;
+    case "imp-todas": impMarcarVisibles(true); break;
+    case "imp-ninguna": impMarcarVisibles(false); break;
+    case "imp-confirmar": impConfirmar(); break;
     case "ver":
       vista = "detalle"; actualId = b.dataset.id; pintar(); window.scrollTo(0, 0);
       break;
@@ -1023,6 +1030,14 @@ function valorCampo(el) {
 
 function onInput(ev) {
   const el = ev.target;
+  if (el.dataset.impQ !== undefined) {
+    imp.q = el.value;
+    const pos = el.selectionStart;
+    pintar();
+    const n = document.getElementById("imp-q");
+    if (n) { n.focus(); n.setSelectionRange(pos, pos); }
+    return;
+  }
   if (el.dataset.filtro) {
     filtros[el.dataset.filtro] = el.value;
     if (el.dataset.filtro === "q") pintarTabla();
@@ -1085,6 +1100,226 @@ async function onChange(ev) {
     const y = window.scrollY;
     pintar();
     window.scrollTo(0, y);
+  }
+}
+
+// ── Importar bases de Costeo ─────────────────────────────────
+// Costeo guarda cada base como un insumo con receta: costeo/insumos/{id} = { nombre, unidad,
+// receta: { insumoId: cantidad }, esBase }. Las cantidades son para UNA unidad de la base
+// (ej. 1 kg de crema), cada una en la unidad de su propio insumo. Se importan como subrecetas
+// que rinden 1 unidad. Una base que usa otra base arrastra a esa otra como subreceta.
+// De paso se dejan hechos los vínculos ingrediente→insumo en costeo/vinculosRecetario, así el
+// costeo de lo importado sale solo, sin vincular a mano.
+const imp = { cargando: false, error: "", insumos: null, sel: new Set(), q: "", guardando: false };
+
+function unidadDeCosteo(u) {
+  const n = clave(u).replace(/\.$/, "");
+  if (["kg", "kgs", "kilo", "kilos", "kilogramo", "kilogramos"].includes(n)) return "kg";
+  if (["g", "gr", "grs", "gramo", "gramos"].includes(n)) return "g";
+  if (["l", "lt", "lts", "litro", "litros"].includes(n)) return "l";
+  if (["ml", "cc", "mililitro", "mililitros"].includes(n)) return "ml";
+  if (["u", "un", "uni", "unid", "unidad", "unidades"].includes(n)) return "u";
+  return null;  // vacía o desconocida ("paquete", "atado"…): se marca para revisar
+}
+// Para la cocina se lee mejor "250 g" que "0,25 kg".
+function cantidadLegible(cant, unidad) {
+  if (cant == null) return { cantidad: null, unidad };
+  if (unidad === "kg" && cant < 1) return { cantidad: +(cant * 1000).toFixed(3), unidad: "g" };
+  if (unidad === "l" && cant < 1) return { cantidad: +(cant * 1000).toFixed(3), unidad: "ml" };
+  return { cantidad: +(+cant).toFixed(4), unidad };
+}
+const esBaseCosteo = ins => !!(ins && (ins.esBase || (ins.receta && Object.keys(ins.receta).length)));
+function recetaExistentePorNombre(nombre) {
+  const k = clave(nombre);
+  return Object.values(recetas).find(r => clave(r.nombre) === k) || null;
+}
+// Bases que hay que importar sí o sí porque las usa alguna elegida (recursivo).
+function impDependencias() {
+  const req = new Set();
+  const visitar = (id, seen) => {
+    const ins = imp.insumos[id];
+    for (const sid of Object.keys(ins?.receta || {})) {
+      const sub = imp.insumos[sid];
+      if (!esBaseCosteo(sub) || seen.has(sid)) continue;
+      seen.add(sid);
+      if (!recetaExistentePorNombre(sub.nombre) && !imp.sel.has(sid)) req.add(sid);
+      visitar(sid, seen);
+    }
+  };
+  imp.sel.forEach(id => visitar(id, new Set([id])));
+  return req;
+}
+
+async function abrirImportar() {
+  vista = "importar"; imp.error = ""; imp.sel = new Set(); imp.q = "";
+  pintar(); window.scrollTo(0, 0);
+  if (imp.insumos) return;
+  imp.cargando = true; pintar();
+  try {
+    imp.insumos = (await get(ref(fb.db, "costeo/insumos"))).val() || {};
+  } catch (err) {
+    console.error(err);
+    imp.error = "No se pudieron leer los insumos de Costeo (" + (err.code || err.message) + ").";
+  }
+  imp.cargando = false;
+  if (vista === "importar") pintar();
+}
+
+function basesCosteo() {
+  return Object.entries(imp.insumos || {})
+    .filter(([, ins]) => esBaseCosteo(ins) && ins.nombre)
+    .map(([id, ins]) => ({ id, ins, existente: recetaExistentePorNombre(ins.nombre) }))
+    .sort((a, b) => a.ins.nombre.localeCompare(b.ins.nombre, "es"));
+}
+
+function pintarImportar(c) {
+  const head = `${barra()}
+    <div class="rec-detalle-head">
+      <div>
+        <div class="rec-titulo">📥 Importar bases de Costeo</div>
+        <div class="rec-sub" style="max-width:640px">Tildá las bases que son de ${esc(areaLabel(area).toLowerCase())}. Cada una se crea como <b>subreceta</b> que rinde 1 unidad (lo mismo que en Costeo), con sus ingredientes. Después completá en cada una la merma, los pasos, la foto y los alérgenos.</div>
+      </div>
+      <div class="rec-actions"><button class="btn btn-ghost btn-sm" data-act="volver">← Volver</button></div>
+    </div>`;
+  if (imp.cargando || !imp.insumos) { c.innerHTML = head + cardMsg(imp.error ? esc(imp.error) : "Leyendo bases de Costeo…"); return; }
+  const todas = basesCosteo();
+  const q = clave(imp.q);
+  const visibles = todas.filter(b => !q || clave(b.ins.nombre).includes(q));
+  const deps = impDependencias();
+  const nuevas = imp.sel.size + deps.size;
+  c.innerHTML = head + `
+    <div class="section-block">
+      ${!todas.length ? `<div class="rec-vacio">No hay bases cargadas en Costeo.</div>` : `
+      <div class="rec-filtros" style="align-items:flex-end">
+        <div class="form-group" style="flex:2"><label class="form-label" for="imp-q">Buscar</label>
+          <input class="form-input" id="imp-q" data-imp-q placeholder="Nombre de la base" value="${esc(imp.q)}"></div>
+        <div class="rec-actions">
+          <button class="btn btn-ghost btn-sm" data-act="imp-todas">Tildar las visibles</button>
+          <button class="btn btn-ghost btn-sm" data-act="imp-ninguna">Destildar las visibles</button>
+        </div>
+      </div>
+      <div class="rec-sub" style="margin-bottom:10px">${todas.length} bases en Costeo · ${todas.filter(b => b.existente).length} ya están en el recetario</div>
+      <div class="rec-tablewrap"><table class="rec-tabla">
+        <thead><tr><th style="width:36px"></th><th>Base</th><th>Ingredientes</th><th class="num">Rinde</th></tr></thead>
+        <tbody>${visibles.map(b => impFila(b, deps)).join("") || `<tr><td colspan="4" class="rec-sub">Ninguna coincide con la búsqueda.</td></tr>`}</tbody>
+      </table></div>`}
+    </div>
+    ${todas.length ? `<div class="rec-actions rec-pie">
+      ${deps.size ? `<span class="rec-sub">Se suman ${deps.size} base${deps.size === 1 ? "" : "s"} más porque las usan las elegidas.</span>` : ""}
+      <button class="btn btn-primary" data-act="imp-confirmar" ${!nuevas || imp.guardando ? "disabled" : ""}>${imp.guardando ? "Importando…" : `Importar ${nuevas || ""} subreceta${nuevas === 1 ? "" : "s"}`}</button>
+    </div>` : ""}`;
+}
+
+function impFila(b, deps) {
+  const ings = Object.entries(b.ins.receta || {}).map(([sid, cant]) => {
+    const s = imp.insumos[sid];
+    const u = unidadDeCosteo(s?.unidad);
+    const leg = cantidadLegible(Number(cant) || null, u || "u");
+    const alerta = !s ? " ⚠️ (insumo borrado)" : !u ? ` ⚠️ (unidad “${s.unidad || "sin cargar"}”)` : "";
+    return `${esBaseCosteo(s) ? "🧪 " : ""}${esc(s?.nombre || "?")} ${esc(fmtCant(leg.cantidad, leg.unidad))}${esc(alerta)}`;
+  });
+  const uBase = unidadDeCosteo(b.ins.unidad);
+  if (b.existente) return `<tr style="opacity:.55"><td>✓</td><td><div class="rec-nom">${esc(b.ins.nombre)}</div><div class="rec-sub">Ya está en el recetario${b.existente.codigo ? ` (${esc(b.existente.codigo)})` : ""}</div></td><td class="rec-sub">${ings.join(" · ")}</td><td class="num">1 ${esc(unidadLabel(uBase) || b.ins.unidad || "u")}</td></tr>`;
+  const on = imp.sel.has(b.id), dep = deps.has(b.id);
+  return `<tr data-act="imp-toggle" data-id="${esc(b.id)}" style="cursor:pointer">
+    <td><input type="checkbox" ${on || dep ? "checked" : ""} ${dep ? "disabled" : ""} tabindex="-1" style="pointer-events:none;accent-color:var(--terra);width:16px;height:16px"></td>
+    <td><div class="rec-nom">${esc(b.ins.nombre)}</div>${dep ? `<div class="rec-sub">Se incluye porque la usa otra base elegida</div>` : ""}${!uBase ? `<div class="rec-sub">⚠️ Unidad “${esc(b.ins.unidad || "sin cargar")}”: revisá el rendimiento después</div>` : ""}</td>
+    <td class="rec-sub">${ings.length ? ings.join(" · ") : "Sin ingredientes"}</td>
+    <td class="num">1 ${esc(unidadLabel(uBase) || b.ins.unidad || "u")}</td>
+  </tr>`;
+}
+
+function impToggle(id) {
+  if (impDependencias().has(id)) return;
+  imp.sel.has(id) ? imp.sel.delete(id) : imp.sel.add(id);
+  const y = window.scrollY; pintar(); window.scrollTo(0, y);
+}
+function impMarcarVisibles(on) {
+  const q = clave(imp.q);
+  basesCosteo().filter(b => !b.existente && (!q || clave(b.ins.nombre).includes(q)))
+    .forEach(b => on ? imp.sel.add(b.id) : imp.sel.delete(b.id));
+  const y = window.scrollY; pintar(); window.scrollTo(0, y);
+}
+
+async function impConfirmar() {
+  if (imp.guardando) return;
+  const ids = [...imp.sel, ...impDependencias()].filter(id => !recetaExistentePorNombre(imp.insumos[id].nombre));
+  if (!ids.length) return;
+  if (!confirm(`Se van a crear ${ids.length} subreceta${ids.length === 1 ? "" : "s"} en el recetario de ${areaLabel(area)}. ¿Seguimos?`)) return;
+  imp.guardando = true; pintar();
+  try {
+    const upd = {};
+    // Catálogo de ingredientes: se reutiliza lo que ya existe (mismo criterio que al guardar una receta).
+    const porClave = {};
+    Object.entries(ingredientes).forEach(([id, x]) => { if (x.tipo !== "empaque") porClave[clave(x.nombre)] = id; });
+    const vinculos = {};
+    const idCatalogo = (nombre, unidad, insumoId) => {
+      const k = clave(nombre);
+      if (!porClave[k]) {
+        const id = push(ref(fb.db, "recetario/ingredientes")).key;
+        porClave[k] = id;
+        upd[`recetario/ingredientes/${id}`] = { nombre: nombre.trim(), unidad: unidad || "g", tipo: "ingrediente", creado: Date.now() };
+      }
+      if (insumoId) vinculos[porClave[k]] = insumoId;
+      return porClave[k];
+    };
+    // Primero se reservan los ids, así una base puede apuntar a otra que se crea en el mismo lote.
+    const nuevoId = {};
+    ids.forEach(id => { nuevoId[id] = push(ref(fb.db, `recetario/areas/${area}/recetas`)).key; });
+    const idReceta = sid => nuevoId[sid] || recetaExistentePorNombre(imp.insumos[sid]?.nombre || "")?.id || null;
+
+    let max = 0;
+    Object.values(recetas).forEach(r => { const m = String(r.codigo || "").toUpperCase().match(/^SUB(\d+)$/); if (m) max = Math.max(max, +m[1]); });
+    const ahora = Date.now();
+    const quien = (miembro?.nombre || usuarioCorto()) + " (importado de Costeo)";
+    const ordenados = ids.slice().sort((a, b) => imp.insumos[a].nombre.localeCompare(imp.insumos[b].nombre, "es"));
+    for (const id of ordenados) {
+      const ins = imp.insumos[id];
+      const uRend = unidadDeCosteo(ins.unidad) || "u";
+      const lineas = [];
+      for (const [sid, cantRaw] of Object.entries(ins.receta || {})) {
+        const s = imp.insumos[sid];
+        if (!s) continue;
+        const cant = Number(cantRaw) || null;
+        if (esBaseCosteo(s) && idReceta(sid)) {
+          const leg = cantidadLegible(cant, unidadDeCosteo(s.unidad) || "u");
+          lineas.push({ tipo: "subreceta", recetaId: idReceta(sid), nombre: s.nombre, cantidad: leg.cantidad, unidad: leg.unidad, merma: null });
+        } else {
+          const leg = cantidadLegible(cant, unidadDeCosteo(s.unidad) || "u");
+          lineas.push({ tipo: "ingrediente", ingredienteId: idCatalogo(s.nombre, leg.unidad, sid), nombre: s.nombre.trim(), cantidad: leg.cantidad, unidad: leg.unidad, merma: null });
+        }
+      }
+      lineas.sort((a, b) => (a.tipo === b.tipo ? 0 : a.tipo === "subreceta" ? -1 : 1) || a.nombre.localeCompare(b.nombre, "es"));
+      upd[`recetario/areas/${area}/recetas/${nuevoId[id]}`] = {
+        nombre: ins.nombre.trim(), codigo: "SUB" + String(++max).padStart(3, "0"), tipo: "subreceta", grupo: "Bases",
+        rendimiento: 1, unidadRendimiento: uRend, porciones: 1,
+        margenSeguridad: 0, costearPorUnidad: true,
+        ingredientes: lineas, empaque: [], pasos: [],
+        observaciones: unidadDeCosteo(ins.unidad) ? "" : `Revisar el rendimiento: en Costeo la unidad era “${ins.unidad || "sin cargar"}”.`,
+        alergenos: {}, tieneFoto: false,
+        creada: ahora, actualizada: ahora, actualizadaPor: quien,
+      };
+    }
+    await update(ref(fb.db), upd);
+    // Vínculos para Costeo: solo los que todavía no existen, para no pisar uno hecho a mano.
+    let vinculados = 0;
+    try {
+      const actuales = (await get(ref(fb.db, "costeo/vinculosRecetario"))).val() || {};
+      const nuevosV = {};
+      Object.entries(vinculos).forEach(([ing, insId]) => { if (!actuales[ing]) nuevosV[`costeo/vinculosRecetario/${ing}`] = insId; });
+      vinculados = Object.keys(nuevosV).length;
+      if (vinculados) await update(ref(fb.db), nuevosV);
+    } catch (err) { console.error("vínculos costeo:", err); }
+    toast(`Se importaron ${ids.length} subreceta${ids.length === 1 ? "" : "s"}${vinculados ? ` y ${vinculados} vínculo${vinculados === 1 ? "" : "s"} con Costeo` : ""}`);
+    imp.sel = new Set();
+    filtros.tipo = "subreceta"; filtros.grupo = ""; filtros.q = "";
+    vista = "lista";
+  } catch (err) {
+    console.error(err);
+    toast("No se pudo importar. Revisá la conexión e intentá de nuevo.", "warn");
+  } finally {
+    imp.guardando = false;
+    pintar();
   }
 }
 
