@@ -786,7 +786,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-09-26 copiar-refuerzos-semana-nueva";
+const APP_VERSION="2026-10-01 vanesa-cocina-sla";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -871,7 +871,7 @@ const PEOPLE_BASE=[
   {n:"Gabriel",role:"barista",loc:"both",franco:"lun"},
   {n:"Mariano",role:"barista",loc:"both",he:true},
   {n:"Luis",role:"cocina",loc:"SL",franco:"jue"},
-  {n:"Vanesa",role:"cocina",loc:"SL",franco:"mie"},
+  {n:"Vanesa",role:"cocina",loc:"both",franco:"mie"},
   {n:"Rodrigo",role:"compras",loc:"SL",franco:"dom",must:{day:"vie",loc:"SL",shift:"M",role:"compras"}},
   {n:"Lucas",role:"cocina",loc:"SLA",franco:"vie"},
   {n:"Matías",role:"cocina",loc:"both",franco:"mar"},
