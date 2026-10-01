@@ -5,6 +5,7 @@ Este repositorio (rama `claude/business-app-features-9mfa1a`) contiene las herra
 | App | Carpeta | Para qué sirve |
 |---|---|---|
 | **Costeo & Proveedores** | `costeo-proveedores/` | Facturas de proveedores, órdenes de pago, precio e historial de insumos, costeo automático de productos, comparación con inflación |
+| **Recetario** | `recetario/` | Fichas técnicas de Cocina (ingredientes, merma, pasos, alérgenos ANMAT, foto) con PDF para imprimir. Acceso con contraseña; Costeo lee las recetas para costearlas |
 | **Presupuestos** | `presupuestos/` | Cotizaciones a clientes con ítems libres; al aceptarse, registra el pedido en el sistema de Pedidos de Clientes (otro proyecto/rama) |
 
 ---
@@ -234,6 +235,8 @@ Ese mail no recibe correo, es solo el identificador de la cuenta. Si preferís u
 
 **Realtime Database** → pestaña **Rules** → reemplazar todo por esto → **Publicar**:
 
+> ⚠️ **Usá las reglas completas de la sección [Recetario → Reglas de seguridad](#reglas-de-seguridad-completas)** en vez de este bloque. Este bloque es el original de Informes y le faltan los nodos del sistema de Pedidos de Producción (que usa esta misma base) y los del Recetario: publicarlo así dejaría sin acceso a Producción.
+
 ```json
 {
   "rules": {
@@ -305,6 +308,156 @@ El bloque impreso no se puede partir entre páginas (`break-inside: avoid`): si 
 
 ---
 
+## Módulo: Recetario
+
+Ubicado en `recetario/`. Fichas técnicas de **Cocina**: las carga el encargado y el equipo trabaja con las fichas **impresas**. Está preparado para sumar las demás áreas de producción.
+
+| Pantalla | Qué tiene |
+|---|---|
+| **Listado** | Búsqueda por nombre o código, filtros por tipo (plato / subreceta) y grupo. Cada receta muestra líneas, lo que produce y la última actualización. |
+| **Ficha** | Foto, preparación paso a paso, alérgenos, ingredientes con cantidad neta / merma / cantidad bruta, empaque, observaciones, y en qué recetas se usa cada subreceta. |
+| **Editar / Nueva** | Datos generales, ingredientes y subrecetas con merma, empaque, pasos (uno por línea), foto, observaciones, alérgenos y datos para el costeo (margen de seguridad, costeo por unidad de rendimiento). |
+| **PDF** | **⬇️ Descargar ficha (PDF)** abre la ficha lista para imprimir o "Guardar como PDF". **🖨️ Imprimir recetario** junta todas las recetas filtradas, una por hoja, para la carpeta de la cocina. |
+
+Reglas que aplica:
+- **Subrecetas** (masas, salsas, rellenos) se usan dentro de otras recetas. Nunca se puede formar un ciclo, y no se puede borrar una subreceta mientras otra receta la use.
+- **Cantidad bruta** = `neta ÷ (1 − merma %)` (45 g con 20 % de merma → 56,25 g). Una cantidad vacía se muestra como "c/n".
+- **Alérgenos ANMAT** (Código Alimentario Argentino, art. 235 séptimo): gluten (TACC), crustáceos, huevo, pescado, maní, soja, leche, frutos secos y sulfitos. Los de una subreceta **se heredan solos** en los platos que la usan.
+- **Códigos** únicos; si se dejan vacíos se asignan solos (`PLA001`, `SUB001`…).
+- Si dos personas editan la misma receta a la vez, al guardar se avisa antes de pisar los cambios de la otra.
+- **No calcula costos.** Los calcula Costeo & Proveedores a partir de estos datos: ver [`INTEGRACION_COSTEOS.md`](INTEGRACION_COSTEOS.md).
+
+### Acceso: solo contraseña, pero de verdad privado
+
+Mismo criterio que Gerencia en Informes: una contraseña escrita en la página no protege nada, porque la base se lee directo por HTTP. Por eso se ingresa **solo con contraseña**, pero por detrás es una **cuenta real de Firebase Auth** (`recetario-cocina@candela-app.com`) y las reglas del servidor solo dejan leer y escribir el recetario a las cuentas habilitadas.
+
+#### Paso 1 — Habilitar email y contraseña
+Si ya se hizo para Informes, no hace falta repetirlo. Si no: Firebase → **Authentication** → **Sign-in method** → **Correo electrónico/contraseña** → Habilitar.
+
+#### Paso 2 — Crear la cuenta del recetario
+**Authentication → Users → Add user**: email `recetario-cocina@candela-app.com` y la contraseña que va a usar el encargado. Ese mail no recibe correo. Copiá el **User UID**.
+
+#### Paso 3 — Habilitar la cuenta
+**Realtime Database → Data** → agregar:
+```
+recetario
+  └─ miembros
+       └─ <UID de la cuenta>
+            ├─ nombre: "Cocina"        ← aparece como autor de los cambios
+            └─ areas
+                 └─ cocina: true
+```
+Se habilita por UID (y no por email) a propósito: así nadie puede crearse una cuenta con ese mail y entrar. Si falta este paso, el propio recetario muestra el UID que hay que cargar.
+
+**Cambiar la contraseña:** como el mail no existe, "Reset password" no sirve (manda un correo que nadie recibe). Borrá la cuenta en **Users** y creala de nuevo con el mismo mail y la contraseña nueva; como cambia el UID, actualizalo en el paso 3. Las recetas no se pierden.
+
+#### Reglas de seguridad completas
+
+Este bloque **reemplaza** al del paso 3 de Informes. Hacé antes los pasos de arriba y **guardá una copia de las reglas actuales**.
+
+```json
+{
+  "rules": {
+    "costeo":       { ".read": true, ".write": true },
+    "presupuestos": { ".read": true, ".write": true },
+    "cronogramas":  { ".read": true, ".write": true },
+    "vacaciones":   { ".read": true, ".write": true },
+
+    "catalogo":            { ".read": true, ".write": true },
+    "pedidos":             { ".read": true, ".write": true },
+    "pedidosTs":           { ".read": true, ".write": true },
+    "insumosPedidos":      { ".read": true, ".write": true },
+    "comprados":           { ".read": true, ".write": true },
+    "confirmados":         { ".read": true, ".write": true },
+    "alertas":             { ".read": true, ".write": true },
+    "ventasCustomInsumos": { ".read": true, ".write": true },
+    "prodCustomInsumos":   { ".read": true, ".write": true },
+    "proveedores":         { ".read": true, ".write": true },
+    "proveedorProducto":   { ".read": true, ".write": true },
+    "stock":               { ".read": true, ".write": true },
+    "stockHistory":        { ".read": true, ".write": true },
+    "anuncios":            { ".read": true, ".write": true },
+
+    "informes": {
+      "envios": {
+        ".read": "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+        "$turno": {
+          "$ts": {
+            ".write": "!data.exists() && newData.exists()",
+            ".validate": "newData.hasChildren(['fecha','loc','turno','experto','enviadoEn'])"
+          }
+        }
+      },
+      "indice": {
+        ".read": true,
+        "$turno": {
+          ".write": "newData.exists()",
+          ".validate": "newData.hasChildren(['fecha','loc','turno','experto','enviadoEn'])"
+        }
+      }
+    },
+
+    "recetario": {
+      "miembros": {
+        "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": false }
+      },
+      "lectores": {
+        "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": false }
+      },
+      "ingredientes": {
+        ".read":  "auth != null && (root.child('recetario/miembros/' + auth.uid).exists() || root.child('recetario/lectores/' + auth.uid).val() === true)",
+        ".write": "auth != null && root.child('recetario/miembros/' + auth.uid).exists()",
+        "$id": {
+          ".validate": "newData.hasChildren(['nombre', 'tipo'])",
+          "nombre": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" }
+        }
+      },
+      "areas": {
+        ".read": "auth != null && root.child('recetario/lectores/' + auth.uid).val() === true",
+        "$area": {
+          ".read":  "auth != null && root.child('recetario/miembros/' + auth.uid + '/areas/' + $area).val() === true",
+          ".write": "auth != null && root.child('recetario/miembros/' + auth.uid + '/areas/' + $area).val() === true",
+          "recetas": {
+            "$id": {
+              ".validate": "newData.hasChildren(['nombre', 'tipo', 'actualizada'])",
+              "nombre": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 150" },
+              "tipo":   { ".validate": "newData.val() === 'plato' || newData.val() === 'subreceta'" }
+            }
+          },
+          "fotos": {
+            "$id": { ".validate": "newData.isString() && newData.val().length < 400000" }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Tres cosas a tener en cuenta:
+- **Los nodos de Pedidos de Producción** (`catalogo`, `pedidos`, `stock`, `anuncios`…) están porque ese sistema usa **esta misma base**. Quedan igual de abiertos que hoy. Si en **Data** aparece otra carpeta principal que no está en la lista, hay que agregarla antes de publicar: cualquier nodo que no figure queda bloqueado.
+- **`informes/envios` ahora exige la cuenta de Gerencia**, no cualquier sesión. Con la regla anterior (`auth != null`), la cuenta del recetario —o cualquier cuenta nueva— podía leer los informes. Si Gerencia usa otro mail, cambialo también acá.
+- **`recetario/lectores`** es para la cuenta de solo lectura de Costeo (ver [`INTEGRACION_COSTEOS.md`](INTEGRACION_COSTEOS.md)).
+
+**Verificar:** en una ventana privada, `https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com/recetario.json` tiene que devolver **`Permission denied`**.
+
+### Sumar otra área (Pastelería, Panadería…)
+1. En `recetario/index.html`, agregar el área a `AREAS_RECETARIO` (ej. `pasteleria: { label: "Pastelería", icon: "🎂" }`).
+2. Crear la cuenta `recetario-pasteleria@candela-app.com` y habilitarla con `recetario/miembros/<UID>/areas/pasteleria: true`.
+
+Con más de un área, la pantalla de ingreso muestra un botón por área antes de pedir la contraseña. Cada área tiene sus recetas y su contraseña; el catálogo de ingredientes es compartido.
+
+### Datos en Firebase
+Mismo proyecto (`pedidos-de-produccion-ee3cb`), rama `recetario/`:
+- `recetario/areas/{área}/recetas/{id}` — la ficha técnica.
+- `recetario/areas/{área}/fotos/{id}` — la foto, comprimida a JPEG (~30–150 KB). Va aparte para que el listado no descargue imágenes.
+- `recetario/ingredientes/{id}` — catálogo compartido de ingredientes y envases; se crea solo al guardar recetas. Es lo que Costeo vincula con sus insumos.
+- `recetario/miembros/{uid}` y `recetario/lectores/{uid}` — quién puede entrar (se cargan a mano en la consola).
+
+El detalle de cada campo está en [`INTEGRACION_COSTEOS.md`](INTEGRACION_COSTEOS.md).
+
+---
+
 ## Desplegar en Netlify
 
 1. [app.netlify.com](https://app.netlify.com/) → **Add new site → Import an existing project → GitHub**.
@@ -330,6 +483,9 @@ La raíz del sitio (`/`) muestra una página simple con links a las dos apps.
 ├── vacaciones/
 │   ├── index.html          — Balance y calendario de vacaciones
 │   └── pedido.html         — Formulario público de pedido
+├── recetario/
+│   ├── index.html          — Recetario: fichas técnicas de Cocina + PDF (clave propia)
+│   └── logo.png            — Logo para la ficha impresa
 ├── informes/
 │   ├── carga.html          — Informe de turno: lo carga el Experto (sin clave)
 │   └── index.html          — Informes de turno: lectura de Gerencia (clave propia)
