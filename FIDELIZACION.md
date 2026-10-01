@@ -1,6 +1,8 @@
 # ⭐ Club Candela — Tarjeta de sellos con QR
 
-Programa de fidelización: el cliente escanea un QR en la mesa o el mostrador, se registra una sola vez (nombre, WhatsApp, cumpleaños) y suma **1 sello por día**. Con la cantidad de sellos configurada, canjea el premio en caja.
+Programa de fidelización: el cliente escanea un QR en la mesa o el mostrador, se registra una sola vez (nombre, WhatsApp, cumpleaños) y suma **1 sello por día**. Con **10 visitas** canjea **una merienda gratis** en caja.
+
+La tarjeta digital es una **réplica de la tarjeta física** (mismo arte, armado a partir del PDF original): el frente "Tarjeta de FIDELIDAD", y en el dorso el nombre del cliente en "Cliente:", su QR personal y los 10 casilleros, donde cada visita se marca con el **isotipo de Candela**. El cliente puede dar vuelta la tarjeta tocándola, y cuando suma un sello la tarjeta gira sola y el isotipo cae en el casillero como un sello de goma.
 
 ## Cómo funciona
 
@@ -64,7 +66,7 @@ Subí los archivos nuevos junto con `index.html` (Netlify o donde esté publicad
 
 ### 6. Configurar e imprimir
 1. En el sistema, entrá a **⭐ Club** con la cuenta del personal.
-2. En **⚙️ Configuración** ajustá la cantidad de sellos, el premio, el tope semanal y el horario.
+2. En **⚙️ Configuración** ajustá el premio, el tope semanal y el horario. Los casilleros quedan fijos en 10, como la tarjeta física. El texto del premio aparece en la tarjeta: "Completá 10 visitas, accedé a *[premio]* y a más promociones exclusivas".
 3. En **🖨️ QR de mesas** imprimí el QR de cada local (sale una hoja A4 con 4 tarjetitas).
 4. Probalo con tu celular antes de ponerlo en las mesas.
 
@@ -88,7 +90,11 @@ tarjeta.html              — Página del cliente (se abre con el QR de mesa)
 js/fidelizacion-comun.js  — Reglas de día/semana/horario compartidas
 js/club-personal.js       — Vista ⭐ Club del sistema interno
 js/vendor/                — Librerías de QR (generar y escanear)
-img/logo.png              — Logo para la tarjeta
+img/tarjeta-frente.svg    — Frente de la tarjeta (vector, del PDF original)
+img/tarjeta-dorso.svg     — Dorso sin los datos variables (nombre, QR, texto del premio)
+img/isotipo.svg           — Isotipo: el sello de cada visita
+img/isotipo-crema.svg     — Isotipo en crema para el encabezado
+img/logo.png              — Logo (ícono al guardar en el celular)
 database.rules.json       — Reglas de seguridad de Firebase
 ```
 

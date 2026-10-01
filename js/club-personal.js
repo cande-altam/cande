@@ -36,9 +36,7 @@ const Club = (() => {
   .club-cli-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
   .club-cli-name{font-size:22px;font-weight:700;letter-spacing:-.3px}
   .club-meta{color:var(--gray);font-size:13px;margin-top:2px}
-  .club-stamps{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 6px}
-  .club-stamp{width:28px;height:28px;border-radius:50%;border:2px dashed var(--cream-dark)}
-  .club-stamp.on{border:none;background:var(--terra)}
+  .club-tarjeta{max-width:360px;margin:16px 0 8px}
   .club-premio{background:var(--black);color:var(--cream);border-radius:12px;padding:14px 16px;margin:12px 0;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
   .club-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
   .club-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px}
@@ -249,8 +247,8 @@ const Club = (() => {
           </div>
           <button class="btn btn-ghost btn-sm" onclick="Club.cerrarCliente()">✕</button>
         </div>
-        <div class="club-stamps">${Array.from({ length: meta }, (_, i) => `<div class="club-stamp${i < llenos ? " on" : ""}"></div>`).join("")}</div>
-        <div class="club-meta">${c.sellos} sello${c.sellos === 1 ? "" : "s"} · meta ${meta}</div>
+        <div class="club-tarjeta">${Fidel.tarjetaHtml({ nombre: c.nombre, sellos: llenos, meta, premio: config.premio, id: "ftj-staff" })}</div>
+        <div class="club-meta">${c.sellos} sello${c.sellos === 1 ? "" : "s"} · premio cada ${meta} visitas</div>
         ${premios > 0 ? `
           <div class="club-premio">
             <div>🎁 <b>${premios > 1 ? premios + " premios" : "1 premio"} para canjear</b><div style="font-size:13px;opacity:.8">${e(config.premio)}</div></div>
@@ -512,13 +510,13 @@ const Club = (() => {
       <div class="card club-pad">
         <div class="mtitle" style="font-size:16px">Programa de sellos</div>
         <div class="club-cfg mt12">
-          <div class="fg"><label class="fl">Sellos para el premio</label><input class="fc" id="cfg-meta" type="number" min="1" max="50" value="${config.sellosPremio}"></div>
+          <div class="fg"><label class="fl">Visitas para el premio</label><input class="fc" id="cfg-meta" type="number" value="${Fidel.CASILLEROS}" disabled title="Igual que la tarjeta física: 10 casilleros"></div>
           <div class="fg" style="grid-column:span 2"><label class="fl">Premio</label><input class="fc" id="cfg-premio" maxlength="120" value="${e(config.premio)}"></div>
           <div class="fg"><label class="fl">Máx. sellos por semana</label><input class="fc" id="cfg-tope" type="number" min="1" max="7" value="${config.topeSemanal}"></div>
           <div class="fg"><label class="fl">Horario desde (hora)</label><input class="fc" id="cfg-desde" type="number" min="0" max="23" value="${config.horaApertura}"></div>
           <div class="fg"><label class="fl">Horario hasta (hora)</label><input class="fc" id="cfg-hasta" type="number" min="1" max="24" value="${config.horaCierre}"></div>
         </div>
-        <div class="ss mt12">Siempre se permite 1 sello por día por cliente. Fuera del horario no se suman sellos.</div>
+        <div class="ss mt12">La tarjeta tiene 10 casilleros, como la física. El premio se muestra en la tarjeta como “Completá 10 visitas, accedé a <i>[premio]</i>…”. Siempre se permite 1 sello por día por cliente y fuera del horario no se suman sellos.</div>
         <button class="btn btn-primary mt12" onclick="Club.guardarConfig()">Guardar</button>
       </div>
       <div class="card club-pad">
@@ -534,13 +532,12 @@ const Club = (() => {
 
   async function guardarConfig() {
     const nuevo = {
-      sellosPremio: parseInt(document.getElementById("cfg-meta").value, 10),
+      sellosPremio: Fidel.CASILLEROS,
       premio: document.getElementById("cfg-premio").value.trim(),
       topeSemanal: parseInt(document.getElementById("cfg-tope").value, 10),
       horaApertura: parseInt(document.getElementById("cfg-desde").value, 10),
       horaCierre: parseInt(document.getElementById("cfg-hasta").value, 10),
     };
-    if (!(nuevo.sellosPremio >= 1 && nuevo.sellosPremio <= 50)) return toast("⚠️ Sellos para el premio: entre 1 y 50");
     if (nuevo.premio.length < 2) return toast("⚠️ Escribí el premio");
     if (!(nuevo.topeSemanal >= 1 && nuevo.topeSemanal <= 7)) return toast("⚠️ Máximo semanal: entre 1 y 7");
     if (!(nuevo.horaApertura >= 0 && nuevo.horaCierre <= 24 && nuevo.horaCierre > nuevo.horaApertura)) return toast("⚠️ Revisá el horario");

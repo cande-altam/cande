@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Club Candela · Tu tarjeta</title>
-<meta name="theme-color" content="#22201F">
+<title>Club Candela · Tu tarjeta de fidelidad</title>
+<meta name="theme-color" content="#E34E44">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Club Candela">
-<link rel="icon" href="img/logo.png">
+<meta name="apple-mobile-web-app-title" content="Candela">
+<link rel="icon" href="img/isotipo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -19,68 +19,66 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --terra:#E15D46;--terra-dark:#c94d38;--terra-pale:#f9ddd8;
-  --turq:#9BD6CC;--turq-dark:#1A6B62;--turq-pale:#d8f0ed;
-  --cream:#EEEBD7;--cream-dark:#dedad8;
-  --black:#22201F;--gray:#7d7b6d;--white:#fff;
-  --shadow:0 4px 16px rgba(34,32,31,.08),0 2px 6px rgba(34,32,31,.05);
+  --rojo:#E34E44;--rojo-osc:#c43d34;
+  --crema:#E8E7CA;--crema-claro:#F4F3E4;--crema-borde:#d9d7b6;
+  --negro:#22201F;--gris:#76745f;--blanco:#fff;
+  --verde:#1A6B62;--verde-claro:#d8f0ed;
+  --sombra:0 4px 16px rgba(34,32,31,.07),0 1px 4px rgba(34,32,31,.05);
 }
-html,body{background:var(--cream)}
-body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--black);min-height:100vh;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
-.top{background:var(--black);color:var(--cream);padding:14px 16px;padding-top:max(14px,env(safe-area-inset-top));display:flex;align-items:center;gap:10px}
-.top img{width:30px;height:30px;object-fit:contain}
-.top b{font-size:15px;letter-spacing:.2px}
-.top span{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9a9888}
-main{max-width:440px;margin:0 auto;padding:18px 16px 40px}
-.card{background:var(--white);border-radius:18px;box-shadow:var(--shadow);padding:22px 18px;margin-bottom:14px}
-h1{font-size:22px;font-weight:800;line-height:1.2;margin-bottom:6px}
-h2{font-size:15px;font-weight:700;margin-bottom:10px}
-.muted{color:var(--gray);font-size:13px}
-label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin:14px 0 6px}
-input,select{width:100%;font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--cream-dark);border-radius:12px;background:#fff;color:var(--black)}
-input:focus,select:focus{outline:none;border-color:var(--terra)}
+html,body{background:var(--crema-claro)}
+body{font-family:'Montserrat',system-ui,sans-serif;color:var(--negro);min-height:100vh;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.top{background:var(--rojo);color:var(--crema);padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));display:flex;align-items:center;justify-content:center}
+.top img{height:24px}
+.top b{font-size:13px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-left:10px}
+main{max-width:460px;margin:0 auto;padding:20px 16px 48px}
+.panel{background:var(--blanco);border-radius:18px;box-shadow:var(--sombra);padding:22px 18px;margin-bottom:14px}
+h1{font-size:22px;font-weight:800;line-height:1.2;margin-bottom:6px;color:var(--rojo)}
+h2{font-size:14px;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;color:var(--rojo)}
+.muted{color:var(--gris);font-size:13px}
+label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gris);margin:14px 0 6px}
+input,select{width:100%;font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--crema-borde);border-radius:12px;background:#fff;color:var(--negro)}
+input:focus,select:focus{outline:none;border-color:var(--rojo)}
 .row{display:flex;gap:10px}
 .row>*{flex:1}
-.hint{font-size:12px;color:var(--gray);margin-top:5px}
-.check{display:flex;gap:10px;align-items:flex-start;margin-top:16px;font-size:13px;color:var(--black);text-transform:none;letter-spacing:0;font-weight:400}
-.check input{width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--terra)}
-.btn{display:block;width:100%;border:none;border-radius:14px;padding:15px;font:inherit;font-size:16px;font-weight:700;cursor:pointer;background:var(--terra);color:#fff;margin-top:20px;box-shadow:0 4px 18px rgba(225,93,70,.30)}
+.hint{font-size:12px;color:var(--gris);margin-top:5px}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:16px;font-size:12.5px;color:var(--negro);text-transform:none;letter-spacing:0;font-weight:400}
+.check input{width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--rojo)}
+.btn{display:block;width:100%;border:none;border-radius:14px;padding:15px;font:inherit;font-size:16px;font-weight:700;cursor:pointer;background:var(--rojo);color:var(--crema);margin-top:20px;box-shadow:0 4px 18px rgba(227,78,68,.30)}
 .btn:disabled{opacity:.6}
-.btn-ghost{background:transparent;color:var(--black);box-shadow:none;border:1.5px solid var(--cream-dark)}
-.err{color:var(--terra-dark);font-size:13px;margin-top:10px;font-weight:600}
-.banner{border-radius:14px;padding:14px 16px;margin-bottom:14px;font-weight:600;font-size:14px;display:flex;gap:10px;align-items:flex-start}
-.banner.ok{background:var(--turq-pale);color:var(--turq-dark)}
-.banner.info{background:#fff8e8;color:#8A5A00}
-.banner .ico{font-size:22px;line-height:1}
-.stamps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 6px}
-.stamp{aspect-ratio:1;border-radius:50%;border:2px dashed var(--cream-dark);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--cream-dark);font-weight:700}
-.stamp.on{border:none;background:var(--terra);color:#fff;box-shadow:0 3px 10px rgba(225,93,70,.3)}
-.stamp.on img{width:58%;filter:brightness(0) invert(1)}
-.stamp.new{animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
-@keyframes pop{0%{transform:scale(.2);opacity:0}100%{transform:scale(1);opacity:1}}
-.progress{font-size:14px;margin-top:8px}
-.premio{background:var(--black);color:var(--cream);border-radius:18px;padding:20px 18px;margin-bottom:14px;text-align:center}
-.premio .big{font-size:34px}
-.premio b{display:block;font-size:18px;margin:6px 0 4px}
-.qrbox{text-align:center}
-.qrbox .qr{width:190px;height:190px;margin:10px auto 6px;background:#fff;padding:6px;border-radius:12px;border:1.5px solid var(--cream-dark)}
-.qrbox .qr svg{width:100%;height:100%;display:block}
+.btn-ghost{background:transparent;color:var(--negro);box-shadow:none;border:1.5px solid var(--crema-borde)}
+.err{color:var(--rojo-osc);font-size:13px;margin-top:10px;font-weight:600}
+.banner{border-radius:14px;padding:13px 15px;margin-bottom:16px;font-weight:600;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+.banner.ok{background:var(--verde-claro);color:var(--verde)}
+.banner.info{background:#fff4dc;color:#8A5A00}
+.banner .ico{font-size:20px;line-height:1.1}
+.tarjeta-wrap{margin:4px 2px 10px}
+.tarjeta-acciones{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 2px 18px;font-size:13px;color:var(--gris)}
+.link{background:none;border:none;font:inherit;font-size:13px;font-weight:600;color:var(--rojo);cursor:pointer;padding:6px 0}
+.progreso{display:flex;align-items:baseline;gap:8px}
+.progreso b{font-size:28px;font-weight:800;color:var(--rojo);line-height:1}
+.premio{background:var(--rojo);color:var(--crema);border-radius:18px;padding:18px;margin-bottom:14px;display:flex;gap:14px;align-items:center}
+.premio .ico{width:52px;height:52px;flex:none;border-radius:50%;background:var(--crema);display:flex;align-items:center;justify-content:center;font-size:26px}
+.premio b{display:block;font-size:17px;font-weight:800}
+.premio span{font-size:13px;opacity:.9}
+.qrgrande{width:220px;height:220px;margin:12px auto 8px;background:#fff;padding:8px;border-radius:14px;border:1.5px solid var(--crema-borde)}
+.qrgrande svg{width:100%;height:100%;display:block}
 .visitas{list-style:none;font-size:13px}
-.visitas li{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--cream)}
+.visitas li{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--crema-claro)}
 .visitas li:last-child{border-bottom:none}
 .steps{font-size:13px;padding-left:18px}
-.steps li{margin:4px 0}
+.steps li{margin:5px 0}
 .center{text-align:center}
-.spinner{width:34px;height:34px;border:3px solid var(--cream-dark);border-top-color:var(--terra);border-radius:50%;animation:spin 1s linear infinite;margin:60px auto 14px}
+.spinner{width:34px;height:34px;border:3px solid var(--crema-borde);border-top-color:var(--rojo);border-radius:50%;animation:spin 1s linear infinite;margin:60px auto 14px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.modal{position:fixed;inset:0;background:rgba(34,32,31,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;backdrop-filter:blur(3px)}
+.modal .panel{max-width:340px;width:100%;text-align:center;margin:0}
+.reg-tarjeta{max-width:320px;margin:0 auto 18px;transform:rotate(-3deg)}
 </style>
 </head>
 <body>
-<header class="top">
-  <img src="img/logo.png" alt="">
-  <div><b>Club Candela</b><span>Café &amp; Patisserie</span></div>
-</header>
+<header class="top"><img src="img/isotipo-crema.svg" alt=""><b>Club Candela</b></header>
 <main id="app"><div class="spinner"></div><p class="center muted">Cargando tu tarjeta…</p></main>
+<div id="modal"></div>
 
 <script>
 const FIREBASE_CONFIG = {
@@ -99,7 +97,9 @@ let db, uid, config, locales;
 let card = null;
 let visitas = [];
 let banner = null;       // {tipo:'ok'|'info', texto}
-let selloNuevo = false;
+let selloNuevo = false;  // animar el último sello (dar vuelta la tarjeta + sello que cae)
+let mostrarFrente = false;
+let renderPendiente = null;
 const app = document.getElementById("app");
 const localQr = new URLSearchParams(location.search).get("l");
 
@@ -111,24 +111,25 @@ function quitarLocalDeUrl(){
 }
 
 function renderError(msg){
-  app.innerHTML = `<div class="card center"><div style="font-size:38px">😕</div><h1>Algo salió mal</h1><p class="muted">${esc(msg)}</p><button class="btn" onclick="location.reload()">Reintentar</button></div>`;
+  app.innerHTML = `<div class="panel center"><div style="font-size:38px">😕</div><h1>Algo salió mal</h1><p class="muted">${esc(msg)}</p><button class="btn" onclick="location.reload()">Reintentar</button></div>`;
 }
 
 // ── Registro ───────────────────────────────────────────────
 function renderRegistro(errorMsg){
   const nombreLocal = localQr && locales[localQr] ? locales[localQr].nombre : null;
   app.innerHTML = `
-    <div class="card">
-      <h1>Sumate al Club Candela ☕</h1>
-      <p class="muted">Cada vez que venís sumás un sello. Con ${config.sellosPremio} sellos te regalamos <b>${esc(config.premio)}</b>.</p>
+    <div class="reg-tarjeta">${Fidel.tarjetaHtml({ nombre: "", sellos: 0, meta: config.sellosPremio, premio: config.premio, frente: true, id: "ftj-reg" })}</div>
+    <div class="panel">
+      <h1>Sumate al Club Candela</h1>
+      <p class="muted">Cada vez que venís sumás un sello en tu tarjeta. Completá ${config.sellosPremio} visitas y accedé a <b>${esc(config.premio)}</b> y a más promociones exclusivas.</p>
       ${nombreLocal ? `<p class="muted" style="margin-top:6px">Tu primer sello se suma en <b>${esc(nombreLocal)}</b> al registrarte.</p>` : ""}
       <form id="reg" autocomplete="on">
         <label for="f-nombre">Nombre</label>
-        <input id="f-nombre" name="name" autocomplete="given-name" required minlength="2" maxlength="60" placeholder="¿Cómo te llamás?">
+        <input id="f-nombre" name="name" autocomplete="name" required minlength="2" maxlength="60" placeholder="¿Cómo te llamás?">
         <label for="f-tel">WhatsApp</label>
         <input id="f-tel" name="tel" type="tel" inputmode="numeric" autocomplete="tel-national" required placeholder="387 512 3456">
         <div class="hint">Código de área sin 0 y número sin 15.</div>
-        <label>Cumpleaños <span style="text-transform:none;font-weight:400">(opcional, para tu regalo)</span></label>
+        <label>Cumpleaños <span style="text-transform:none;font-weight:500;letter-spacing:0">(opcional, ¡hay regalo!)</span></label>
         <div class="row">
           <select id="f-dia"><option value="">Día</option>${Array.from({length:31},(_,i)=>`<option>${i+1}</option>`).join("")}</select>
           <select id="f-mes"><option value="">Mes</option>${MESES.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("")}</select>
@@ -171,8 +172,9 @@ async function registrar(ev){
       [`telefonos/${tel}`]: uid,
     });
     card = (await db.ref(`fidelizacion/tarjetas/${uid}`).once("value")).val();
-    banner = { tipo: "ok", texto: `¡Listo, ${nombre}! Ya tenés tu tarjeta.` };
+    banner = { tipo: "ok", texto: `¡Listo, ${nombre.split(" ")[0]}! Ya tenés tu tarjeta de fidelidad.` };
     await intentarSello();
+    window.scrollTo(0, 0);
     escucharTarjeta();
   } catch (err) {
     console.error(err);
@@ -183,11 +185,11 @@ async function registrar(ev){
 // El número ya está asociado a otro celular (cambió de teléfono o borró los datos)
 function renderYaRegistrado(tel){
   app.innerHTML = `
-    <div class="card qrbox">
+    <div class="panel center">
       <div style="font-size:38px">📱</div>
       <h1>Ese número ya tiene tarjeta</h1>
       <p class="muted">Seguramente la creaste en otro celular o se borraron los datos del navegador. Mostrale este código al personal y la pasamos a este celular con todos tus sellos.</p>
-      <div class="qr">${Fidel.qrSvg(Fidel.qrDeTarjeta(uid))}</div>
+      <div class="qrgrande">${Fidel.qrSvg(Fidel.qrDeTarjeta(uid))}</div>
       <p class="muted">Número: ${esc(tel.slice(0,3))} ${esc(tel.slice(3,6))} ${esc(tel.slice(6))}</p>
       <button class="btn btn-ghost" onclick="location.reload()">Ya me la pasaron, actualizar</button>
     </div>`;
@@ -225,13 +227,38 @@ function escucharTarjeta(){
   db.ref(`fidelizacion/tarjetas/${uid}`).on("value", s => {
     card = s.val();
     if (!card) return renderRegistro();
-    renderTarjeta();
+    programarRender();
   });
   db.ref(`fidelizacion/visitas/${uid}`).limitToLast(5).on("value", s => {
     visitas = Object.values(s.val() || {}).sort((a,b) => b.ts - a.ts);
-    if (card) renderTarjeta();
+    if (card) programarRender();
   });
 }
+
+// Los dos listeners llegan casi juntos: dibujar una sola vez para no cortar la animación
+function programarRender(){
+  clearTimeout(renderPendiente);
+  renderPendiente = setTimeout(renderTarjeta, 60);
+}
+
+function darVuelta(){
+  mostrarFrente = !mostrarFrente;
+  const t = document.getElementById("ftj");
+  if (t) t.classList.toggle("frente", mostrarFrente);
+}
+
+function agrandarQr(){
+  document.getElementById("modal").innerHTML = `
+    <div class="modal" onclick="cerrarModal()">
+      <div class="panel" onclick="event.stopPropagation()">
+        <h2>Tu código Club Candela</h2>
+        <div class="qrgrande">${Fidel.qrSvg(Fidel.qrDeTarjeta(uid))}</div>
+        <p class="muted">${esc(card.nombre)}<br>Mostralo en caja para canjear tus premios.</p>
+        <button class="btn btn-ghost" onclick="cerrarModal()">Cerrar</button>
+      </div>
+    </div>`;
+}
+function cerrarModal(){ document.getElementById("modal").innerHTML = ""; }
 
 function renderTarjeta(){
   const meta = config.sellosPremio;
@@ -241,54 +268,57 @@ function renderTarjeta(){
   const llenos = premios > 0 ? meta : enCurso;
   const faltan = meta - enCurso;
   const extra = premios > 0 ? card.sellos - meta : 0;
-
-  const stamps = Array.from({ length: meta }, (_, i) => {
-    const on = i < llenos;
-    const nuevo = on && selloNuevo && i === llenos - 1;
-    return `<div class="stamp${on ? " on" : ""}${nuevo ? " new" : ""}">${on ? '<img src="img/logo.png" alt="">' : i + 1}</div>`;
-  }).join("");
+  const animar = selloNuevo && llenos > 0;
 
   app.innerHTML = `
     ${banner ? `<div class="banner ${banner.tipo}"><span class="ico">${banner.tipo === "ok" ? "🎉" : "ℹ️"}</span><span>${esc(banner.texto)}</span></div>` : ""}
+    <div class="tarjeta-wrap" onclick="darVuelta()">
+      ${Fidel.tarjetaHtml({
+        nombre: card.nombre, sellos: llenos, meta, premio: config.premio,
+        qrText: Fidel.qrDeTarjeta(uid), qrClick: "agrandarQr()",
+        nuevo: animar ? llenos - 1 : -1,
+        frente: animar || mostrarFrente,
+      })}
+    </div>
+    <div class="tarjeta-acciones">
+      <div class="progreso"><b>${llenos}/${meta}</b><span>visitas</span></div>
+      <button class="link" onclick="darVuelta()">↻ Dar vuelta</button>
+    </div>
     ${premios > 0 ? `
       <div class="premio">
-        <div class="big">🎁</div>
-        <b>¡Tenés ${premios > 1 ? premios + " premios" : "un premio"}!</b>
-        <div>${esc(config.premio)}</div>
-        <div class="muted" style="color:#b9b6a3;margin-top:8px">Mostrale tu código de abajo al personal para canjearlo.</div>
-      </div>` : ""}
-    <div class="card">
-      <h1>Hola, ${esc(card.nombre.split(" ")[0])} 👋</h1>
-      <div class="stamps">${stamps}</div>
-      <p class="progress">${premios > 0
-        ? `¡Tarjeta completa! Canjeá tu premio.${extra > 0 ? ` Ya tenés <b>${extra} sello${extra === 1 ? "" : "s"}</b> para la próxima.` : ""}`
-        : `Te ${faltan === 1 ? "falta <b>1 sello</b>" : `faltan <b>${faltan} sellos</b>`} para: <b>${esc(config.premio)}</b>`}</p>
-    </div>
-    <div class="card qrbox">
-      <h2>Tu código Club Candela</h2>
-      <div class="qr">${Fidel.qrSvg(Fidel.qrDeTarjeta(uid))}</div>
-      <p class="muted">Mostralo en caja para canjear premios.</p>
-    </div>
-    <div class="card">
+        <div class="ico">🎁</div>
+        <div><b>¡Completaste tu tarjeta!</b><span>Tenés ${premios > 1 ? premios + " premios" : "tu premio"}: ${esc(config.premio)}. Tocá el QR de tu tarjeta y mostralo en caja.${extra > 0 ? ` Ya tenés ${extra} sello${extra === 1 ? "" : "s"} para la próxima.` : ""}</span></div>
+      </div>` : `
+      <p class="muted" style="margin:-6px 2px 16px">Te ${faltan === 1 ? "falta <b>1 visita</b>" : `faltan <b>${faltan} visitas</b>`} para ${esc(config.premio)}.</p>`}
+    <div class="panel">
       <h2>¿Cómo sumo sellos?</h2>
       <ol class="steps">
         <li>Cada vez que venís, escaneá el QR de tu mesa o del mostrador.</li>
         <li>Se suma 1 sello por día (hasta ${config.topeSemanal} por semana).</li>
-        <li>Con ${meta} sellos, canjeás tu premio en caja.</li>
+        <li>Con ${meta} visitas, tocá el QR de tu tarjeta y mostralo en caja para canjear.</li>
       </ol>
-      <p class="muted" style="margin-top:10px">💡 <b>Guardá esta página</b> para tenerla a mano: en iPhone tocá <b>Compartir → Agregar a inicio</b>; en Android, <b>⋮ → Agregar a pantalla principal</b>.</p>
+      <p class="muted" style="margin-top:10px">💡 <b>Guardá tu tarjeta</b> en el celular: en iPhone tocá <b>Compartir → Agregar a inicio</b>; en Android, <b>⋮ → Agregar a pantalla principal</b>.</p>
     </div>
     ${visitas.length ? `
-      <div class="card">
+      <div class="panel">
         <h2>Tus últimas visitas</h2>
         <ul class="visitas">${visitas.map(v => `<li><span>${esc(locales[v.local]?.nombre || v.local)}</span><span class="muted">${Fidel.fmtFechaHora(v.ts)}</span></li>`).join("")}</ul>
       </div>` : ""}`;
+
+  if (animar) {
+    // Primero se ve el frente y la tarjeta se da vuelta sola; el sello nuevo cae al terminar el giro
+    mostrarFrente = false;
+    requestAnimationFrame(() => setTimeout(() => {
+      const t = document.getElementById("ftj");
+      if (t) t.classList.remove("frente");
+    }, 350));
+  }
   selloNuevo = false;
 }
 
 function renderSesionPersonal(){
   app.innerHTML = `
-    <div class="card center">
+    <div class="panel center">
       <div style="font-size:38px">🧑‍🍳</div>
       <h1>Sesión del personal abierta</h1>
       <p class="muted">Este navegador tiene abierta la sesión del personal de Candela. La tarjeta del Club se usa desde el celular del cliente.</p>
