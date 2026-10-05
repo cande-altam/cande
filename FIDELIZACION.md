@@ -11,7 +11,7 @@ La tarjeta digital es una **réplica de la tarjeta física** (mismo arte, armado
 | **Cliente** | Escanea el QR de la mesa → la primera vez completa sus datos y elige un **PIN de 4 números** → se suma el sello del día. Desde otro celular o navegador entra con **“¿Ya tenés tarjeta?”** (WhatsApp + PIN). |
 | **Mozos** | Nada. |
 | **Caja** | Cuando el cliente tiene premio, escanea el código de su tarjeta (o lo busca por WhatsApp) en **⭐ Club → Atender** y toca **Entregar premio**. |
-| **Encargado** | Mira la base de socios, cumpleaños próximos y clientes inactivos, exporta a CSV, imprime los QR y ajusta el premio y los límites. |
+| **Encargado** | En **👥 Clientes** ve la base unificada (pedidos + Club, cruzados por WhatsApp): socios, premios pendientes, cumpleaños próximos y clientes inactivos, y exporta a CSV. En ⭐ Club imprime los QR y ajusta el premio y los límites. |
 
 ### Controles de seguridad
 Las **reglas de la base de datos** (`database.rules.json`) aplican estos controles. Nadie puede saltearlos desde el celular, aunque sepa programar.
@@ -71,6 +71,16 @@ Subí los archivos nuevos junto con `index.html` (Netlify o donde esté publicad
 4. Probalo con tu celular antes de ponerlo en las mesas.
 
 ---
+
+## Base de clientes unificada (👥 Clientes)
+
+La pestaña **👥 Clientes** junta en un solo lugar a los clientes de pedidos y a los socios del Club:
+
+- Se cruzan por **WhatsApp**. Los teléfonos de pedidos se normalizan a 10 números, así que "0387 15 400-1122", "+54 9 387 4001122" y "387 4001122" cuentan como la misma persona. Si alguien fue cargado con nombres distintos, aparece "También cargado como…".
+- Cada cliente muestra sus pedidos (productos más pedidos e historial) y, si es socio, sus sellos, visitas, premios canjeados y cumpleaños, con el botón **Abrir en ⭐ Club**.
+- Filtros: con pedidos, socios del Club, en ambas, premio pendiente, cumpleaños en 7 días y 30+ días sin venir. El **CSV** exporta la lista filtrada con el WhatsApp listo para campañas (549…).
+- Los datos del Club solo aparecen con la sesión del personal abierta en ⭐ Club. Sin sesión se ven solo los datos de pedidos.
+- No se modifica ni se mezcla nada en la base de datos: la unión se hace al mostrar la lista.
 
 ## Situaciones frecuentes
 

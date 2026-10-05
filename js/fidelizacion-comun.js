@@ -48,6 +48,34 @@ const Fidel = (() => {
     return /^\d{10}$/.test(d) ? d : null;
   }
 
+  // Para cruzar con los teléfonos que se cargan a mano en pedidos ("0387 15 412-3456",
+  // "+54 9 387 4123456", "387 412-3456"…): además saca el 15 después del código de área.
+  function normalizarTelefonoFlexible(raw) {
+    const n = normalizarTelefono(raw);
+    if (n) return n;
+    let d = String(raw || "").replace(/\D/g, "");
+    if (d.startsWith("54")) d = d.slice(2);
+    if (d.length === 13 && d.startsWith("9")) d = d.slice(1);
+    if (d.startsWith("0")) d = d.slice(1);
+    if (d.length === 12) {
+      for (const p of [3, 4, 2]) {
+        if (d.substr(p, 2) === "15") return d.slice(0, p) + d.slice(p + 2);
+      }
+    }
+    return null;
+  }
+
+  // Días que faltan para el próximo cumpleaños ("MM-DD"), contando desde hoy en Argentina
+  function diasHastaCumple(mmdd, now) {
+    if (!mmdd) return null;
+    const hoy = inicioDia(now) - TZ_MS;           // 00:00 ART expresado como fecha UTC
+    const anio = new Date(hoy).getUTCFullYear();
+    const [m, d] = mmdd.split("-").map(Number);
+    let prox = Date.UTC(anio, m - 1, d);
+    if (prox < hoy) prox = Date.UTC(anio + 1, m - 1, d);
+    return Math.round((prox - hoy) / DAY_MS);
+  }
+
   // Revisa si hoy se puede sumar un sello. Devuelve null si se puede,
   // o un texto explicando por qué no. Las reglas de Firebase hacen el
   // mismo control del lado del servidor: esto es solo para avisar lindo.
@@ -189,7 +217,7 @@ const Fidel = (() => {
     CASILLEROS, CONFIG_DEFAULT, LOCALES_DEFAULT,
     watchServerOffset, serverNow,
     inicioDia, inicioSemana, msDelDia,
-    normalizarTelefono, motivoSinSello, tarjetaConSello,
+    normalizarTelefono, normalizarTelefonoFlexible, diasHastaCumple, motivoSinSello, tarjetaConSello,
     qrDeTarjeta, uidDeQr, qrSvg, qrSvgMarca, tarjetaHtml,
     fmtFecha, fmtFechaHora, fmtCumple,
   };

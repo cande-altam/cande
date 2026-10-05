@@ -3,7 +3,7 @@
 // El personal ingresa con una cuenta de Firebase (email y
 // contraseña) habilitada en fidelizacion/staff/{uid}. Desde acá:
 // buscar/escanear clientes, entregar premios, pasar tarjetas a
-// otro celular, ver la base de clientes, imprimir los QR de mesa
+// otro celular, imprimir los QR de mesa
 // y configurar el programa.
 // Usa globals de index.html: db, e(), toast(), closeModal().
 // =============================================================
@@ -15,8 +15,6 @@ const Club = (() => {
   let locales = {};
   let tarjetas = {};           // uid -> tarjeta
   let tab = "atender";
-  let filtro = "todos";
-  let busqueda = "";
   let clienteUid = null;       // cliente abierto en "Atender"
   let visitasCliente = [];
   let pinCliente = null;       // true/false: si el cliente ya tiene PIN para entrar desde otro celular
@@ -82,6 +80,7 @@ const Club = (() => {
       }
       if (esStaff) await cargarDatos();
       if (currentView === "club") render();
+      if (currentView === "clientes") renderClientes();
     });
   }
 
@@ -109,7 +108,7 @@ const Club = (() => {
       db.ref("fidelizacion/locales").off();
       escuchando = false;
     }
-    tarjetas = {}; clienteUid = null;
+    tarjetas = {}; clienteUid = null; config = null;
     firebase.auth().signOut();
   }
 
@@ -130,16 +129,12 @@ const Club = (() => {
 
   // Llegaron datos nuevos: redibujar sin cortar el escáner ni lo que se está tipeando
   function refrescar() {
+    if (currentView === "clientes") return renderClientes();   // la base unificada usa estos datos
     if (currentView !== "club") return;
     const t = document.getElementById("club-tab");
     if (!t) return render();
     const editando = document.activeElement && t.contains(document.activeElement);
     if (tab === "atender") return renderCliente();
-    if (tab === "clientes" && editando) {
-      const l = document.getElementById("club-lista");
-      if (l) l.innerHTML = tablaClientes(clientesFiltrados());
-      return;
-    }
     if (tab === "config" && editando) return;
     render();
   }
@@ -153,7 +148,7 @@ const Club = (() => {
     if (!esStaff) return renderNoHabilitado(c);
     if (!config) { c.innerHTML = `<div class="card club-pad" style="text-align:center;color:var(--gray)">Cargando…</div>`; return; }
 
-    const tabs = [["atender", "🔎 Atender"], ["clientes", "👥 Clientes"], ["qr", "🖨️ QR de mesas"], ["config", "⚙️ Configuración"]];
+    const tabs = [["atender", "🔎 Atender"], ["qr", "🖨️ QR de mesas"], ["config", "⚙️ Configuración"]];
     c.innerHTML = `
       <div class="club-bar mb16">
         <div class="cuadra-tabs" style="margin-bottom:0;border-bottom:none">
@@ -164,7 +159,6 @@ const Club = (() => {
       <div id="club-tab"></div>`;
     const t = document.getElementById("club-tab");
     if (tab === "atender") renderAtender(t);
-    if (tab === "clientes") renderClientes(t);
     if (tab === "qr") renderQr(t);
     if (tab === "config") renderConfig(t);
   }
@@ -399,97 +393,6 @@ const Club = (() => {
     if (w) w.innerHTML = "";
   }
 
-  // ── Clientes ──────────────────────────────────────────────
-  function diasHastaCumple(mmdd, now) {
-    if (!mmdd) return null;
-    const hoy = new Date(Fidel.inicioDia(now) + 3 * 3600000); // 00:00 ART como fecha UTC
-    const [m, d] = mmdd.split("-").map(Number);
-    let prox = Date.UTC(hoy.getUTCFullYear(), m - 1, d);
-    if (prox < hoy.getTime()) prox = Date.UTC(hoy.getUTCFullYear() + 1, m - 1, d);
-    return Math.round((prox - hoy.getTime()) / 86400000);
-  }
-
-  function listaClientes() {
-    const now = Fidel.serverNow();
-    const meta = config.sellosPremio;
-    return Object.entries(tarjetas).map(([uid, c]) => ({
-      uid, ...c,
-      premio: c.sellos >= meta,
-      cumpleEn: diasHastaCumple(c.cumple, now),
-      diasSinVenir: c.ultimoSello ? Math.floor((now - c.ultimoSello) / 86400000) : null,
-    }));
-  }
-
-  const FILTROS = {
-    todos:    ["Todos", () => true],
-    premio:   ["🎁 Con premio", c => c.premio],
-    cumple:   ["🎂 Cumple en 7 días", c => c.cumpleEn !== null && c.cumpleEn <= 7],
-    inactivo: ["💤 30+ días sin venir", c => c.diasSinVenir !== null && c.diasSinVenir >= 30],
-    nuevos:   ["🆕 Sin visitas", c => !c.ultimoSello],
-  };
-
-  function clientesFiltrados() {
-    const q = busqueda.toLowerCase().trim();
-    return listaClientes()
-      .filter(FILTROS[filtro][1])
-      .filter(c => !q || c.nombre.toLowerCase().includes(q) || c.telefono.includes(q.replace(/\D/g, "") || "~"))
-      .sort((a, b) => filtro === "cumple" ? a.cumpleEn - b.cumpleEn : (b.ultimoSello || b.creada) - (a.ultimoSello || a.creada));
-  }
-
-  function renderClientes(t) {
-    const todos = listaClientes();
-    const n = f => todos.filter(FILTROS[f][1]).length;
-    const lista = clientesFiltrados();
-    t.innerHTML = `
-      <div class="stats-row">
-        ${[["Socios", todos.length], ["Premios por canjear", n("premio")], ["Cumples en 7 días", n("cumple")], ["30+ días sin venir", n("inactivo")]]
-          .map(([l, v]) => `<div class="scard"><div class="fl" style="margin-bottom:4px">${l}</div><div style="font-size:26px;font-weight:800;color:var(--terra)">${v}</div></div>`).join("")}
-      </div>
-      <div class="club-bar mb16">
-        <div class="club-chips" style="margin:0">${Object.entries(FILTROS).map(([k, [l]]) => `<button class="club-chip${filtro === k ? " on" : ""}" onclick="Club.setFiltro('${k}')">${l}</button>`).join("")}</div>
-        <div class="fxc">
-          <input class="fc" style="width:220px" placeholder="🔍 Nombre o teléfono" value="${e(busqueda)}" oninput="Club.setBusqueda(this.value)">
-          <button class="btn btn-ghost btn-sm" onclick="Club.exportarCsv()">⬇️ CSV</button>
-        </div>
-      </div>
-      <div class="card club-tablewrap" id="club-lista">${tablaClientes(lista)}</div>`;
-  }
-
-  function tablaClientes(lista) {
-    if (!lista.length) return `<div class="club-pad" style="text-align:center;color:var(--gray)">${Object.keys(tarjetas).length ? "No hay clientes con ese filtro." : "Todavía no hay socios. Imprimí los QR de mesa desde la pestaña “QR de mesas”."}</div>`;
-    return `<table class="otbl" style="margin:0"><thead><tr><th>Nombre</th><th>WhatsApp</th><th>Cumple</th><th>Sellos</th><th>Visitas</th><th>Última visita</th><th>Local</th></tr></thead><tbody>
-      ${lista.map(c => `<tr class="club-row" onclick="Club.abrirCliente('${e(c.uid)}')">
-        <td><b style="font-weight:600">${e(c.nombre)}</b>${c.premio ? " 🎁" : ""}</td>
-        <td>${e(c.telefono)}</td>
-        <td>${Fidel.fmtCumple(c.cumple)}${c.cumpleEn !== null && c.cumpleEn <= 7 ? ` <span class="badge b-pending">${c.cumpleEn === 0 ? "¡hoy!" : "en " + c.cumpleEn + "d"}</span>` : ""}</td>
-        <td>${c.sellos}</td>
-        <td>${c.totalSellos}</td>
-        <td>${c.ultimoSello ? Fidel.fmtFecha(c.ultimoSello) + (c.diasSinVenir >= 30 ? ` <span class="badge b-producing">${c.diasSinVenir}d</span>` : "") : "—"}</td>
-        <td>${e(locales[c.ultimoLocal]?.nombre || "—")}</td>
-      </tr>`).join("")}</tbody></table>`;
-  }
-
-  function setFiltro(f) { filtro = f; render(); }
-  function setBusqueda(v) {
-    busqueda = v;
-    const l = document.getElementById("club-lista");
-    if (l) l.innerHTML = tablaClientes(clientesFiltrados());
-  }
-
-  function exportarCsv() {
-    const lista = clientesFiltrados();
-    const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const filas = [["Nombre", "WhatsApp", "Cumpleaños", "Sellos", "Visitas totales", "Premios canjeados", "Última visita", "Último local", "Socio desde"]]
-      .concat(lista.map(c => [c.nombre, "549" + c.telefono, Fidel.fmtCumple(c.cumple), c.sellos, c.totalSellos, c.canjes,
-        c.ultimoSello ? Fidel.fmtFecha(c.ultimoSello) : "", locales[c.ultimoLocal]?.nombre || "", Fidel.fmtFecha(c.creada)]));
-    const blob = new Blob(["﻿" + filas.map(f => f.map(q).join(";")).join("\r\n")], { type: "text/csv;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `club-candela-${filtro}.csv`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  }
-
   // ── QR de mesas ───────────────────────────────────────────
   function urlTarjeta(local) {
     const base = location.origin + location.pathname.replace(/[^/]*$/, "");
@@ -613,11 +516,23 @@ const Club = (() => {
         </div>
       </div></div>`;
   }
+  // Datos del Club para la base unificada de 👥 Clientes (solo con sesión del personal)
+  function datos() {
+    return { activo: esStaff && !!config, tarjetas, config, locales };
+  }
+
+  // Abrir un socio en ⭐ Club → Atender (desde 👥 Clientes)
+  function irACliente(uid) {
+    tab = "atender";
+    App.show("club");
+    abrirCliente(uid);
+  }
+
   function confirmarOk() { const cb = confirmarCb; confirmarCb = null; closeModal(); if (cb) cb(); }
 
   return {
     init, render, setTab, logout, buscarTel, abrirCliente, cerrarCliente, canjear,
-    escanear, detenerEscaner, asignarPin, guardarPin, setFiltro, setBusqueda, exportarCsv, imprimirQr,
+    escanear, detenerEscaner, asignarPin, guardarPin, imprimirQr, datos, irACliente,
     guardarConfig, guardarLocales, confirmarOk,
   };
 })();

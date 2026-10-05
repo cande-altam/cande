@@ -460,12 +460,15 @@ textarea.fc{resize:vertical;min-height:56px}
 
 <div class="view" id="view-clientes">
   <div class="sh" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-    <div><div class="st">👥 Base de Clientes</div><div class="ss">Historial de pedidos por cliente para promociones y ofertas personalizadas</div></div>
+    <div><div class="st">👥 Base de Clientes</div><div class="ss">Pedidos y Club Candela en un solo lugar, unificados por WhatsApp</div></div>
     <div class="fxc gap6">
-      <div class="msearch-wrap" style="width:260px"><span class="msearch-ico">🔍</span><input class="fc msearch" id="cl-search" placeholder="Buscar cliente o teléfono..." oninput="renderClientes(this.value)"></div>
+      <div class="msearch-wrap" style="width:260px"><span class="msearch-ico">🔍</span><input class="fc msearch" id="cl-search" placeholder="Buscar cliente o teléfono..." oninput="renderClientes()"></div>
+      <button class="btn btn-ghost btn-sm" onclick="exportarClientesCsv()">⬇️ CSV</button>
     </div>
   </div>
+  <div id="cl-club-banner"></div>
   <div class="stats-row" id="cl-stats"></div>
+  <div class="club-chips" id="cl-chips"></div>
   <div id="cl-list"></div>
 </div>
 
@@ -993,76 +996,148 @@ function saveClient(order, orderId){
   });
 }
 
-function renderClientes(search=''){
+// ── Base unificada: clientes de pedidos + socios del Club Candela ──
+// Se cruzan por WhatsApp normalizado (10 números). Los datos del Club solo
+// aparecen con la sesión del personal abierta en ⭐ Club.
+let clFiltro='todos';
+
+const CL_FILTROS={
+  todos:   ['Todos',              ()=>true],
+  pedidos: ['🛍 Con pedidos',      c=>c.enPedidos],
+  club:    ['⭐ Socios Club',      c=>c.enClub, true],
+  ambas:   ['🔗 En ambas',         c=>c.enPedidos&&c.enClub, true],
+  premio:  ['🎁 Premio pendiente', c=>c.premio, true],
+  cumple:  ['🎂 Cumple en 7 días', c=>c.cumpleEn!==null&&c.cumpleEn<=7, true],
+  inactivo:['💤 30+ días sin venir',c=>c.ultimaActividad&&Date.now()-c.ultimaActividad>=30*86400000],
+};
+
+function clientesUnificados(){
+  const club=(typeof Club!=='undefined')?Club.datos():{activo:false};
+  const map=new Map();
+  const nuevo=(key,tel,telRaw)=>({key,tel,telRaw,nombres:[],registros:[],club:null,clubUid:null});
+  clients.forEach(c=>{
+    const tel=Fidel.normalizarTelefonoFlexible(c.phone);
+    const k=tel?'t'+tel:'k'+String(c.key||c.name).replace(/[^a-zA-Z0-9_]/g,'');
+    if(!map.has(k)) map.set(k,nuevo(k,tel,c.phone||''));
+    const u=map.get(k); u.registros.push(c); u.nombres.push(c.name);
+  });
+  if(club.activo) Object.entries(club.tarjetas||{}).forEach(([uid,t])=>{
+    const k='t'+t.telefono;
+    if(!map.has(k)) map.set(k,nuevo(k,t.telefono,t.telefono));
+    const u=map.get(k); u.club=t; u.clubUid=uid; u.nombres.push(t.nombre);
+  });
+  const meta=(club.config&&club.config.sellosPremio)||10;
+  const now=Fidel.serverNow();
+  return [...map.values()].map(u=>{
+    const orderIds=Object.assign({},...u.registros.map(c=>c.orderIds||{}));
+    const ords=orders.filter(o=>orderIds[o.id]).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    const totalOrders=u.registros.reduce((s,c)=>s+(c.totalOrders||0),0);
+    const lastOrderMs=Math.max(0,...u.registros.map(c=>new Date(c.lastOrderAt||0).getTime()||0));
+    const ultimoReg=[...u.registros].sort((a,b)=>new Date(b.lastOrderAt||0)-new Date(a.lastOrderAt||0))[0];
+    const nombre=(u.club&&u.club.nombre)||(ultimoReg&&ultimoReg.name)||'Sin nombre';
+    const vistos=new Set([nombre.toLowerCase().trim()]);
+    const otrosNombres=u.nombres.filter(n=>{const k=(n||'').toLowerCase().trim(); if(!k||vistos.has(k))return false; vistos.add(k); return true;});
+    return {...u,nombre,otrosNombres,ords,totalOrders,lastOrderMs,meta,
+      enPedidos:u.registros.length>0, enClub:!!u.club,
+      premio:!!u.club&&u.club.sellos>=meta,
+      cumpleEn:u.club?Fidel.diasHastaCumple(u.club.cumple,now):null,
+      ultimaActividad:Math.max(lastOrderMs,(u.club&&u.club.ultimoSello)||0)};
+  });
+}
+
+function clientesFiltrados(lista){
+  const inp=document.getElementById('cl-search');
+  const q=((inp&&inp.value)||'').toLowerCase().trim();
+  const qd=q.replace(/\D/g,'');
+  return lista
+    .filter(CL_FILTROS[clFiltro][1])
+    .filter(c=>!q||c.nombre.toLowerCase().includes(q)||c.otrosNombres.some(n=>n.toLowerCase().includes(q))||(qd&&((c.tel||'').includes(qd)||(c.telRaw||'').replace(/\D/g,'').includes(qd))))
+    .sort((a,b)=>clFiltro==='cumple'?a.cumpleEn-b.cumpleEn:b.ultimaActividad-a.ultimaActividad);
+}
+
+function setClFiltro(f){ clFiltro=f; renderClientes(); }
+
+function renderClientes(){
   const listEl=document.getElementById('cl-list');
   const statsEl=document.getElementById('cl-stats');
+  const chipsEl=document.getElementById('cl-chips');
+  const bannerEl=document.getElementById('cl-club-banner');
   if(!listEl) return;
+  const club=(typeof Club!=='undefined')?Club.datos():{activo:false};
+  if(!club.activo&&CL_FILTROS[clFiltro][2]) clFiltro='todos';
+  const todos=clientesUnificados();
+  const filtered=clientesFiltrados(todos);
+  const n=f=>todos.filter(CL_FILTROS[f][1]).length;
+  const sc=(lbl,v)=>`<div class="scard"><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${lbl}</div><div style="font-size:26px;font-weight:800;color:var(--terra)">${v}</div></div>`;
 
-  const q=(search||'').toLowerCase().trim();
-  const filtered=q
-    ? clients.filter(c=>c.name.toLowerCase().includes(q)||(c.phone||'').includes(q))
-    : clients;
-
-  // Stats
-  if(statsEl){
-    const totalPedidos=clients.reduce((s,c)=>s+(c.totalOrders||0),0);
-    statsEl.innerHTML=`
-      <div class="scard"><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Clientes registrados</div><div style="font-size:26px;font-weight:800;color:var(--terra)">${clients.length}</div></div>
-      <div class="scard"><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Pedidos totales</div><div style="font-size:26px;font-weight:800;color:var(--terra)">${totalPedidos}</div></div>
-      <div class="scard"><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Prom. pedidos/cliente</div><div style="font-size:26px;font-weight:800;color:var(--terra)">${clients.length?Math.round(totalPedidos/clients.length*10)/10:0}</div></div>`;
-  }
+  if(bannerEl) bannerEl.innerHTML=club.activo?'':`
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--cream-mid)">
+      <div style="font-size:13px">⭐ Para sumar los datos del <b>Club Candela</b> (sellos, visitas y cumpleaños), ingresá en ⭐ Club con la cuenta del personal.</div>
+      <button class="btn btn-primary btn-sm" onclick="App.show('club')">Ir a ⭐ Club</button>
+    </div>`;
+  if(statsEl) statsEl.innerHTML=club.activo
+    ? sc('Clientes',todos.length)+sc('Con pedidos',n('pedidos'))+sc('Socios Club',n('club'))+sc('En ambas',n('ambas'))
+    : sc('Clientes',todos.length)+sc('Pedidos totales',todos.reduce((s,c)=>s+c.totalOrders,0))+sc('Prom. pedidos/cliente',todos.length?(todos.reduce((s,c)=>s+c.totalOrders,0)/todos.length).toFixed(1):0);
+  if(chipsEl) chipsEl.innerHTML=Object.entries(CL_FILTROS).filter(([,f])=>club.activo||!f[2])
+    .map(([k,[l]])=>`<button class="club-chip${clFiltro===k?' on':''}" onclick="setClFiltro('${k}')">${l} <span style="opacity:.6">${n(k)}</span></button>`).join('');
 
   if(!filtered.length){
-    listEl.innerHTML='<div class="card" style="text-align:center;padding:40px;color:var(--muted)">'+(q?'No se encontraron clientes para "'+e(q)+'"':'Todavía no hay clientes registrados. Los clientes se guardan automáticamente al enviar pedidos.')+'</div>';
+    listEl.innerHTML='<div class="card" style="text-align:center;padding:40px;color:var(--muted)">'+(todos.length?'No hay clientes con ese filtro o búsqueda.':'Todavía no hay clientes. Se suman solos al cargar pedidos con teléfono o cuando alguien se registra en el Club.')+'</div>';
     return;
   }
-
-  listEl.innerHTML=filtered.map(cl=>{
-    const initials=cl.name.trim().split(/\s+/).map(w=>w[0]||'').slice(0,2).join('').toUpperCase()||'?';
-    const clientOrders=orders.filter(o=>{
-      if(!cl.orderIds) return false;
-      return cl.orderIds[o.id];
-    });
-    // Build product frequency map
+  listEl.innerHTML=filtered.slice(0,300).map(cl=>{
+    const initials=cl.nombre.trim().split(/\s+/).map(w=>w[0]||'').slice(0,2).join('').toUpperCase()||'?';
     const prodFreq={};
-    clientOrders.forEach(o=>{
-      if(o.items) Object.values(o.items).forEach(it=>{
-        const k=it.name;
-        prodFreq[k]=(prodFreq[k]||0)+(it.qty||1);
-      });
-    });
+    cl.ords.forEach(o=>{ if(o.items) Object.values(o.items).forEach(it=>{ prodFreq[it.name]=(prodFreq[it.name]||0)+(it.qty||1); }); });
     const topProds=Object.entries(prodFreq).sort((a,b)=>b[1]-a[1]).slice(0,8);
-    const lastOrder=clientOrders.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))[0];
+    const c=cl.club;
+    const telTxt=cl.tel?`${cl.tel.slice(0,3)} ${cl.tel.slice(3,6)} ${cl.tel.slice(6)}`:cl.telRaw;
+    const badge=(txt,bg,fg)=>`<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;background:${bg};color:${fg};margin-left:6px;vertical-align:2px">${txt}</span>`;
+    const meta=[
+      telTxt?'📞 '+e(telTxt):'',
+      c&&c.cumple?'🎂 '+Fidel.fmtCumple(c.cumple)+(cl.cumpleEn!==null&&cl.cumpleEn<=7?(cl.cumpleEn===0?' ¡hoy!':' (en '+cl.cumpleEn+'d)'):''):'',
+      cl.enPedidos?'Último pedido: '+(cl.lastOrderMs?fdate(new Date(cl.lastOrderMs).toISOString()):'—'):'',
+      c?'Última visita: '+(c.ultimoSello?Fidel.fmtFecha(c.ultimoSello):'—'):'',
+    ].filter(Boolean).join(' · ');
     return `
       <div class="cl-card">
         <div class="cl-head" onclick="toggleCliente('${cl.key}')">
-          <div class="cl-avatar">${initials}</div>
+          <div class="cl-avatar">${e(initials)}</div>
           <div class="cl-info">
-            <div class="cl-name">${e(cl.name)}</div>
-            <div class="cl-meta">${cl.phone?'📞 '+e(cl.phone)+' · ':''} Último pedido: ${lastOrder?fdate(lastOrder.createdAt):'—'}</div>
+            <div class="cl-name">${e(cl.nombre)}${c?badge('⭐ Club','var(--terra-pale)','var(--terra-dark)'):''}${cl.premio?badge('🎁 Premio','#FEF3C7','#92400E'):''}</div>
+            <div class="cl-meta">${meta}</div>
           </div>
           <div class="cl-stats">
-            <div class="cl-stat"><div class="cl-stat-num">${cl.totalOrders||0}</div><div class="cl-stat-lbl">Pedidos</div></div>
-            <div class="cl-stat"><div class="cl-stat-num">${topProds.length}</div><div class="cl-stat-lbl">Productos</div></div>
+            <div class="cl-stat"><div class="cl-stat-num">${cl.totalOrders}</div><div class="cl-stat-lbl">Pedidos</div></div>
+            ${c?`<div class="cl-stat"><div class="cl-stat-num">${Math.min(c.sellos,cl.meta)}/${cl.meta}</div><div class="cl-stat-lbl">Sellos</div></div>`:''}
           </div>
           <span style="color:var(--light);font-size:13px;margin-left:10px" id="cl-arrow-${cl.key}">›</span>
         </div>
         <div class="cl-body" id="cl-body-${cl.key}">
+          ${cl.otrosNombres.length?`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">También cargado como: ${cl.otrosNombres.map(e).join(', ')}</div>`:''}
+          ${c?`
+            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">⭐ Club Candela</div>
+            <div class="stats-row" style="margin-bottom:10px">
+              <div class="scard" style="padding:10px 12px"><div class="cl-stat-num">${c.sellos}</div><div class="cl-stat-lbl">Sellos actuales</div></div>
+              <div class="scard" style="padding:10px 12px"><div class="cl-stat-num">${c.totalSellos}</div><div class="cl-stat-lbl">Visitas totales</div></div>
+              <div class="scard" style="padding:10px 12px"><div class="cl-stat-num">${c.canjes||0}</div><div class="cl-stat-lbl">Premios canjeados</div></div>
+              <div class="scard" style="padding:10px 12px"><div class="cl-stat-num" style="font-size:14px">${Fidel.fmtFecha(c.creada)}</div><div class="cl-stat-lbl">Socio desde</div></div>
+            </div>
+            <div class="fxc gap6" style="margin-bottom:14px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="Club.irACliente('${cl.clubUid}')">Abrir en ⭐ Club</button>
+              <a class="btn btn-ghost btn-sm" href="https://wa.me/549${cl.tel}" target="_blank" rel="noopener" style="text-decoration:none">💬 WhatsApp</a>
+            </div>`:(cl.tel?`<div class="fxc gap6" style="margin-bottom:14px"><a class="btn btn-ghost btn-sm" href="https://wa.me/549${cl.tel}" target="_blank" rel="noopener" style="text-decoration:none">💬 WhatsApp</a>${club.activo?'<span style="font-size:12px;color:var(--muted)">Todavía no es socio del Club</span>':''}</div>`:'')}
           ${topProds.length?`
             <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Productos más pedidos</div>
             <div class="cl-prods">
-              ${topProds.map(([name,qty])=>`
-                <div class="cl-prod-chip">
-                  <span>${e(name)}</span>
-                  <span class="cl-prod-count">x${qty}</span>
-                </div>`).join('')}
-            </div>`:'<div style="color:var(--muted);font-size:13px">Sin productos registrados aún</div>'}
-          ${clientOrders.length?`
+              ${topProds.map(([name,qty])=>`<div class="cl-prod-chip"><span>${e(name)}</span><span class="cl-prod-count">x${qty}</span></div>`).join('')}
+            </div>`:(cl.enPedidos?'<div style="color:var(--muted);font-size:13px">Sin productos registrados aún</div>':'')}
+          ${cl.ords.length?`
             <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px">Historial de pedidos</div>
             <table class="otbl">
               <thead><tr><th>#</th><th>Fecha</th><th>Entrega</th><th>Local</th><th>Items</th><th>Estado</th></tr></thead>
               <tbody>
-                ${clientOrders.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,10).map(o=>{
+                ${cl.ords.slice(0,10).map(o=>{
                   const items=o.items?Object.values(o.items):[];
                   const statusLabel=o.status==='pending'?'Pendiente':o.status==='progress'?'En proceso':o.status==='producing'?'Produciendo':o.status==='ready'?'Listo':'—';
                   return `<tr>
@@ -1070,7 +1145,7 @@ function renderClientes(search=''){
                     <td>${fdate(o.createdAt)}</td>
                     <td>${fdt(o.deliveryDateTime)}</td>
                     <td>${e(o.local||'')}</td>
-                    <td style="font-size:12px">${items.map(it=>it.name+' x'+it.qty).join(', ')}</td>
+                    <td style="font-size:12px">${items.map(it=>e(it.name)+' x'+it.qty).join(', ')}</td>
                     <td><span class="badge ${o.status==='pending'?'b-pending':o.status==='ready'?'b-ready':'b-producing'}"><span class="bdot"></span>${statusLabel}</span></td>
                   </tr>`;
                 }).join('')}
@@ -1078,7 +1153,22 @@ function renderClientes(search=''){
             </table>`:''}
         </div>
       </div>`;
-  }).join('');
+  }).join('')+(filtered.length>300?`<div style="text-align:center;color:var(--muted);font-size:12px;padding:10px">Mostrando 300 de ${filtered.length}. Usá la búsqueda o los filtros para ver el resto.</div>`:'');
+}
+
+function exportarClientesCsv(){
+  const lista=clientesFiltrados(clientesUnificados());
+  const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const filas=[['Nombre','WhatsApp','Cumpleaños','Pedidos','Último pedido','Socio Club','Sellos actuales','Visitas Club','Premios canjeados','Última visita Club','Otros nombres']]
+    .concat(lista.map(c=>[c.nombre, c.tel?'549'+c.tel:c.telRaw, c.club&&c.club.cumple?Fidel.fmtCumple(c.club.cumple):'', c.totalOrders,
+      c.lastOrderMs?fdate(new Date(c.lastOrderMs).toISOString()):'', c.enClub?'Sí':'No', c.club?c.club.sellos:'', c.club?c.club.totalSellos:'',
+      c.club?(c.club.canjes||0):'', c.club&&c.club.ultimoSello?Fidel.fmtFecha(c.club.ultimoSello):'', c.otrosNombres.join(' / ')]));
+  const blob=new Blob(['﻿'+filas.map(f=>f.map(q).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`clientes-candela-${clFiltro}.csv`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
 function toggleCliente(key){
