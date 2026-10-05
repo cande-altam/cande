@@ -19,6 +19,7 @@ const Club = (() => {
   let busqueda = "";
   let clienteUid = null;       // cliente abierto en "Atender"
   let visitasCliente = [];
+  let pinCliente = null;       // true/false: si el cliente ya tiene PIN para entrar desde otro celular
   let escuchando = false;
   let scanner = null;
   let authListo = false;
@@ -223,9 +224,12 @@ const Club = (() => {
   async function abrirCliente(uid) {
     clienteUid = uid;
     visitasCliente = [];
+    pinCliente = null;
     if (tab !== "atender") { tab = "atender"; render(); } else renderCliente();
     const s = await db.ref(`fidelizacion/visitas/${uid}`).limitToLast(15).once("value");
     visitasCliente = Object.values(s.val() || {}).sort((a, b) => b.ts - a.ts);
+    const c = tarjetas[uid];
+    if (c) pinCliente = (await db.ref(`fidelizacion/pines/${c.telefono}`).once("value")).exists();
     renderCliente();
   }
 
@@ -261,7 +265,9 @@ const Club = (() => {
           <div><b>${c.ultimoSello ? Fidel.fmtFecha(c.ultimoSello) : "—"}</b><span>Última visita</span></div>
         </div>
         <div class="club-actions">
+          <button class="btn btn-ghost btn-sm" onclick="Club.asignarPin()">🔑 ${pinCliente ? "Asignar PIN nuevo" : "Asignar PIN"}</button>
           <button class="btn btn-ghost btn-sm" onclick="Club.escanear('transferir')">📱 Pasar a otro celular</button>
+          <span class="club-meta">${pinCliente === null ? "" : pinCliente ? "✅ Tiene PIN" : "⚠️ Todavía no tiene PIN"}</span>
         </div>
         ${visitasCliente.length ? `
           <div class="fl" style="margin:18px 0 8px">Últimas visitas</div>
@@ -310,6 +316,38 @@ const Club = (() => {
         abrirCliente(nuevoUid);
       } catch (err) { console.error(err); toast("⚠️ No se pudo pasar la tarjeta"); }
     });
+  }
+
+  // El cliente perdió el acceso (otro celular/navegador) o se olvidó el PIN:
+  // se le asigna uno nuevo y entra desde su celular con "¿Ya tenés tarjeta?"
+  function asignarPin() {
+    const c = tarjetas[clienteUid];
+    if (!c) return;
+    document.getElementById("modal-root").innerHTML = `
+      <div class="mbackdrop"><div class="modal">
+        <div class="mtitle">🔑 PIN para ${e(c.nombre)}</div>
+        <div class="msub">Pedile al cliente que elija 4 números. Después, en su celular, toca <b>“¿Ya tenés tarjeta?”</b> y entra con su WhatsApp y este PIN.</div>
+        <input class="fc" id="club-pin" type="tel" inputmode="numeric" maxlength="4" placeholder="4 números" style="font-size:22px;letter-spacing:8px;text-align:center;width:100%">
+        <div id="club-pin-err" style="color:#b83a25;font-size:13px;min-height:18px;margin-top:6px"></div>
+        <div class="fxc" style="justify-content:flex-end;margin-top:8px">
+          <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+          <button class="btn btn-primary" onclick="Club.guardarPin()">Guardar PIN</button>
+        </div>
+      </div></div>`;
+    document.getElementById("club-pin").focus();
+  }
+
+  async function guardarPin() {
+    const c = tarjetas[clienteUid];
+    const pin = document.getElementById("club-pin").value.trim();
+    if (!/^\d{4}$/.test(pin)) { document.getElementById("club-pin-err").textContent = "Tienen que ser 4 números."; return; }
+    try {
+      await db.ref(`fidelizacion/pines/${c.telefono}`).set(pin);
+      pinCliente = true;
+      closeModal();
+      toast(`✅ PIN guardado para ${c.nombre}`);
+      renderCliente();
+    } catch (err) { console.error(err); toast("⚠️ No se pudo guardar el PIN"); }
   }
 
   // ── Escáner de QR (cámara) ────────────────────────────────
@@ -579,7 +617,7 @@ const Club = (() => {
 
   return {
     init, render, setTab, logout, buscarTel, abrirCliente, cerrarCliente, canjear,
-    escanear, detenerEscaner, setFiltro, setBusqueda, exportarCsv, imprimirQr,
+    escanear, detenerEscaner, asignarPin, guardarPin, setFiltro, setBusqueda, exportarCsv, imprimirQr,
     guardarConfig, guardarLocales, confirmarOk,
   };
 })();

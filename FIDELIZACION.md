@@ -8,7 +8,7 @@ La tarjeta digital es una **réplica de la tarjeta física** (mismo arte, armado
 
 | Quién | Qué hace |
 |---|---|
-| **Cliente** | Escanea el QR de la mesa → la primera vez completa sus datos → se suma el sello del día. Guarda la página en la pantalla de inicio del celular. |
+| **Cliente** | Escanea el QR de la mesa → la primera vez completa sus datos y elige un **PIN de 4 números** → se suma el sello del día. Desde otro celular o navegador entra con **“¿Ya tenés tarjeta?”** (WhatsApp + PIN). |
 | **Mozos** | Nada. |
 | **Caja** | Cuando el cliente tiene premio, escanea el código de su tarjeta (o lo busca por WhatsApp) en **⭐ Club → Atender** y toca **Entregar premio**. |
 | **Encargado** | Mira la base de socios, cumpleaños próximos y clientes inactivos, exporta a CSV, imprime los QR y ajusta el premio y los límites. |
@@ -18,7 +18,7 @@ Las **reglas de la base de datos** (`database.rules.json`) aplican estos control
 
 - **1 sello por día** por cliente.
 - **Tope semanal** (por defecto 4) y **horario de atención**: fuera de horario no se suman sellos.
-- **Un WhatsApp = una tarjeta.** Cada tarjeta queda atada al celular donde se creó.
+- **Un WhatsApp = una tarjeta.** La tarjeta se puede abrir en otros celulares o navegadores con el WhatsApp y el PIN. Para que nadie adivine un PIN probando, se permite **1 intento cada 10 segundos por número**, y el PIN no lo puede leer nadie más que el cliente y el personal.
 - **Privacidad:** un cliente solo puede ver su propia tarjeta. La lista de clientes, los teléfonos y las visitas solo los ve el personal habilitado.
 - **Nadie se suma sellos a mano** ni modifica la configuración. El premio solo lo descuenta el personal.
 - **Canje con el personal:** antes de entregar el premio, la caja ve el historial de visitas (fecha, hora y local) y detecta cualquier cosa rara.
@@ -74,8 +74,13 @@ Subí los archivos nuevos junto con `index.html` (Netlify o donde esté publicad
 
 ## Situaciones frecuentes
 
-**El cliente cambió de celular o borró los datos del navegador.**
-En el celular nuevo, abre la tarjeta y pone su WhatsApp. Le aparece "Ese número ya tiene tarjeta" con un código. En la caja: **Atender → buscar su WhatsApp → 📱 Pasar a otro celular → escanear ese código**. La tarjeta pasa con todos los sellos.
+**El cliente abre el QR y le pide registrarse, pero ya tenía tarjeta.**
+Pasa cuando abre el QR en otro celular, desde otra app (cámara de Instagram, WhatsApp, Google Lens), en modo incógnito o después de borrar los datos del navegador. Toca **“¿Ya tenés tarjeta?”** y entra con su WhatsApp y su PIN: ve su tarjeta con todos los sellos y se suma el sello del día. Si al registrarse pone el mismo WhatsApp y el mismo PIN, entra solo.
+
+**No tiene PIN o se lo olvidó.** (Los que se registraron antes del PIN lo crean desde su tarjeta, en el recuadro “🔑 Creá tu PIN”.)
+En la caja: **⭐ Club → Atender → buscar su WhatsApp → 🔑 Asignar PIN**, el cliente elige 4 números y entra con “¿Ya tenés tarjeta?”. No hace falta la cámara.
+
+**Pasar la tarjeta escaneando (alternativa).** En el celular nuevo, “¿Ya tenés tarjeta?” → “Mostrar código para el personal”. En la caja: **Atender → buscar su WhatsApp → 📱 Pasar a otro celular → escanear ese código**.
 
 **"No se pudo abrir la cámara".**
 El navegador necesita permiso de cámara y el sistema tiene que estar abierto con `https://`. Mientras tanto se puede buscar al cliente por WhatsApp.
