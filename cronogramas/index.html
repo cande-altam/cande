@@ -302,6 +302,28 @@
   #printOverlay .mv-table td.mv-expert{color:#8a5a10;font-weight:800}
   #printOverlay .mv-table td.mv-rest{color:#5c574e;font-size:10.5px;white-space:normal}
 
+  /* vista de la semana siguiente (quincena): mismas clases mv-* que la vista mensual, pero con los
+     colores del tema normal (claro u oscuro) en vez de los fijos del overlay de impresión — vive
+     en la página, no en un overlay aparte. Es de solo lectura: tocá "Editar esta semana" para que
+     pase a ser la semana activa de verdad. */
+  .pairPreview{margin-top:20px}
+  .pairPreview .pairHead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .pairPreview .pairHead b{font-family:var(--font-display);font-size:15px}
+  .pairPreview .pairHead .sub{margin:0}
+  .pairPreview .mv-week{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:14px;background:var(--panel)}
+  .pairPreview .mv-week h3{margin:0;padding:10px 14px;background:var(--panel-2);font-size:14px;font-family:var(--font-display);border-bottom:1px solid var(--line)}
+  .pairPreview .mv-loc{padding:10px 14px 2px;font-weight:800;font-size:12.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.3px}
+  .pairPreview .mv-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:10px}
+  .pairPreview .mv-table th,.pairPreview .mv-table td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;color:var(--ink)}
+  .pairPreview .mv-table th{background:var(--panel-2);color:var(--ink-soft);font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+  .pairPreview .mv-table td.mv-puesto{font-weight:700}
+  .pairPreview .mv-table tr.mv-sep td{background:var(--crema);font-weight:800;color:var(--accent-ink);padding:6px 8px;white-space:normal}
+  :root[data-theme="dark"] .pairPreview .mv-table tr.mv-sep td{background:#3a2f22}
+  @media (prefers-color-scheme:dark){.pairPreview .mv-table tr.mv-sep td{background:#3a2f22}}
+  .pairPreview .mv-table td.mv-muted{color:var(--line-strong)}
+  .pairPreview .mv-table td.mv-expert{color:var(--warn);font-weight:800}
+  .pairPreview .mv-table td.mv-rest{color:var(--ink-soft);font-size:10.5px;white-space:normal}
+
   /* burbuja de error al pasar el mouse sobre un casillero con conflicto */
   #cellTooltip{position:fixed;z-index:600;max-width:250px;background:var(--crit);color:#fff;font-size:12px;font-weight:600;line-height:1.4;padding:9px 12px;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.25);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
   #cellTooltip.show{opacity:1;transform:translateY(0)}
@@ -619,10 +641,12 @@
           <option value="atencion">Atención (mozos y vendedores)</option>
           <option value="cajeros">Cajeros</option>
         </select>
+        <label style="display:flex;align-items:center;gap:5px;font-weight:600"><input type="checkbox" id="pairViewToggle" style="accent-color:var(--accent)"> Ver también la semana siguiente</label>
         <span class="sub teamFilterHint" id="teamFilterHint"></span>
       </div>
       <div class="notebanner" id="noteBanner"></div>
       <div class="sched" id="sched"></div>
+      <div class="pairPreview" id="pairPreview"></div>
 
       <section class="card" style="margin-top:18px">
         <h2>Equipo · días y franco</h2>
@@ -813,7 +837,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-10-09 filtro-equipo-vista-mensual";
+const APP_VERSION="2026-10-09 vista-quincena";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -826,6 +850,10 @@ const TEAM_LABEL={cajeros:"Cajeros",baristas:"Baristas",atencion:"Atención (moz
 // mostrás ahora) — se guarda aparte, no entra en el estado sincronizado.
 const LS_TEAM_FILTER="candela_scheduler_teamfilter_v1";
 let teamFilter=localStorage.getItem(LS_TEAM_FILTER)||"";
+// "ver también la semana siguiente" (quincena): preferencia de este dispositivo — por default
+// activada (así se arma y revisa la quincena completa de entrada), se puede apagar si molesta.
+const LS_PAIR_VIEW="candela_scheduler_pairview_v1";
+let pairViewOn=localStorage.getItem(LS_PAIR_VIEW)!=="0";
 // máximo de personas por turno (base + refuerzos) para los puestos que tienen un tope fijo. Cajero
 // siempre es 1 solo (no admite refuerzo); barista y cocina admiten como mucho 1 refuerzo además de
 // la persona de base. Los puestos que no están acá no tienen tope (siempre queda una fila "+" de
@@ -1585,6 +1613,7 @@ function render(){
   renderNotes();
   renderSched(v.worked,empty);
   renderTeam(v);
+  renderPairPreview();
 }
 function renderNotes(){
   const el=document.getElementById("noteBanner");if(!el)return;
@@ -2218,6 +2247,38 @@ function htmlTableFromRows(title,rows){
   h+=`</tbody></table>`;
   return h;
 }
+// "quincena": junto a la semana activa (que se sigue editando igual que siempre), se muestra la
+// semana siguiente de solo lectura — tocando "Editar esta semana" esa pasa a ser la activa (con
+// loadWeek/crearOAbrirSemana de siempre) y la que tenías activa pasa a mostrarse como "anterior".
+// Usa el mismo truco de la vista mensual (cambiar momentáneamente los campos de semana de `state`
+// para reusar buildScheduleRows, después devolverlos) — nunca toca lo que ya está guardado.
+let pairPreviewToken=0;
+async function renderPairPreview(){
+  const el=document.getElementById("pairPreview");if(!el)return;
+  if(!pairViewOn||!state.weekStart){el.innerHTML="";return;}
+  const myToken=++pairPreviewToken;
+  const nextKey=addDaysISO(state.weekStart,7);
+  const rango=fmtWeekRange(nextKey);
+  el.innerHTML=`<div class="pairHead"><b>Semana siguiente</b><span class="sub">${rango} — cargando…</span></div>`;
+  const data=await fetchWeekData(nextKey);
+  if(myToken!==pairPreviewToken)return; // saltaste de semana (o se desactivó) mientras cargaba
+  if(!data||(!Object.keys(data.assign||{}).length&&!(data.ex||[]).filter(e=>!e.auto).length)){
+    el.innerHTML=`<div class="pairHead"><b>Semana siguiente</b><span class="sub">${rango} — todavía no tiene turnos cargados</span>
+      <button type="button" class="btn sm" id="pairEditBtn">✎ Cargar esta semana</button></div>`;
+    document.getElementById("pairEditBtn").addEventListener("click",()=>crearOAbrirSemana(nextKey));
+    return;
+  }
+  const backup=weekPart(state);
+  Object.assign(state,blankWeek(nextKey),data);
+  const workedSnap=workedFrom(state.assign,state.ex);
+  const slRows=buildScheduleRows("SL",workedSnap);
+  const slaRows=buildScheduleRows("SLA",workedSnap);
+  Object.assign(state,backup);
+  el.innerHTML=`<div class="pairHead"><b>Semana siguiente</b><span class="sub">${rango}${data.label?" · "+escAttr(data.label):""} — de solo lectura</span>
+      <button type="button" class="btn sm" id="pairEditBtn">✎ Editar esta semana</button></div>
+    <div class="mv-week"><h3>${rango}</h3>${htmlTableFromRows("San Luis",slRows)}${htmlTableFromRows("SLA",slaRows)}</div>`;
+  document.getElementById("pairEditBtn").addEventListener("click",()=>loadWeek(nextKey));
+}
 let monthViewYear=null,monthViewMonth=null;
 const MES_NOMBRE=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 async function openMonthView(y,m){
@@ -2731,6 +2792,12 @@ function initControls(){
     localStorage.setItem(LS_TEAM_FILTER,teamFilter);
     updateTeamFilterHint();
     render();
+  });
+  document.getElementById("pairViewToggle").checked=pairViewOn;
+  document.getElementById("pairViewToggle").addEventListener("change",e=>{
+    pairViewOn=e.target.checked;
+    localStorage.setItem(LS_PAIR_VIEW,pairViewOn?"1":"0");
+    renderPairPreview();
   });
   document.getElementById("btnAddAbs").addEventListener("click",()=>{
     const n=document.getElementById("absPerson").value;if(!n)return toast("Elegí una persona");
