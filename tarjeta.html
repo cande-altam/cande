@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Club Candela · Tu tarjeta de fidelidad</title>
+<meta name="theme-color" content="#E34E44">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Candela">
+<link rel="icon" href="img/isotipo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="js/vendor/qrcode.js"></script>
+<script src="js/fidelizacion-comun.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --rojo:#E34E44;--rojo-osc:#c43d34;
+  --crema:#E8E7CA;--crema-claro:#F4F3E4;--crema-borde:#d9d7b6;
+  --negro:#22201F;--gris:#76745f;--blanco:#fff;
+  --verde:#1A6B62;--verde-claro:#d8f0ed;
+  --sombra:0 4px 16px rgba(34,32,31,.07),0 1px 4px rgba(34,32,31,.05);
+}
+html,body{background:var(--crema-claro)}
+body{font-family:'Montserrat',system-ui,sans-serif;color:var(--negro);min-height:100vh;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.top{background:var(--rojo);color:var(--crema);padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));display:flex;align-items:center;justify-content:center}
+.top img{height:24px}
+.top b{font-size:13px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-left:10px}
+main{max-width:460px;margin:0 auto;padding:20px 16px 48px}
+.panel{background:var(--blanco);border-radius:18px;box-shadow:var(--sombra);padding:22px 18px;margin-bottom:14px}
+h1{font-size:22px;font-weight:800;line-height:1.2;margin-bottom:6px;color:var(--rojo)}
+h2{font-size:14px;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;color:var(--rojo)}
+.muted{color:var(--gris);font-size:13px}
+label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gris);margin:14px 0 6px}
+input,select{width:100%;font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--crema-borde);border-radius:12px;background:#fff;color:var(--negro)}
+input:focus,select:focus{outline:none;border-color:var(--rojo)}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.hint{font-size:12px;color:var(--gris);margin-top:5px}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:16px;font-size:12.5px;color:var(--negro);text-transform:none;letter-spacing:0;font-weight:400}
+.check input{width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--rojo)}
+.btn{display:block;width:100%;border:none;border-radius:14px;padding:15px;font:inherit;font-size:16px;font-weight:700;cursor:pointer;background:var(--rojo);color:var(--crema);margin-top:20px;box-shadow:0 4px 18px rgba(227,78,68,.30)}
+.btn:disabled{opacity:.6}
+.btn-ghost{background:transparent;color:var(--negro);box-shadow:none;border:1.5px solid var(--crema-borde)}
+.err{color:var(--rojo-osc);font-size:13px;margin-top:10px;font-weight:600}
+.banner{border-radius:14px;padding:13px 15px;margin-bottom:16px;font-weight:600;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+.banner.ok{background:var(--verde-claro);color:var(--verde)}
+.banner.info{background:#fff4dc;color:#8A5A00}
+.banner .ico{font-size:20px;line-height:1.1}
+.tarjeta-wrap{margin:4px 2px 10px}
+.tarjeta-acciones{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 2px 18px;font-size:13px;color:var(--gris)}
+.link{background:none;border:none;font:inherit;font-size:13px;font-weight:600;color:var(--rojo);cursor:pointer;padding:6px 0}
+.progreso{display:flex;align-items:baseline;gap:8px}
+.progreso b{font-size:28px;font-weight:800;color:var(--rojo);line-height:1}
+.premio{background:var(--rojo);color:var(--crema);border-radius:18px;padding:18px;margin-bottom:14px;display:flex;gap:14px;align-items:center}
+.premio .ico{width:52px;height:52px;flex:none;border-radius:50%;background:var(--crema);display:flex;align-items:center;justify-content:center;font-size:26px}
+.premio b{display:block;font-size:17px;font-weight:800}
+.premio span{font-size:13px;opacity:.9}
+.qrgrande{width:220px;height:220px;margin:12px auto 8px;background:#fff;padding:8px;border-radius:14px;border:1.5px solid var(--crema-borde)}
+.qrgrande svg{width:100%;height:100%;display:block}
+.visitas{list-style:none;font-size:13px}
+.visitas li{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--crema-claro)}
+.visitas li:last-child{border-bottom:none}
+.steps{font-size:13px;padding-left:18px}
+.steps li{margin:5px 0}
+.center{text-align:center}
+.spinner{width:34px;height:34px;border:3px solid var(--crema-borde);border-top-color:var(--rojo);border-radius:50%;animation:spin 1s linear infinite;margin:60px auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.modal{position:fixed;inset:0;background:rgba(34,32,31,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;backdrop-filter:blur(3px)}
+.modal .panel{max-width:340px;width:100%;text-align:center;margin:0}
+.reg-tarjeta{max-width:320px;margin:0 auto 18px;transform:rotate(-3deg)}
+</style>
+</head>
+<body>
+<header class="top"><img src="img/isotipo-crema.svg" alt=""><b>Club Candela</b></header>
+<main id="app"><div class="spinner"></div><p class="center muted">Cargando tu tarjeta…</p></main>
+<div id="modal"></div>
+
+<script>
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDFqS6RG1fkOZGo1x2-WcfT82am7ERHgyY",
+  authDomain: "pedidos-de-clientes-4775b.firebaseapp.com",
+  databaseURL: "https://pedidos-de-clientes-4775b-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-clientes-4775b",
+  storageBucket: "pedidos-de-clientes-4775b.firebasestorage.app",
+  messagingSenderId: "702040534350",
+  appId: "1:702040534350:web:af4acddff23ee2db24c21f"
+};
+
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+let db, uid, config, locales;
+let cardUid = null;      // id de la tarjeta (puede ser de otro celular vinculado con PIN)
+let tienePin = true;
+let card = null;
+let visitas = [];
+let banner = null;       // {tipo:'ok'|'info', texto}
+let selloNuevo = false;  // animar el último sello (dar vuelta la tarjeta + sello que cae)
+let mostrarFrente = false;
+let renderPendiente = null;
+const app = document.getElementById("app");
+const localQr = new URLSearchParams(location.search).get("l");
+
+function esc(s){ return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function quitarLocalDeUrl(){
+  // Para que recargar la página no vuelva a intentar sumar el sello
+  if (localQr) history.replaceState(null, "", location.pathname);
+}
+
+function renderError(msg){
+  app.innerHTML = `<div class="panel center"><div style="font-size:38px">😕</div><h1>Algo salió mal</h1><p class="muted">${esc(msg)}</p><button class="btn" onclick="location.reload()">Reintentar</button></div>`;
+}
+
+// ── Registro ───────────────────────────────────────────────
+function renderRegistro(errorMsg){
+  const nombreLocal = localQr && locales[localQr] ? locales[localQr].nombre : null;
+  app.innerHTML = `
+    <div class="reg-tarjeta">${Fidel.tarjetaHtml({ nombre: "", sellos: 0, meta: config.sellosPremio, premio: config.premio, frente: true, id: "ftj-reg" })}</div>
+    <div class="panel">
+      <h1>Sumate al Club Candela</h1>
+      <p class="muted">Cada vez que venís sumás un sello en tu tarjeta. Completá ${config.sellosPremio} visitas y accedé a <b>${esc(config.premio)}</b> y a más promociones exclusivas.</p>
+      ${nombreLocal ? `<p class="muted" style="margin-top:6px">Tu primer sello se suma en <b>${esc(nombreLocal)}</b> al registrarte.</p>` : ""}
+      <button class="link" type="button" onclick="renderRecuperar()">¿Ya tenés tarjeta? Entrá con tu WhatsApp y PIN →</button>
+      <form id="reg" autocomplete="on">
+        <label for="f-nombre">Nombre</label>
+        <input id="f-nombre" name="name" autocomplete="name" required minlength="2" maxlength="60" placeholder="¿Cómo te llamás?">
+        <label for="f-tel">WhatsApp</label>
+        <input id="f-tel" name="tel" type="tel" inputmode="numeric" autocomplete="tel-national" required placeholder="387 512 3456">
+        <div class="hint">Código de área sin 0 y número sin 15.</div>
+        <label for="f-pin">Elegí un PIN de 4 números</label>
+        <input id="f-pin" type="password" inputmode="numeric" autocomplete="new-password" maxlength="4" required placeholder="••••">
+        <div class="hint">Con tu WhatsApp y este PIN abrís tu tarjeta desde cualquier celular.</div>
+        <label>Cumpleaños <span style="text-transform:none;font-weight:500;letter-spacing:0">(opcional, ¡hay regalo!)</span></label>
+        <div class="row">
+          <select id="f-dia"><option value="">Día</option>${Array.from({length:31},(_,i)=>`<option>${i+1}</option>`).join("")}</select>
+          <select id="f-mes"><option value="">Mes</option>${MESES.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("")}</select>
+        </div>
+        <label class="check"><input type="checkbox" id="f-ok" required> <span>Acepto que Candela guarde mis datos para el programa de beneficios y me escriba por WhatsApp con novedades y promociones. Puedo pedir la baja cuando quiera.</span></label>
+        ${errorMsg ? `<div class="err">${esc(errorMsg)}</div>` : ""}
+        <button class="btn" type="submit" id="f-btn">Crear mi tarjeta</button>
+      </form>
+    </div>`;
+  document.getElementById("reg").addEventListener("submit", registrar);
+}
+
+async function registrar(ev){
+  ev.preventDefault();
+  const nombre = document.getElementById("f-nombre").value.trim().replace(/\s+/g," ");
+  const tel = Fidel.normalizarTelefono(document.getElementById("f-tel").value);
+  const dia = document.getElementById("f-dia").value;
+  const mes = document.getElementById("f-mes").value;
+  const pin = document.getElementById("f-pin").value.trim();
+  if (nombre.length < 2) return renderRegistro("Escribí tu nombre.");
+  if (!tel) return renderRegistro("El WhatsApp tiene que tener 10 números: código de área sin 0 y número sin 15. Ej: 387 512 3456.");
+  if (!/^\d{4}$/.test(pin)) return renderRegistro("El PIN tiene que ser de 4 números.");
+  if ((dia && !mes) || (!dia && mes)) return renderRegistro("Completá día y mes del cumpleaños, o dejá los dos vacíos.");
+
+  const btn = document.getElementById("f-btn");
+  btn.disabled = true; btn.textContent = "Creando…";
+
+  try {
+    const duenio = (await db.ref(`fidelizacion/telefonos/${tel}`).once("value")).val();
+    if (duenio && duenio !== uid) {
+      // Ya tiene tarjeta: probar con el PIN que acaba de escribir
+      const r = await recuperar(tel, pin);
+      if (r.error) renderRecuperar(tel, r.error);
+      return;
+    }
+
+    const nueva = {
+      nombre, telefono: tel,
+      creada: firebase.database.ServerValue.TIMESTAMP,
+      sellos: 0, totalSellos: 0, canjes: 0,
+      ultimoSello: 0, semana: 0, sellosSemana: 0,
+    };
+    if (dia && mes) nueva.cumple = `${String(mes).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+
+    await db.ref("fidelizacion").update({
+      [`tarjetas/${uid}`]: nueva,
+      [`telefonos/${tel}`]: uid,
+      [`pines/${tel}`]: pin,
+    });
+    cardUid = uid;
+    tienePin = true;
+    card = (await db.ref(`fidelizacion/tarjetas/${uid}`).once("value")).val();
+    banner = { tipo: "ok", texto: `¡Listo, ${nombre.split(" ")[0]}! Ya tenés tu tarjeta de fidelidad.` };
+    await intentarSello();
+    window.scrollTo(0, 0);
+    escucharTarjeta();
+  } catch (err) {
+    console.error(err);
+    renderRegistro("No pudimos crear la tarjeta. Revisá tu conexión e intentá de nuevo.");
+  }
+}
+
+// Entrar a una tarjeta existente desde otro celular o navegador (WhatsApp + PIN)
+function renderRecuperar(tel, errorMsg){
+  const telFmt = tel ? `${tel.slice(0,3)} ${tel.slice(3,6)} ${tel.slice(6)}` : "";
+  app.innerHTML = `
+    <div class="panel">
+      <h1>Entrá a tu tarjeta</h1>
+      <p class="muted">${tel ? "Ese WhatsApp ya tiene una tarjeta. " : ""}Escribí tu WhatsApp y tu PIN de 4 números para abrirla en este celular, con todos tus sellos.</p>
+      <form id="rec">
+        <label for="r-tel">WhatsApp</label>
+        <input id="r-tel" type="tel" inputmode="numeric" autocomplete="tel-national" required placeholder="387 512 3456" value="${esc(telFmt)}">
+        <label for="r-pin">PIN</label>
+        <input id="r-pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="4" required placeholder="••••">
+        ${errorMsg ? `<div class="err">${esc(errorMsg)}</div>` : ""}
+        <button class="btn" type="submit" id="r-btn">Entrar a mi tarjeta</button>
+      </form>
+      <p class="muted" style="margin-top:16px">¿No tenés PIN o te lo olvidaste? Pedile al personal en caja que te asigne uno nuevo.</p>
+      <details style="margin-top:10px"><summary class="muted" style="cursor:pointer">Mostrar código para el personal</summary>
+        <div class="qrgrande">${Fidel.qrSvg(Fidel.qrDeTarjeta(uid))}</div>
+      </details>
+      <button class="btn btn-ghost" type="button" onclick="renderRegistro()">Soy nuevo, quiero registrarme</button>
+    </div>`;
+  document.getElementById("rec").addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const t = Fidel.normalizarTelefono(document.getElementById("r-tel").value);
+    const pin = document.getElementById("r-pin").value.trim();
+    if (!t) return renderRecuperar(tel, "El WhatsApp tiene que tener 10 números: código de área sin 0 y número sin 15.");
+    if (!/^\d{4}$/.test(pin)) return renderRecuperar(t, "El PIN tiene que ser de 4 números.");
+    const btn = document.getElementById("r-btn");
+    btn.disabled = true; btn.textContent = "Entrando…";
+    const r = await recuperar(t, pin);
+    if (r.error) renderRecuperar(t, r.error);
+  });
+}
+
+// Vincula este celular a la tarjeta del WhatsApp si el PIN es correcto.
+// Las reglas de Firebase validan el PIN y permiten 1 intento cada 10 segundos por número.
+async function recuperar(tel, pin){
+  try {
+    const duenio = (await db.ref(`fidelizacion/telefonos/${tel}`).once("value")).val();
+    if (!duenio) return { error: "No encontramos una tarjeta con ese WhatsApp. Revisá el número o registrate." };
+    try {
+      await db.ref(`fidelizacion/intentos/${tel}`).set({ uid, pin, ts: firebase.database.ServerValue.TIMESTAMP });
+    } catch (_) {
+      return { error: "Esperá 10 segundos y probá de nuevo." };
+    }
+    try {
+      await db.ref(`fidelizacion/alias/${uid}`).set({ uid: duenio, tel });
+    } catch (_) {
+      return { error: "El PIN no es correcto. Si no lo recordás, pedí uno nuevo en caja." };
+    }
+    cardUid = duenio;
+    tienePin = true;
+    card = (await db.ref(`fidelizacion/tarjetas/${cardUid}`).once("value")).val();
+    if (!card) return { error: "No pudimos abrir la tarjeta. Pedí ayuda al personal." };
+    banner = { tipo: "ok", texto: `¡Hola de nuevo, ${card.nombre.split(" ")[0]}! Ya estás en tu tarjeta.` };
+    await intentarSello();
+    window.scrollTo(0, 0);
+    escucharTarjeta();
+    return { ok: true };
+  } catch (err) {
+    console.error(err);
+    return { error: "No pudimos conectarnos. Revisá tu conexión e intentá de nuevo." };
+  }
+}
+
+async function guardarPin(){
+  const pin = document.getElementById("p-pin").value.trim();
+  const err = document.getElementById("p-err");
+  if (!/^\d{4}$/.test(pin)) { err.textContent = "El PIN tiene que ser de 4 números."; return; }
+  try {
+    await db.ref(`fidelizacion/pines/${card.telefono}`).set(pin);
+    tienePin = true;
+    banner = { tipo: "ok", texto: "¡Listo! Ya podés abrir tu tarjeta desde cualquier celular con tu WhatsApp y tu PIN." };
+    renderTarjeta();
+  } catch (e) {
+    console.error(e);
+    err.textContent = "No pudimos guardar el PIN. Probá de nuevo.";
+  }
+}
+
+// ── Sello ──────────────────────────────────────────────────
+async function intentarSello(){
+  if (!localQr) return;
+  quitarLocalDeUrl();
+  if (!locales[localQr]) {
+    banner = { tipo: "info", texto: "Este QR no corresponde a ningún local. Pedí ayuda al personal." };
+    return;
+  }
+  const now = Fidel.serverNow();
+  const motivo = Fidel.motivoSinSello(card, config, now);
+  if (motivo) { banner = { tipo: "info", texto: motivo }; return; }
+
+  const vid = db.ref(`fidelizacion/visitas/${cardUid}`).push().key;
+  try {
+    await db.ref("fidelizacion").update({
+      [`tarjetas/${cardUid}`]: Fidel.tarjetaConSello(card, localQr, now),
+      [`visitas/${cardUid}/${vid}`]: { ts: firebase.database.ServerValue.TIMESTAMP, local: localQr },
+    });
+    selloNuevo = true;
+    const texto = `¡Sumaste un sello en ${locales[localQr].nombre}!`;
+    banner = { tipo: "ok", texto: banner && banner.tipo === "ok" ? `${banner.texto} ${texto}` : texto };
+  } catch (err) {
+    console.error(err);
+    banner = { tipo: "info", texto: "No pudimos sumar el sello (fuera de horario o ya sumaste hoy). Si creés que es un error, avisale al personal." };
+  }
+}
+
+// ── Tarjeta ────────────────────────────────────────────────
+function escucharTarjeta(){
+  db.ref(`fidelizacion/tarjetas/${cardUid}`).on("value", s => {
+    card = s.val();
+    if (!card) return cardUid === uid ? renderRegistro() : db.ref(`fidelizacion/alias/${uid}`).remove().then(() => location.reload());
+    programarRender();
+  });
+  db.ref(`fidelizacion/visitas/${cardUid}`).limitToLast(5).on("value", s => {
+    visitas = Object.values(s.val() || {}).sort((a,b) => b.ts - a.ts);
+    if (card) programarRender();
+  });
+}
+
+// Los dos listeners llegan casi juntos: dibujar una sola vez para no cortar la animación
+function programarRender(){
+  clearTimeout(renderPendiente);
+  renderPendiente = setTimeout(() => {
+    const a = document.activeElement;
+    if (a && a.tagName === "INPUT" && app.contains(a)) return programarRender();  // no borrar lo que está escribiendo
+    renderTarjeta();
+  }, 60);
+}
+
+function darVuelta(){
+  mostrarFrente = !mostrarFrente;
+  const t = document.getElementById("ftj");
+  if (t) t.classList.toggle("frente", mostrarFrente);
+}
+
+function agrandarQr(){
+  document.getElementById("modal").innerHTML = `
+    <div class="modal" onclick="cerrarModal()">
+      <div class="panel" onclick="event.stopPropagation()">
+        <h2>Tu código Club Candela</h2>
+        <div class="qrgrande">${Fidel.qrSvg(Fidel.qrDeTarjeta(cardUid))}</div>
+        <p class="muted">${esc(card.nombre)}<br>Mostralo en caja para canjear tus premios.</p>
+        <button class="btn btn-ghost" onclick="cerrarModal()">Cerrar</button>
+      </div>
+    </div>`;
+}
+function cerrarModal(){ document.getElementById("modal").innerHTML = ""; }
+
+function renderTarjeta(){
+  const meta = config.sellosPremio;
+  const premios = Math.floor(card.sellos / meta);
+  const enCurso = card.sellos % meta;
+  // Con un premio sin canjear la tarjeta se muestra completa; los sellos extra se aclaran aparte
+  const llenos = premios > 0 ? meta : enCurso;
+  const faltan = meta - enCurso;
+  const extra = premios > 0 ? card.sellos - meta : 0;
+  const animar = selloNuevo && llenos > 0;
+
+  app.innerHTML = `
+    ${banner ? `<div class="banner ${banner.tipo}"><span class="ico">${banner.tipo === "ok" ? "🎉" : "ℹ️"}</span><span>${esc(banner.texto)}</span></div>` : ""}
+    <div class="tarjeta-wrap" onclick="darVuelta()">
+      ${Fidel.tarjetaHtml({
+        nombre: card.nombre, sellos: llenos, meta, premio: config.premio,
+        qrText: Fidel.qrDeTarjeta(cardUid), qrClick: "agrandarQr()",
+        nuevo: animar ? llenos - 1 : -1,
+        frente: animar || mostrarFrente,
+      })}
+    </div>
+    <div class="tarjeta-acciones">
+      <div class="progreso"><b>${llenos}/${meta}</b><span>visitas</span></div>
+      <button class="link" onclick="darVuelta()">↻ Dar vuelta</button>
+    </div>
+    ${premios > 0 ? `
+      <div class="premio">
+        <div class="ico">🎁</div>
+        <div><b>¡Completaste tu tarjeta!</b><span>Tenés ${premios > 1 ? premios + " premios" : "tu premio"}: ${esc(config.premio)}. Tocá el QR de tu tarjeta y mostralo en caja.${extra > 0 ? ` Ya tenés ${extra} sello${extra === 1 ? "" : "s"} para la próxima.` : ""}</span></div>
+      </div>` : `
+      <p class="muted" style="margin:-6px 2px 16px">Te ${faltan === 1 ? "falta <b>1 visita</b>" : `faltan <b>${faltan} visitas</b>`} para ${esc(config.premio)}.</p>`}
+    ${tienePin ? "" : `
+      <div class="panel">
+        <h2>🔑 Creá tu PIN</h2>
+        <p class="muted">Con tu WhatsApp y un PIN de 4 números vas a poder abrir tu tarjeta desde cualquier celular o navegador, sin perder tus sellos.</p>
+        <div class="row" style="margin-top:12px;align-items:center">
+          <input id="p-pin" type="password" inputmode="numeric" autocomplete="new-password" maxlength="4" placeholder="••••">
+          <button class="btn" style="margin-top:0" onclick="guardarPin()">Guardar</button>
+        </div>
+        <div class="err" id="p-err"></div>
+      </div>`}
+    <div class="panel">
+      <h2>¿Cómo sumo sellos?</h2>
+      <ol class="steps">
+        <li>Cada vez que venís, escaneá el QR de tu mesa o del mostrador.</li>
+        <li>Se suma 1 sello por día (hasta ${config.topeSemanal} por semana).</li>
+        <li>Con ${meta} visitas, tocá el QR de tu tarjeta y mostralo en caja para canjear.</li>
+      </ol>
+      <p class="muted" style="margin-top:10px">💡 Para volver a tu tarjeta, escaneá el QR de cualquier mesa o <b>guardá este link en favoritos ⭐</b>. Si cambiás de celular o se abre en otro navegador, tocá <b>“¿Ya tenés tarjeta?”</b> y entrá con tu WhatsApp y tu PIN.</p>
+    </div>
+    ${visitas.length ? `
+      <div class="panel">
+        <h2>Tus últimas visitas</h2>
+        <ul class="visitas">${visitas.map(v => `<li><span>${esc(locales[v.local]?.nombre || v.local)}</span><span class="muted">${Fidel.fmtFechaHora(v.ts)}</span></li>`).join("")}</ul>
+      </div>` : ""}`;
+
+  if (animar) {
+    // Primero se ve el frente y la tarjeta se da vuelta sola; el sello nuevo cae al terminar el giro
+    mostrarFrente = false;
+    requestAnimationFrame(() => setTimeout(() => {
+      const t = document.getElementById("ftj");
+      if (t) t.classList.remove("frente");
+    }, 350));
+  }
+  selloNuevo = false;
+}
+
+function renderSesionPersonal(){
+  app.innerHTML = `
+    <div class="panel center">
+      <div style="font-size:38px">🧑‍🍳</div>
+      <h1>Sesión del personal abierta</h1>
+      <p class="muted">Este navegador tiene abierta la sesión del personal de Candela. La tarjeta del Club se usa desde el celular del cliente.</p>
+      <button class="btn btn-ghost" onclick="firebase.auth().signOut().then(()=>location.reload())">Cerrar sesión del personal</button>
+    </div>`;
+}
+
+// ── Inicio ─────────────────────────────────────────────────
+async function iniciar(user){
+  try {
+    uid = user.uid;
+    const [cfgSnap, locSnap, cardSnap] = await Promise.all([
+      db.ref("fidelizacion/config").once("value"),
+      db.ref("fidelizacion/locales").once("value"),
+      db.ref(`fidelizacion/tarjetas/${uid}`).once("value"),
+    ]);
+    config = cfgSnap.val();
+    locales = locSnap.val() || {};
+    if (!config) return renderError("El Club Candela todavía no está activado. ¡Muy pronto!");
+    card = cardSnap.val();
+    cardUid = uid;
+    if (!card) {
+      // ¿Este celular está vinculado a una tarjeta con WhatsApp + PIN?
+      const alias = (await db.ref(`fidelizacion/alias/${uid}`).once("value")).val();
+      if (alias) {
+        cardUid = alias.uid;
+        card = (await db.ref(`fidelizacion/tarjetas/${cardUid}`).once("value")).val();
+      }
+      if (!card) {
+        if (alias) await db.ref(`fidelizacion/alias/${uid}`).remove().catch(() => {});
+        cardUid = null;
+        return renderRegistro();
+      }
+    }
+    tienePin = await db.ref(`fidelizacion/pines/${card.telefono}`).once("value").then(x => x.exists(), () => true);
+    await intentarSello();
+    escucharTarjeta();
+  } catch (err) {
+    console.error(err);
+    renderError("No pudimos conectarnos. Revisá tu conexión a internet.");
+  }
+}
+
+firebase.initializeApp(FIREBASE_CONFIG);
+db = firebase.database();
+Fidel.watchServerOffset(db);
+let iniciado = false;
+firebase.auth().onAuthStateChanged(user => {
+  if (iniciado) return;
+  if (!user) {
+    firebase.auth().signInAnonymously().catch(err => {
+      console.error(err);
+      renderError("No pudimos iniciar tu tarjeta. Revisá tu conexión a internet.");
+    });
+    return;
+  }
+  iniciado = true;
+  if (!user.isAnonymous) return renderSesionPersonal();
+  // Esperar el offset del reloj del servidor antes de calcular día/semana
+  db.ref(".info/serverTimeOffset").once("value").then(() => iniciar(user));
+});
+</script>
+</body>
+</html>
