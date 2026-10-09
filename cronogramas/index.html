@@ -62,6 +62,10 @@
   .weekbox input,.weekbox select{background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 11px;width:190px;color:var(--ink);font:inherit}
   .weekbox input#weekStart{width:150px}
   .weekbox select#weekSwitcher{width:150px}
+  .teamFilterBar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+  .teamFilterBar label{font-size:12.5px;font-weight:700;color:var(--ink-soft)}
+  .teamFilterBar select{background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:7px 11px;color:var(--ink);font:inherit;font-size:13px}
+  .teamFilterHint{font-size:12px}
   .btn{border:1px solid var(--line-strong);background:var(--panel-2);border-radius:9px;padding:8px 13px;cursor:pointer;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:.12s}
   .btn:hover{border-color:var(--ink-soft)}
   .btn:disabled{opacity:.35;cursor:default;pointer-events:none}
@@ -286,6 +290,17 @@
   #printOverlay .pv-textwrap textarea{width:100%;height:min(50vh,360px);border:1px solid #ccc;border-radius:8px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;color:#1a1a1a;background:#faf9f3;resize:vertical}
   #printOverlay .pv-confirm{margin:0 20px 20px;background:#fbf0d8;border:1px solid #e3c98a;border-radius:9px;padding:14px 16px}
   #printOverlay .pv-confirm p{margin:0 0 10px;font-size:13.5px;color:#4a3f1e;font-weight:600}
+  #printOverlay .mv-week{margin:0 20px 22px;border:1px solid #e7e2d0;border-radius:10px;overflow:hidden}
+  #printOverlay .mv-week h3{margin:0;padding:10px 14px;background:#f2efe3;font-size:14px;font-family:var(--font-display);color:#1a1a1a;border-bottom:1px solid #e7e2d0}
+  #printOverlay .mv-loc{padding:10px 14px 2px;font-weight:800;font-size:12.5px;color:#6b5a1e;text-transform:uppercase;letter-spacing:.3px}
+  #printOverlay .mv-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:10px}
+  #printOverlay .mv-table th,#printOverlay .mv-table td{padding:5px 8px;border-bottom:1px solid #eee;text-align:left;white-space:nowrap;color:#1a1a1a}
+  #printOverlay .mv-table th{background:#faf8f0;color:#6b5a1e;font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+  #printOverlay .mv-table td.mv-puesto{font-weight:700}
+  #printOverlay .mv-table tr.mv-sep td{background:#fbf0d8;font-weight:800;color:#6b5a1e;padding:6px 8px;white-space:normal}
+  #printOverlay .mv-table td.mv-muted{color:#bbb}
+  #printOverlay .mv-table td.mv-expert{color:#8a5a10;font-weight:800}
+  #printOverlay .mv-table td.mv-rest{color:#5c574e;font-size:10.5px;white-space:normal}
 
   /* burbuja de error al pasar el mouse sobre un casillero con conflicto */
   #cellTooltip{position:fixed;z-index:600;max-width:250px;background:var(--crit);color:#fff;font-size:12px;font-weight:600;line-height:1.4;padding:9px 12px;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.25);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
@@ -350,6 +365,7 @@
     <button class="btn ghost" id="btnNew" title="Arranca una semana nueva copiando ésta como base">↻ Nueva semana</button>
     <button class="btn ghost icon-btn" id="btnMover" title="Mover personas de un casillero a otro tocando origen y destino">✥</button>
     <button class="btn ghost icon-btn" id="btnPrint" title="Ver imagen del cronograma para guardar">⬇️</button>
+    <button class="btn ghost icon-btn" id="btnMonthView" title="Ver el mes completo (todas las semanas ya cargadas juntas, de solo lectura)">📅</button>
     <button class="btn ghost icon-btn" id="btnExport" title="Exportar datos para pasar a otro dispositivo">📤</button>
     <button class="btn ghost icon-btn" id="btnImport" title="Importar datos desde otro dispositivo">📥</button>
     <button class="btn ghost icon-btn" id="btnTheme" title="Cambiar tema">◐</button>
@@ -594,6 +610,17 @@
         </div>
       </section>
 
+      <div class="teamFilterBar">
+        <label for="teamFilter">Ver equipo</label>
+        <select id="teamFilter">
+          <option value="">Todos los equipos</option>
+          <option value="cocina">Cocina</option>
+          <option value="baristas">Baristas</option>
+          <option value="atencion">Atención (mozos y vendedores)</option>
+          <option value="cajeros">Cajeros</option>
+        </select>
+        <span class="sub teamFilterHint" id="teamFilterHint"></span>
+      </div>
       <div class="notebanner" id="noteBanner"></div>
       <div class="sched" id="sched"></div>
 
@@ -786,10 +813,19 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-10-01 vanesa-cocina-sla";
+const APP_VERSION="2026-10-09 filtro-equipo-vista-mensual";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
+// "equipos de trabajo": a qué equipo pertenece cada puesto, para poder armar/enviar el horario
+// filtrado por equipo (ver "Ver equipo" arriba de la grilla). Compras y Bacha/Envíos (ayudante) no
+// entran en ningún equipo a propósito — solo se ven con el filtro en "Todos los equipos".
+const TEAM_OF_ROLE={cajero:"cajeros",barista:"baristas",atencion:"atencion",cocina:"cocina"};
+const TEAM_LABEL={cajeros:"Cajeros",baristas:"Baristas",atencion:"Atención (mozos y vendedores)",cocina:"Cocina"};
+// filtro de equipo: preferencia de ESTE dispositivo (no es un dato del horario en sí, es solo qué
+// mostrás ahora) — se guarda aparte, no entra en el estado sincronizado.
+const LS_TEAM_FILTER="candela_scheduler_teamfilter_v1";
+let teamFilter=localStorage.getItem(LS_TEAM_FILTER)||"";
 // máximo de personas por turno (base + refuerzos) para los puestos que tienen un tope fijo. Cajero
 // siempre es 1 solo (no admite refuerzo); barista y cocina admiten como mucho 1 refuerzo además de
 // la persona de base. Los puestos que no están acá no tienen tope (siempre queda una fila "+" de
@@ -1699,6 +1735,14 @@ function extraLabelFor(loc,role,shift,defaultLabel){
   if(loc==="SLA"&&role==="atencion")return"Mozo 2";
   return defaultLabel;
 }
+// "Ver equipo": si hay un filtro activo, un puesto se muestra solo si pertenece a ese equipo —
+// Compras y Bacha/Envíos (sin equipo asignado) quedan afuera de cualquier filtro, solo se ven en
+// "Todos los equipos".
+function roleAllowed(role){return !teamFilter||TEAM_OF_ROLE[role]===teamFilter;}
+function updateTeamFilterHint(){
+  const el=document.getElementById("teamFilterHint");if(!el)return;
+  el.textContent=teamFilter?`Mostrando solo ${TEAM_LABEL[teamFilter].toLowerCase()} — Compras y Bacha/Envíos no se ven con este filtro.`:"";
+}
 function locTable(loc,title,worked){
   let h=`<section class="card"><div class="loc-head"><h2>${title}</h2></div><div class="tbl-scroll"><table class="grid"><thead><tr><th>Puesto</th>`;
   DAYS.forEach((dd,i)=>h+=`<th class="${isWknd(i)?"wknd":""}">${dd[2]}</th>`);
@@ -1707,7 +1751,7 @@ function locTable(loc,title,worked){
     h+=`<tr class="shift-sep"><td colspan="8">${slabel}</td></tr>`;
     const base=rowsFor(loc,shift);
     const roles=[];base.forEach(r=>{if(!roles.includes(r.role))roles.push(r.role);});
-    roles.forEach(role=>{
+    roles.filter(roleAllowed).forEach(role=>{
       const brows=base.filter(r=>r.role===role);
       brows.forEach(row=>{
         h+=`<tr><td class="puesto">${rowLabelFor(loc,shift,row)}${row.wk?' <span class="wktag">refuerzo</span>':""}</td>`;
@@ -1720,7 +1764,7 @@ function locTable(loc,title,worked){
     });
     // refuerzos con un puesto que este local no tiene como fila base (ej: Bacha/Envíos en SLA):
     // sin esto, "Personas extra" los guardaba pero no aparecían en ningún lado.
-    const extraOnlyRoles=[...new Set(state.ex.filter(e=>e.loc===loc&&e.shift===shift&&!roles.includes(e.role)).map(e=>e.role))];
+    const extraOnlyRoles=[...new Set(state.ex.filter(e=>e.loc===loc&&e.shift===shift&&!roles.includes(e.role)).map(e=>e.role))].filter(roleAllowed);
     extraOnlyRoles.forEach(role=>{h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,shift,ROLE_LABEL[role]||role),maxTurnoFor(loc,shift,role));});
   });
   h+=restRows(loc,worked);
@@ -1760,7 +1804,7 @@ function newExtraCellHTML(d,loc,shift,role){
   return `<td class="cell extra ${isWknd(d)?"wknd":""}"><div class="excell"><select class="cellsel empty" data-newex="${d}|${loc}|${shift}|${role}"><option value="">+ agregar</option>${opts}</select></div><button type="button" class="moveOverlay" data-movenewex="${d}|${loc}|${shift}|${role}" aria-label="Mover acá"></button></td>`;
 }
 function restRows(loc,worked){
-  const roster=PEOPLE.filter(p=>p.loc===loc||p.loc==="both");
+  const roster=PEOPLE.filter(p=>(p.loc===loc||p.loc==="both")&&roleAllowed(roleFor(p.n)));
   let h=`<tr class="shift-sep rest-sep"><td colspan="8">Descansos</td></tr><tr class="rest-row"><td class="puesto">Franco del día</td>`;
   for(let d=0;d<7;d++){
     const rest=roster.filter(p=>!(worked[p.n]&&worked[p.n].has(d)));
@@ -1961,7 +2005,7 @@ function buildScheduleRows(loc,worked){
     rows.push({sep:true,label:slabel});
     const base=rowsFor(loc,shift);
     const roles=[];base.forEach(r=>{if(!roles.includes(r.role))roles.push(r.role);});
-    roles.forEach(role=>{
+    roles.filter(roleAllowed).forEach(role=>{
       const brows=base.filter(r=>r.role===role);
       brows.forEach(row=>{
         const cells=DAYS.map((_,d)=>{
@@ -1984,7 +2028,7 @@ function buildScheduleRows(loc,worked){
     });
   });
   rows.push({sep:true,label:"Descansos",rest:true});
-  const roster=PEOPLE.filter(p=>p.loc===loc||p.loc==="both");
+  const roster=PEOPLE.filter(p=>(p.loc===loc||p.loc==="both")&&roleAllowed(roleFor(p.n)));
   const cells=DAYS.map((_,d)=>{
     const rest=roster.filter(p=>!(worked[p.n]&&worked[p.n].has(d)));
     return{text:rest.map(p=>p.n).join(", ")||"—",rest:true};
@@ -2095,10 +2139,10 @@ function openPrintView(){
   // que es un gesto nativo del celular sobre la imagen y no depende de ningún permiso de JavaScript.
   let ov=document.getElementById("printOverlay");
   if(!ov){ov=document.createElement("div");ov.id="printOverlay";document.body.appendChild(ov);}
-  ov.innerHTML=`<div class="pv-bar"><b>Compartir cronograma</b><div class="pv-actions">
+  ov.innerHTML=`<div class="pv-bar"><b>Compartir cronograma${teamFilter?" · "+TEAM_LABEL[teamFilter]:""}</b><div class="pv-actions">
       <button class="pv-btn" id="pvCloseBtn">Cerrar</button>
     </div></div>
-    <p class="pv-hint">📸 Mantené presionada la imagen de abajo y elegí <b>"Guardar imagen"</b> / <b>"Añadir a Fotos"</b> para descargarla.</p>
+    <p class="pv-hint">📸 Mantené presionada la imagen de abajo y elegí <b>"Guardar imagen"</b> / <b>"Añadir a Fotos"</b> para descargarla.${teamFilter?` Se arma con el filtro <b>${TEAM_LABEL[teamFilter]}</b> activo — cambialo arriba de la grilla antes de abrir esto si querés otro equipo o el horario completo.`:""}</p>
     <div class="pv-imgwrap"><img id="pvImg" alt="Cronograma Candela"></div>`;
   const canvas=renderScheduleCanvas();
   document.getElementById("pvImg").src=canvas.toDataURL("image/png");
@@ -2119,6 +2163,104 @@ function getOverlay(){
   let ov=document.getElementById("printOverlay");
   if(!ov){ov=document.createElement("div");ov.id="printOverlay";document.body.appendChild(ov);}
   return ov;
+}
+/* ---------------- VISTA MENSUAL (solo lectura, junta semanas ya cargadas) ----------------
+   Cada semana vive en su propia ruta (ver "varias semanas en simultáneo"), guardada sin límite de
+   tiempo — nada se borra solo. Esta vista no agrega datos nuevos: busca qué lunes caen dentro del
+   mes elegido, trae cada semana (de este dispositivo si ya la tiene, si no de la nube) y las junta
+   en una sola pantalla de solo lectura, para revisar a fin de mes lo que realmente se ejecutó. Para
+   editar una semana puntual seguís usando el selector de arriba, como siempre. */
+function mondaysOverlappingMonth(y,m){
+  const firstOfMonth=new Date(y,m,1);
+  const lastOfMonth=new Date(y,m+1,0);
+  const cur=new Date(firstOfMonth);
+  cur.setDate(cur.getDate()-((cur.getDay()+6)%7)); // retrocede al lunes de esa semana
+  const mondays=[];
+  while(cur<=lastOfMonth){
+    mondays.push(cur.getFullYear()+"-"+String(cur.getMonth()+1).padStart(2,"0")+"-"+String(cur.getDate()).padStart(2,"0"));
+    cur.setDate(cur.getDate()+7);
+  }
+  return mondays;
+}
+async function fetchWeekData(key){
+  const local=loadLocalWeeks()[key];
+  if(local)return local;
+  if(window.CloudWeekRead){
+    try{const remote=await window.CloudWeekRead.get(key);if(remote)return remote;}catch(e){console.error("vista mensual: no se pudo leer "+key,e);}
+  }
+  return null;
+}
+// a diferencia de validate() (que además calcula alertas/conflictos, pensada para la semana que se
+// está editando), esto solo arma "quién trabajó qué día" a partir de una foto de semana — lo único
+// que hace falta para dibujar la grilla y la fila de francos en una vista de solo lectura.
+function workedFrom(assign,ex){
+  const worked={};
+  Object.keys(assign||{}).forEach(k=>{const[d]=k.split("|");const n=assign[k];if(!n)return;(worked[n]=worked[n]||new Set()).add(+d);});
+  (ex||[]).forEach(e=>{if(!e.n)return;(worked[e.n]=worked[e.n]||new Set()).add(e.day);});
+  return worked;
+}
+// tabla de solo lectura a partir de las filas que arma buildScheduleRows (las mismas que usa la
+// imagen para compartir) — con clases propias (mv-*) para no heredar sin querer el tema claro/oscuro
+// de la grilla en vivo dentro de este overlay, que siempre es claro.
+function htmlTableFromRows(title,rows){
+  let h=`<div class="mv-loc">${title}</div><table class="mv-table"><thead><tr><th>Puesto</th>`;
+  DAYS.forEach(dd=>h+=`<th>${dd[2]}</th>`);
+  h+=`</tr></thead><tbody>`;
+  rows.forEach(row=>{
+    if(row.sep){h+=`<tr class="mv-sep"><td colspan="8">${row.label}</td></tr>`;return;}
+    h+=`<tr><td class="mv-puesto">${row.label}</td>`;
+    row.cells.forEach(c=>{
+      const cls=row.rest?"mv-rest":c.muted?"mv-muted":c.expert?"mv-expert":"";
+      h+=`<td class="${cls}">${c.text||""}</td>`;
+    });
+    h+=`</tr>`;
+  });
+  h+=`</tbody></table>`;
+  return h;
+}
+let monthViewYear=null,monthViewMonth=null;
+const MES_NOMBRE=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+async function openMonthView(y,m){
+  const now=new Date();
+  if(y==null){y=now.getFullYear();m=now.getMonth();}
+  monthViewYear=y;monthViewMonth=m;
+  const ov=getOverlay();
+  ov.innerHTML=`<div class="pv-bar">
+      <b>📅 ${MES_NOMBRE[m]} ${y}</b>
+      <div class="pv-actions">
+        <button class="pv-btn" id="mvPrev">← Mes anterior</button>
+        <button class="pv-btn" id="mvNext">Mes siguiente →</button>
+        <button class="pv-btn" id="pvCloseBtn">Cerrar</button>
+      </div>
+    </div>
+    <p class="pv-hint">Junta las semanas ya cargadas que caen dentro de este mes para revisar lo que se ejecutó — es de solo lectura, para editar abrí la semana puntual desde el selector de arriba.${teamFilter?` Filtro activo: <b>${TEAM_LABEL[teamFilter]}</b> (cambialo arriba de la grilla antes de abrir esto si querés otro).`:""}</p>
+    <div id="mvBody"><p class="sub" style="padding:20px">Cargando…</p></div>`;
+  document.getElementById("pvCloseBtn").addEventListener("click",()=>ov.remove());
+  document.getElementById("mvPrev").addEventListener("click",()=>{let nm=m-1,ny=y;if(nm<0){nm=11;ny--;}openMonthView(ny,nm);});
+  document.getElementById("mvNext").addEventListener("click",()=>{let nm=m+1,ny=y;if(nm>11){nm=0;ny++;}openMonthView(ny,nm);});
+  const mondays=mondaysOverlappingMonth(y,m);
+  const results=await Promise.all(mondays.map(async k=>({key:k,data:await fetchWeekData(k)})));
+  if(monthViewYear!==y||monthViewMonth!==m)return; // cambiaste de mes mientras cargaba: no pisar la vista nueva
+  const body=document.getElementById("mvBody");if(!body)return;
+  const backup=weekPart(state);
+  let html="";
+  results.forEach(({key,data})=>{
+    const rango=fmtWeekRange(key);
+    if(!data||(!Object.keys(data.assign||{}).length&&!(data.ex||[]).filter(e=>!e.auto).length)){
+      html+=`<div class="mv-week"><h3>${rango}</h3><p class="sub" style="padding:0 14px 12px">Esta semana todavía no tiene turnos cargados.</p></div>`;
+      return;
+    }
+    Object.assign(state,blankWeek(key),data);
+    const workedSnap=workedFrom(state.assign,state.ex);
+    const slRows=buildScheduleRows("SL",workedSnap);
+    const slaRows=buildScheduleRows("SLA",workedSnap);
+    html+=`<div class="mv-week"><h3>${rango}${data.label?" · "+escAttr(data.label):""}</h3>`
+        +htmlTableFromRows("San Luis",slRows)
+        +htmlTableFromRows("SLA",slaRows)
+        +`</div>`;
+  });
+  Object.assign(state,backup);
+  body.innerHTML=html||`<p class="sub" style="padding:20px">No hay semanas para este mes.</p>`;
 }
 function openExportView(){
   const ov=getOverlay();
@@ -2568,6 +2710,7 @@ function initControls(){
   document.getElementById("btnMover").addEventListener("click",()=>toggleMovingMode());
   document.getElementById("moveHintCancel").addEventListener("click",()=>toggleMovingMode(false));
   document.getElementById("btnPrint").addEventListener("click",openPrintView);
+  document.getElementById("btnMonthView").addEventListener("click",()=>openMonthView());
   document.getElementById("btnExport").addEventListener("click",openExportView);
   document.getElementById("btnImport").addEventListener("click",openImportView);
   const railToggle=document.getElementById("railToggle"),railBody=document.getElementById("railBody");
@@ -2581,6 +2724,14 @@ function initControls(){
     document.documentElement.setAttribute("data-theme",next);
   });
   document.getElementById("weekLabel").addEventListener("input",e=>{state.label=e.target.value;});
+  document.getElementById("teamFilter").value=teamFilter;
+  updateTeamFilterHint();
+  document.getElementById("teamFilter").addEventListener("change",e=>{
+    teamFilter=e.target.value;
+    localStorage.setItem(LS_TEAM_FILTER,teamFilter);
+    updateTeamFilterHint();
+    render();
+  });
   document.getElementById("btnAddAbs").addEventListener("click",()=>{
     const n=document.getElementById("absPerson").value;if(!n)return toast("Elegí una persona");
     const days=[...document.querySelectorAll("#absDays input:checked")].map(c=>+c.value);
