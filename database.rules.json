@@ -195,6 +195,124 @@
           }
         }
       }
+    },
+    "vouchers": {
+      ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+      "$codigo": {
+        ".write": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists() && newData.exists() && (!data.exists() || data.child('estado').val() === 'activo')",
+        ".validate": "$codigo.matches(/^CND-[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{4}$/) && newData.hasChildren(['codigo', 'tipo', 'encabezado', 'titulo', 'destacado', 'origen', 'vence', 'creado', 'creadoPor', 'estado']) && (newData.child('tipo').val() === 'monto' ? newData.hasChild('monto') : newData.hasChild('items')) && (data.exists() || (newData.child('estado').val() === 'activo' && newData.child('creado').val() === now && newData.child('creadoPor').val() === auth.token.email && newData.child('vence').val() > now))",
+        "codigo": {
+          ".validate": "newData.val() === $codigo"
+        },
+        "tipo": {
+          ".validate": "(newData.val() === 'productos' || newData.val() === 'monto') && (!data.exists() || newData.val() === data.val())"
+        },
+        "encabezado": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 40 && (!data.exists() || newData.val() === data.val())"
+        },
+        "titulo": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 40 && (!data.exists() || newData.val() === data.val())"
+        },
+        "destacado": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20 && (!data.exists() || newData.val() === data.val())"
+        },
+        "monto": {
+          ".validate": "newData.isNumber() && newData.val() >= 1 && (!data.exists() || newData.val() === data.val())"
+        },
+        "items": {
+          ".validate": "!data.exists()",
+          "$i": {
+            ".validate": "newData.hasChildren(['cant', 'nombre'])",
+            "cant": {
+              ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 99"
+            },
+            "nombre": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "origen": {
+          ".validate": "(newData.val() === 'regalo' || newData.val() === 'venta') && (!data.exists() || newData.val() === data.val())"
+        },
+        "motivo": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60 && (!data.exists() || newData.val() === data.val())"
+        },
+        "precio": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() || newData.val() === data.val())"
+        },
+        "pago": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && (!data.exists() || newData.val() === data.val())"
+        },
+        "cliente": {
+          ".validate": "!data.exists()",
+          "nombre": {
+            ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
+          },
+          "telefono": {
+            ".validate": "newData.isString() && newData.val().matches(/^[0-9]{10}$/)"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "nota": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120 && (!data.exists() || newData.val() === data.val())"
+        },
+        "lote": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && (!data.exists() || newData.val() === data.val())"
+        },
+        "vence": {
+          ".validate": "newData.isNumber() && (!data.exists() || newData.val() === data.val())"
+        },
+        "creado": {
+          ".validate": "newData.isNumber() && (!data.exists() || newData.val() === data.val())"
+        },
+        "creadoPor": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120 && (!data.exists() || newData.val() === data.val())"
+        },
+        "estado": {
+          ".validate": "newData.val() === data.val() || (!data.exists() && newData.val() === 'activo') || (data.val() === 'activo' && ((newData.val() === 'canjeado' && newData.parent().hasChild('canje') && newData.parent().child('vence').val() >= now) || (newData.val() === 'anulado' && newData.parent().hasChild('anulado'))))"
+        },
+        "canje": {
+          ".validate": "!data.exists() && newData.parent().child('estado').val() === 'canjeado' && newData.hasChildren(['ts', 'staff', 'local'])",
+          "ts": {
+            ".validate": "newData.val() === now"
+          },
+          "staff": {
+            ".validate": "newData.val() === auth.token.email"
+          },
+          "local": {
+            ".validate": "newData.isString() && root.child('fidelizacion/locales/' + newData.val()).exists()"
+          },
+          "nota": {
+            ".validate": "newData.isString() && newData.val().length <= 120"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "anulado": {
+          ".validate": "!data.exists() && newData.parent().child('estado').val() === 'anulado' && newData.hasChildren(['ts', 'staff', 'motivo'])",
+          "ts": {
+            ".validate": "newData.val() === now"
+          },
+          "staff": {
+            ".validate": "newData.val() === auth.token.email"
+          },
+          "motivo": {
+            ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 120"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     }
   }
 }
