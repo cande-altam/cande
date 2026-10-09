@@ -1,0 +1,318 @@
+{
+  "rules": {
+    "orders": {
+      ".read": true,
+      ".write": true
+    },
+    "orderCounter": {
+      ".read": true,
+      ".write": true
+    },
+    "menu": {
+      ".read": true,
+      ".write": true
+    },
+    "clients": {
+      ".read": true,
+      ".write": true
+    },
+    "catalogo": {
+      ".read": true,
+      ".write": true
+    },
+    "config": {
+      ".read": true,
+      ".write": true
+    },
+    "pedidos_insumos": {
+      ".read": true,
+      ".write": true
+    },
+    "pedidos_mercaderia": {
+      ".read": true,
+      ".write": true
+    },
+    "fidelizacion": {
+      "staff": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": false
+        }
+      },
+      "config": {
+        ".read": "auth != null",
+        ".write": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        ".validate": "newData.hasChildren(['sellosPremio', 'premio', 'topeSemanal', 'horaApertura', 'horaCierre'])",
+        "sellosPremio": {
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 50"
+        },
+        "premio": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 120"
+        },
+        "topeSemanal": {
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 7"
+        },
+        "horaApertura": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 23"
+        },
+        "horaCierre": {
+          ".validate": "newData.isNumber() && newData.val() > newData.parent().child('horaApertura').val() && newData.val() <= 24"
+        },
+        "$other": {
+          ".validate": false
+        }
+      },
+      "locales": {
+        ".read": true,
+        ".write": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        "$local": {
+          ".validate": "$local.matches(/^[a-z0-9]{2,20}$/) && newData.hasChild('nombre')",
+          "nombre": {
+            ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 40"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "telefonos": {
+        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        "$tel": {
+          ".read": "auth != null",
+          ".write": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || (!data.exists() && newData.val() === auth.uid && !root.child('fidelizacion/tarjetas/' + auth.uid).exists() && newData.parent().parent().child('tarjetas/' + auth.uid + '/telefono').val() === $tel))",
+          ".validate": "$tel.matches(/^[0-9]{10}$/) && newData.isString()"
+        }
+      },
+      "tarjetas": {
+        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        "$uid": {
+          ".read": "auth != null && ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) || root.child('fidelizacion/staff/' + auth.uid).exists())",
+          ".write": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || (newData.exists() && ((auth.uid === $uid && !data.exists() && newData.child('sellos').val() === 0 && newData.child('totalSellos').val() === 0 && newData.child('canjes').val() === 0 && newData.child('ultimoSello').val() === 0 && newData.child('semana').val() === 0 && newData.child('sellosSemana').val() === 0 && newData.child('creada').val() === now && !newData.hasChild('ultimoLocal') && newData.parent().parent().child('telefonos/' + newData.child('telefono').val()).val() === $uid) || ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) && data.exists() && newData.child('nombre').val() === data.child('nombre').val() && newData.child('telefono').val() === data.child('telefono').val() && newData.child('cumple').val() === data.child('cumple').val() && newData.child('creada').val() === data.child('creada').val() && newData.child('canjes').val() === data.child('canjes').val() && newData.child('sellos').val() === data.child('sellos').val() + 1 && newData.child('totalSellos').val() === data.child('totalSellos').val() + 1 && newData.child('ultimoSello').val() === now && data.child('ultimoSello').val() < now - ((now - 10800000) % 86400000) && (now - 10800000) % 86400000 >= root.child('fidelizacion/config/horaApertura').val() * 3600000 && (now - 10800000) % 86400000 < root.child('fidelizacion/config/horaCierre').val() * 3600000 && root.child('fidelizacion/locales/' + newData.child('ultimoLocal').val()).exists() && newData.child('semana').val() === now - ((now + 248400000) % 604800000) && ((data.child('semana').val() === newData.child('semana').val() && newData.child('sellosSemana').val() === data.child('sellosSemana').val() + 1 && newData.child('sellosSemana').val() <= root.child('fidelizacion/config/topeSemanal').val()) || (data.child('semana').val() !== newData.child('semana').val() && newData.child('sellosSemana').val() === 1))))))",
+          ".validate": "newData.hasChildren(['nombre', 'telefono', 'creada', 'sellos', 'totalSellos', 'canjes', 'ultimoSello', 'semana', 'sellosSemana'])",
+          "nombre": {
+            ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 60"
+          },
+          "telefono": {
+            ".validate": "newData.isString() && newData.val().matches(/^[0-9]{10}$/)"
+          },
+          "cumple": {
+            ".validate": "newData.isString() && newData.val().matches(/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)"
+          },
+          "creada": {
+            ".validate": "newData.isNumber()"
+          },
+          "sellos": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "totalSellos": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "canjes": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "ultimoSello": {
+            ".validate": "newData.isNumber()"
+          },
+          "ultimoLocal": {
+            ".validate": "newData.isString()"
+          },
+          "semana": {
+            ".validate": "newData.isNumber()"
+          },
+          "sellosSemana": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "visitas": {
+        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        "$uid": {
+          ".read": "auth != null && ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) || root.child('fidelizacion/staff/' + auth.uid).exists())",
+          ".write": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+          "$vid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) && !data.exists() && newData.child('ts').val() === now && newData.parent().parent().parent().child('tarjetas/' + $uid + '/ultimoSello').val() === now",
+            ".validate": "newData.hasChildren(['ts', 'local'])",
+            "ts": {
+              ".validate": "newData.isNumber()"
+            },
+            "local": {
+              ".validate": "newData.isString() && root.child('fidelizacion/locales/' + newData.val()).exists()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      },
+      "canjes": {
+        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        "$cid": {
+          ".write": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists() && !data.exists()",
+          ".validate": "newData.hasChildren(['uid', 'ts', 'staff', 'sellosUsados'])"
+        }
+      },
+      "pines": {
+        "$tel": {
+          ".read": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || root.child('fidelizacion/telefonos/' + $tel).val() === auth.uid || (root.child('fidelizacion/alias/' + auth.uid).exists() && root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === root.child('fidelizacion/telefonos/' + $tel).val()))",
+          ".write": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || newData.parent().parent().child('telefonos/' + $tel).val() === auth.uid || (root.child('fidelizacion/alias/' + auth.uid).exists() && root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === root.child('fidelizacion/telefonos/' + $tel).val()))",
+          ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}$/)"
+        }
+      },
+      "intentos": {
+        "$tel": {
+          ".write": "auth != null && newData.child('uid').val() === auth.uid && newData.child('ts').val() === now && (!data.exists() || data.child('ts').val() < now - 10000)",
+          ".validate": "$tel.matches(/^[0-9]{10}$/) && newData.hasChildren(['uid', 'pin', 'ts'])",
+          "uid": {
+            ".validate": "newData.isString()"
+          },
+          "pin": {
+            ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}$/)"
+          },
+          "ts": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "alias": {
+        "$a": {
+          ".read": "auth != null && auth.uid === $a",
+          ".write": "auth != null && auth.uid === $a && (!newData.exists() || (!root.child('fidelizacion/tarjetas/' + $a).exists() && newData.child('uid').val() === root.child('fidelizacion/telefonos/' + newData.child('tel').val()).val() && root.child('fidelizacion/intentos/' + newData.child('tel').val() + '/uid').val() === auth.uid && root.child('fidelizacion/intentos/' + newData.child('tel').val() + '/ts').val() > now - 120000 && root.child('fidelizacion/intentos/' + newData.child('tel').val() + '/pin').val() === root.child('fidelizacion/pines/' + newData.child('tel').val()).val()))",
+          ".validate": "newData.hasChildren(['uid', 'tel'])",
+          "uid": {
+            ".validate": "newData.isString()"
+          },
+          "tel": {
+            ".validate": "newData.isString() && newData.val().matches(/^[0-9]{10}$/)"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "vouchers": {
+      ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+      "$codigo": {
+        ".write": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists() && newData.exists() && (!data.exists() || data.child('estado').val() === 'activo')",
+        ".validate": "$codigo.matches(/^CND-[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{4}$/) && newData.hasChildren(['codigo', 'tipo', 'encabezado', 'titulo', 'destacado', 'origen', 'vence', 'creado', 'creadoPor', 'estado']) && (newData.child('tipo').val() === 'monto' ? newData.hasChild('monto') : newData.hasChild('items')) && (data.exists() || (newData.child('estado').val() === 'activo' && newData.child('creado').val() === now && newData.child('creadoPor').val() === auth.token.email && newData.child('vence').val() > now))",
+        "codigo": {
+          ".validate": "newData.val() === $codigo"
+        },
+        "tipo": {
+          ".validate": "(newData.val() === 'productos' || newData.val() === 'monto') && (!data.exists() || newData.val() === data.val())"
+        },
+        "encabezado": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 40 && (!data.exists() || newData.val() === data.val())"
+        },
+        "titulo": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 40 && (!data.exists() || newData.val() === data.val())"
+        },
+        "destacado": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20 && (!data.exists() || newData.val() === data.val())"
+        },
+        "monto": {
+          ".validate": "newData.isNumber() && newData.val() >= 1 && (!data.exists() || newData.val() === data.val())"
+        },
+        "items": {
+          ".validate": "!data.exists()",
+          "$i": {
+            ".validate": "newData.hasChildren(['cant', 'nombre'])",
+            "cant": {
+              ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 99"
+            },
+            "nombre": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "origen": {
+          ".validate": "(newData.val() === 'regalo' || newData.val() === 'venta') && (!data.exists() || newData.val() === data.val())"
+        },
+        "motivo": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60 && (!data.exists() || newData.val() === data.val())"
+        },
+        "precio": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() || newData.val() === data.val())"
+        },
+        "pago": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && (!data.exists() || newData.val() === data.val())"
+        },
+        "cliente": {
+          ".validate": "!data.exists()",
+          "nombre": {
+            ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
+          },
+          "telefono": {
+            ".validate": "newData.isString() && newData.val().matches(/^[0-9]{10}$/)"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "nota": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120 && (!data.exists() || newData.val() === data.val())"
+        },
+        "lote": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && (!data.exists() || newData.val() === data.val())"
+        },
+        "vence": {
+          ".validate": "newData.isNumber() && (!data.exists() || newData.val() === data.val())"
+        },
+        "creado": {
+          ".validate": "newData.isNumber() && (!data.exists() || newData.val() === data.val())"
+        },
+        "creadoPor": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120 && (!data.exists() || newData.val() === data.val())"
+        },
+        "estado": {
+          ".validate": "newData.val() === data.val() || (!data.exists() && newData.val() === 'activo') || (data.val() === 'activo' && ((newData.val() === 'canjeado' && newData.parent().hasChild('canje') && newData.parent().child('vence').val() >= now) || (newData.val() === 'anulado' && newData.parent().hasChild('anulado'))))"
+        },
+        "canje": {
+          ".validate": "!data.exists() && newData.parent().child('estado').val() === 'canjeado' && newData.hasChildren(['ts', 'staff', 'local'])",
+          "ts": {
+            ".validate": "newData.val() === now"
+          },
+          "staff": {
+            ".validate": "newData.val() === auth.token.email"
+          },
+          "local": {
+            ".validate": "newData.isString() && root.child('fidelizacion/locales/' + newData.val()).exists()"
+          },
+          "nota": {
+            ".validate": "newData.isString() && newData.val().length <= 120"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "anulado": {
+          ".validate": "!data.exists() && newData.parent().child('estado').val() === 'anulado' && newData.hasChildren(['ts', 'staff', 'motivo'])",
+          "ts": {
+            ".validate": "newData.val() === now"
+          },
+          "staff": {
+            ".validate": "newData.val() === auth.token.email"
+          },
+          "motivo": {
+            ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 120"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}
