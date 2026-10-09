@@ -284,6 +284,7 @@
   #printOverlay .pv-actions{display:flex;gap:8px;flex-wrap:wrap}
   #printOverlay .pv-btn{border:1px solid #ccc;background:#f2efe3;border-radius:9px;padding:9px 14px;font-weight:700;font-size:13px;cursor:pointer;color:#1a1a1a}
   #printOverlay .pv-hint{margin:0;padding:11px 20px;font-size:13px;color:#6b5a1e;background:#fbf0d8;border-bottom:1px solid #e3c98a;font-weight:600}
+  #printOverlay .pv-nextweek{display:flex;align-items:center;gap:7px;padding:12px 20px 0;font-size:13px;font-weight:600;color:#1a1a1a;cursor:pointer}
   #printOverlay .pv-imgwrap{padding:20px;text-align:center}
   #printOverlay .pv-imgwrap img{max-width:100%;height:auto;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.12)}
   #printOverlay .pv-textwrap{padding:16px 20px}
@@ -837,7 +838,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-10-09 vista-quincena";
+const APP_VERSION="2026-10-10 descargar-quincena";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -2077,10 +2078,28 @@ function wrapCanvasText(ctx,text,maxWidth){
   if(cur)lines.push(cur);
   return lines.length?lines:[""];
 }
-function renderScheduleCanvas(){
+async function renderScheduleCanvas(opts){
+  opts=opts||{};
   const v=validate();
-  const PU_W=142,COL_W=112,ROW_H=28,SEP_H=24,TITLE_H=34,HEAD_H=26,PAD=22,GAP=20,TOP_H=54;
-  const sections=[["San Luis",buildScheduleRows("SL",v.worked)],["SLA",buildScheduleRows("SLA",v.worked)]];
+  const PU_W=142,COL_W=112,ROW_H=28,SEP_H=24,TITLE_H=34,HEAD_H=26,PAD=22,GAP=20,TOP_H=54,WEEKBAR_H=32;
+  // "incluir semana siguiente": junta las dos quincenas en una sola imagen, reusando el mismo truco
+  // de la vista de a pares (cambiar momentáneamente los campos de semana de `state` para armar las
+  // filas de esa otra semana con buildScheduleRows de siempre, después devolverlos tal cual estaban).
+  const weeks=[{banner:null,sections:[["San Luis",buildScheduleRows("SL",v.worked)],["SLA",buildScheduleRows("SLA",v.worked)]]}];
+  if(opts.includeNext&&state.weekStart){
+    const nextKey=addDaysISO(state.weekStart,7);
+    const data=await fetchWeekData(nextKey);
+    if(data&&(Object.keys(data.assign||{}).length||(data.ex||[]).filter(e=>!e.auto).length)){
+      const backup=weekPart(state);
+      Object.assign(state,blankWeek(nextKey),data);
+      const workedNext=workedFrom(state.assign,state.ex);
+      weeks.push({
+        banner:`Semana siguiente · ${fmtWeekRange(nextKey)}${data.label?" · "+data.label:""}`,
+        sections:[["San Luis",buildScheduleRows("SL",workedNext)],["SLA",buildScheduleRows("SLA",workedNext)]]
+      });
+      Object.assign(state,backup);
+    }
+  }
   const width=PU_W+COL_W*7+PAD*2;
 
   const mctx=document.createElement("canvas").getContext("2d");
@@ -2093,7 +2112,8 @@ function renderScheduleCanvas(){
     return Math.max(ROW_H,maxLines*14+10);
   }
   function sectionH(rows){return TITLE_H+HEAD_H+rows.reduce((s,r)=>s+rowH(r),0);}
-  const totalH=PAD+TOP_H+sections.reduce((s,[,rows],i)=>s+sectionH(rows)+(i>0?GAP:0),0)+PAD;
+  function weekH(week){return (week.banner?WEEKBAR_H:0)+week.sections.reduce((s,[,rows],i)=>s+sectionH(rows)+(i>0?GAP:0),0);}
+  const totalH=PAD+TOP_H+weeks.reduce((s,w,i)=>s+weekH(w)+(i>0?GAP*1.4:0),0)+PAD;
 
   const scale=2;
   const canvas=document.createElement("canvas");
@@ -2106,76 +2126,97 @@ function renderScheduleCanvas(){
   ctx.fillStyle="#1a1a1a";
   ctx.font="700 20px Georgia, 'Times New Roman', serif";
   ctx.textAlign="left";
-  ctx.fillText(`Candela · Cronograma${state.label?" · "+state.label:""}`,PAD,y+20);
+  ctx.fillText(`Candela · Cronograma${state.weekStart?" · "+fmtWeekRange(state.weekStart):""}${state.label?" · "+state.label:""}`,PAD,y+20);
   ctx.font="400 11px Arial, sans-serif";ctx.fillStyle="#777";
   ctx.fillText(`Generado el ${new Date().toLocaleDateString("es-AR")}`,PAD,y+37);
   y+=TOP_H;
 
-  sections.forEach(([title,rows],si)=>{
-    ctx.fillStyle="#f2efe3";ctx.fillRect(PAD,y,width-PAD*2,TITLE_H);
-    ctx.fillStyle="#1a1a1a";ctx.font="700 15px Arial, sans-serif";
-    ctx.fillText(title,PAD+10,y+22);
-    y+=TITLE_H;
+  weeks.forEach((week,wi)=>{
+    if(week.banner){
+      ctx.fillStyle="#2c6f63";ctx.fillRect(PAD,y,width-PAD*2,WEEKBAR_H);
+      ctx.fillStyle="#ffffff";ctx.font="700 13px Arial, sans-serif";
+      ctx.fillText(week.banner.toUpperCase(),PAD+10,y+WEEKBAR_H/2+5);
+      y+=WEEKBAR_H;
+    }
+    week.sections.forEach(([title,rows],si)=>{
+      ctx.fillStyle="#f2efe3";ctx.fillRect(PAD,y,width-PAD*2,TITLE_H);
+      ctx.fillStyle="#1a1a1a";ctx.font="700 15px Arial, sans-serif";
+      ctx.fillText(title,PAD+10,y+22);
+      y+=TITLE_H;
 
-    ctx.fillStyle="#faf9f3";ctx.fillRect(PAD,y,width-PAD*2,HEAD_H);
-    ctx.font="700 10px Arial, sans-serif";ctx.fillStyle="#555";
-    let x=PAD+PU_W;
-    DAYS.forEach(d=>{ctx.fillText(d[1].toUpperCase(),x+8,y+17);x+=COL_W;});
-    ctx.strokeStyle="#c9c3ac";ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(PAD,y+HEAD_H);ctx.lineTo(width-PAD,y+HEAD_H);ctx.stroke();
-    y+=HEAD_H;
+      ctx.fillStyle="#faf9f3";ctx.fillRect(PAD,y,width-PAD*2,HEAD_H);
+      ctx.font="700 10px Arial, sans-serif";ctx.fillStyle="#555";
+      let x=PAD+PU_W;
+      DAYS.forEach(d=>{ctx.fillText(d[1].toUpperCase(),x+8,y+17);x+=COL_W;});
+      ctx.strokeStyle="#c9c3ac";ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(PAD,y+HEAD_H);ctx.lineTo(width-PAD,y+HEAD_H);ctx.stroke();
+      y+=HEAD_H;
 
-    rows.forEach(row=>{
-      const h=rowH(row);
-      if(row.sep){
-        ctx.fillStyle=row.rest?"#e4f2ef":"#f1eedd";ctx.fillRect(PAD,y,width-PAD*2,h);
-        ctx.fillStyle=row.rest?"#2c6f63":"#5c574e";ctx.font="700 10px Arial, sans-serif";
-        ctx.fillText(row.label.toUpperCase(),PAD+10,y+h/2+3);
-      }else{
-        ctx.fillStyle=row.extra?"#fff7f4":"#ffffff";ctx.fillRect(PAD,y,PU_W,h);
-        ctx.fillStyle=row.extra?"#b23a26":"#1a1a1a";
-        ctx.font=row.extra?"italic 600 11px Arial, sans-serif":"600 11px Arial, sans-serif";
-        ctx.fillText(row.label,PAD+10,y+h/2+3);
-        let cx=PAD+PU_W;
-        row.cells.forEach(c=>{
-          ctx.fillStyle=c.expert?"#fbf0d8":"#ffffff";ctx.fillRect(cx,y,COL_W,h);
-          ctx.fillStyle=c.expert?"#8a5a10":c.muted?"#bbb":c.rest?"#5c574e":"#1a1a1a";
-          ctx.font=c.expert?"700 11.5px Arial, sans-serif":c.rest?"500 10.5px Arial, sans-serif":"500 11.5px Arial, sans-serif";
-          ctx.textAlign="center";
-          if(row.rest){
-            const lines=wrapCanvasText(ctx,c.text,COL_W-10);
-            const startY=y+h/2-((lines.length-1)*14)/2+4;
-            lines.forEach((ln,li)=>ctx.fillText(ln,cx+COL_W/2,startY+li*14));
-          }else{
-            ctx.fillText(c.text,cx+COL_W/2,y+h/2+4);
-          }
-          ctx.textAlign="left";
-          cx+=COL_W;
-        });
-      }
-      ctx.strokeStyle="#e2ddc9";ctx.lineWidth=1;
-      ctx.beginPath();ctx.moveTo(PAD,y+h);ctx.lineTo(width-PAD,y+h);ctx.stroke();
-      y+=h;
+      rows.forEach(row=>{
+        const h=rowH(row);
+        if(row.sep){
+          ctx.fillStyle=row.rest?"#e4f2ef":"#f1eedd";ctx.fillRect(PAD,y,width-PAD*2,h);
+          ctx.fillStyle=row.rest?"#2c6f63":"#5c574e";ctx.font="700 10px Arial, sans-serif";
+          ctx.fillText(row.label.toUpperCase(),PAD+10,y+h/2+3);
+        }else{
+          ctx.fillStyle=row.extra?"#fff7f4":"#ffffff";ctx.fillRect(PAD,y,PU_W,h);
+          ctx.fillStyle=row.extra?"#b23a26":"#1a1a1a";
+          ctx.font=row.extra?"italic 600 11px Arial, sans-serif":"600 11px Arial, sans-serif";
+          ctx.fillText(row.label,PAD+10,y+h/2+3);
+          let cx=PAD+PU_W;
+          row.cells.forEach(c=>{
+            ctx.fillStyle=c.expert?"#fbf0d8":"#ffffff";ctx.fillRect(cx,y,COL_W,h);
+            ctx.fillStyle=c.expert?"#8a5a10":c.muted?"#bbb":c.rest?"#5c574e":"#1a1a1a";
+            ctx.font=c.expert?"700 11.5px Arial, sans-serif":c.rest?"500 10.5px Arial, sans-serif":"500 11.5px Arial, sans-serif";
+            ctx.textAlign="center";
+            if(row.rest){
+              const lines=wrapCanvasText(ctx,c.text,COL_W-10);
+              const startY=y+h/2-((lines.length-1)*14)/2+4;
+              lines.forEach((ln,li)=>ctx.fillText(ln,cx+COL_W/2,startY+li*14));
+            }else{
+              ctx.fillText(c.text,cx+COL_W/2,y+h/2+4);
+            }
+            ctx.textAlign="left";
+            cx+=COL_W;
+          });
+        }
+        ctx.strokeStyle="#e2ddc9";ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(PAD,y+h);ctx.lineTo(width-PAD,y+h);ctx.stroke();
+        y+=h;
+      });
+      if(si<week.sections.length-1)y+=GAP;
     });
-    if(si<sections.length-1)y+=GAP;
+    if(wi<weeks.length-1)y+=GAP*1.4;
   });
   return canvas;
 }
-function openPrintView(){
+let printViewToken=0;
+async function openPrintView(){
   // Confirmado con la usuaria: dentro del visor de artifacts del chat, cualquier acción que dispare
   // algo del navegador (imprimir, abrir pestaña, descargar archivo) queda bloqueada en silencio,
   // aunque la imagen se dibuja perfecto. Por eso el único método que ofrecemos es "mantener presionado",
   // que es un gesto nativo del celular sobre la imagen y no depende de ningún permiso de JavaScript.
   let ov=document.getElementById("printOverlay");
   if(!ov){ov=document.createElement("div");ov.id="printOverlay";document.body.appendChild(ov);}
+  const myToken=++printViewToken;
   ov.innerHTML=`<div class="pv-bar"><b>Compartir cronograma${teamFilter?" · "+TEAM_LABEL[teamFilter]:""}</b><div class="pv-actions">
       <button class="pv-btn" id="pvCloseBtn">Cerrar</button>
     </div></div>
     <p class="pv-hint">📸 Mantené presionada la imagen de abajo y elegí <b>"Guardar imagen"</b> / <b>"Añadir a Fotos"</b> para descargarla.${teamFilter?` Se arma con el filtro <b>${TEAM_LABEL[teamFilter]}</b> activo — cambialo arriba de la grilla antes de abrir esto si querés otro equipo o el horario completo.`:""}</p>
+    <label class="pv-nextweek"><input type="checkbox" id="pvIncludeNext"${pairViewOn?" checked":""}> Incluir también la semana siguiente en la misma imagen</label>
     <div class="pv-imgwrap"><img id="pvImg" alt="Cronograma Candela"></div>`;
-  const canvas=renderScheduleCanvas();
-  document.getElementById("pvImg").src=canvas.toDataURL("image/png");
   document.getElementById("pvCloseBtn").addEventListener("click",()=>ov.remove());
+  const redraw=async()=>{
+    const img=document.getElementById("pvImg");if(!img)return;
+    img.src="";img.alt="Generando…";
+    const includeNext=document.getElementById("pvIncludeNext").checked;
+    const canvas=await renderScheduleCanvas({includeNext});
+    if(myToken!==printViewToken)return; // cerraste o volviste a abrir mientras se generaba
+    img.src=canvas.toDataURL("image/png");
+    img.alt="Cronograma Candela";
+  };
+  document.getElementById("pvIncludeNext").addEventListener("change",redraw);
+  await redraw();
 }
 
 /* ---------------- EXPORTAR / IMPORTAR (sincronizar entre dispositivos a mano) ---------------- */
