@@ -261,7 +261,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-10-10 13:13";
+const APP_VERSION = "2026-10-10 13:43";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -4871,7 +4871,7 @@ window.cerrarFormProducto = function() {
 window.guardarProducto = async function() {
   const nombre = document.getElementById("prod-nombre").value.trim();
   const precioVentaRaw = document.getElementById("prod-precio-venta").value;
-  const precioVenta = precioVentaRaw ? parseFloat(precioVentaRaw) : null;
+  const precioVenta = precioVentaRaw ? parseMontoAr(precioVentaRaw) : null;
   const costoManualRaw = document.getElementById("prod-costo-manual").value;
   const costoSinIvaRaw = document.getElementById("prod-costo-sin-iva").value;
   const ivaPct = Number(document.getElementById("prod-iva-pct").value) || RETAIL_IVA_PCT;
@@ -4940,7 +4940,7 @@ function renderProductosView(container) {
       <div class="section-title" style="margin-bottom:14px">${editing === "new" ? "➕ Nuevo producto" : "✏️ Editar producto"}</div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="prod-nombre" value="${escapeHtml(editingData.nombre)}"></div>
-        <div class="form-group"><label class="form-label">Precio de venta (opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="prod-precio-venta" value="${editingData.precioVenta ?? ""}"></div>
+        <div class="form-group"><label class="form-label">Precio de venta (opcional)</label><input type="text" inputmode="decimal" class="form-input" id="prod-precio-venta" value="${editingData.precioVenta ?? ""}"></div>
         <div class="form-group"><label class="form-label">Categoría (opcional)</label><input class="form-input" id="prod-categoria" placeholder="ej. Fiambres, Panadería, Bebidas Cafetería..." value="${escapeHtml(editingData.categoria)}"></div>
       </div>
       <div class="form-row">
@@ -5118,7 +5118,7 @@ function renderProductosView(container) {
           <td>${fmtMoney(f.precioActual)}</td>
           <td>
             <div style="display:flex;gap:4px;align-items:center">
-              <input type="number" step="1" min="0" class="form-input" style="max-width:100px" value="${f.precioSugerido}" onchange="guardarPrecioVentaRapido('${f.id}', this.value)" title="Precio que se va a guardar — viene precargado con el sugerido, pero podés poner otro">
+              <input type="text" inputmode="decimal" class="form-input" style="max-width:100px" value="${f.precioSugerido}" onchange="guardarPrecioVentaRapido('${f.id}', this.value)" title="Precio que se va a guardar — viene precargado con el sugerido, pero podés poner otro">
               <button type="button" class="btn btn-turq btn-sm btn-icon" onclick="guardarPrecioVentaRapido('${f.id}', ${f.precioSugerido})" title="Aplicar el precio sugerido tal cual, sin escribir nada">✓</button>
             </div>
           </td>
@@ -5177,18 +5177,35 @@ const PALABRAS_PREPARACION = ["relleno", "rellena", "rellenos", "rellenas", "rev
 // qué productos hay que tocar, de cuánto a cuánto, y por qué.
 const AJUSTE_MINIMO_FUDO = 1; // diferencias de menos de $1 no ameritan tocar nada
 
+// Precio sugerido redondeado a la centena, con el modelo que le toca al producto. null = sin costo.
+function precioSugeridoProducto(p) {
+  const esRetail = usaPrecioRetail(p);
+  const retail = esRetail ? calcPrecioRetail(p) : null;
+  const modelo = esRetail ? null : calcModeloCosteo(p);
+  const crudo = retail && retail.costoSinIva > 0 ? retail.precioSugerido : (modelo ? modelo.precioSugerido : null);
+  return crudo === null ? null : Math.round(crudo / 100) * 100;
+}
+
+// Un precio de venta elegido a mano DISTINTO del sugerido (redondear a $1.750, dejar uno de promo)
+// es una decisión: el producto sale de "Precios a actualizar" hasta que el costo vuelva a moverse y
+// cambie el sugerido. Antes la fila quedaba ahí para siempre y el campo volvía a mostrar el sugerido,
+// así que parecía que el precio no se había guardado aunque saliera el aviso de "guardado".
+function precioRevisadoVigente(p, sugerido) {
+  return !!(p && p.precioRevisado && sugerido !== null && Math.abs(Number(p.precioRevisado.sugerido) - sugerido) < AJUSTE_MINIMO_FUDO);
+}
+
 function productosConCambioDePrecio() {
   return objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
     .map(([id, p]) => {
       const esRetail = usaPrecioRetail(p);
       const retail = esRetail ? calcPrecioRetail(p) : null;
       const modelo = esRetail ? null : calcModeloCosteo(p);
-      const crudo = retail && retail.costoSinIva > 0 ? retail.precioSugerido : (modelo ? modelo.precioSugerido : null);
-      if (crudo === null) return null;
-      const sugerido = Math.round(crudo / 100) * 100;
+      const sugerido = precioSugeridoProducto(p);
+      if (sugerido === null) return null;
       const actual = Number(p.precioVenta) || 0;
       const dif = sugerido - actual;
       if (!actual || Math.abs(dif) < AJUSTE_MINIMO_FUDO) return null;
+      if (precioRevisadoVigente(p, sugerido)) return null;
       return {
         id, nombre: p.nombre, categoria: p.categoria || "",
         tipo: CLASIFICACION_LABEL[clasificarProducto(p)],
@@ -5301,12 +5318,15 @@ function renderProductosTable() {
     // sistema de caja). Se marca con la diferencia, que es lo que se va a ir a cambiar.
     const difVsSugerido = precioSugeridoRedondeado !== null && Number(p.precioVenta) > 0
       ? precioSugeridoRedondeado - Number(p.precioVenta) : null;
-    const badgeAjuste = difVsSugerido !== null && Math.abs(difVsSugerido) >= 1
+    const elegidoAMano = difVsSugerido !== null && Math.abs(difVsSugerido) >= 1 && precioRevisadoVigente(p, precioSugeridoRedondeado);
+    const badgeAjuste = elegidoAMano
+      ? `<div class="text-muted" style="font-size:11px" title="Precio distinto del sugerido, elegido a mano. Vuelve a 'Precios a actualizar' si cambia el costo.">✋ Elegido a mano</div>`
+      : difVsSugerido !== null && Math.abs(difVsSugerido) >= 1
       ? `<div><span class="badge ${difVsSugerido > 0 ? "badge-suba" : "badge-baja"}" title="El precio sugerido cambió respecto del precio que tenés cargado">${difVsSugerido > 0 ? "🔺 Subir" : "🔻 Bajar"} ${fmtMoney(Math.abs(difVsSugerido))}</span></div>`
       : "";
     const pendienteFudo = state.pendientesFudo[id];
     const precioVentaCell = `
-      <input type="number" step="1" min="0" class="form-input" style="max-width:120px" value="${p.precioVenta ?? ""}" placeholder="Precio venta" onchange="guardarPrecioVentaRapido('${id}', this.value)">
+      <input type="text" inputmode="decimal" class="form-input" style="max-width:120px" value="${p.precioVenta ?? ""}" placeholder="Precio venta" onchange="guardarPrecioVentaRapido('${id}', this.value)">
       ${precioSugeridoRedondeado !== null ? `<div class="text-muted" style="font-size:11px">Sugerido: ${fmtMoney(precioSugeridoRedondeado)}</div>` : ""}
       ${desgloseRetail}${badgeAjuste}
       ${pendienteFudo ? `<div><span class="badge" style="background:var(--terra);color:#fff" title="Antes: ${fmtMoney(pendienteFudo.precioAnterior)}">📤 Falta pasar a FUDO</span></div>` : ""}
@@ -5789,12 +5809,33 @@ async function registrarPendienteFudo(id, precioVentaNuevo) {
   state.pendientesFudo = { ...state.pendientesFudo, [id]: entry };
 }
 
+// Lee un monto escrito a mano al uso argentino: "1.750" son mil setecientos cincuenta (no 1,75),
+// "1.750,50" y "1750,5" también. Los campos de precio son de texto justamente para que el navegador
+// no reinterprete el punto de miles como coma decimal.
+function parseMontoAr(val) {
+  if (typeof val === "number") return Number.isFinite(val) ? val : null;
+  let s = String(val ?? "").replace(/[$\s]/g, "");
+  if (!s) return null;
+  if (s.includes(".") && s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  else if (/,\d{1,2}$/.test(s)) s = s.replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : null;
+}
+
 window.guardarPrecioVentaRapido = async function(id, val) {
-  const precioVenta = val ? parseFloat(val) : null;
+  const precioVenta = parseMontoAr(val) || null;
+  const p = state.productos[id] || {};
+  const sugerido = precioSugeridoProducto(p);
+  // Si se eligió un precio distinto del sugerido, queda anotado contra QUÉ sugerido se decidió.
+  const distinto = precioVenta && sugerido !== null && Math.abs(sugerido - precioVenta) >= AJUSTE_MINIMO_FUDO;
+  const precioRevisado = distinto ? { sugerido, fecha: todayISO() } : null;
   await registrarPendienteFudo(id, precioVenta || 0);
-  await update(ref(db, `costeo/productos/${id}`), { precioVenta });
-  state.productos[id] = { ...state.productos[id], precioVenta };
-  showToast("✅ Precio de venta guardado.", "success");
+  await update(ref(db, `costeo/productos/${id}`), { precioVenta, precioRevisado });
+  state.productos[id] = { ...state.productos[id], precioVenta, precioRevisado };
+  showToast(distinto
+    ? `✅ Precio de venta guardado: ${fmtMoney(precioVenta)}. Lo elegiste distinto del sugerido (${fmtMoney(sugerido)}), así que sale de "Precios a actualizar" hasta que el costo vuelva a cambiar.`
+    : `✅ Precio de venta guardado: ${fmtMoney(precioVenta || 0)}.`, "success");
   // render() completo, no solo renderProductosTable(): el precio editado puede sacar (o meter) a
   // este producto de "🔄 Precios a actualizar", que se calcula en la vista de afuera y no se
   // refrescaba solo. Sin esto, editar el precio DESDE ese panel dejaba la fila vieja a la vista
