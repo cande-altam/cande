@@ -261,7 +261,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-10-01 14:35";
+const APP_VERSION = "2026-10-10 11:32";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -4613,6 +4613,10 @@ function extraerMedidaProducto(nombre) {
   const texto = String(nombre || "");
   let m = texto.match(new RegExp(`x\\s*(\\d+(?:[.,]\\d+)?)\\s*(?:${MEDIDA_UNIDAD_RE})?\\b`, "i"));
   if (!m) m = texto.match(new RegExp(`(\\d+(?:[.,]\\d+)?)\\s*${MEDIDA_UNIDAD_RE}\\b`, "i"));
+  // Las listas de bebidas suelen escribir solo el número al final ("COCA COLA 1500"). Un número
+  // suelto en cualquier otro lugar puede ser un código, así que solo se acepta como ÚLTIMO término
+  // y con 3 o 4 cifras (cc o gramos).
+  if (!m) m = texto.trim().match(/\s(\d{3,4})$/);
   if (!m) return null;
   let valor = parseFloat(m[1].replace(",", "."));
   const unidad = String(m[2] || "").toLowerCase();
@@ -4635,30 +4639,85 @@ function tieneDescriptorDistinto(nombreSinMedida) {
   return palabras.some(w => PALABRAS_TIPO_NO_MARCA.has(w) && !PALABRAS_VACIAS.has(w));
 }
 
+// Clave de "mismo producto, otra variante": familia de marca + medida (Coca Cola / Fanta / Sprite
+// 1500 cc) o primera palabra + medida (Ades manzana / naranja 200 cc). null si el nombre no tiene
+// medida o trae un descriptor que lo hace un producto distinto ("Leche entera" vs "descremada").
+// La usa tanto "Unificar similares" como el reconocimiento de líneas de una lista de precios: una
+// línea "FANTA NARANJA 1.5L" tiene que caer en el producto ya unificado "Coca Cola 1500 cc".
+function claveUnificacionProducto(nombre) {
+  const medida = extraerMedidaProducto(nombre);
+  if (!medida) return null;
+  const familia = FAMILIAS_RETAIL_PROD.find(f => f.patrones.some(re => re.test(nombre)));
+  if (familia) return { key: `familia:${familia.canonico}:${medida.valor}`, canonico: `${familia.canonico} ${medidaTextoProducto(medida)}` };
+  const sinMedida = String(nombre).replace(medida.texto, " ").trim();
+  if (tieneDescriptorDistinto(sinMedida)) return null;
+  const primera = stripAccentsCosteo(String(nombre).trim().split(/\s+/)[0] || "").toLowerCase();
+  if (primera.length < 3) return null;
+  const nombreBase = primera.charAt(0).toUpperCase() + primera.slice(1);
+  return { key: `variante:${primera}:${medida.valor}`, canonico: `${nombreBase} ${medidaTextoProducto(medida)}` };
+}
+
 function buscarProductosParaUnificar() {
   const entries = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
     .filter(([, p]) => clasificarProducto(p) === "retail");
   const grupos = {};
   for (const [id, p] of entries) {
-    const medida = extraerMedidaProducto(p.nombre);
-    if (!medida) continue;
-    const familia = FAMILIAS_RETAIL_PROD.find(f => f.patrones.some(re => re.test(p.nombre)));
-    if (familia) {
-      const key = `familia:${familia.canonico}:${medida.valor}`;
-      (grupos[key] ||= { canonico: `${familia.canonico} ${medidaTextoProducto(medida)}`, items: [] }).items.push({ id, p });
-      continue;
-    }
-    const sinMedida = p.nombre.replace(medida.texto, " ").trim();
-    if (tieneDescriptorDistinto(sinMedida)) continue;
-    const primera = stripAccentsCosteo(p.nombre.trim().split(/\s+/)[0] || "").toLowerCase();
-    if (primera.length < 3) continue;
-    const key = `variante:${primera}:${medida.valor}`;
-    const nombreBase = primera.charAt(0).toUpperCase() + primera.slice(1);
-    (grupos[key] ||= { canonico: `${nombreBase} ${medidaTextoProducto(medida)}`, items: [] }).items.push({ id, p });
+    const c = claveUnificacionProducto(p.nombre);
+    if (!c) continue;
+    (grupos[c.key] ||= { canonico: c.canonico, items: [] }).items.push({ id, p });
   }
   return Object.entries(grupos)
     .filter(([, g]) => g.items.length >= 2)
     .map(([clave, g]) => ({ clave, ...g }));
+}
+
+// Reconoce a qué PRODUCTO DE REVENTA corresponde el texto de una línea de lista de precios.
+// Antes el respaldo local solo buscaba en insumos: una línea de bebidas que la IA no identificaba
+// (o que identificaba como el insumo gemelo creado por una factura) nunca llegaba al producto, y
+// por eso "Precios a actualizar" no se enteraba de la suba. Tres pasos, de más a menos seguro:
+//   1. Nombre o alias idéntico (normalizado).
+//   2. Parecido por palabras, exigiendo la MISMA medida: tokensInsumo descarta los números, así
+//      que sin esto "Coca Cola 500" y "Coca Cola 1500" serían indistinguibles.
+//   3. Misma clave de unificación (familia de marca o variante + medida), si un solo producto la tiene.
+// Devuelve el id, o "" si no hay un único candidato claro — ante la duda, que lo elija el usuario.
+function buscarProductoRetailParaTexto(texto) {
+  const limpio = String(texto || "").trim();
+  if (!limpio) return "";
+  const candidatos = Object.entries(state.productos).filter(([, p]) => p && p.nombre && usaPrecioRetail(p));
+  if (!candidatos.length) return "";
+
+  const clave = claveAliasInsumo(limpio);
+  const exactos = candidatos.filter(([, p]) => claveAliasInsumo(p.nombre) === clave || (p.alias && p.alias[clave]));
+  if (exactos.length === 1) return exactos[0][0];
+
+  const medidaTexto = extraerMedidaProducto(limpio);
+  const medidaCompatible = (p) => {
+    const m = extraerMedidaProducto(p.nombre);
+    return !m || !medidaTexto || m.valor === medidaTexto.valor;
+  };
+  const tokens = tokensInsumo(limpio);
+  if (tokens.length) {
+    const setTexto = new Set(tokens);
+    const puntuados = [];
+    for (const [id, p] of candidatos) {
+      if (!medidaCompatible(p)) continue;
+      const tokensP = tokensInsumo(p.nombre);
+      if (!tokensP.length || tiposIncompatibles(tokens, tokensP)) continue;
+      let score = parecidoTokens(tokens, tokensP);
+      if (tokensP.length >= 2 && tokensP.every(t => setTexto.has(t))) score = Math.max(score, 0.95);
+      if (score >= MATCH_UMBRAL_ALTA) puntuados.push({ id, score });
+    }
+    puntuados.sort((a, b) => b.score - a.score);
+    const hayEmpate = puntuados.length > 1 && Math.abs(puntuados[1].score - puntuados[0].score) < 0.01;
+    if (puntuados.length && !hayEmpate) return puntuados[0].id;
+  }
+
+  const grupo = claveUnificacionProducto(limpio);
+  if (grupo) {
+    const delGrupo = candidatos.filter(([, p]) => claveUnificacionProducto(p.nombre)?.key === grupo.key);
+    if (delGrupo.length === 1) return delGrupo[0][0];
+  }
+  return "";
 }
 
 window.toggleUnificarProductos = function() {
@@ -4699,8 +4758,16 @@ window.fusionarProductosGrupo = async function(idsSeleccionados, survivorId, nom
   const others = ids.filter(id => id !== survivorId);
   if (!confirm(`¿Unificar ${ids.length} productos en "${nombre}"? Los otros ${others.length} se eliminan. El costo y precio de venta que va a quedar son los de "${survivor.nombre}" — revisalos después si hace falta.`)) return;
 
-  await update(ref(db, `costeo/productos/${survivorId}`), { nombre });
-  state.productos[survivorId] = { ...survivor, nombre };
+  // Igual que al fusionar insumos: los nombres que desaparecen pasan a ser alias del que queda. Así
+  // una lista de precios que siga diciendo "Fanta 1,5 L" cae en "Coca Cola 1500 cc" en vez de
+  // quedar sin identificar (o ir a parar a un insumo) y no mover el precio sugerido.
+  const alias = { ...(survivor.alias || {}) };
+  for (const n of [survivor.nombre, ...others.map(id => state.productos[id].nombre)]) {
+    const k = claveAliasInsumo(n);
+    if (k && k !== claveAliasInsumo(nombre)) alias[k] = true;
+  }
+  await update(ref(db, `costeo/productos/${survivorId}`), { nombre, alias });
+  state.productos[survivorId] = { ...survivor, nombre, alias };
   for (const id of others) {
     await remove(ref(db, `costeo/productos/${id}`));
     delete state.productos[id];
@@ -6063,15 +6130,46 @@ window.handleListaFotoChange = async function(e) {
 // Normaliza lo que devuelve la IA a las filas editables de la tabla de revisión. Cada fila conoce
 // su destino (insumo existente, producto existente, insumo nuevo o ignorar) y se puede corregir a
 // mano antes de aplicar — la IA sugiere, el usuario decide.
+// El "otro lugar" donde vive el mismo artículo de una línea de lista: el producto de reventa gemelo
+// de un insumo, o el insumo gemelo de un producto. Pasa mucho con las bebidas y lo que se revende:
+// cada factura escaneada crea un INSUMO por línea, y el mismo artículo además está cargado como
+// PRODUCTO (con su costo sin IVA y su precio de venta) sin estar vinculados entre sí. Si la lista se
+// aplicaba solo al insumo, el producto quedaba con el costo viejo y nunca sugería subir el precio.
+// "" si no hay gemelo, o si ya están vinculados (ahí aplicarPrecioListaProducto redirige al insumo
+// solo, y aplicarlo dos veces sería repetir).
+function destinoGemeloLista(destino, textoLinea) {
+  const [tipo, id] = String(destino || "").split(":");
+  if (tipo === "i" && state.insumos[id]) {
+    const prodId = buscarProductoRetailParaTexto(textoLinea) || buscarProductoRetailParaTexto(state.insumos[id].nombre);
+    const prod = prodId ? state.productos[prodId] : null;
+    return prod && !prod.insumoVinculadoId ? `p:${prodId}` : "";
+  }
+  if (tipo === "p" && state.productos[id]) {
+    const prod = state.productos[id];
+    if (prod.insumoVinculadoId) return "";
+    const insId = matchInsumoId(textoLinea) || matchInsumoId(prod.nombre);
+    return insId ? `i:${insId}` : "";
+  }
+  return "";
+}
+
 function normalizarLineasLista(items) {
   return (items || []).map(it => {
     const insumoId = it.insumoId && state.insumos[it.insumoId] ? it.insumoId : "";
-    const productoId = !insumoId && it.productoId && state.productos[it.productoId] ? it.productoId : "";
-    const matchLocal = insumoId || productoId ? "" : matchInsumoId(it.nombre);
-    const destino = insumoId ? `i:${insumoId}`
-      : productoId ? `p:${productoId}`
-      : matchLocal ? `i:${matchLocal}`
+    const productoId = it.productoId && state.productos[it.productoId] ? it.productoId : "";
+    // Un artículo que se revende va primero al PRODUCTO: es donde está el precio de venta que la
+    // lista tiene que mover. Antes la línea quedaba en el insumo apenas la IA (o el respaldo local,
+    // que solo miraba insumos) encontraba uno, y el producto no se enteraba.
+    const productoLocal = productoId ? "" : buscarProductoRetailParaTexto(it.nombre)
+      || (insumoId ? buscarProductoRetailParaTexto(state.insumos[insumoId].nombre) : "");
+    const prodFinal = productoId || productoLocal;
+    const insFinal = insumoId || (prodFinal ? "" : matchInsumoId(it.nombre));
+    const destino = prodFinal ? `p:${prodFinal}`
+      : insFinal ? `i:${insFinal}`
       : "__nuevo__";
+    // Si además existe el gemelo en el otro catálogo, la lista actualiza los dos lugares a la vez.
+    let destino2 = destinoGemeloLista(destino, it.nombre);
+    if (prodFinal && insumoId && !state.productos[prodFinal].insumoVinculadoId) destino2 = `i:${insumoId}`;
     const precio = Number(it.precio);
     const cont = Number(it.contenidoPorUnidad);
     // Si la línea está cotizada por bulto, lo que se guarda es el precio por unidad de medida —
@@ -6088,6 +6186,7 @@ function normalizarLineasLista(items) {
     return {
       nombre: String(it.nombre || "").trim(),
       destino,
+      destino2,
       marca: String(it.marca || "").trim(),
       codigo: String(it.codigo || "").trim(),
       unidad: String(it.unidad || "").trim(),
@@ -6297,7 +6396,15 @@ window.setListaLineaDestino = function(idx, val) {
   const linea = (state.listaLineas || [])[idx];
   if (!linea) return;
   linea.destino = val;
+  linea.destino2 = destinoGemeloLista(val, linea.nombre);
   if (val === "__ignorar__" || val === "__nuevo__") linea.aplicar = false;
+  render();
+};
+// El gemelo se propone, pero se puede descartar si no corresponde.
+window.quitarListaLineaGemelo = function(idx) {
+  const linea = (state.listaLineas || [])[idx];
+  if (!linea) return;
+  linea.destino2 = "";
   render();
 };
 window.setListaLineaPrecio = function(idx, val) {
@@ -6348,13 +6455,21 @@ window.cancelarLista = function() {
 
 // Compara el precio de la lista contra el costo con el que se está costeando hoy, para poder
 // mostrar de un vistazo qué va a cambiar realmente antes de aplicar nada.
+// Para un producto se compara SIN IVA contra SIN IVA — exactamente la misma base que usa
+// aplicarPrecioListaProducto al decidir si sube. Antes se comparaba contra calcCostoProducto (costo
+// TOTAL, con IVA): cualquier suba de menos del 21% aparecía como "💡 más barato", y "🔺 Solo las que
+// suben" la destildaba — la lista se cargaba "bien" pero esas subas nunca llegaban al producto.
+function costoComparableListaProducto(producto) {
+  if (producto.insumoVinculadoId && state.insumos[producto.insumoVinculadoId]) return precioEfectivoInsumo(producto.insumoVinculadoId);
+  return calcPrecioRetail(producto).costoSinIva;
+}
 function comparacionLineaLista(linea) {
   const precio = Number(linea.precio);
   if (!(precio > 0)) return { estado: "sin-precio", actual: null, pct: null };
   const [tipo, id] = String(linea.destino || "").split(":");
   let actual = null;
   if (tipo === "i" && state.insumos[id]) actual = precioEfectivoInsumo(id);
-  else if (tipo === "p" && state.productos[id]) actual = calcCostoProducto(state.productos[id]);
+  else if (tipo === "p" && state.productos[id]) actual = costoComparableListaProducto(state.productos[id]);
   else return { estado: "nuevo", actual: null, pct: null };
   if (!(actual > 0)) return { estado: "sube", actual: 0, pct: null };
   const pct = ((precio - actual) / actual) * 100;
@@ -6379,17 +6494,27 @@ window.aplicarListaPrecios = async function() {
     const listaId = listaRef.key;
     let subieron = 0, sinCambio = 0;
     const detalle = [];
+    let productosActualizados = 0;
     for (const linea of lineas) {
       const [tipo, id] = String(linea.destino).split(":");
       const args = { proveedorId, proveedorNombre, precio: Number(linea.precio), marca: linea.marca, fechaLista, listaId };
       const r = tipo === "p" ? await aplicarPrecioListaProducto(id, args) : await aplicarPrecioListaInsumo(id, args);
       if (r.subio) subieron++; else sinCambio++;
+      // El mismo artículo cargado en el otro catálogo (insumo de factura + producto de reventa):
+      // se actualizan los dos, si no el producto se queda con el costo viejo.
+      const [tipo2, id2] = String(linea.destino2 || "").split(":");
+      let r2 = null;
+      if (tipo2 === "p" && state.productos[id2] && id2 !== id) r2 = await aplicarPrecioListaProducto(id2, args);
+      else if (tipo2 === "i" && state.insumos[id2] && id2 !== id) r2 = await aplicarPrecioListaInsumo(id2, args);
+      if ((tipo === "p" && r.subio) || (tipo2 === "p" && r2 && r2.subio)) productosActualizados++;
       detalle.push({
         nombre: linea.nombre || "", tipo: tipo === "p" ? "producto" : "insumo", destinoId: id,
+        ...(r2 ? { tambienTipo: tipo2 === "p" ? "producto" : "insumo", tambienId: id2 } : {}),
         marca: normMarca(linea.marca), precio: Number(linea.precio),
         precioAnterior: r.precioAnterior ?? null, subio: !!r.subio
       });
     }
+    const sinIdentificar = (state.listaLineas || []).filter(l => l.destino === "__nuevo__" && Number(l.precio) > 0).length;
     await set(listaRef, {
       proveedorId, proveedorNombre, fecha: fechaLista, fechaCarga: todayISO(),
       origen: state._listaFotoDataUrl ? "foto" : "texto",
@@ -6400,7 +6525,7 @@ window.aplicarListaPrecios = async function() {
       detalle
     });
     state.listasPrecios[listaId] = { proveedorId, proveedorNombre, fecha: fechaLista, aplicadas: lineas.length, subieron, sinCambio, totalLineas: (state.listaLineas || []).length, detalle };
-    showToast(`✅ Lista aplicada: ${lineas.length} precios cargados, ${subieron} subieron el costo.`, "success");
+    showToast(`✅ Lista aplicada: ${lineas.length} precios cargados, ${subieron} subieron el costo${productosActualizados ? ` (${productosActualizados} producto${productosActualizados === 1 ? "" : "s"} de venta con costo nuevo — revisá "🔄 Precios a actualizar")` : ""}.${sinIdentificar ? ` ⚠️ ${sinIdentificar} línea${sinIdentificar === 1 ? "" : "s"} sin identificar no se aplicaron.` : ""}`, sinIdentificar ? "warn" : "success");
     window.cancelarLista();
   } catch (err) {
     console.error("Error al aplicar la lista de precios:", err);
@@ -6417,6 +6542,34 @@ window.eliminarLista = async function(id) {
   delete state.listasPrecios[id];
   showToast("🗑️ Registro de lista eliminado.", "success");
   render();
+};
+
+// Vuelve a abrir una lista ya aplicada en la pantalla de revisión, reconociendo cada línea de nuevo.
+// Sirve para recuperar listas cargadas cuando el reconocimiento solo miraba insumos: así los
+// productos de venta que quedaron sin actualizar reciben el precio sin volver a subir la lista ni
+// gastar otra lectura con IA. Los precios guardados ya están por unidad y sin IVA, por eso no se
+// vuelve a dividir por bulto ni a descontar IVA. Reaplicar al insumo el mismo precio no cambia nada.
+window.reabrirLista = function(id) {
+  const l = state.listasPrecios[id];
+  const detalle = l ? (Array.isArray(l.detalle) ? l.detalle : Object.values(l.detalle || {})) : [];
+  if (!detalle.length) return;
+  const items = detalle.map(d => ({
+    nombre: d.nombre, marca: d.marca || "", precio: d.precio,
+    contenidoPorUnidad: null, precioIncluyeIva: false,
+    insumoId: d.tipo === "insumo" ? d.destinoId : null,
+    productoId: d.tipo === "producto" ? d.destinoId : null
+  }));
+  state.listaLineas = normalizarLineasLista(items);
+  state.listaProveedorId = l.proveedorId || "";
+  state.listaFecha = l.fecha || todayISO();
+  state.listaMeta = {
+    proveedorLeido: l.proveedorNombre || "", cuit: "", calidadImagen: "", camposIlegibles: [],
+    notas: `Lista de ${l.proveedorNombre || "proveedor sin nombre"} del ${fmtDate(l.fecha)} reabierta para revisar. Fijate que cada línea vaya al producto de venta que corresponde y aplicala de nuevo.`
+  };
+  state.viewingListaId = null;
+  showToast("🔁 Lista reabierta: revisá a qué se aplica cada línea y volvé a aplicarla.", "success");
+  render();
+  window.scrollTo(0, 0);
 };
 
 window.toggleListaDetalle = function(id) {
@@ -6503,7 +6656,11 @@ function renderListasView(container) {
               <tr class="${l.aplicar ? "fila-abierta" : ""}">
                 <td><input type="checkbox" ${l.aplicar ? "checked" : ""} ${aplicable ? "" : "disabled"} onchange="toggleListaLinea(${idx}, this.checked)"></td>
                 <td>${escapeHtml(l.nombre) || "—"}${l.codigo ? `<div class="text-muted" style="font-size:11px">cód. ${escapeHtml(l.codigo)}</div>` : ""}${l.contenidoPorUnidad ? `<div class="text-muted" style="font-size:11px">📦 x${l.contenidoPorUnidad} — lista ${fmtMoney(l.precioLista)} → ${fmtMoney(l.precio)} por unidad</div>` : ""}</td>
-                <td><select class="form-select" style="min-width:190px" onchange="setListaLineaDestino(${idx}, this.value)">${opcionesDestinoLista(l.destino)}</select></td>
+                <td><select class="form-select" style="min-width:190px" onchange="setListaLineaDestino(${idx}, this.value)">${opcionesDestinoLista(l.destino)}</select>${(() => {
+                  const [t2, id2] = String(l.destino2 || "").split(":");
+                  const nombre2 = t2 === "p" ? state.productos[id2]?.nombre : t2 === "i" ? state.insumos[id2]?.nombre : null;
+                  return nombre2 ? `<div class="text-muted" style="font-size:11px;margin-top:4px">↳ también actualiza el ${t2 === "p" ? "producto" : "insumo"} «${escapeHtml(nombre2)}» <a href="#" onclick="quitarListaLineaGemelo(${idx});return false;" title="No actualizar este">✕</a></div>` : "";
+                })()}</td>
                 <td><input class="form-input" style="min-width:110px" value="${escapeHtml(l.marca)}" placeholder="Marca" onchange="setListaLineaMarca(${idx}, this.value)"></td>
                 <td><input type="number" step="0.01" min="0" class="form-input" style="min-width:110px" value="${l.precio === "" ? "" : l.precio}" onchange="setListaLineaPrecio(${idx}, this.value)"></td>
                 <td class="text-muted">${retail ? fmtMoney(retail.impuestos) : "—"}${retail ? `<div style="font-size:11px">IVA ${retail.ivaPct}%</div>` : ""}</td>
@@ -6537,6 +6694,7 @@ function renderListasView(container) {
         <td>${l.subieron ? `<span class="badge badge-suba">🔺 ${l.subieron} subieron</span>` : `<span class="badge badge-neutro">Sin subas</span>`}</td>
         <td style="white-space:nowrap"><div class="row-actions">
           <button class="btn btn-ghost btn-sm btn-icon" onclick="toggleListaDetalle('${id}')" title="${abierta ? "Ocultar detalle" : "Ver qué precios se aplicaron"}">${abierta ? "▴" : "▾"}</button>
+          ${Array.isArray(l.detalle) && l.detalle.length ? `<button class="btn btn-ghost btn-sm btn-icon" onclick="reabrirLista('${id}')" title="Volver a revisar esta lista y aplicarla de nuevo (sirve para que llegue a los productos de venta que antes no se actualizaron)">🔁</button>` : ""}
           <button class="btn btn-ghost btn-sm btn-icon" onclick="eliminarLista('${id}')" title="Borrar el registro de esta lista">🗑️</button>
         </div></td>
       </tr>
