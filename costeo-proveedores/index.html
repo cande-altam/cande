@@ -261,7 +261,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-10-10 11:32";
+const APP_VERSION = "2026-10-10 13:13";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -329,6 +329,7 @@ const state = {
   mostrarPendientesFudo: false,
   pendientesFudo: {},
   mostrarUnificarProductos: false,
+  mostrarGemelosVincular: false,
   gruposProductosDescartados: new Set(),
   // Recetario (ver INTEGRACION_COSTEOS.md): solo lectura, en tiempo real, a través de recAuth/recDb.
   recetarioConectado: false,
@@ -2276,12 +2277,39 @@ async function actualizarPrecioInsumo(insumoId, { proveedorId, proveedorNombre, 
 //    consultas del tipo "¿cuándo compramos queso crema por última vez?".
 //  · La línea queda marcada con origen "lista" y su fecha de vigencia, así precioCosteoInsumo la
 //    puede tratar con la regla que corresponde (solo puede subir el costo, nunca bajarlo).
-async function aplicarPrecioListaInsumo(insumoId, { proveedorId, proveedorNombre, precio, marca, fechaLista, listaId }) {
+// ¿Los precios de este insumo están cargados CON IVA? Las facturas guardan el precio tal como vino y
+// marcan `conIva` en cada compra; "Con IVA" es la opción por defecto al cargar una factura, y la carga
+// manual también es con IVA. Por eso, salvo que la compra más reciente que lo aclara diga lo contrario,
+// el criterio de los insumos es CON IVA.
+function insumoPreciosConIva(ins) {
+  const marcadas = Object.values(ins?.historial || {}).filter(h => h && typeof h.conIva === "boolean");
+  if (!marcadas.length) return true;
+  marcadas.sort((a, b) => String(a.fecha || "").localeCompare(String(b.fecha || "")));
+  return marcadas[marcadas.length - 1].conIva;
+}
+function ivaPctPorDefectoInsumo(insumoId) {
+  const vinculado = Object.values(state.productos).find(p => p && p.insumoVinculadoId === insumoId && p.ivaPct != null);
+  return vinculado ? Number(vinculado.ivaPct) : RETAIL_IVA_PCT;
+}
+// El precio de una lista se maneja SIN IVA (es la columna "Costo s/IVA" de la revisión). Para guardarlo
+// en un insumo hay que llevarlo al MISMO criterio que sus compras: si las facturas están con IVA, se le
+// suma. Sin esto la lista se comparaba sin IVA contra facturas con IVA: cualquier aumento menor al 21%
+// parecía "más barato" que la última factura y, como una lista solo puede subir el costo, no subía nada.
+function precioListaParaInsumo(insumoId, precioNeto, ivaPct) {
+  const ins = state.insumos[insumoId];
+  if (!ins || !insumoPreciosConIva(ins)) return precioNeto;
+  const iva = ivaPct == null || ivaPct === "" ? ivaPctPorDefectoInsumo(insumoId) : Number(ivaPct) || 0;
+  return Math.round(precioNeto * (1 + iva / 100) * 10000) / 10000;
+}
+
+async function aplicarPrecioListaInsumo(insumoId, { proveedorId, proveedorNombre, precio: precioNeto, marca, fechaLista, listaId, ivaPct }) {
   const insumo = state.insumos[insumoId] || {};
+  const precio = precioListaParaInsumo(insumoId, precioNeto, ivaPct);
   const key = comboKeyPrecio(proveedorId, marca);
   const precios = { ...(insumo.precios || {}) };
   precios[key] = {
     precio,
+    precioNeto,
     fechaUltimo: fechaLista || todayISO(),
     fechaLista: fechaLista || todayISO(),
     actualizadoTs: Date.now(),
@@ -2335,10 +2363,15 @@ async function aplicarPrecioListaInsumo(insumoId, { proveedorId, proveedorNombre
 //  · Si está vinculado a un insumo (caso fiambres: el jamón cocido se vende y además se usa en
 //    recetas), el precio va al insumo — es el único lugar donde se mantiene ese costo.
 //  · Si no, actualiza su costo de compra, y solo si sube: misma regla que los insumos.
-async function aplicarPrecioListaProducto(productoId, { proveedorId, proveedorNombre, precio, marca, fechaLista, listaId }) {
+async function aplicarPrecioListaProducto(productoId, { proveedorId, proveedorNombre, precio, marca, fechaLista, listaId, ivaPct }) {
   const producto = state.productos[productoId] || {};
   if (producto.insumoVinculadoId && state.insumos[producto.insumoVinculadoId]) {
-    const r = await aplicarPrecioListaInsumo(producto.insumoVinculadoId, { proveedorId, proveedorNombre, precio, marca, fechaLista, listaId });
+    // El precio de la lista es por unidad del PRODUCTO; el insumo se costea por su propia unidad.
+    const cant = Number(producto.insumoVinculadoCantidad) || 1;
+    const r = await aplicarPrecioListaInsumo(producto.insumoVinculadoId, {
+      proveedorId, proveedorNombre, precio: precio / cant, marca, fechaLista, listaId,
+      ivaPct: ivaPct ?? producto.ivaPct
+    });
     return { ...r, viaInsumoId: producto.insumoVinculadoId };
   }
   // Se compara siempre SIN IVA contra SIN IVA: el precio de la lista es lo que factura el
@@ -3632,12 +3665,15 @@ window.moverInsumosAProductos = async function() {
   let movidos = 0;
   for (const id of ids) {
     const ins = state.insumos[id];
-    const costo = precioEfectivoInsumo(id);
+    // El costo se guarda SIN IVA porque es lo que el modelo de retail espera; el IVA se le suma
+    // después con la alícuota del producto. El precio del insumo viene de facturas que, salvo que
+    // digan lo contrario, están CON IVA: antes se copiaba tal cual al campo "sin IVA", el IVA se
+    // sumaba dos veces en el sugerido, y una lista sin IVA nunca llegaba a superarlo.
+    const costoInsumo = precioEfectivoInsumo(id);
+    const costo = insumoPreciosConIva(ins) ? costoInsumo / (1 + RETAIL_IVA_PCT / 100) : costoInsumo;
     await set(push(ref(db, "costeo/productos")), {
       nombre: ins.nombre, categoria: "Reventa", precioVenta: null, receta: {},
-      // El costo se guarda SIN IVA porque es lo que el modelo de retail espera; el IVA se le suma
-      // después con la alícuota del producto.
-      costoSinIva: costo > 0 ? costo : null,
+      costoSinIva: costo > 0 ? Math.round(costo * 100) / 100 : null,
       ivaPct: RETAIL_IVA_PCT, gananciaPct: RETAIL_GANANCIA_PCT,
       creadoTs: Date.now()
     });
@@ -4489,7 +4525,7 @@ function calcCostoProducto(producto) {
   // insumo — con todas sus líneas proveedor+marca — y el producto toma de ahí su costo de compra,
   // así se costea con la misma regla y no hay dos lugares donde mantener el precio.
   if (producto.insumoVinculadoId && state.insumos[producto.insumoVinculadoId]) {
-    return precioEfectivoInsumo(producto.insumoVinculadoId) * (Number(producto.insumoVinculadoCantidad) || 1);
+    return costoTotalProductoVinculado(producto);
   }
   // Sin receta armada: usamos el costo estimado a mano, si lo cargaron (útil para catálogos
   // grandes importados donde no es realista armar una receta ingrediente por ingrediente para todo).
@@ -4501,6 +4537,16 @@ function calcCostoProducto(producto) {
     return Number(producto.costoSinIva) * (1 + ivaPctBase / 100);
   }
   return Number(producto.costoManual) || 0;
+}
+
+// Costo TOTAL (con IVA) de un producto vinculado a un insumo. El criterio de los insumos es con IVA
+// (ver insumoPreciosConIva), así que en general es el precio del insumo tal cual. Si sus facturas
+// son sin IVA, se le suma — si no, el precio de venta sugerido saldría un 21% más bajo.
+function costoTotalProductoVinculado(p) {
+  const base = precioEfectivoInsumo(p.insumoVinculadoId) * (Number(p.insumoVinculadoCantidad) || 1);
+  if (insumoPreciosConIva(state.insumos[p.insumoVinculadoId])) return base;
+  const iva = p.ivaPct == null ? RETAIL_IVA_PCT : Number(p.ivaPct) || 0;
+  return base * (1 + iva / 100);
 }
 
 function costoProductoFuente(producto) {
@@ -4543,7 +4589,7 @@ function calcPrecioRetail(producto, costoSinIvaOverride) {
   // sugerido se quedaría congelado para siempre por más que el insumo se encareciera con cada
   // factura nueva, exactamente el bug que se busca evitar acá.
   if (costoSinIvaOverride === undefined && p.insumoVinculadoId && state.insumos[p.insumoVinculadoId]) {
-    const costoTotal = precioEfectivoInsumo(p.insumoVinculadoId) * (Number(p.insumoVinculadoCantidad) || 1);
+    const costoTotal = costoTotalProductoVinculado(p);
     const ganancia = costoTotal * (gananciaPct / 100);
     return { costoSinIva: costoTotal, ivaPct: 0, impuestos: 0, costoTotal, gananciaPct, ganancia, precioSugerido: costoTotal + ganancia };
   }
@@ -4975,10 +5021,34 @@ function renderProductosView(container) {
       ${!editing ? `<div class="row-actions">
         <button class="btn ${pendientesFudo.length ? "btn-primary" : "btn-ghost"}" onclick="togglePendientesFudo()" title="Los precios de venta que editaste, para copiarlos fácil en FUDO">📤 Precios editados${pendientesFudo.length ? ` (${pendientesFudo.length})` : ""}</button>
         <button class="btn btn-turq" onclick="toggleCambiosPrecio()" title="Los productos cuyo precio de venta quedó distinto del sugerido, para ir a actualizarlos en la caja">🔄 Precios a actualizar${cambiosPrecio.length ? ` (${cambiosPrecio.length})` : ""}</button>
+        <button class="btn btn-ghost" onclick="toggleGemelosVincular()" title="Productos de reventa que también están cargados como insumo (por las facturas): vincularlos deja el costo en un solo lugar, que actualizan facturas y listas">🔗 Vincular con insumos</button>
         <button class="btn ${gruposUnificar.length ? "btn-primary" : "btn-ghost"}" onclick="toggleUnificarProductos()" title="Productos de retail que probablemente sean el mismo (variante de sabor o familia de marca), para revisar y unificar">🧃 Unificar similares${gruposUnificar.length ? ` (${gruposUnificar.length})` : ""}</button>
         <button class="btn btn-primary" onclick="abrirFormProducto()">+ Nuevo producto</button>
       </div>` : ""}
     </div>
+    ${!editing && state.mostrarGemelosVincular ? (() => {
+      const gemelos = buscarGemelosParaVincular();
+      return `
+    <div class="section-block" style="border-color:var(--turq)">
+      <div class="section-title">🔗 Productos que también son insumos</div>
+      <div class="text-muted" style="font-size:12px;margin:4px 0 12px">Lo que se compra y además se revende (las bebidas, los fiambres) suele estar cargado dos veces: como <strong>insumo</strong> —lo crean las facturas— y como <strong>producto</strong> con su precio de venta. Si no están vinculados, una factura o una lista actualiza uno solo y el otro queda con el costo viejo. Al vincularlos, el producto toma siempre el costo del insumo. Revisá cada par, elegí el insumo correcto y confirmá: nada se vincula solo.</div>
+      ${gemelos.length ? `<div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th></th><th>Producto</th><th>Costo hoy</th><th>Insumo</th><th>Cantidad por unidad</th></tr></thead>
+        <tbody>${gemelos.map(({ pid, insumos }) => {
+          const p = state.productos[pid];
+          return `<tr data-gemelo="${pid}">
+            <td><input type="checkbox" checked></td>
+            <td>${escapeHtml(p.nombre)}</td>
+            <td>${fmtMoney(calcCostoProducto(p))}</td>
+            <td><select class="form-select" style="min-width:220px">${insumos.map(iid => `<option value="${iid}">${escapeHtml(state.insumos[iid].nombre)} — ${fmtMoney(precioEfectivoInsumo(iid))}${state.insumos[iid].unidad ? ` / ${escapeHtml(state.insumos[iid].unidad)}` : ""}</option>`).join("")}</select></td>
+            <td><input type="number" step="0.001" min="0" class="form-input" style="max-width:90px" value="1" title="Cuánto del insumo lleva cada unidad que se vende (1 si es la misma botella)"></td>
+          </tr>`;
+        }).join("")}</tbody>
+      </table></div>
+      <div class="row-actions" style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="vincularGemelosSeleccionados()">🔗 Vincular los tildados</button></div>`
+      : `<div class="empty-state">✅ No hay productos de reventa sin vincular que también estén cargados como insumo.</div>`}
+    </div>`;
+    })() : ""}
     ${!editing && state.mostrarUnificarProductos ? `
     <div class="section-block" style="border-color:var(--terra)">
       <div class="section-header">
@@ -6153,6 +6223,85 @@ function destinoGemeloLista(destino, textoLinea) {
   return "";
 }
 
+// ── Vincular un producto de reventa con su insumo gemelo ─────────────────────
+// Es la solución de fondo para lo que se compra y además se revende (las bebidas de Cosalta, los
+// fiambres): un solo costo, el del insumo, que actualizan tanto las facturas como las listas, y que el
+// producto toma de ahí. El costo propio que tenía el producto se borra: era una segunda copia que
+// quedaba vieja (y en los productos armados con "Insumos que son productos", además estaba guardado
+// con IVA en el campo "sin IVA").
+async function vincularProductoAInsumo(productoId, insumoId, cantidad) {
+  if (!state.productos[productoId] || !state.insumos[insumoId]) return;
+  const upd = { insumoVinculadoId: insumoId, insumoVinculadoCantidad: Number(cantidad) > 0 ? Number(cantidad) : 1, costoManual: null, costoSinIva: null };
+  await update(ref(db, `costeo/productos/${productoId}`), upd);
+  state.productos[productoId] = { ...state.productos[productoId], ...upd };
+  invalidarCacheCosteo();
+}
+
+// Productos de reventa sin vincular que tienen al menos un insumo gemelo. Se busca en los dos
+// sentidos: el nombre del producto contra los insumos, y el nombre de cada insumo contra los
+// productos (que respeta la medida y las familias unificadas: "Fanta 1500cc" -> "Coca Cola 1500 cc").
+// Nunca se vincula solo: esto arma la propuesta, la decisión es del usuario.
+function buscarGemelosParaVincular() {
+  const porProducto = {};
+  const agregar = (pid, iid) => { (porProducto[pid] ||= []).includes(iid) || porProducto[pid].push(iid); };
+  const vinculable = (p) => p && p.nombre && usaPrecioRetail(p) && !p.insumoVinculadoId;
+  for (const [pid, p] of Object.entries(state.productos)) {
+    if (!vinculable(p)) continue;
+    const r = buscarInsumoParaTexto(p.nombre);
+    if (r.id && (r.confianza === "alias" || r.confianza === "alta") && !esBaseInsumo(state.insumos[r.id])) agregar(pid, r.id);
+  }
+  for (const [iid, ins] of Object.entries(state.insumos)) {
+    if (!ins || !ins.nombre || esBaseInsumo(ins)) continue;
+    const pid = buscarProductoRetailParaTexto(ins.nombre);
+    if (pid && vinculable(state.productos[pid])) agregar(pid, iid);
+  }
+  return objToSortedEntries(porProducto, () => 0)
+    .map(([pid, insumos]) => ({ pid, insumos }))
+    .sort((a, b) => state.productos[a.pid].nombre.localeCompare(state.productos[b.pid].nombre));
+}
+
+window.toggleGemelosVincular = function() {
+  state.mostrarGemelosVincular = !state.mostrarGemelosVincular;
+  render();
+};
+// Lee las filas tildadas del panel directo del DOM (insumo elegido y cantidad), como "Unificar".
+window.vincularGemelosSeleccionados = async function() {
+  const filas = [...document.querySelectorAll("[data-gemelo]")].filter(f => f.querySelector('input[type=checkbox]')?.checked);
+  if (!filas.length) { showToast("⚠️ No hay ninguno tildado.", "warn"); return; }
+  if (!confirm(`¿Vincular ${filas.length} producto(s) con su insumo?\n\nDesde ahora su costo sale del insumo: lo actualizan las facturas y las listas de precios, en los dos lugares a la vez. El costo propio que tenía cada producto se reemplaza.`)) return;
+  for (const f of filas) {
+    await vincularProductoAInsumo(f.dataset.gemelo, f.querySelector("select")?.value, f.querySelector('input[type=number]')?.value);
+  }
+  showToast(`🔗 ${filas.length} producto(s) vinculados con su insumo.`, "success");
+  render();
+};
+// Desde la revisión de una lista: la línea ya tiene el producto y su insumo gemelo identificados.
+window.vincularGemeloLinea = async function(idx) {
+  const l = (state.listaLineas || [])[idx];
+  const [t1, pid] = String(l?.destino || "").split(":");
+  const [t2, iid] = String(l?.destino2 || "").split(":");
+  if (t1 !== "p" || t2 !== "i") return;
+  await vincularProductoAInsumo(pid, iid, 1);
+  // Ya vinculados: la lista va al insumo y el producto la toma de ahí, no hace falta aplicarla dos veces.
+  for (const otra of state.listaLineas) if (otra.destino === `p:${pid}`) otra.destino2 = "";
+  showToast(`🔗 «${state.productos[pid].nombre}» vinculado con el insumo «${state.insumos[iid].nombre}».`, "success");
+  render();
+};
+window.vincularGemelosLista = async function() {
+  const pares = [];
+  for (const l of state.listaLineas || []) {
+    const [t1, pid] = String(l.destino || "").split(":");
+    const [t2, iid] = String(l.destino2 || "").split(":");
+    if (t1 === "p" && t2 === "i" && !pares.some(x => x.pid === pid)) pares.push({ pid, iid });
+  }
+  if (!pares.length) return;
+  if (!confirm(`¿Vincular ${pares.length} producto(s) de esta lista con su insumo?\n\n${pares.slice(0, 12).map(x => `${state.productos[x.pid].nombre}  ↔  ${state.insumos[x.iid].nombre}`).join("\n")}${pares.length > 12 ? `\n…y ${pares.length - 12} más` : ""}\n\nDesde ahora su costo sale del insumo, y lo actualizan las facturas y las listas en los dos lugares a la vez.`)) return;
+  for (const { pid, iid } of pares) await vincularProductoAInsumo(pid, iid, 1);
+  for (const l of state.listaLineas) if (pares.some(x => l.destino === `p:${x.pid}`)) l.destino2 = "";
+  showToast(`🔗 ${pares.length} producto(s) vinculados con su insumo. Ahora aplicá la lista.`, "success");
+  render();
+};
+
 function normalizarLineasLista(items) {
   return (items || []).map(it => {
     const insumoId = it.insumoId && state.insumos[it.insumoId] ? it.insumoId : "";
@@ -6421,6 +6570,13 @@ window.setListaLineaGanancia = function(idx, val) {
   linea.gananciaPct = Number.isFinite(n) && n >= 0 ? n : null;
   render();
 };
+window.setListaLineaIva = function(idx, val) {
+  const linea = (state.listaLineas || [])[idx];
+  if (!linea) return;
+  const n = Number(val);
+  linea.ivaPct = Number.isFinite(n) && n >= 0 ? n : null;
+  render();
+};
 window.setListaLineaMarca = function(idx, val) {
   const linea = (state.listaLineas || [])[idx];
   if (linea) linea.marca = val;
@@ -6459,18 +6615,26 @@ window.cancelarLista = function() {
 // aplicarPrecioListaProducto al decidir si sube. Antes se comparaba contra calcCostoProducto (costo
 // TOTAL, con IVA): cualquier suba de menos del 21% aparecía como "💡 más barato", y "🔺 Solo las que
 // suben" la destildaba — la lista se cargaba "bien" pero esas subas nunca llegaban al producto.
-function costoComparableListaProducto(producto) {
-  if (producto.insumoVinculadoId && state.insumos[producto.insumoVinculadoId]) return precioEfectivoInsumo(producto.insumoVinculadoId);
-  return calcPrecioRetail(producto).costoSinIva;
-}
+// Para un insumo (o un producto vinculado a uno) se compara en el criterio del insumo: el precio de la
+// lista se lleva a "con IVA" si sus facturas están con IVA — lo mismo que hace aplicarPrecioListaInsumo.
 function comparacionLineaLista(linea) {
-  const precio = Number(linea.precio);
-  if (!(precio > 0)) return { estado: "sin-precio", actual: null, pct: null };
+  const precioNeto = Number(linea.precio);
+  if (!(precioNeto > 0)) return { estado: "sin-precio", actual: null, pct: null };
   const [tipo, id] = String(linea.destino || "").split(":");
-  let actual = null;
-  if (tipo === "i" && state.insumos[id]) actual = precioEfectivoInsumo(id);
-  else if (tipo === "p" && state.productos[id]) actual = costoComparableListaProducto(state.productos[id]);
-  else return { estado: "nuevo", actual: null, pct: null };
+  let actual = null, precio = precioNeto;
+  if (tipo === "i" && state.insumos[id]) {
+    actual = precioEfectivoInsumo(id);
+    precio = precioListaParaInsumo(id, precioNeto, linea.ivaPct);
+  } else if (tipo === "p" && state.productos[id]) {
+    const p = state.productos[id];
+    if (p.insumoVinculadoId && state.insumos[p.insumoVinculadoId]) {
+      const cant = Number(p.insumoVinculadoCantidad) || 1;
+      actual = precioEfectivoInsumo(p.insumoVinculadoId) * cant;
+      precio = precioListaParaInsumo(p.insumoVinculadoId, precioNeto, linea.ivaPct ?? p.ivaPct);
+    } else {
+      actual = calcPrecioRetail(p).costoSinIva;
+    }
+  } else return { estado: "nuevo", actual: null, pct: null };
   if (!(actual > 0)) return { estado: "sube", actual: 0, pct: null };
   const pct = ((precio - actual) / actual) * 100;
   if (precio > actual + 0.005) return { estado: "sube", actual, pct };
@@ -6497,7 +6661,7 @@ window.aplicarListaPrecios = async function() {
     let productosActualizados = 0;
     for (const linea of lineas) {
       const [tipo, id] = String(linea.destino).split(":");
-      const args = { proveedorId, proveedorNombre, precio: Number(linea.precio), marca: linea.marca, fechaLista, listaId };
+      const args = { proveedorId, proveedorNombre, precio: Number(linea.precio), marca: linea.marca, fechaLista, listaId, ivaPct: linea.ivaPct };
       const r = tipo === "p" ? await aplicarPrecioListaProducto(id, args) : await aplicarPrecioListaInsumo(id, args);
       if (r.subio) subieron++; else sinCambio++;
       // El mismo artículo cargado en el otro catálogo (insumo de factura + producto de reventa):
@@ -6627,6 +6791,10 @@ function renderListasView(container) {
         </div>
       </div>
       ${avisosHtml}
+      ${(() => {
+        const pares = new Set((lineas || []).filter(l => String(l.destino).startsWith("p:") && String(l.destino2 || "").startsWith("i:")).map(l => l.destino));
+        return pares.size ? `<div class="item-warn" style="margin-bottom:12px">🔗 <strong>${pares.size} producto${pares.size === 1 ? "" : "s"} de esta lista también ${pares.size === 1 ? "está" : "están"} cargado${pares.size === 1 ? "" : "s"} como insumo</strong> (por las facturas), sin estar vinculados. Si los vinculás, el costo queda en un solo lugar y lo actualizan las listas <em>y</em> las facturas en los dos lados a la vez. <button class="btn btn-primary btn-sm" style="margin-left:6px" onclick="vincularGemelosLista()">🔗 Vincular ${pares.size}</button></div>` : "";
+      })()}
       <div class="text-muted" style="margin-bottom:10px">Solo se aplican las líneas tildadas. Un precio de lista <strong>más alto</strong> que el costo actual lo actualiza enseguida; uno <strong>más bajo</strong> se guarda y se destaca como oportunidad de compra, pero no baja el costeo hasta que la compres de verdad.</div>
       <div class="data-table-wrap">
         <table class="data-table">
@@ -6659,11 +6827,13 @@ function renderListasView(container) {
                 <td><select class="form-select" style="min-width:190px" onchange="setListaLineaDestino(${idx}, this.value)">${opcionesDestinoLista(l.destino)}</select>${(() => {
                   const [t2, id2] = String(l.destino2 || "").split(":");
                   const nombre2 = t2 === "p" ? state.productos[id2]?.nombre : t2 === "i" ? state.insumos[id2]?.nombre : null;
-                  return nombre2 ? `<div class="text-muted" style="font-size:11px;margin-top:4px">↳ también actualiza el ${t2 === "p" ? "producto" : "insumo"} «${escapeHtml(nombre2)}» <a href="#" onclick="quitarListaLineaGemelo(${idx});return false;" title="No actualizar este">✕</a></div>` : "";
+                  const vincular = tipoDest === "p" && t2 === "i"
+                    ? ` · <a href="#" onclick="vincularGemeloLinea(${idx});return false;" title="Que el producto tome siempre el costo de este insumo: así lo actualizan también las facturas">🔗 vincular para siempre</a>` : "";
+                  return nombre2 ? `<div class="text-muted" style="font-size:11px;margin-top:4px">↳ también actualiza el ${t2 === "p" ? "producto" : "insumo"} «${escapeHtml(nombre2)}» <a href="#" onclick="quitarListaLineaGemelo(${idx});return false;" title="No actualizar este">✕</a>${vincular}</div>` : "";
                 })()}</td>
                 <td><input class="form-input" style="min-width:110px" value="${escapeHtml(l.marca)}" placeholder="Marca" onchange="setListaLineaMarca(${idx}, this.value)"></td>
                 <td><input type="number" step="0.01" min="0" class="form-input" style="min-width:110px" value="${l.precio === "" ? "" : l.precio}" onchange="setListaLineaPrecio(${idx}, this.value)"></td>
-                <td class="text-muted">${retail ? fmtMoney(retail.impuestos) : "—"}${retail ? `<div style="font-size:11px">IVA ${retail.ivaPct}%</div>` : ""}</td>
+                <td class="text-muted">${retail ? fmtMoney(retail.impuestos) : "—"}${retail ? `<div><select class="form-select" style="font-size:11px;padding:2px 4px;max-width:80px" title="Alícuota de IVA de esta línea" onchange="setListaLineaIva(${idx}, this.value)">${RETAIL_IVA_OPCIONES.map(v => `<option value="${v}" ${Number(retail.ivaPct) === v ? "selected" : ""}>IVA ${v}%</option>`).join("")}</select></div>` : ""}</td>
                 <td>${retail ? fmtMoney(retail.costoTotal) : "—"}</td>
                 <td>${retail ? `<input type="number" step="1" min="0" class="form-input" style="max-width:70px" value="${retail.gananciaPct}" title="% de ganancia sobre el costo total" onchange="setListaLineaGanancia(${idx}, this.value)">` : "—"}</td>
                 <td>${retail ? `<strong>${fmtMoney(retail.precioSugerido)}</strong>${precioVentaActual ? `<div class="text-muted" style="font-size:11px">hoy: ${fmtMoney(precioVentaActual)}</div>` : ""}` : `<span class="text-muted">receta</span>`}</td>
