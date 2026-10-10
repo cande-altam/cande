@@ -1,0 +1,2864 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Candela · Cronogramas</title>
+<style>
+  :root{
+    --crema:#EEEBD7; --terracota:#E15D46; --turquesa:#9BD6CC; --negro:#22201F;
+    /* tokens - light */
+    --bg:#F5F3E7; --panel:#FFFFFF; --panel-2:#FBFAF2; --ink:#22201F; --ink-soft:#5C574E;
+    --line:#DED9C4; --line-strong:#C9C3AC; --accent:#E15D46; --accent-ink:#B23a26;
+    --teal:#7FC6BA; --teal-ink:#2C6F63; --teal-soft:#E4F2EF;
+    --warn:#C98A1E; --warn-soft:#FBF0D8; --crit:#C23A22; --crit-soft:#F8E2DC;
+    --ok:#2C6F63; --ok-soft:#E4F2EF;
+    --chip:#F1EEDD; --shadow:0 1px 2px rgba(34,32,31,.06),0 6px 20px rgba(34,32,31,.06);
+    --font-display:'DM Serif Display','Playfair Display',Georgia,'Times New Roman',serif;
+    --font-body:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#1A1917; --panel:#242220; --panel-2:#2B2825; --ink:#EEEBD7; --ink-soft:#B4AE9C;
+      --line:#3A362F; --line-strong:#4A453B; --accent:#E9765F; --accent-ink:#F0937F;
+      --teal:#6FB7AB; --teal-ink:#9BD6CC; --teal-soft:#233531;
+      --warn:#E0B54C; --warn-soft:#3A3220; --crit:#E9765F; --crit-soft:#3B2621;
+      --ok:#9BD6CC; --ok-soft:#233531; --chip:#2F2C28; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1A1917; --panel:#242220; --panel-2:#2B2825; --ink:#EEEBD7; --ink-soft:#B4AE9C;
+    --line:#3A362F; --line-strong:#4A453B; --accent:#E9765F; --accent-ink:#F0937F;
+    --teal:#6FB7AB; --teal-ink:#9BD6CC; --teal-soft:#233531;
+    --warn:#E0B54C; --warn-soft:#3A3220; --crit:#E9765F; --crit-soft:#3B2621;
+    --ok:#9BD6CC; --ok-soft:#233531; --chip:#2F2C28; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --bg:#F5F3E7; --panel:#FFFFFF; --panel-2:#FBFAF2; --ink:#22201F; --ink-soft:#5C574E;
+    --line:#DED9C4; --line-strong:#C9C3AC; --accent:#E15D46; --accent-ink:#B23a26;
+    --teal:#7FC6BA; --teal-ink:#2C6F63; --teal-soft:#E4F2EF;
+    --warn:#C98A1E; --warn-soft:#FBF0D8; --crit:#C23A22; --crit-soft:#F8E2DC;
+    --ok:#2C6F63; --ok-soft:#E4F2EF; --chip:#F1EEDD; --shadow:0 1px 2px rgba(34,32,31,.06),0 6px 20px rgba(34,32,31,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:var(--font-display);font-weight:400;margin:0;text-wrap:balance}
+  button,select,input{font-family:inherit;font-size:inherit;color:inherit}
+  .wrap{max-width:1320px;margin:0 auto;padding:18px 20px 80px}
+
+  /* top bar */
+  .top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);position:sticky;top:8px;z-index:40}
+  .brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+  .mark{width:38px;height:38px;border-radius:11px;background:radial-gradient(120% 120% at 30% 20%,var(--terracota),#c74027);display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-size:22px;line-height:1;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+  .brand h1{font-size:20px;letter-spacing:.2px}
+  .brand p{margin:1px 0 0;font-size:11.5px;color:var(--ink-soft);letter-spacing:.4px;text-transform:uppercase}
+  .appVersion{text-transform:none;letter-spacing:0;opacity:.55;cursor:default}
+  .syncBanner{display:none;align-items:center;gap:10px;background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:11px;padding:10px 14px;font-size:12.5px;font-weight:600;margin-bottom:14px}
+  .syncBanner.show{display:flex}
+  .syncBanner button{margin-left:auto;border:none;background:transparent;color:inherit;font-size:16px;cursor:pointer;line-height:1;padding:2px;opacity:.7}
+  .syncBanner button:hover{opacity:1}
+  .weekbox{display:flex;align-items:center;gap:8px}
+  .weekbox input,.weekbox select{background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 11px;width:190px;color:var(--ink);font:inherit}
+  .weekbox input#weekStart{width:150px}
+  .weekbox select#weekSwitcher{width:150px}
+  .btn{border:1px solid var(--line-strong);background:var(--panel-2);border-radius:9px;padding:8px 13px;cursor:pointer;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:.12s}
+  .btn:hover{border-color:var(--ink-soft)}
+  .btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.ghost{background:transparent}
+  .icon-btn{width:38px;height:38px;padding:0;justify-content:center;border-radius:10px}
+  .btn.sm{padding:5px 9px;font-size:11.5px}
+  .syncStatus{font-size:16px;opacity:.45;cursor:default;user-select:none;line-height:1}
+  .syncStatus.saving{opacity:1;animation:syncPulse 1s ease-in-out infinite}
+  .syncStatus.ok{opacity:.75}
+  .syncStatus.error{opacity:1;filter:grayscale(.3)}
+  @keyframes syncPulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+  .layout{display:grid;grid-template-columns:290px 1fr;gap:18px;margin-top:18px;align-items:start}
+  @media (max-width:1000px){
+    .layout{grid-template-columns:1fr;display:flex;flex-direction:column}
+    main{order:1}
+    .rail{order:2}
+  }
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+  .card h2{font-size:16px;padding:14px 16px 0}
+  .card .sub{font-size:12px;color:var(--ink-soft);padding:2px 16px 0}
+  .card-body{padding:14px 16px}
+  .rail{display:flex;flex-direction:column;gap:16px;position:sticky;top:88px}
+  @media (max-width:1000px){.rail{position:static}}
+
+  /* mobile: los controles quedan colapsados bajo un botón para que el calendario sea lo primero que se ve */
+  .railToggle{display:none}
+  .railBody{display:flex;flex-direction:column;gap:16px}
+  @media (max-width:1000px){
+    .railToggle{display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px;font-weight:700;font-size:14px;box-shadow:var(--shadow);cursor:pointer;color:var(--ink)}
+    .railToggle .car{transition:transform .15s}
+    .railToggle[aria-expanded="true"] .car{transform:rotate(180deg)}
+    .railBody{display:none;margin-top:14px}
+    .railBody.open{display:flex}
+  }
+  @media (prefers-reduced-motion:reduce){.railToggle .car{transition:none}}
+
+  .eyebrow{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent-ink);font-weight:700}
+  .field{margin-top:12px}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:600}
+  .field select,.field input[type=text]{width:100%;background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 10px}
+  .daychecks{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+  .daychecks label{display:flex;flex-direction:column;align-items:center;font-size:10px;gap:3px;color:var(--ink-soft);cursor:pointer;font-weight:600}
+  .daychecks input{margin:0;accent-color:var(--accent)}
+  .mini-list{margin-top:10px;display:flex;flex-direction:column;gap:7px}
+  .mini-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:7px 9px;font-size:12.5px}
+  .mini-row .x{margin-left:auto;cursor:pointer;color:var(--ink-soft);border:none;background:none;font-size:15px;line-height:1;padding:2px 4px}
+  .mini-row .x:hover{color:var(--crit)}
+  .mini-row .editIcon{margin-left:auto;cursor:pointer;color:var(--ink-soft);border:none;background:none;font-size:12px;line-height:1;padding:2px 4px;opacity:.7}
+  .mini-row .editIcon:hover{opacity:1;color:var(--accent-ink)}
+  .mini-row .editIcon+.x{margin-left:0}
+  .daychip{display:inline-flex;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:1px 3px 1px 7px;font-size:11px}
+  .daychip .xday{border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:12px;line-height:1;padding:2px 3px}
+  .daychip .xday:hover{color:var(--crit)}
+  .pill{display:inline-block;padding:1px 7px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.3px}
+  .pill.he{background:var(--teal-soft);color:var(--teal-ink)}
+  .pill.abs{background:var(--warn-soft);color:var(--warn)}
+
+  /* schedule */
+  .sched{display:flex;flex-direction:column;gap:18px}
+  .cta-empty{padding:40px 20px}
+  .cta-empty-body{max-width:420px;margin:0 auto;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+  .cta-empty-icon{font-size:38px;line-height:1}
+  .cta-empty-body h2{font-size:19px}
+  .cta-empty-body p{margin:0;font-size:13.5px;color:var(--ink-soft);line-height:1.55}
+  .cta-empty-btn{margin-top:10px;padding:14px 26px;font-size:15px;width:100%;max-width:320px}
+  .loc-head{display:flex;align-items:center;gap:10px;padding:14px 16px 0}
+  .loc-head h2{font-size:18px}
+  .tbl-scroll{overflow-x:auto;padding:12px 16px 16px}
+  table.grid{border-collapse:separate;border-spacing:0;width:100%;min-width:720px}
+  table.grid th,table.grid td{padding:0;text-align:left}
+  table.grid thead th{position:sticky;top:0;background:var(--panel);z-index:2;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);padding:6px 6px 8px;border-bottom:2px solid var(--line-strong);text-align:center}
+  table.grid thead th.wknd{color:var(--accent-ink)}
+  table.grid thead th:first-child{text-align:left;padding-left:10px}
+  .puesto{font-weight:600;font-size:12.5px;white-space:nowrap;padding:4px 10px 4px 12px;border-bottom:1px solid var(--line);background:var(--panel-2);position:sticky;left:0;z-index:1;min-width:118px}
+  .wktag{font-size:9px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--accent-ink);background:var(--crema);border-radius:5px;padding:1px 5px;vertical-align:middle}
+  :root[data-theme="dark"] .wktag{background:#3a2f22}
+  @media (prefers-color-scheme:dark){.wktag{background:#3a2f22}}
+  .shift-sep.rest-sep{background:var(--teal-soft);color:var(--teal-ink)}
+  tr.rest-row .puesto{background:var(--panel-2)}
+  td.cell.restcell{vertical-align:top;border-left:1px solid var(--line)}
+  .restlist{display:flex;flex-direction:column;gap:3px;padding:7px 6px;align-items:center;min-height:22px}
+  .restname{font-size:10.5px;color:var(--ink-soft);line-height:1.3;text-align:center;white-space:nowrap}
+  .restname i{font-style:normal;color:var(--warn);font-size:9.5px}
+  .restnone{font-size:12px;color:var(--line-strong)}
+  .shift-sep td{background:var(--chip);font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);padding:5px 12px;border-bottom:1px solid var(--line-strong);position:sticky;left:0}
+  td.cell{position:relative;border-bottom:1px solid var(--line);border-left:1px solid var(--line);vertical-align:middle;min-width:86px}
+  td.cell.wknd{background:color-mix(in srgb,var(--crema) 40%,transparent)}
+  @media (prefers-color-scheme:dark){td.cell.wknd{background:rgba(233,118,95,.05)}}
+  .cellsel{width:100%;border:none;background:transparent;padding:6px 5px;font-size:12.5px;font-weight:500;cursor:pointer;border-radius:6px;text-align:center;text-align-last:center;-webkit-appearance:none;appearance:none;color:var(--ink)}
+  .cellsel:hover{background:var(--panel-2)}
+  .cellsel:focus{outline:2px solid var(--accent);outline-offset:-2px}
+  .cellsel.filled{color:var(--ink)}
+  .cellsel.empty{color:var(--line-strong)}
+  .cellsel.dupe{background:var(--crit-soft);color:var(--crit);font-weight:700}
+  .cellsel.disabled{opacity:.32;pointer-events:none}
+  .cellsel.he{box-shadow:inset 0 0 0 1.5px var(--teal)}
+  .cellsel.expert{background:var(--warn-soft);color:var(--warn);font-weight:700;box-shadow:inset 0 0 0 1.5px var(--warn)}
+  .cellsel.expert.he{box-shadow:inset 0 0 0 1.5px var(--warn),inset 0 0 0 3px var(--teal)}
+  .cellsel.expert-alt{box-shadow:inset 0 0 0 1.5px var(--warn);opacity:.7}
+  td.cell.closed{background:repeating-linear-gradient(45deg,var(--chip),var(--chip) 5px,transparent 5px,transparent 10px)}
+  td.cell.inactive{background:var(--panel-2)}
+  .celloff{display:block;text-align:center;padding:8px 5px;font-size:11px;color:var(--line-strong);user-select:none}
+  td.cell.closed .celloff{color:var(--ink-soft);font-style:italic;font-size:10px;text-transform:uppercase;letter-spacing:.4px;opacity:.75}
+  .puesto.extra{font-style:italic;color:var(--accent-ink);font-weight:600}
+  td.cell.extra .cellsel.filled{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent)}
+  td.cell.extra .cellsel.filled.he{box-shadow:inset 0 0 0 1.5px var(--teal)}
+  td.cell.extra .cellsel.filled.expert{box-shadow:inset 0 0 0 1.5px var(--warn)}
+  td.cell.extra .cellsel.filled.expert-alt{box-shadow:inset 0 0 0 1.5px var(--warn);opacity:.7}
+  td.cell.extra .cellsel.filled.dupe{box-shadow:none}
+  .excell{position:relative;display:flex;align-items:center}
+  .excell .cellsel{flex:1}
+  .halfbadge{position:absolute;right:2px;top:2px;font-size:9px;font-weight:800;line-height:1.4;padding:0 4px;border-radius:5px;border:1px solid transparent;cursor:pointer;font-family:inherit}
+  .halfbadge.on{color:var(--accent-ink);background:var(--crema)}
+  :root[data-theme="dark"] .halfbadge.on{background:#3a2f22}
+  @media (prefers-color-scheme:dark){.halfbadge.on{background:#3a2f22}}
+  .halfbadge.off{color:var(--line-strong);background:transparent;border-color:var(--line-strong);opacity:.55;transition:opacity .12s}
+  .excell:hover .halfbadge.off,.halfbadge.off:focus-visible{opacity:1}
+  /* aparece sobre un experto que "perdió" la ⭐ este turno por chocar con otro experto — tocarlo lo
+     elige a él en vez del que la tiene por defecto */
+  .expertPick{position:absolute;left:1px;bottom:1px;width:16px;height:14px;line-height:14px;font-size:8.5px;text-align:center;border:none;background:var(--warn-soft);color:var(--warn);cursor:pointer;padding:0;border-radius:4px;font-weight:800;z-index:2}
+  .expertPick:hover{filter:brightness(1.1)}
+  .excell .expertPick{position:static;margin-left:2px;flex:none;width:auto;padding:0 4px}
+
+  /* modo "mover personas": un botón invisible tapa todo el casillero (funciona igual con mouse
+     que con el dedo, a diferencia de arrastrar-y-soltar nativo, que en el celular no anda bien
+     sobre un <select>). Toca uno para levantarlo, toca otro para soltarlo ahí (o intercambian). */
+  .moveOverlay{display:none;position:absolute;inset:0;border:none;background:transparent;cursor:pointer;z-index:5;border-radius:4px}
+  body.moving .moveOverlay{display:block}
+  body.moving .cellsel,body.moving .noteBtn,body.moving .halfbadge{pointer-events:none;opacity:.55}
+  body.moving .moveOverlay:hover,body.moving .moveOverlay:focus-visible{background:color-mix(in srgb,var(--accent) 14%,transparent);outline:2px dashed var(--accent);outline-offset:-2px}
+  .moveOverlay.picked{background:color-mix(in srgb,var(--accent) 22%,transparent);outline:2px solid var(--accent);outline-offset:-2px}
+  #btnMover.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  #moveHint{display:none;align-items:center;gap:10px;background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:11px;padding:10px 14px;font-size:12.5px;font-weight:600;margin-bottom:14px}
+  #moveHint.show{display:flex}
+  #moveHint button{margin-left:auto;border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);background:transparent;color:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:5px 10px;border-radius:8px}
+  .notebanner{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .notebanner:empty{display:none}
+  .notebanner .nb{background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:600}
+  .stickyAdd{display:flex;gap:8px;margin-top:4px}
+  .stickyAdd input{flex:1;background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 11px;font-size:12.5px;color:var(--ink)}
+  .stickyNotes{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .stickyNotes:empty{margin-top:0}
+  .sticky{background:#fdf3c7;color:#5c4a10;border:1px solid #e6d488;border-radius:2px 10px 10px 10px;padding:9px 11px;font-size:12.5px;font-weight:600;max-width:220px;box-shadow:0 3px 8px rgba(0,0,0,.08);position:relative;transform:rotate(-1deg)}
+  .sticky:nth-child(even){transform:rotate(1deg)}
+  :root[data-theme="dark"] .sticky{background:#4a3f14;color:#f0dd8a;border-color:#6b5a1e}
+  @media (prefers-color-scheme:dark){.sticky{background:#4a3f14;color:#f0dd8a;border-color:#6b5a1e}}
+  .sticky .x{position:absolute;top:2px;right:5px;border:none;background:none;color:inherit;opacity:.55;cursor:pointer;font-size:13px;line-height:1;padding:2px}
+  .sticky .x:hover{opacity:1}
+  .sticky p{margin:0;padding-right:12px;word-break:break-word}
+
+  /* alerts */
+  .alerts .card-body{padding-top:6px}
+  .alert-empty{color:var(--teal-ink);font-weight:600;display:flex;align-items:center;gap:8px;padding:6px 0}
+  .alert{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:10px;margin-top:8px;font-size:12.5px;border:1px solid transparent}
+  .alert .dot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex:none}
+  .alert.crit{background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 30%,transparent)}
+  .alert.crit .dot{background:var(--crit)}
+  .alert.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+  .alert.warn .dot{background:var(--warn)}
+  .alert b{font-weight:700}
+  .counts{display:flex;gap:8px;flex-wrap:wrap;margin:2px 16px 0}
+  .count{flex:1;min-width:70px;text-align:center;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:9px 6px}
+  .count .n{font-family:var(--font-display);font-size:24px;line-height:1;font-variant-numeric:tabular-nums}
+  .count.crit .n{color:var(--crit)} .count.warn .n{color:var(--warn)} .count.ok .n{color:var(--ok)}
+  .count small{display:block;font-size:10.5px;color:var(--ink-soft);margin-top:4px;text-transform:uppercase;letter-spacing:.4px}
+
+  /* team */
+  .team{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:7px;padding:12px 16px 16px}
+  .tcard{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:8px 9px;font-size:12px}
+  .tcard.bad{border-color:var(--crit);background:var(--crit-soft)}
+  .tcard.warn{border-color:var(--warn)}
+  .tcard .nm{font-weight:700;display:flex;align-items:center;gap:6px}
+  .tcard .rl{color:var(--ink-soft);font-size:10.5px;text-transform:capitalize}
+  .tcard .dd{margin-top:3px;font-variant-numeric:tabular-nums;font-size:11.5px}
+  .swatch{width:8px;height:8px;border-radius:2px;flex:none}
+  .footer-note{font-size:11.5px;color:var(--ink-soft);margin-top:14px;text-align:center}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--negro);color:var(--crema);padding:11px 18px;border-radius:11px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  /* Sin margen de hoja, el navegador no tiene dónde imprimir su pie con la URL del sitio, la fecha
+     y el número de página. El margen visual se devuelve como padding del contenido. */
+  @page{margin:0}
+  @media print{
+    .top,.rail,.no-print{display:none!important}
+    .layout{grid-template-columns:1fr}
+    body{background:#fff}
+    .wrap{padding:14mm 12mm}
+    .card{box-shadow:none;border-color:#ccc;break-inside:avoid}
+  }
+
+  /* mobile: barra superior y controles más cómodos al tacto */
+  @media (max-width:640px){
+    .wrap{padding:12px 12px 70px}
+    .top{position:static;padding:12px 14px;gap:10px}
+    .brand{width:100%}
+    .weekbox{width:100%;order:3;flex-wrap:wrap}
+    .weekbox input,.weekbox select{width:100%}
+    #btnAuto{order:1;flex:1 1 auto;justify-content:center}
+    #btnSave{order:2}
+    #btnNew{order:4}
+    .btn{padding:10px 14px;min-height:40px}
+    .icon-btn{width:40px;height:40px}
+    table.grid{min-width:640px}
+    .field select,.field input[type=text]{padding:10px 11px;min-height:40px}
+  }
+
+  /* vista para imprimir / compartir: overlay a pantalla completa, siempre clara aunque el tema esté oscuro */
+  #printOverlay{position:fixed;inset:0;background:#fff;color:#1a1a1a;z-index:500;overflow:auto}
+  #printOverlay .pv-bar{position:sticky;top:0;background:#fff;border-bottom:2px solid #e7e2d0;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  #printOverlay .pv-bar b{font-family:var(--font-display);font-size:16px;color:#1a1a1a}
+  #printOverlay .pv-actions{display:flex;gap:8px;flex-wrap:wrap}
+  #printOverlay .pv-btn{border:1px solid #ccc;background:#f2efe3;border-radius:9px;padding:9px 14px;font-weight:700;font-size:13px;cursor:pointer;color:#1a1a1a}
+  #printOverlay .pv-hint{margin:0;padding:11px 20px;font-size:13px;color:#6b5a1e;background:#fbf0d8;border-bottom:1px solid #e3c98a;font-weight:600}
+  #printOverlay .pv-imgwrap{padding:20px;text-align:center}
+  #printOverlay .pv-imgwrap img{max-width:100%;height:auto;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+  #printOverlay .pv-textwrap{padding:16px 20px}
+  #printOverlay .pv-textwrap textarea{width:100%;height:min(50vh,360px);border:1px solid #ccc;border-radius:8px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;color:#1a1a1a;background:#faf9f3;resize:vertical}
+  #printOverlay .pv-confirm{margin:0 20px 20px;background:#fbf0d8;border:1px solid #e3c98a;border-radius:9px;padding:14px 16px}
+  #printOverlay .pv-confirm p{margin:0 0 10px;font-size:13.5px;color:#4a3f1e;font-weight:600}
+
+  /* burbuja de error al pasar el mouse sobre un casillero con conflicto */
+  #cellTooltip{position:fixed;z-index:600;max-width:250px;background:var(--crit);color:#fff;font-size:12px;font-weight:600;line-height:1.4;padding:9px 12px;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.25);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+  #cellTooltip.show{opacity:1;transform:translateY(0)}
+
+  /* comentario por turno */
+  .noteBtn{position:absolute;top:1px;right:1px;width:15px;height:15px;line-height:15px;font-size:9px;text-align:center;border:none;background:transparent;color:var(--line-strong);cursor:pointer;padding:0;border-radius:4px;opacity:0;transition:opacity .12s;filter:grayscale(1)}
+  .cell:hover .noteBtn,.excell:hover .noteBtn,.noteBtn:focus-visible{opacity:1}
+  .noteBtn.has{opacity:1;filter:none;background:var(--crema)}
+  :root[data-theme="dark"] .noteBtn.has{background:#3a2f22}
+  .excell .noteBtn{position:static;margin-left:2px;flex:none}
+  .noteOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:550;display:flex;align-items:center;justify-content:center;padding:20px}
+  .noteCard{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+  .noteCard .noteHead{padding:15px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .noteCard .noteHead button{border:none;background:transparent;color:var(--ink-soft);font-size:19px;cursor:pointer;line-height:1;padding:2px}
+  .noteCard .noteBody{padding:16px 18px}
+  .noteCard textarea{width:100%;min-height:110px;border:1px solid var(--line-strong);border-radius:9px;padding:11px;font-family:inherit;font-size:13px;background:var(--panel-2);color:var(--ink);resize:vertical}
+  .noteCard .noteActions{display:flex;gap:8px;padding:0 18px 18px}
+
+  /* auth gate */
+  .authGate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;z-index:100}
+  .authCard{width:100%;max-width:340px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:32px 28px;box-shadow:var(--shadow);text-align:center}
+  .authCard .mark{width:44px;height:44px;border-radius:12px;background:radial-gradient(120% 120% at 30% 20%,var(--terracota),#c74027);display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-size:24px;line-height:1;margin:0 auto 16px}
+  .authCard h2{font-size:20px;margin-bottom:6px}
+  .authSub{color:var(--ink-soft);font-size:12.5px;margin-bottom:22px}
+  .authCard input{width:100%;background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:11px 13px;font-size:14px;text-align:center;letter-spacing:2px;margin-bottom:12px}
+  .authCard .btn{width:100%;justify-content:center}
+  .authErr{color:var(--crit);font-size:12.5px;margin-top:12px}
+</style>
+</head>
+<body>
+<div id="authGate" class="authGate">
+  <div class="authCard">
+    <div class="mark">C</div>
+    <h2>Cronogramas</h2>
+    <p class="authSub">Acceso exclusivo del equipo de Candela</p>
+    <input id="authPass" type="password" placeholder="Contraseña" autocomplete="off" inputmode="numeric">
+    <button class="btn primary" id="authBtn">Ingresar</button>
+    <p id="authErr" class="authErr" style="display:none">Contraseña incorrecta.</p>
+  </div>
+</div>
+<div class="wrap" id="appWrap" style="display:none">
+  <header class="top">
+    <div class="brand">
+      <div class="mark">C</div>
+      <div>
+        <h1>Cronogramas</h1>
+        <p>Candela · Café &amp; Patisserie <span class="appVersion" id="appVersion" title="Versión que está corriendo en este navegador. Si no coincide con la de otro dispositivo, ese navegador tiene una copia guardada vieja: recargá forzando la actualización (celular: cerrá y volvé a abrir la pestaña; compu: Ctrl+Shift+R / Cmd+Shift+R)."></span></p>
+      </div>
+    </div>
+    <div class="weekbox">
+      <select id="weekSwitcher" title="Saltar a otra semana ya cargada" aria-label="Elegir semana"></select>
+      <input id="weekLabel" type="text" placeholder="Semana (ej: 13–19/07)" aria-label="Etiqueta de la semana">
+      <input id="weekStart" type="date" title="Lunes de la semana — elegí una fecha nueva para crear esa semana (podés copiar esta como base), o una ya usada para abrirla" aria-label="Fecha del lunes de la semana">
+    </div>
+    <span id="syncStatus" class="syncStatus" title="Conectando…">☁️</span>
+    <button class="btn primary" id="btnAuto" title="Genera la semana respetando las reglas">✨ Autocompletar</button>
+    <button class="btn" id="btnSave">💾 Guardar</button>
+    <button class="btn ghost icon-btn" id="btnUndo" title="Deshacer el último cambio" disabled>↩️</button>
+    <button class="btn ghost icon-btn" id="btnRedo" title="Rehacer" disabled>↪️</button>
+    <button class="btn ghost icon-btn" id="btnHistory" title="Ver versiones anteriores guardadas en la nube">🕐</button>
+    <button class="btn ghost" id="btnNew" title="Arranca una semana nueva copiando ésta como base">↻ Nueva semana</button>
+    <button class="btn ghost icon-btn" id="btnMover" title="Mover personas de un casillero a otro tocando origen y destino">✥</button>
+    <button class="btn ghost icon-btn" id="btnPrint" title="Ver imagen del cronograma para guardar">⬇️</button>
+    <button class="btn ghost icon-btn" id="btnExport" title="Exportar datos para pasar a otro dispositivo">📤</button>
+    <button class="btn ghost icon-btn" id="btnImport" title="Importar datos desde otro dispositivo">📥</button>
+    <button class="btn ghost icon-btn" id="btnTheme" title="Cambiar tema">◐</button>
+    <button class="btn ghost icon-btn" id="btnLogout" title="Cerrar sesión">🚪</button>
+  </header>
+
+  <div class="layout">
+    <!-- CONTROL RAIL -->
+    <aside class="rail">
+      <button class="railToggle no-print" id="railToggle" aria-expanded="false" aria-controls="railBody">
+        <span>⚙️ Cambios y reglas de la semana</span><span class="car">▾</span>
+      </button>
+      <div class="railBody" id="railBody">
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Sumar persona al equipo</span>
+          <p class="sub" style="padding:4px 0 0">Se suma a las listas de todo el sitio (turnos, francos, puesto). Después la podés editar o sacar desde acá mismo.</p>
+          <div class="field">
+            <label for="nuevoNombre">Nombre</label>
+            <input type="text" id="nuevoNombre" placeholder="Ej: Sofía">
+          </div>
+          <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><label for="nuevoRole">Puesto</label><select id="nuevoRole"></select></div>
+            <div><label for="nuevoLoc">Local</label><select id="nuevoLoc"><option value="SL">San Luis</option><option value="SLA">SLA</option><option value="both">Los dos</option></select></div>
+          </div>
+          <div class="field">
+            <label for="nuevoFranco">Franco fijo (opcional)</label>
+            <select id="nuevoFranco"><option value="auto">Sin fijar (variable cada semana)</option></select>
+          </div>
+          <button class="btn primary" id="btnAddPersona" style="margin-top:11px;width:100%">+ Agregar persona</button>
+          <button class="btn" id="btnCancelarEdicionPersona" style="margin-top:7px;width:100%;display:none">Cancelar edición</button>
+          <div class="mini-list" id="personaList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Cambios de la semana</span>
+          <div class="field">
+            <label for="absPerson">Ausencia / vacaciones</label>
+            <select id="absPerson"><option value="">Elegí una persona…</option></select>
+            <div class="daychecks" id="absDays"></div>
+            <button class="btn" id="btnAddAbs" style="margin-top:9px;width:100%">+ Agregar ausencia</button>
+          </div>
+          <div class="mini-list" id="absList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Personas extra / refuerzo</span>
+          <p class="sub" style="padding:4px 0 0">Suma gente a un día puntual (día de cierre, feria, partido…). Aparece como fila extra en la grilla.</p>
+          <div class="field">
+            <label for="exPerson">Persona</label>
+            <select id="exPerson"></select>
+          </div>
+          <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><label for="exDay">Día</label><select id="exDay"></select></div>
+            <div><label for="exShift">Turno</label><select id="exShift"><option value="M">Mañana</option><option value="T">Tarde</option></select></div>
+          </div>
+          <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><label for="exLoc">Local</label><select id="exLoc"><option value="SL">San Luis</option><option value="SLA">SLA</option></select></div>
+            <div><label for="exRole">Rol</label><select id="exRole"></select></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:7px;margin-top:11px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink-soft)">
+            <input type="checkbox" id="exHalf" style="accent-color:var(--accent)"> Es medio turno / turno cortado
+          </label>
+          <button class="btn" id="btnAddEx" style="margin-top:11px;width:100%">+ Agregar persona extra</button>
+          <div class="mini-list" id="exList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Puesto de cada persona</span>
+          <p class="sub" style="padding:4px 0 0">Cambiá el puesto principal de alguien (ej: un cajero que pasa a atención) o agregale puestos de respaldo para que pueda cubrir otro rol cuando haga falta.</p>
+          <div class="field">
+            <label for="rolePerson">Persona</label>
+            <select id="rolePerson"></select>
+          </div>
+          <div class="field">
+            <label for="roleMain">Puesto principal</label>
+            <select id="roleMain"></select>
+          </div>
+          <button class="btn" id="btnSetRoleMain" style="margin-top:9px;width:100%">Cambiar puesto principal</button>
+          <div class="field" style="margin-top:14px">
+            <label>Puestos de respaldo (además del principal)</label>
+            <div class="daychecks" id="roleBackupChecks" style="flex-wrap:wrap"></div>
+          </div>
+          <button class="btn" id="btnSetRoleBackup" style="margin-top:9px;width:100%">Guardar respaldos</button>
+          <div class="mini-list" id="roleOverrideList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Nombres de las filas de la grilla</span>
+          <p class="sub" style="padding:4px 0 0">Cambiá cómo se llama una fila puntual (ej: "Vendedor 1") sin tocar qué puesto cubre en realidad — se ve así en todas las semanas, la grilla y al imprimir.</p>
+          <div class="field">
+            <label for="rowLabelLoc">Local</label>
+            <select id="rowLabelLoc"><option value="SL">San Luis</option><option value="SLA">SLA</option></select>
+          </div>
+          <div class="field">
+            <label for="rowLabelShift">Turno</label>
+            <select id="rowLabelShift"><option value="M">Mañana</option><option value="T">Tarde</option></select>
+          </div>
+          <div id="rowLabelFields" style="display:flex;flex-direction:column;gap:8px;margin-top:12px"></div>
+          <button class="btn" id="btnSaveRowLabels" style="margin-top:9px;width:100%">Guardar nombres</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Experto Candela</span>
+          <p class="sub" style="padding:4px 0 0">Se destaca con ⭐ dondequiera que esa persona aparezca asignada en la grilla, y también al imprimir. Si un turno tiene dos expertos a la vez, gana uno por defecto — tocá el botón "⭐?" que aparece junto al otro para elegirlo a él en su lugar.</p>
+          <div class="field">
+            <label for="expertoPerson">Persona</label>
+            <select id="expertoPerson"></select>
+          </div>
+          <button class="btn" id="btnAddExperto" style="margin-top:9px;width:100%">⭐ Marcar como Experto Candela</button>
+          <div class="mini-list" id="expertoList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Franco fijo (día de descanso)</span>
+          <p class="sub" style="padding:4px 0 0">Fijá el día de descanso semanal de cada persona. Si no lo fijás, el autocompletado le busca un día libre distinto cada semana.</p>
+          <div class="field">
+            <label for="francoPerson">Persona</label>
+            <select id="francoPerson"></select>
+          </div>
+          <div class="field">
+            <label for="francoDay">Día de franco</label>
+            <select id="francoDay">
+              <option value="auto">Automático (variable cada semana)</option>
+            </select>
+          </div>
+          <button class="btn" id="btnSetFranco" style="margin-top:9px;width:100%">Fijar franco</button>
+          <div class="mini-list" id="francoList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Turno fijo (toda la temporada)</span>
+          <p class="sub" style="padding:4px 0 0">Ej: Luis y Érica tarde de lunes a sábado, domingo mañana. Se repite semana a semana sin que lo vuelvas a cargar.</p>
+          <div class="field">
+            <label for="fixedPerson">Persona</label>
+            <select id="fixedPerson"></select>
+          </div>
+          <div class="field">
+            <label>Días</label>
+            <div class="daychecks" id="fixedDays"></div>
+          </div>
+          <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><label for="fixedShift">Turno</label><select id="fixedShift"><option value="M">Mañana</option><option value="T">Tarde</option></select></div>
+            <div><label for="fixedLoc">Local</label><select id="fixedLoc"><option value="SL">San Luis</option><option value="SLA">SLA</option></select></div>
+          </div>
+          <div class="field"><label for="fixedRole">Rol en ese turno</label><select id="fixedRole"></select></div>
+          <label style="display:flex;align-items:center;gap:7px;margin-top:9px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink-soft)">
+            <input type="checkbox" id="fixedHalf" style="accent-color:var(--accent)"> Es medio turno / refuerzo (no ocupa el puesto base)
+          </label>
+          <button class="btn" id="btnAddFixed" style="margin-top:9px;width:100%">+ Agregar regla fija</button>
+          <div class="mini-list" id="fixedList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">No pueden trabajar juntos</span>
+          <p class="sub" style="padding:4px 0 0">Si las dos personas quedan en el mismo turno (mañana o tarde) y el mismo local, se marca como error en la grilla. En locales distintos no cuenta.</p>
+          <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><label for="incompatA">Persona</label><select id="incompatA"></select></div>
+            <div><label for="incompatB">No puede trabajar con</label><select id="incompatB"></select></div>
+          </div>
+          <div class="field"><label for="incompatNota">Motivo (opcional, solo para vos)</label><input id="incompatNota" type="text" placeholder="Ej: se llevan mal / no conviene por X motivo"></div>
+          <button class="btn" id="btnAddIncompat" style="margin-top:11px;width:100%">+ Agregar regla</button>
+          <div class="mini-list" id="incompatList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Reglas especiales</span>
+          <p class="sub" style="padding:4px 0 0">Cierres de turno o notas para esta semana.</p>
+          <div class="field">
+            <label for="ruleType">Tipo de regla</label>
+            <select id="ruleType"><option value="cierre">Cierre de turno (local cerrado)</option><option value="nota">Nota / recordatorio</option></select>
+          </div>
+          <div id="ruleCierre">
+            <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div><label for="ruleDay">Día</label><select id="ruleDay"></select></div>
+              <div><label for="ruleShift">Turno</label><select id="ruleShift"><option value="T">Tarde</option><option value="M">Mañana</option><option value="ALL">Todo el día</option></select></div>
+            </div>
+            <div class="field"><label for="ruleLoc">Local</label><select id="ruleLoc"><option value="both">Ambos locales</option><option value="SL">San Luis</option><option value="SLA">SLA</option></select></div>
+          </div>
+          <div id="ruleNota" style="display:none">
+            <div class="field"><label for="ruleNotaDay">Día</label><select id="ruleNotaDay"></select></div>
+            <div class="field"><label for="ruleText">Recordatorio</label><input id="ruleText" type="text" placeholder="Ej: coffee break 9hs / partido 19hs"></div>
+          </div>
+          <button class="btn" id="btnAddRule" style="margin-top:11px;width:100%">+ Agregar regla</button>
+          <div class="mini-list" id="ruleList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body">
+          <span class="eyebrow">Reglas activas</span>
+          <ul style="margin:8px 0 0;padding-left:18px;font-size:12px;color:var(--ink-soft);line-height:1.7">
+            <li>Mín. 6 días / 1 franco</li>
+            <li>Tarde: SL ≥3 atención · SLA ≥2 mozas</li>
+            <li>Finde: SL 3/3 · SLA 2/2</li>
+            <li>Milagros lun AM · Zoe jue AM · Rodrigo vie AM</li>
+            <li>Cruce de locales solo si hace falta</li>
+          </ul>
+        </div>
+      </section>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main>
+      <div class="syncBanner no-print" id="syncBanner">
+        <span id="syncBannerMsg">⚠️ No se pudo conectar con la sincronización en la nube. Tus cambios se guardan en este dispositivo, pero no van a verse en otros hasta que vuelva la conexión.</span>
+        <button type="button" id="syncBannerClose" title="Cerrar">✕</button>
+      </div>
+      <div id="moveHint" class="no-print">
+        <span id="moveHintMsg">✥ Modo mover activado: tocá a alguien para levantarlo, después tocá el casillero donde lo querés poner.</span>
+        <button type="button" id="moveHintCancel">Salir</button>
+      </div>
+      <section class="card alerts no-print" style="margin-bottom:18px">
+        <h2>Auditoría en vivo</h2>
+        <div class="counts" id="counts"></div>
+        <div class="card-body" id="alertList"></div>
+        <div class="card-body" style="padding-top:0">
+          <div class="stickyAdd">
+            <input type="text" id="stickyText" placeholder="Agregar un recordatorio…" maxlength="140">
+            <button class="btn sm" id="btnAddSticky">📌 Agregar</button>
+          </div>
+          <div class="stickyNotes" id="stickyNotes"></div>
+        </div>
+      </section>
+
+      <div class="notebanner" id="noteBanner"></div>
+      <div class="sched" id="sched"></div>
+
+      <section class="card" style="margin-top:18px">
+        <h2>Equipo · días y franco</h2>
+        <p class="sub">Cada persona debería llegar a 6 días con al menos 1 franco.</p>
+        <div class="team" id="team"></div>
+      </section>
+
+      <p class="footer-note">Hecho para Candela · los datos se guardan en este navegador. Tipografías DM aproximadas si tu equipo no las tiene instaladas.</p>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div id="cellTooltip"></div>
+
+<script type="module">
+// Sincronización entre dispositivos (Firebase Realtime Database).
+// Mismo proyecto que ya usa el módulo "Presupuestos" de este sitio — la API key de Firebase
+// no es secreta (la seguridad la dan las reglas de la base, no ocultar esta key), por eso ya
+// está en la lista de exclusión del escaneo de secretos de Netlify.
+// Va en un <script type="module"> aparte (import de ES modules) para no tocar el script
+// principal, que sigue siendo un script clásico. Se comunican por eventos en window, así que
+// si Firebase no carga (sin internet, red corporativa, etc.) el resto de la app sigue
+// funcionando igual que antes, solo con localStorage.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
+  authDomain: "pedidos-de-produccion-ee3cb.firebaseapp.com",
+  databaseURL: "https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-produccion-ee3cb",
+  storageBucket: "pedidos-de-produccion-ee3cb.firebasestorage.app",
+  messagingSenderId: "744141794971",
+  appId: "1:744141794971:web:9639c8bf3834e4978ae03e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+// Varias semanas en simultáneo, cada una independiente: en vez de un solo bloque que se pisa
+// entero en cada guardado (como era antes, en cronogramas/state), lo que es común a todas las
+// semanas (personas, puestos, reglas fijas, incompatibilidades, Experto Candela) vive en
+// cronogramas/config, y cada semana vive en su propia ruta cronogramas/weeks/<lunes> — guardar
+// una semana nunca toca ni pisa el nodo de otra. cronogramas/weekIndex es una lista liviana
+// (solo fecha+etiqueta de cada semana) para armar el selector sin descargar todas las semanas.
+const configRef = ref(db, "cronogramas/config");
+const weekIndexRef = ref(db, "cronogramas/weekIndex");
+const legacyStateRef = ref(db, "cronogramas/state"); // ruta vieja, de antes de separar por semana
+
+// fábrica de canal de sync con eco propio: guardamos CADA guardado pendiente (no solo el último),
+// porque si hacés varios cambios seguidos puede haber más de un guardado en el aire al mismo
+// tiempo — con una sola variable, el eco del primero podía llegar después de que ya hubiéramos
+// anotado el segundo, no coincidir, y confundirse con un cambio "de otro dispositivo" pisando tu
+// edición más reciente.
+function makeSyncChannel(nodeRef, updateEvent, wrapDetail){
+  wrapDetail = wrapDetail || (remote=>remote);
+  let pendingEchoes = [];
+  let pushTimer = null;
+  let unsub = onValue(nodeRef, snap=>{
+    const remote = snap.val();
+    const remoteJSON = remote==null ? null : JSON.stringify(remote);
+    if(remoteJSON!==null){
+      const idx=pendingEchoes.indexOf(remoteJSON);
+      if(idx>=0){pendingEchoes.splice(idx,1);return;} // era el eco de uno de nuestros guardados
+    }
+    window.dispatchEvent(new CustomEvent(updateEvent,{detail:wrapDetail(remote)}));
+  }, err=>{
+    console.error(updateEvent+" onValue:",err);
+    window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
+  });
+  return {
+    push(stateObj){
+      clearTimeout(pushTimer);
+      pushTimer = setTimeout(()=>{
+        const json = JSON.stringify(stateObj);
+        pendingEchoes.push(json);
+        if(pendingEchoes.length>25)pendingEchoes.shift(); // por las dudas, que no crezca sin límite
+        window.dispatchEvent(new CustomEvent("cloudsync-saving"));
+        set(nodeRef, stateObj)
+          .then(()=>window.dispatchEvent(new CustomEvent("cloudsync-saved")))
+          .catch(err=>{
+            pendingEchoes=pendingEchoes.filter(j=>j!==json);
+            console.error(updateEvent+" push:",err);window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
+          });
+      }, 400);
+    },
+    stop(){unsub();}
+  };
+}
+
+window.CloudSync = makeSyncChannel(configRef, "cloudsync-update"); // config global, ruta fija
+
+// la semana activa cambia de ruta cada vez que el usuario salta de una semana a otra. En vez de un
+// método aparte para avisar "ahora mirás esta otra semana" (que podría perderse si este módulo
+// todavía no terminó de cargar cuando el script principal intenta avisarle), push() recibe la key
+// de la semana en cada llamada y se reconecta solo si cambió — así alcanza con llamar push() para
+// que siempre termine escuchando/guardando en la semana correcta, sin coordinación previa.
+let activeWeekChannel = null, activeWeekKey = null;
+window.CloudSyncWeek = {
+  push(weekKey, stateObj){
+    if(activeWeekKey!==weekKey){
+      if(activeWeekChannel)activeWeekChannel.stop();
+      activeWeekKey = weekKey;
+      // el detail lleva la key para que quien escucha pueda ignorar ecos tardíos de una semana de
+      // la que ya te fuiste (si saltás rápido de semana en semana, puede llegar una respuesta vieja).
+      activeWeekChannel = makeSyncChannel(ref(db,"cronogramas/weeks/"+weekKey), "weeksync-update", remote=>({key:weekKey,data:remote}));
+    }
+    activeWeekChannel.push(stateObj);
+    // índice liviano para el selector de semanas — no hace falta esperar a que confirme
+    set(ref(db,"cronogramas/weekIndex/"+weekKey),{weekStart:stateObj.weekStart||"",label:stateObj.label||""}).catch(()=>{});
+  }
+};
+onValue(weekIndexRef, snap=>{
+  window.dispatchEvent(new CustomEvent("weekindex-update",{detail:snap.val()||{}}));
+}, err=>console.error("weekIndex onValue:",err));
+
+// lectura puntual (no en vivo) de una semana puntual — para confirmar contra la nube, antes de
+// tratar una fecha como "semana nueva", que ninguna otra ruta de refuerzo ni la caché local todavía
+// vieron. Sin esto, si este dispositivo abre una semana que YA existe en la nube pero ni la tiene
+// cacheada ni el índice liviano llegó a tiempo (recién abierta la página, por ejemplo), se la podía
+// llegar a tratar como nueva y pisarla en blanco — justo el tipo de pérdida de datos que esto evita.
+window.CloudWeekRead = {
+  get(weekKey){
+    return get(ref(db,"cronogramas/weeks/"+weekKey)).then(s=>s.val());
+  }
+};
+
+// migración única desde la ruta vieja (cronogramas/state, un solo bloque para toda la app) hacia
+// la nueva (config separada + una ruta por semana). Es una transformación determinística de los
+// mismos datos de origen, así que no importa si más de un dispositivo la dispara al mismo tiempo:
+// todos calculan el mismo resultado y escribirlo de más no pierde nada. Solo corre si la config
+// nueva todavía no existe — una vez migrado, no se vuelve a tocar cronogramas/state.
+get(configRef).then(configSnap=>{
+  if(configSnap.exists())return; // ya migrado (por este dispositivo o por otro)
+  return get(legacyStateRef).then(legacySnap=>{
+    const legacy=legacySnap.val();
+    if(!legacy||!legacy.assign)return; // no había nada que migrar
+    const WEEK_KEYS=["label","weekStart","assign","abs","ex","rules","comments","expertoTurno"];
+    const week={},cfg={};
+    Object.keys(legacy).forEach(k=>{ if(WEEK_KEYS.includes(k))week[k]=legacy[k]; else cfg[k]=legacy[k]; });
+    const weekKey=(legacy.weekStart||"").trim()||"sin-fecha";
+    return Promise.all([
+      set(configRef,cfg),
+      set(ref(db,"cronogramas/weeks/"+weekKey),week),
+      set(ref(db,"cronogramas/weekIndex/"+weekKey),{weekStart:week.weekStart||"",label:week.label||""})
+    ]);
+  });
+}).catch(err=>console.error("migración config/semanas:",err));
+
+// Historial de versiones: además del estado "vivo" (que siempre se pisa con el último guardado),
+// se guarda una foto aparte cada tanto en cronogramas/history/<fecha>. Nació porque un guardado se
+// perdió sin dejar rastro y no había forma de recuperarlo — esto es la red de seguridad para que
+// no vuelva a pasar. Se poda para no acumular para siempre.
+const historyRef = ref(db, "cronogramas/history");
+const HISTORY_MAX = 40;
+window.CloudHistory = {
+  save(stateObj){
+    const key = new Date().toISOString().replace(/[:.]/g,"-");
+    const snap = Object.assign({}, stateObj, {_snapshotAt:new Date().toISOString()});
+    set(ref(db, "cronogramas/history/"+key), snap).catch(err=>console.error("history save:",err));
+    get(historyRef).then(s=>{
+      const val=s.val(); if(!val)return;
+      const keys=Object.keys(val).sort();
+      const exceso=keys.length-HISTORY_MAX;
+      if(exceso>0)keys.slice(0,exceso).forEach(k=>remove(ref(db,"cronogramas/history/"+k)).catch(()=>{}));
+    }).catch(()=>{});
+  },
+  list(cb){
+    get(historyRef).then(s=>{
+      const val=s.val()||{};
+      cb(Object.keys(val).sort().reverse().map(k=>({key:k,state:val[k]})));
+    }).catch(err=>{console.error("history list:",err);cb(null);});
+  }
+};
+
+// Lectura (sin escritura) del módulo de Vacaciones, para marcar ausencias automáticas por
+// vacación en la semana cargada. Cronogramas nunca escribe acá — el módulo Vacaciones es el
+// único que edita sus propios datos.
+const vacacionesRef = ref(db, "vacaciones/state");
+onValue(vacacionesRef, snap=>{
+  window.dispatchEvent(new CustomEvent("vacsync-update",{detail:snap.val()}));
+}, err=>{
+  console.error("vacsync onValue:",err);
+});
+</script>
+
+<script>
+"use strict";
+// Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador
+// (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
+// el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
+// diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
+const APP_VERSION="2026-10-01 vanesa-cocina-sla";
+/* ---------------- DATA MODEL ---------------- */
+const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
+const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
+// máximo de personas por turno (base + refuerzos) para los puestos que tienen un tope fijo. Cajero
+// siempre es 1 solo (no admite refuerzo); barista y cocina admiten como mucho 1 refuerzo además de
+// la persona de base. Los puestos que no están acá no tienen tope (siempre queda una fila "+" de
+// margen de más, se use o no).
+const MAX_TURNO={cajero:1,barista:2,cocina:2};
+// En San Luis (con más puestos separados: Vendedor 1, Compras, Bacha/Envíos, Mozo) varias de esas
+// filas "+" quedaban casi siempre vacías — acá no admiten refuerzo, igual que cajero. La de
+// atención mañana ("Refuerzo") se deja en un cupo fijo en vez de ir sumando una fila de margen de
+// más cada vez que se usa una; la de la tarde (con Vendedor 1, Vendedor 2 y Mozo 1 de base) no
+// admite ninguno. En SLA, mañana tampoco admite refuerzo de atención (Mozo 1 + Mozo 2 alcanzan); la
+// tarde se deja en un cupo fijo de uno ("Mozo 2 +"), sin fila de margen de más.
+function maxTurnoFor(loc,shift,role){
+  if(loc==="SL"){
+    if(role==="barista")return 1;
+    if(role==="compras")return 1;
+    if(role==="ayudante")return 1;
+    if(role==="atencion")return 3;
+  }
+  // SLA: Mozo 1 de base + un cupo de refuerzo ("Mozo 2 +", para medios turnos u otro refuerzo
+  // puntual), igual en mañana y tarde — sin fila de margen de más.
+  if(loc==="SLA"&&role==="atencion")return 2;
+  return MAX_TURNO[role];
+}
+// Feriados nacionales de Argentina (Ley 27.399): "feriado" es de pago obligatorio si se trabaja;
+// "no_laborable" (puente turístico) es opcional para el empleador. Verificado 2026 completo; 2027
+// con los inamovibles/trasladables ya confirmados (los puentes de 2027 todavía no fueron
+// decretados al momento de cargar esto — agregarlos acá cuando se confirmen).
+const FERIADOS_AR=[
+  {fecha:"2026-01-01",nombre:"Año Nuevo",tipo:"feriado"},
+  {fecha:"2026-02-16",nombre:"Carnaval",tipo:"feriado"},
+  {fecha:"2026-02-17",nombre:"Carnaval",tipo:"feriado"},
+  {fecha:"2026-03-23",nombre:"Puente turístico",tipo:"no_laborable"},
+  {fecha:"2026-03-24",nombre:"Día Nacional de la Memoria",tipo:"feriado"},
+  {fecha:"2026-04-02",nombre:"Día del Veterano y los Caídos en Malvinas",tipo:"feriado"},
+  {fecha:"2026-04-03",nombre:"Viernes Santo",tipo:"feriado"},
+  {fecha:"2026-05-01",nombre:"Día del Trabajador",tipo:"feriado"},
+  {fecha:"2026-05-25",nombre:"Día de la Revolución de Mayo",tipo:"feriado"},
+  {fecha:"2026-06-20",nombre:"Paso a la Inmortalidad del Gral. Belgrano",tipo:"feriado"},
+  {fecha:"2026-07-09",nombre:"Día de la Independencia",tipo:"feriado"},
+  {fecha:"2026-07-10",nombre:"Puente turístico",tipo:"no_laborable"},
+  {fecha:"2026-08-17",nombre:"Paso a la Inmortalidad del Gral. San Martín",tipo:"feriado"},
+  {fecha:"2026-10-12",nombre:"Día del Respeto a la Diversidad Cultural",tipo:"feriado"},
+  {fecha:"2026-11-23",nombre:"Día de la Soberanía Nacional",tipo:"feriado"},
+  {fecha:"2026-12-07",nombre:"Puente turístico",tipo:"no_laborable"},
+  {fecha:"2026-12-08",nombre:"Inmaculada Concepción de María",tipo:"feriado"},
+  {fecha:"2026-12-25",nombre:"Navidad",tipo:"feriado"},
+  {fecha:"2027-01-01",nombre:"Año Nuevo",tipo:"feriado"},
+  {fecha:"2027-02-08",nombre:"Carnaval",tipo:"feriado"},
+  {fecha:"2027-02-09",nombre:"Carnaval",tipo:"feriado"},
+  {fecha:"2027-03-24",nombre:"Día Nacional de la Memoria",tipo:"feriado"},
+  {fecha:"2027-03-26",nombre:"Viernes Santo",tipo:"feriado"},
+  {fecha:"2027-04-02",nombre:"Día del Veterano y los Caídos en Malvinas",tipo:"feriado"},
+  {fecha:"2027-05-01",nombre:"Día del Trabajador",tipo:"feriado"},
+  {fecha:"2027-05-25",nombre:"Día de la Revolución de Mayo",tipo:"feriado"},
+  {fecha:"2027-06-20",nombre:"Paso a la Inmortalidad del Gral. Belgrano",tipo:"feriado"},
+  {fecha:"2027-07-09",nombre:"Día de la Independencia",tipo:"feriado"},
+  {fecha:"2027-08-16",nombre:"Paso a la Inmortalidad del Gral. San Martín",tipo:"feriado"},
+  {fecha:"2027-10-11",nombre:"Día del Respeto a la Diversidad Cultural",tipo:"feriado"},
+  {fecha:"2027-11-22",nombre:"Día de la Soberanía Nacional",tipo:"feriado"},
+  {fecha:"2027-12-08",nombre:"Inmaculada Concepción de María",tipo:"feriado"},
+  {fecha:"2027-12-25",nombre:"Navidad",tipo:"feriado"},
+];
+function feriadosEnSemana(){
+  if(!state.weekStart)return[];
+  const out=[];
+  for(let d=0;d<7;d++){
+    const iso=isoDe(d);if(!iso)continue;
+    FERIADOS_AR.filter(f=>f.fecha===iso).forEach(f=>out.push({...f,dia:d}));
+  }
+  return out;
+}
+// loc: 'SL' | 'SLA' | 'both'
+// PEOPLE_BASE es la lista fija del código. PEOPLE es la que se usa en todo el resto de la app —
+// se recalcula (rebuildPeople, más abajo) sumándole state.peopleExtra, que es donde vive la gente
+// agregada a mano desde el botón "Sumar persona al equipo". Así el resto del código (BY_NAME,
+// selects, filas de la grilla) no necesita saber que existen dos fuentes distintas.
+const PEOPLE_BASE=[
+  {n:"Luciana",role:"barista",loc:"both",franco:"vie"},
+  {n:"Gabriel",role:"barista",loc:"both",franco:"lun"},
+  {n:"Mariano",role:"barista",loc:"both",he:true},
+  {n:"Luis",role:"cocina",loc:"SL",franco:"jue"},
+  {n:"Vanesa",role:"cocina",loc:"both",franco:"mie"},
+  {n:"Rodrigo",role:"compras",loc:"SL",franco:"dom",must:{day:"vie",loc:"SL",shift:"M",role:"compras"}},
+  {n:"Lucas",role:"cocina",loc:"SLA",franco:"vie"},
+  {n:"Matías",role:"cocina",loc:"both",franco:"mar"},
+  {n:"Lázaro",role:"ayudante",loc:"SL",franco:"mie",backup:["compras"]},
+  {n:"Gonzalo",role:"cocina",loc:"both",franco:"lun"},
+  {n:"Jhon",role:"ayudante",loc:"both",franco:"mar",backup:["atencion"]},
+  {n:"Natalia",role:"cajero",loc:"SL",franco:"dom"},
+  {n:"Javier",role:"cajero",loc:"SL",franco:"jue"},
+  {n:"Aaron",role:"cajero",loc:"both",franco:"mie"},
+  {n:"Érica",role:"atencion",loc:"SL",franco:"lun"},
+  {n:"Paula",role:"atencion",loc:"SL",franco:"mar"},
+  {n:"Margarita",role:"atencion",loc:"SL",franco:"lun"},
+  {n:"Brenda",role:"atencion",loc:"SL",franco:"vie",backup:["cajero"]},
+  {n:"Valentina",role:"atencion",loc:"both",he:true,franco:"mar"},
+  {n:"Guadalupe",role:"atencion",loc:"both",he:true,franco:"jue"},
+  {n:"Dana",role:"atencion",loc:"both",he:true,franco:"vie",backup:["cajero"]},
+  {n:"Milagros",role:"atencion",loc:"both",franco:"mie",must:{day:"lun",loc:"SLA",shift:"M",role:"atencion"}},
+  {n:"Zoe",role:"atencion",loc:"both",franco:"vie",must:{day:"jue",loc:"SLA",shift:"M",role:"atencion"}},
+  {n:"Rebeca",role:"atencion",loc:"SLA",franco:"mie"},
+];
+let PEOPLE=PEOPLE_BASE.slice();
+let BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
+function rebuildPeople(){
+  PEOPLE=PEOPLE_BASE.concat(state.peopleExtra||[]);
+  BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
+}
+const EVENT_HE=["Dana","Brenda","Guadalupe","Aaron","Luciana","Gabriel","Valentina"];
+
+// slot templates per local/shift. weekendOnly rows only required Sat/Sun.
+function rowsFor(loc,shift){
+  if(loc==="SL"&&shift==="M")return[
+    {role:"cajero",idx:0,label:"Cajero"},{role:"barista",idx:0,label:"Barista"},
+    {role:"atencion",idx:0,label:"Vendedor 1"},
+    {role:"atencion",idx:2,label:"Mozo 1",wk:true},
+    {role:"cocina",idx:0,label:"Cocina"},{role:"compras",idx:0,label:"Compras"},
+    {role:"ayudante",idx:0,label:"Bacha/Envíos"}];
+  if(loc==="SL"&&shift==="T")return[
+    {role:"cajero",idx:0,label:"Cajero"},{role:"barista",idx:0,label:"Barista"},
+    {role:"atencion",idx:0,label:"Vendedor 1"},{role:"atencion",idx:1,label:"Vendedor 2"},{role:"atencion",idx:2,label:"Mozo 1"},
+    {role:"cocina",idx:0,label:"Cocina"},{role:"ayudante",idx:0,label:"Envíos"}];
+  if(loc==="SLA"&&shift==="M")return[
+    {role:"barista",idx:0,label:"Barista"},{role:"atencion",idx:0,label:"Mozo 1"},
+    {role:"cocina",idx:0,label:"Cocina"}];
+  return[
+    {role:"barista",idx:0,label:"Barista"},{role:"atencion",idx:0,label:"Mozo 1"},
+    {role:"cocina",idx:0,label:"Cocina"}];
+}
+// nombre a mostrar de una fila puntual de la grilla: por default el de rowsFor, pero se puede
+// renombrar por local+turno+puesto+posición desde "Nombres de las filas" sin tocar qué puesto
+// cubre en realidad esa fila (es solo el texto que se ve, el rol/idx interno no cambia).
+function rowLabelKey(loc,shift,role,idx){return `${loc}|${shift}|${role}|${idx}`;}
+function rowLabelFor(loc,shift,row){
+  const k=rowLabelKey(loc,shift,row.role,row.idx);
+  return (state.rowLabelOverride&&state.rowLabelOverride[k])||row.label;
+}
+const isWknd=d=>d>=5;
+function isClosed(d,loc,shift){return state.rules.some(r=>r.type==="cierre"&&r.day===d&&(r.loc===loc||r.loc==="both")&&(r.shift===shift||r.shift==="ALL"));}
+// sellable: la celda es editable en la grilla (siempre, salvo que el local esté cerrado ese turno)
+function sellable(d,loc,shift){return !isClosed(d,loc,shift);}
+// requiredCell: cuenta para el mínimo del puesto (las filas "wk" -refuerzo- solo son obligatorias el finde,
+// pero siguen siendo editables entre semana por si querés reforzar igual)
+function requiredCell(d,loc,shift,row){return sellable(d,loc,shift)&&(row.wk?isWknd(d):true);}
+function notesFor(d){return state.rules.filter(r=>r.type==="nota"&&r.day===d);}
+function key(d,loc,shift,role,idx){return `${d}|${loc}|${shift}|${role}|${idx}`;}
+
+// eligible people for a role at a local
+function peopleFor(role,loc){
+  return PEOPLE.filter(p=>{
+    const primary=roleFor(p.n)===role;
+    const isBackup=backupFor(p.n).includes(role);
+    if(!primary&&!isBackup)return false;
+    const locOk=p.loc==="both"||p.loc===loc;
+    return primary?locOk:true; // un respaldo puede cruzar de local si hace falta (ej: Rodrigo cubre Compras en San Luis)
+  });
+}
+
+/* ---------------- STATE ---------------- */
+function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{},expertos:[],expertoTurno:{},stickyNotes:[],rowLabelOverride:{}};}
+// múltiples semanas en simultáneo: se puede tener septiembre entero cargado, cada semana con sus
+// propias asignaciones/ausencias/refuerzos, y saltar de una a otra sin que se pisen entre sí. Lo que
+// SÍ es común a todas las semanas (quién trabaja acá, sus puestos, reglas fijas, incompatibilidades,
+// quién es Experto Candela) vive aparte, en la "config" — cambiarlo se ve reflejado en todas las
+// semanas, como corresponde a un dato de la persona/local y no de una semana puntual.
+const WEEK_FIELDS=["label","weekStart","assign","abs","ex","rules","comments","expertoTurno"];
+const FALLBACK_WEEK_KEY="sin-fecha";
+function weekKeyOf(s){return (s&&s.weekStart||"").trim()||FALLBACK_WEEK_KEY;}
+function weekPart(s){const o={};WEEK_FIELDS.forEach(k=>o[k]=s[k]);return o;}
+function configPart(s){const o={};Object.keys(defaultState()).forEach(k=>{if(!WEEK_FIELDS.includes(k))o[k]=s[k];});return o;}
+function blankWeek(weekStart){return {label:"",weekStart:weekStart||"",assign:{},abs:[],ex:[],rules:[],comments:{},expertoTurno:{}};}
+// las reglas "semilla" (seedFixedRules, seedCocinaComprasCajero) se cargan una sola vez por tag.
+// Antes se detectaba "ya cargada" mirando si quedaba algún turno fijo con ese tag — pero si borrabas
+// el grupo ENTERO, no quedaba ninguno, y el sistema lo tomaba como "todavía no cargada" y lo volvía a
+// crear solo: no había forma de borrarlo para siempre. Ahora se guarda aparte qué tags ya se aplicaron.
+function migrationDone(tag){return state.migrationsApplied&&state.migrationsApplied.includes(tag);}
+function marcarMigracion(tag){if(!state.migrationsApplied)state.migrationsApplied=[];if(!state.migrationsApplied.includes(tag))state.migrationsApplied.push(tag);}
+let state=defaultState();
+// localStorage por dispositivo, en tres partes: la config global, un diccionario con todas las
+// semanas que se cargaron alguna vez en este dispositivo, y qué semana estás mirando ACÁ (esto
+// último a propósito NO se sincroniza con la nube — cada dispositivo puede estar mirando/editando
+// una semana distinta al mismo tiempo, que es justo el pedido de "trabajar varias semanas en
+// simultáneo"). LS_LEGACY es el formato viejo (un solo bloque para toda la app); se migra una vez.
+const LS_CONFIG="candela_scheduler_config_v2";
+const LS_WEEKS="candela_scheduler_weeks_v2";
+const LS_ACTIVE="candela_scheduler_active_v2";
+const LS_LEGACY="candela_scheduler_v1";
+function loadLocalConfig(){try{return JSON.parse(localStorage.getItem(LS_CONFIG));}catch(e){return null;}}
+function saveLocalConfig(cfg){localStorage.setItem(LS_CONFIG,JSON.stringify(cfg));}
+function loadLocalWeeks(){try{return JSON.parse(localStorage.getItem(LS_WEEKS))||{};}catch(e){return {};}}
+function saveLocalWeek(key,weekObj){const all=loadLocalWeeks();all[key]=weekObj;localStorage.setItem(LS_WEEKS,JSON.stringify(all));}
+// deshacer/rehacer: cada semana tiene su propio historial (deshacer en la semana que estás mirando
+// nunca te manda a otra semana ni deshace cambios que hiciste en otra). weekHistories guarda el
+// historial de cada semana aunque saltes a otra y vuelvas; undoStack/redoStack son siempre la
+// pareja de la semana activa — loadWeek() los reapunta al cambiar de semana.
+const UNDO_LIMIT=60;
+let weekHistories={},undoStack=[],redoStack=[],suspendHistory=false;
+function useHistoryBucket(key){
+  if(!weekHistories[key])weekHistories[key]={undo:[],redo:[]};
+  undoStack=weekHistories[key].undo;
+  redoStack=weekHistories[key].redo;
+  syncUndoRedoButtons();
+}
+// además del deshacer local (que se pierde al cerrar la pestaña), cada tanto se manda una foto
+// aparte a la nube que sobrevive aunque cierres todo — la red de seguridad real ante un guardado
+// que se pisa mal. No en cada tecla: como mucho cada 10 minutos de uso real.
+let lastSnapshotAt=0;
+const SNAPSHOT_MIN_INTERVAL=10*60*1000;
+function maybeSnapshot(){
+  if(!window.CloudHistory)return;
+  const now=Date.now();
+  if(now-lastSnapshotAt<SNAPSHOT_MIN_INTERVAL)return;
+  lastSnapshotAt=now;
+  window.CloudHistory.save(state); // guarda TODO (config + la semana activa en este momento)
+}
+function persist(){
+  const key=weekKeyOf(state);
+  const localWeeks=loadLocalWeeks();
+  const weekJSON=JSON.stringify(weekPart(state));
+  if(!suspendHistory){
+    const prevJSON=Object.prototype.hasOwnProperty.call(localWeeks,key)?JSON.stringify(localWeeks[key]):null;
+    if(prevJSON!==null&&prevJSON!==weekJSON){undoStack.push(prevJSON);if(undoStack.length>UNDO_LIMIT)undoStack.shift();redoStack.length=0;}
+  }
+  localWeeks[key]=JSON.parse(weekJSON);
+  localStorage.setItem(LS_WEEKS,JSON.stringify(localWeeks));
+  saveLocalConfig(configPart(state));
+  localStorage.setItem(LS_ACTIVE,key);
+  syncUndoRedoButtons();
+  if(!suspendHistory){
+    if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(configPart(state));}
+    if(window.CloudSyncWeek){setSyncStatus("saving");window.CloudSyncWeek.push(key,weekPart(state));}
+    maybeSnapshot();
+  }
+}
+// arranque: reconstruye config + la semana que este dispositivo tenía abierta la última vez,
+// migrando una sola vez desde el formato viejo (un solo bloque) si hace falta. Devuelve la key de
+// la semana con la que hay que arrancar.
+function loadLocalState(){
+  let cfg=loadLocalConfig();
+  const weeks=loadLocalWeeks();
+  let activeKey=localStorage.getItem(LS_ACTIVE);
+  if(!cfg&&!activeKey){
+    try{
+      const legacy=JSON.parse(localStorage.getItem(LS_LEGACY));
+      if(legacy&&legacy.assign){
+        const full=Object.assign(defaultState(),legacy);
+        activeKey=weekKeyOf(full);
+        cfg=configPart(full);
+        weeks[activeKey]=weekPart(full);
+        saveLocalConfig(cfg);
+        localStorage.setItem(LS_WEEKS,JSON.stringify(weeks));
+        localStorage.setItem(LS_ACTIVE,activeKey);
+      }
+    }catch(e){}
+  }
+  activeKey=activeKey||FALLBACK_WEEK_KEY;
+  state=Object.assign(defaultState(),cfg||{},weeks[activeKey]||blankWeek(activeKey===FALLBACK_WEEK_KEY?"":activeKey));
+  return activeKey;
+}
+// saltar (o crear) la semana "key" — no altera ninguna otra semana, cada una vive en su propio
+// lugar tanto localmente como en la nube. seedWeekObj se usa solo al crear una semana nueva (por
+// ej. copiando la grilla de la semana actual como base).
+function loadWeek(key,seedWeekObj){
+  if(!key)return;
+  suspendHistory=true; // saltar de semana no es "un cambio" que se pueda deshacer
+  const localWeeks=loadLocalWeeks();
+  const weekObj=seedWeekObj||localWeeks[key]||blankWeek(key===FALLBACK_WEEK_KEY?"":key);
+  Object.assign(state,weekObj); // weekObj siempre trae los 8 campos de WEEK_FIELDS completos
+  if(!state.weekStart&&key!==FALLBACK_WEEK_KEY)state.weekStart=key;
+  runMigrations(); // regenera los refuerzos automáticos de medio turno para los días de ESTA semana
+  aplicarAusenciasPorVacaciones();
+  useHistoryBucket(key);
+  fillPersonSelects();
+  document.getElementById("weekLabel").value=state.label||"";
+  document.getElementById("weekStart").value=state.weekStart||"";
+  renderWeekSwitcher();
+  renderMini();render();
+  persist();
+  suspendHistory=false;
+}
+// crea una semana nueva para "dateStr" (preguntando si copiar la grilla actual como base) o, si ya
+// existe una semana con esa fecha, simplemente salta a ella — nunca pisa la que ya había.
+function addDaysISO(dateStr,n){
+  const d=new Date(dateStr+"T00:00:00");d.setDate(d.getDate()+n);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+// crea la semana de "dateStr" copiando SIEMPRE la grilla y los refuerzos manuales de la semana
+// calendario anterior (7 días antes) como base — así armar un mes entero es solo ajustar lo que
+// cambia de una semana a la siguiente, no cargar todo de cero cada vez. Busca esa semana anterior
+// en lo que ya hay guardado en este dispositivo (o en la que tenés abierta ahora mismo, si es esa);
+// si no la encuentra, arranca en blanco sin preguntar nada (nada de diálogos de confirmación: se
+// presta a que se entienda al revés y termine armando una semana vacía sin que te des cuenta).
+async function crearOAbrirSemana(dateStr){
+  if(!dateStr)return;
+  const localWeeks=loadLocalWeeks();
+  if(Object.prototype.hasOwnProperty.call(localWeeks,dateStr)){loadWeek(dateStr);toast("Semana abierta");return;}
+  let remoteWeek=null,remoteConfirmed=weekIndexCache&&Object.prototype.hasOwnProperty.call(weekIndexCache,dateStr);
+  // hay conexión real con la nube si el módulo de Firebase llegó a cargar (window.CloudSync existe
+  // apenas carga, antes de que se resuelva ningún pedido) — si NO hay conexión, seguimos con el
+  // criterio local nomás, como el resto de la app sin internet (nada se sube hasta que vuelva la
+  // conexión, así que no hay riesgo de pisar algo que todavía no vimos).
+  const online=!!(window.CloudSync&&window.CloudSyncWeek);
+  // este dispositivo no la tiene cacheada — antes de asumir que es una semana nueva, confirmamos
+  // contra la nube directamente (no alcanza con weekIndexCache: si la página recién cargó, todavía
+  // puede no haber llegado). Sin este chequeo, una semana que SÍ existe pero que este dispositivo
+  // todavía no vio se trataba como nueva y se pisaba en blanco al guardar — pérdida de datos real.
+  if(!remoteConfirmed&&online&&window.CloudWeekRead){
+    try{
+      remoteWeek=await window.CloudWeekRead.get(dateStr);
+      remoteConfirmed=true;
+    }catch(e){console.error("chequeo de semana existente:",e);}
+  }
+  if(remoteConfirmed&&remoteWeek){
+    saveLocalWeek(dateStr,Object.assign(blankWeek(dateStr),remoteWeek));
+    loadWeek(dateStr);
+    toast("Semana abierta");
+    return;
+  }
+  if(online&&!remoteConfirmed){
+    // hay conexión pero no se pudo confirmar (falla puntual): por las dudas no se crea nada nuevo —
+    // mejor eso que arriesgarse a pisar una semana real que todavía no llegamos a ver.
+    toast("No se pudo confirmar si esa semana ya existe — probá de nuevo en un momento.");
+    document.getElementById("weekStart").value=state.weekStart||"";
+    return;
+  }
+  const seed=blankWeek(dateStr);
+  const prevKey=addDaysISO(dateStr,-7);
+  const prevWeek=localWeeks[prevKey]||(prevKey===weekKeyOf(state)?weekPart(state):null);
+  const copio=!!(prevWeek&&Object.keys(prevWeek.assign||{}).length);
+  if(prevWeek){
+    seed.assign=JSON.parse(JSON.stringify(prevWeek.assign||{}));
+    // los refuerzos manuales ("Personas extra") también se copian como base — si no, había que
+    // volver a cargarlos a mano cada semana. Los automáticos (de un turno fijo de medio turno) NO
+    // se copian: se regeneran solos según state.fixed al abrir la semana nueva (los genera
+    // runMigrations→regenerateFixedHalfExtras), copiarlos de acá también los duplicaría.
+    seed.ex=JSON.parse(JSON.stringify((prevWeek.ex||[]).filter(e=>!e.auto)));
+  }
+  loadWeek(dateStr,seed);
+  toast(copio?"Semana nueva lista (copiada de la semana anterior)":"Semana nueva lista (no había una semana anterior para copiar)");
+}
+// deshacer/rehacer local: solo tocan los datos de ESTA semana (nunca la config global ni otra
+// semana) — restoreLocalWeekSnapshot no re-suscribe ni cambia qué semana está activa.
+function restoreLocalWeekSnapshot(json){
+  suspendHistory=true;
+  Object.assign(state,JSON.parse(json));
+  suspendHistory=false;
+  fillPersonSelects();
+  document.getElementById("weekLabel").value=state.label||"";
+  document.getElementById("weekStart").value=state.weekStart||"";
+  renderMini();render();
+  syncUndoRedoButtons();
+  saveLocalWeek(weekKeyOf(state),weekPart(state));
+  if(window.CloudSyncWeek){setSyncStatus("saving");window.CloudSyncWeek.push(weekKeyOf(state),weekPart(state));} // el deshacer/rehacer también se sincroniza a otros dispositivos
+}
+// "🕐 Historial de versiones": restaura una foto de la nube que puede ser de OTRA semana (o de una
+// config vieja) — a diferencia del deshacer local, acá sí hay que pisar la config global y ubicar
+// la semana restaurada en su lugar correcto (puede no ser la que tenés abierta ahora).
+function restoreHistorySnapshot(json){
+  state=Object.assign(defaultState(),JSON.parse(json));
+  suspendHistory=true;
+  runMigrations();
+  const key=weekKeyOf(state);
+  saveLocalConfig(configPart(state));
+  saveLocalWeek(key,weekPart(state));
+  localStorage.setItem(LS_ACTIVE,key);
+  suspendHistory=false;
+  useHistoryBucket(key);
+  fillPersonSelects();
+  document.getElementById("weekLabel").value=state.label||"";
+  document.getElementById("weekStart").value=state.weekStart||"";
+  renderWeekSwitcher();
+  renderMini();render();
+  syncUndoRedoButtons();
+  if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(configPart(state));}
+  if(window.CloudSyncWeek){setSyncStatus("saving");window.CloudSyncWeek.push(key,weekPart(state));}
+}
+function undoLast(){
+  if(!undoStack.length)return;
+  redoStack.push(JSON.stringify(weekPart(state)));
+  restoreLocalWeekSnapshot(undoStack.pop());
+  toast("Cambio deshecho ↩️");
+}
+function redoLast(){
+  if(!redoStack.length)return;
+  undoStack.push(JSON.stringify(weekPart(state)));
+  restoreLocalWeekSnapshot(redoStack.pop());
+  toast("Cambio rehecho ↪️");
+}
+function syncUndoRedoButtons(){
+  const u=document.getElementById("btnUndo"),r=document.getElementById("btnRedo");
+  if(u)u.disabled=!undoStack.length;
+  if(r)r.disabled=!redoStack.length;
+}
+// puesto principal / de respaldo de una persona: prioriza lo que vos cambiaste en "Puesto de cada persona"
+// por sobre el default del código (igual que francoFor con el franco).
+function roleFor(name){
+  if(Object.prototype.hasOwnProperty.call(state.roleOverride,name))return state.roleOverride[name];
+  const p=BY_NAME[name];return p&&p.role;
+}
+function backupFor(name){
+  if(Object.prototype.hasOwnProperty.call(state.backupOverride,name))return state.backupOverride[name];
+  const p=BY_NAME[name];return (p&&p.backup)||[];
+}
+
+// normaliza state.fixed: junta reglas repetidas (misma persona/turno/local/rol/medio-turno) en una sola con los días combinados
+function dedupeFixed(){
+  const map=new Map();
+  state.fixed.forEach(f=>{
+    const half=!!f.half;const role=f.role||(BY_NAME[f.n]&&roleFor(f.n));
+    const kk=`${f.n}|${f.shift}|${f.loc}|${role}|${half}`;
+    if(!map.has(kk))map.set(kk,{id:f.id,seedTag:f.seedTag,n:f.n,days:new Set(),shift:f.shift,loc:f.loc,role,half});
+    const e=map.get(kk);f.days.forEach(d=>e.days.add(d));if(f.seedTag&&!e.seedTag)e.seedTag=f.seedTag;
+  });
+  const rebuilt=[...map.values()].map(e=>({id:e.id,seedTag:e.seedTag,n:e.n,days:[...e.days].sort((a,b)=>a-b),shift:e.shift,loc:e.loc,role:e.role,half:e.half}));
+  const changed=JSON.stringify(rebuilt)!==JSON.stringify(state.fixed);
+  state.fixed=rebuilt;
+  return changed;
+}
+// saca entradas de "personas extra" repetidas al pixel (misma persona/día/turno/local/rol) que puedan haber quedado de una carga manual duplicada
+function dedupeEx(){
+  const seen=new Set();const before=state.ex.length;
+  state.ex=state.ex.filter(e=>{const kk=`${e.n}|${e.day}|${e.shift}|${e.loc}|${e.role}`;if(seen.has(kk))return false;seen.add(kk);return true;});
+  return state.ex.length!==before;
+}
+
+/* ---------------- VACACIONES (lectura desde el módulo Vacaciones) ----------------
+   Cronogramas nunca escribe datos de vacaciones, solo los lee para marcar ausencia automática
+   en los días de la semana cargada que caigan dentro de un rango de vacaciones confirmado. */
+let vacacionesCache=null;
+function isoDe(d){ // fecha ISO del día d (0=lunes) de la semana cargada, o null si no hay weekStart
+  if(!state.weekStart)return null;
+  const base=new Date(state.weekStart+"T00:00:00");
+  base.setDate(base.getDate()+d);
+  return base.getFullYear()+"-"+String(base.getMonth()+1).padStart(2,"0")+"-"+String(base.getDate()).padStart(2,"0");
+}
+function aplicarAusenciasPorVacaciones(){
+  if(!vacacionesCache||!vacacionesCache.taken||!state.weekStart)return false;
+  let changed=false;
+  for(let d=0;d<7;d++){
+    const iso=isoDe(d);if(!iso)continue;
+    vacacionesCache.taken.forEach(t=>{
+      if(t.estado!=="confirmada")return; // "a confirmar" no bloquea el autocompletado todavía
+      if(!BY_NAME[t.n])return;
+      if(!(t.desde<=iso&&iso<=t.hasta))return;
+      if(state.ausObviada[t.n+"|"+iso])return; // la borraste vos a mano: no se vuelve a poner sola
+      let a=state.abs.find(x=>x.n===t.n);
+      if(!a){a={n:t.n,days:[]};state.abs.push(a);}
+      if(!a.days.includes(d)){a.days.push(d);a.days.sort((x,y)=>x-y);changed=true;}
+    });
+  }
+  return changed;
+}
+
+// availability helpers
+function absDaysFor(name){const a=state.abs.find(x=>x.n===name);return a?a.days:[];}
+function fixedDaysFor(name){const s=new Set();state.fixed.forEach(f=>{if(f.n===name)f.days.forEach(d=>s.add(d));});return s;}
+function fxLocFor(f){const p=BY_NAME[f.n];return p.loc==="both"?(f.loc||"SL"):p.loc;}
+// día de franco fijo de una persona: prioriza lo que vos fijaste en "Franco fijo" por sobre el default del código;
+// devuelve el índice de día (0-6), o undefined si es flexible (lo decide el autocompletado cada semana).
+function francoFor(name){
+  if(Object.prototype.hasOwnProperty.call(state.francoFixed,name)){
+    const v=state.francoFixed[name];
+    return v==="auto"?undefined:v;
+  }
+  const p=BY_NAME[name];
+  return p&&p.franco?DAYS.findIndex(x=>x[0]===p.franco):undefined;
+}
+function isOut(name,d){const p=BY_NAME[name];if(!p)return false;if(francoFor(name)===d)return true;return absDaysFor(name).includes(d);}
+
+// regenera los refuerzos de medio turno de las reglas fijas (sin duplicar entre corridas).
+// se llama al arrancar la app y cada vez que cambian las reglas fijas, no solo al autocompletar,
+// para que un turno cortado permanente se vea en el calendario aunque no vuelvas a tocar "Autocompletar".
+function regenerateFixedHalfExtras(){
+  state.ex=state.ex.filter(e=>!e.auto);
+  state.fixed.filter(f=>f.half).forEach(f=>{
+    const p=BY_NAME[f.n];if(!p)return;const loc=fxLocFor(f),role=f.role||roleFor(f.n);
+    f.days.forEach(d=>{
+      if(isOut(f.n,d)||isClosed(d,loc,f.shift))return;
+      state.ex.push({id:`auto-${f.id}-${d}`,auto:true,fixedId:f.id,n:f.n,day:d,shift:f.shift,loc,role,half:true});
+    });
+  });
+}
+// borrar (desde la grilla o desde "Personas extra") un refuerzo AUTOMÁTICO de un turno fijo de medio
+// turno (ej: Gonzalo/Matías el finde) solo lo ocultaba ese momento: como la regla permanente seguía
+// en state.fixed, regenerateFixedHalfExtras() la volvía a crear en la próxima sincronización o recarga.
+// Esto borra el día de la regla permanente (y la regla entera si ya no le quedan días), así queda
+// borrado de verdad. Para borrar un turno fijo entero de una, seguís usando la lista "Turno fijo".
+function quitarRefuerzoAuto(exEntry){
+  if(!exEntry||!exEntry.auto||!exEntry.fixedId)return false;
+  const f=state.fixed.find(x=>x.id===exEntry.fixedId);
+  if(!f)return false;
+  f.days=f.days.filter(d=>d!==exEntry.day);
+  if(!f.days.length)state.fixed=state.fixed.filter(x=>x.id!==f.id);
+  regenerateFixedHalfExtras();
+  return true;
+}
+
+/* ---------------- MODO MOVER (tocar origen, tocar destino) ----------------
+   Arrastrar y soltar de verdad (HTML5 drag&drop) no es confiable en el celular sobre un <select>,
+   así que en vez de eso: un botón invisible tapa todo el casillero mientras el modo está activo.
+   Tocás uno para "levantarlo" y otro para "soltarlo" — se mueve, o si el destino ya tenía a alguien,
+   los dos intercambian de lugar. Direcciones posibles: "k" (casillero base), "ex" (refuerzo ya
+   cargado) o "newex" (casillero de refuerzo todavía vacío). */
+let movingMode=false,movingFrom=null;
+function moveGetName(kind,ref){
+  if(kind==="k")return state.assign[ref]||"";
+  if(kind==="ex"){const e=state.ex.find(x=>String(x.id)===ref);return e?e.n:"";}
+  return "";
+}
+function moveSetName(kind,ref,name){
+  if(kind==="k"){if(name)state.assign[ref]=name;else delete state.assign[ref];return;}
+  if(kind==="ex"){
+    const idx=state.ex.findIndex(x=>String(x.id)===ref);if(idx<0)return;
+    if(name)state.ex[idx].n=name;
+    else{delete state.comments["ex:"+state.ex[idx].id];if(!quitarRefuerzoAuto(state.ex[idx]))state.ex.splice(idx,1);}
+    return;
+  }
+  if(kind==="newex"){
+    if(!name)return;
+    const[d,loc,shift,role]=ref.split("|");
+    state.ex.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),n:name,day:+d,shift,loc,role});
+  }
+}
+function toggleMovingMode(on){
+  movingMode=on!=null?on:!movingMode;
+  movingFrom=null;
+  document.body.classList.toggle("moving",movingMode);
+  document.getElementById("btnMover").classList.toggle("active",movingMode);
+  document.getElementById("moveHint").classList.toggle("show",movingMode);
+}
+function handleMoveOverlayClick(btn){
+  let kind,ref;
+  if(btn.dataset.movek!=null){kind="k";ref=btn.dataset.movek;}
+  else if(btn.dataset.moveex!=null){kind="ex";ref=btn.dataset.moveex;}
+  else{kind="newex";ref=btn.dataset.movenewex;}
+  if(!movingFrom){
+    const name=moveGetName(kind,ref);
+    if(!name)return; // no hay a quién levantar de un casillero vacío
+    if(kind==="ex"){
+      const e=state.ex.find(x=>String(x.id)===ref);
+      if(e&&e.auto)return toast("Ese refuerzo sale solo de un turno fijo permanente — para moverlo, editá la regla en \"Turno fijo\"");
+    }
+    movingFrom={kind,ref,name};
+    document.querySelectorAll(".moveOverlay.picked").forEach(el=>el.classList.remove("picked"));
+    btn.classList.add("picked");
+    document.getElementById("moveHintMsg").textContent=`✥ Moviendo a ${name}: tocá el casillero destino (o tocalo de nuevo para cancelar).`;
+    return;
+  }
+  if(movingFrom.kind===kind&&movingFrom.ref===ref){ // tocaste el mismo: cancelar
+    btn.classList.remove("picked");
+    movingFrom=null;
+    document.getElementById("moveHintMsg").textContent="✥ Modo mover activado: tocá a alguien para levantarlo, después tocá el casillero donde lo querés poner.";
+    return;
+  }
+  const {kind:srcKind,ref:srcRef,name:srcName}=movingFrom;
+  const destName=moveGetName(kind,ref);
+  moveSetName(kind,ref,srcName);
+  moveSetName(srcKind,srcRef,destName);
+  movingFrom=null;
+  renderMini();render();persist();
+  toast(destName?`${srcName} y ${destName} intercambiaron de lugar`:`${srcName} se movió`);
+  document.getElementById("moveHintMsg").textContent="✥ Modo mover activado: tocá a alguien para levantarlo, después tocá el casillero donde lo querés poner.";
+}
+
+/* ---------------- AUTOCOMPLETE ---------------- */
+function autocomplete(){
+  regenerateFixedHalfExtras();
+  const assign={};
+  const worked={}; PEOPLE.forEach(p=>worked[p.n]=new Set());
+  state.ex.forEach(e=>{if(BY_NAME[e.n])worked[e.n].add(e.day);});
+
+  // ---- 1. FRANCO assignment (guarantees 1 franco / max 6 days each) ----
+  const franco={};
+  const roleDayF={}; ["barista","cocina","ayudante","cajero","atencion","compras"].forEach(r=>roleDayF[r]=[0,0,0,0,0,0,0]);
+  const globalF=[0,0,0,0,0,0,0];
+  PEOPLE.forEach(p=>{const d=francoFor(p.n);if(d!==undefined){franco[p.n]=d;roleDayF[roleFor(p.n)][d]++;globalF[d]++;}});
+  PEOPLE.filter(p=>francoFor(p.n)===undefined).forEach(p=>{
+    const absent=absDaysFor(p.n);
+    if(absent.length>=6)return; // out ~all week, no franco needed
+    const mustDay=p.must?DAYS.findIndex(x=>x[0]===p.must.day):-1;
+    const fx=fixedDaysFor(p.n);
+    let cand=[0,1,2,3,4].filter(d=>d!==mustDay&&!absent.includes(d)&&!fx.has(d)); // día libre entre semana, fuera de sus reglas fijas
+    if(!cand.length)cand=[0,1,2,3,4].filter(d=>d!==mustDay&&!absent.includes(d));
+    if(!cand.length)cand=[0,1,2,3,4,5,6].filter(d=>d!==mustDay&&!absent.includes(d));
+    const pr=roleFor(p.n);
+    cand.sort((a,b)=>(roleDayF[pr][a]-roleDayF[pr][b])||(globalF[a]-globalF[b]));
+    const d=cand[0];franco[p.n]=d;roleDayF[pr][d]++;globalF[d]++;
+  });
+  const outFor=(name,d)=>franco[name]===d||absDaysFor(name).includes(d);
+
+  // ---- 2. mandatory availabilities ----
+  for(let d=0;d<7;d++)PEOPLE.forEach(p=>{
+    if(p.must&&DAYS[d][0]===p.must.day&&!outFor(p.n,d)){
+      const k=key(d,p.must.loc,p.must.shift,p.must.role,0);
+      if(!assign[k]){assign[k]=p.n;worked[p.n].add(d);}
+    }
+  });
+
+  // ---- 2b. reglas fijas de puesto base (turno habitual de cada persona; las de medio turno ya se generaron arriba como refuerzo) ----
+  state.fixed.filter(f=>!f.half).forEach(f=>{const p=BY_NAME[f.n];if(!p)return;const loc=fxLocFor(f),role=f.role||roleFor(f.n);
+    f.days.forEach(d=>{
+      if(outFor(f.n,d)||isClosed(d,loc,f.shift))return;
+      let busy=false;Object.keys(assign).forEach(kk=>{const[dd,,sh]=kk.split("|");if(+dd===d&&sh===f.shift&&assign[kk]===f.n)busy=true;});
+      if(busy)return;
+      const rows=rowsFor(loc,f.shift).filter(r=>r.role===role);
+      for(const row of rows){const k=key(d,loc,f.shift,role,row.idx);if(!assign[k]){assign[k]=f.n;worked[f.n].add(d);break;}}
+    });
+  });
+
+  // ---- 3. fill slots ----
+  for(let d=0;d<7;d++){
+    [["SL","M"],["SL","T"],["SLA","M"],["SLA","T"]].forEach(([loc,shift])=>{
+      rowsFor(loc,shift).forEach(row=>{
+        if(!requiredCell(d,loc,shift,row))return; // el autocompletado no llena solo la fila de refuerzo entre semana
+        const k=key(d,loc,shift,row.role,row.idx); if(assign[k])return;
+        const busyShift=new Set(),busyDay=new Set(),busyOther=new Set();
+        Object.keys(assign).forEach(kk=>{const[dd,ll,sh]=kk.split("|");if(+dd===d){busyDay.add(assign[kk]);if(sh===shift)busyShift.add(assign[kk]);if(ll!==loc)busyOther.add(assign[kk]);}});
+        state.ex.forEach(e=>{if(e.day===d){busyDay.add(e.n);if(e.shift===shift)busyShift.add(e.n);if(e.loc!==loc)busyOther.add(e.n);}});
+        const heOk=n=>{const p=BY_NAME[n];return p&&(p.he||EVENT_HE.includes(n));};
+        let cands=peopleFor(row.role,loc).filter(p=>{
+          if(outFor(p.n,d))return false;
+          if(busyShift.has(p.n))return false;             // same time = impossible
+          if(busyDay.has(p.n)&&!heOk(p.n))return false;   // turno doble solo para gente de HE (si no, se deja hueco)
+          return true;
+        });
+        cands.sort((a,b)=>{
+          const prA=roleFor(a.n)===row.role?0:1,prB=roleFor(b.n)===row.role?0:1; if(prA!==prB)return prA-prB;      // rol principal antes que respaldo
+          const dbA=busyDay.has(a.n)?1:0,dbB=busyDay.has(b.n)?1:0; if(dbA!==dbB)return dbA-dbB;          // evitar turno doble innecesario
+          const hmA=a.loc===loc?0:1,hmB=b.loc===loc?0:1; if(hmA!==hmB)return hmA-hmB;                    // priorizar gente del local, reservar rotativos
+          const crA=busyOther.has(a.n)?1:0,crB=busyOther.has(b.n)?1:0; if(crA!==crB)return crA-crB;      // evitar cruce de local el mismo día
+          return worked[a.n].size-worked[b.n].size;                                                     // equilibrar hacia 6 días
+        });
+        if(cands[0]){assign[k]=cands[0].n;worked[cands[0].n].add(d);}
+      });
+    });
+  }
+  state.assign=assign; render(); persist();
+  toast("Semana autocompletada ✨");
+}
+
+/* ---------------- VALIDATION ---------------- */
+function validate(){
+  const alerts=[];
+  // gather assignments incl extras -> per day maps
+  const dayShift={}; // d|shift -> [{name,loc}]
+  const dayAll={};   // d -> Set names (any shift)
+  const worked={};   PEOPLE.forEach(p=>worked[p.n]=new Set());
+  function add(d,shift,loc,name){
+    if(!name)return;
+    (dayShift[d+"|"+shift]=dayShift[d+"|"+shift]||[]).push({name,loc});
+    (dayAll[d]=dayAll[d]||{})[name]=true;
+    worked[name].add(d);
+  }
+  Object.keys(state.assign).forEach(k=>{const[d,loc,sh]=k.split("|");add(+d,sh,loc,state.assign[k]);});
+  state.ex.forEach(e=>add(e.day,e.shift,e.loc,e.n));
+
+  // 1 simultaneity (same day+shift twice)
+  Object.keys(dayShift).forEach(ks=>{
+    const[d,sh]=ks.split("|");const seen={};
+    dayShift[ks].forEach(o=>{seen[o.name]=(seen[o.name]||0)+1;});
+    Object.keys(seen).forEach(nm=>{if(seen[nm]>1)alerts.push({t:"crit",h:nm,m:`está en dos lugares a la vez el ${DAYS[+d][1].toLowerCase()} a la ${sh==="M"?"mañana":"tarde"}.`});});
+  });
+  // 1b incompatibilidades ("no pueden trabajar juntos") en el mismo turno Y el mismo local — si
+  // están el mismo turno pero en locales distintos, no cuenta como choque.
+  if(state.incompat.length)Object.keys(dayShift).forEach(ks=>{
+    const[d,sh]=ks.split("|");
+    ["SL","SLA"].forEach(loc=>{
+      const names=[...new Set(dayShift[ks].filter(o=>o.loc===loc).map(o=>o.name))];
+      for(let i=0;i<names.length;i++)for(let j=i+1;j<names.length;j++){
+        if(sonIncompatibles(names[i],names[j]))
+          alerts.push({t:"crit",h:`${names[i]} y ${names[j]}`,m:`no pueden trabajar juntos y están los dos el ${DAYS[+d][1].toLowerCase()} a la ${sh==="M"?"mañana":"tarde"} en ${loc==="SL"?"San Luis":"SLA"}.`});
+      }
+    });
+  });
+  // 2 double shift same day (M+T) -> HE, salvo turno cortado marcado como medio turno
+  const isHalfAt=(nm,d,sh)=>state.ex.some(e=>e.n===nm&&e.day===d&&e.shift===sh&&e.half);
+  for(let d=0;d<7;d++){
+    const names=dayAll[d]?Object.keys(dayAll[d]):[];
+    names.forEach(nm=>{
+      const m=(dayShift[d+"|M"]||[]).some(o=>o.name===nm);
+      const t=(dayShift[d+"|T"]||[]).some(o=>o.name===nm);
+      if(m&&t){
+        if(isHalfAt(nm,d,"M")||isHalfAt(nm,d,"T"))return; // turno cortado intencional, no es un error
+        const p=BY_NAME[nm];const heOk=p&&(p.he||EVENT_HE.includes(nm));
+        alerts.push({t:heOk?"warn":"crit",h:nm,m:`hace turno doble (HE) el ${DAYS[d][1].toLowerCase()}.`+(heOk?"":" No figura como disponible para horas extra.")});
+      }
+    });
+  }
+  // 3 franco / 6 days / fixed franco / vacation clash
+  PEOPLE.forEach(p=>{
+    const w=worked[p.n];const wc=w.size;
+    const avail=7-absDaysFor(p.n).length;const target=Math.min(6,avail);
+    if(wc===7)alerts.push({t:"crit",h:p.n,m:"trabaja los 7 días, sin franco."});
+    else if(wc>0&&wc<target)alerts.push({t:"warn",h:p.n,m:`solo ${wc} de ${target} días (falta llegar a 6).`});
+    const ff=francoFor(p.n);
+    if(ff!==undefined&&w.has(ff))
+      alerts.push({t:"warn",h:p.n,m:`está asignado en su franco fijo (${DAYS[ff][1].toLowerCase()}).`});
+    // vacation clash
+    absDaysFor(p.n).forEach(d=>{if(w.has(d))alerts.push({t:"crit",h:p.n,m:`está de ausencia/vacaciones el ${DAYS[d][1].toLowerCase()} pero quedó asignado.`});});
+  });
+  // 4 afternoon/weekend minimums
+  for(let d=0;d<7;d++){
+    const wk=isWknd(d);
+    // SL atención: TT always 3; TM 2, weekend 3
+    checkCount(alerts,d,"SL","T","atencion",3,"San Luis tarde");
+    checkCount(alerts,d,"SL","M","atencion",wk?3:2,"San Luis mañana");
+    checkCount(alerts,d,"SLA","T","atencion",2,"SLA tarde (mozas)");
+    checkCount(alerts,d,"SLA","M","atencion",wk?2:1,"SLA mañana (mozas)");
+    // core singletons
+    ["SL","SLA"].forEach(loc=>["M","T"].forEach(sh=>{
+      checkCount(alerts,d,loc,sh,"barista",1,(loc==="SL"?"San Luis":"SLA")+(sh==="M"?" mañana":" tarde")+" · barista",true);
+    }));
+  }
+  // 5 mandatory availabilities
+  PEOPLE.forEach(p=>{if(p.must){const d=DAYS.findIndex(x=>x[0]===p.must.day);
+    const k=key(d,p.must.loc,p.must.shift,p.must.role,0);
+    const here=state.assign[k]===p.n||state.ex.some(e=>e.n===p.n&&e.day===d&&e.loc===p.must.loc&&e.shift===p.must.shift);
+    if(!isOut(p.n,d)&&!here)alerts.push({t:"warn",h:p.n,m:`debería trabajar el ${p.must.day==="lun"?"lunes":p.must.day==="jue"?"jueves":"viernes"} a la mañana y no está puesta ahí.`});}});
+  // 5b turno fijo no cubierto por su titular
+  state.fixed.forEach(f=>{
+    const loc=fxLocFor(f);
+    f.days.forEach(d=>{
+      if(isOut(f.n,d))return;
+      const here=Object.keys(state.assign).some(k=>{const[dd,ll,sh]=k.split("|");return +dd===d&&ll===loc&&sh===f.shift&&state.assign[k]===f.n;})
+        ||state.ex.some(e=>e.n===f.n&&e.day===d&&e.loc===loc&&e.shift===f.shift);
+      if(!here)alerts.push({t:"warn",h:f.n,m:`tiene turno fijo el ${DAYS[d][1].toLowerCase()} ${f.shift==="M"?"mañana":"tarde"} y no está puesto ahí.`});
+    });
+  });
+  // 6 empty required cells (no cuenta la fila de refuerzo entre semana: es opcional, no un hueco)
+  let holes=0;
+  for(let d=0;d<7;d++)[["SL","M"],["SL","T"],["SLA","M"],["SLA","T"]].forEach(([loc,sh])=>{
+    rowsFor(loc,sh).forEach(row=>{if(requiredCell(d,loc,sh,row)&&!state.assign[key(d,loc,sh,row.role,row.idx)])holes++;});
+  });
+  return {alerts,worked,holes};
+}
+function countFilled(d,loc,shift,role){
+  let c=0;rowsFor(loc,shift).forEach(row=>{if(row.role===role&&sellable(d,loc,shift)&&state.assign[key(d,loc,shift,role,row.idx)])c++;});
+  state.ex.forEach(e=>{if(e.day===d&&e.loc===loc&&e.shift===shift&&e.role===role)c++;});
+  return c;
+}
+function checkCount(alerts,d,loc,shift,role,min,label,isCore){
+  if(isClosed(d,loc,shift))return;
+  const c=countFilled(d,loc,shift,role);
+  if(c<min)alerts.push({t:isCore?"warn":"crit",h:DAYS[d][2],m:`${label}: ${c} de ${min} ${role==="atencion"?"":""}(${min-c} faltan${min-c>1?"":""}).`});
+}
+
+/* ---------------- RENDER ---------------- */
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1900);}
+
+function render(){
+  // los refuerzos de medio turno (auto:true) están siempre presentes por diseño, no cuentan como "semana cargada"
+  const empty=Object.keys(state.assign).length===0&&state.ex.filter(e=>!e.auto).length===0;
+  const v=validate();
+  renderCounts(v,empty);
+  renderAlerts(v,empty);
+  renderStickyNotes();
+  renderNotes();
+  renderSched(v.worked,empty);
+  renderTeam(v);
+}
+function renderNotes(){
+  const el=document.getElementById("noteBanner");if(!el)return;
+  const items=[];
+  feriadosEnSemana().forEach(f=>items.push(`${f.tipo==="feriado"?"🎉":"🗓️"} ${DAYS[f.dia][1]} ${fmtFechaCorta(f.fecha)}: ${f.nombre}${f.tipo==="no_laborable"?" (no laborable, opcional)":" — feriado nacional"}`));
+  state.rules.filter(r=>r.type==="cierre").forEach(r=>items.push(`🔒 ${DAYS[r.day][1]} · cierra ${r.shift==="M"?"a la mañana":r.shift==="T"?"a la tarde":"todo el día"} · ${r.loc==="both"?"ambos locales":r.loc==="SL"?"San Luis":"SLA"}`));
+  state.rules.filter(r=>r.type==="nota").forEach(r=>items.push(`📌 ${DAYS[r.day][1]}: ${r.text}`));
+  el.innerHTML=items.map(t=>`<div class="nb">${t}</div>`).join("");
+}
+function fmtFechaCorta(iso){const[,m,d]=iso.split("-");return`${d}/${m}`;}
+
+function renderCounts(v,empty){
+  const el=document.getElementById("counts");
+  if(empty){el.innerHTML=`<div class="count"><div class="n">—</div><small>Conflictos</small></div><div class="count"><div class="n">—</div><small>Avisos</small></div><div class="count"><div class="n">—</div><small>Sin cubrir</small></div>`;return;}
+  const crit=v.alerts.filter(a=>a.t==="crit").length;
+  const warn=v.alerts.filter(a=>a.t==="warn").length;
+  el.innerHTML=`
+    <div class="count ${crit?"crit":"ok"}"><div class="n">${crit}</div><small>Conflictos</small></div>
+    <div class="count ${warn?"warn":"ok"}"><div class="n">${warn}</div><small>Avisos</small></div>
+    <div class="count ${v.holes?"warn":"ok"}"><div class="n">${v.holes}</div><small>Sin cubrir</small></div>`;
+}
+function renderAlerts(v,empty){
+  const el=document.getElementById("alertList");
+  if(empty){el.innerHTML=`<div class="alert-empty">Cargá los cambios de la semana y tocá <b>✨ Autocompletar</b> para generar la grilla. Después ajustá lo que quieras a mano.</div>`;return;}
+  if(!v.alerts.length){el.innerHTML=`<div class="alert-empty">✓ Todo en orden: sin duplicados, todos con franco y tardes cubiertas.</div>`;return;}
+  const order={crit:0,warn:1};
+  const sorted=v.alerts.slice().sort((a,b)=>order[a.t]-order[b.t]);
+  el.innerHTML=sorted.map(a=>`<div class="alert ${a.t}"><span class="dot"></span><div><b>${a.h}</b> ${a.m}</div></div>`).join("");
+}
+// notas tipo "post-it" para recordatorios generales — a diferencia de las notas de "Reglas
+// especiales" (que van atadas a un día puntual y viven en el banner de arriba), estas son de
+// alcance libre y persisten semana a semana, visibles directo en la Auditoría en vivo.
+function renderStickyNotes(){
+  const el=document.getElementById("stickyNotes");if(!el)return;
+  el.innerHTML=state.stickyNotes.map(n=>
+    `<div class="sticky"><button type="button" class="x" data-i="${n.id}" title="Borrar">×</button><p>${escAttr(n.text)}</p></div>`
+  ).join("");
+  el.querySelectorAll(".x").forEach(b=>b.addEventListener("click",()=>{
+    state.stickyNotes=state.stickyNotes.filter(n=>String(n.id)!==b.dataset.i);
+    renderStickyNotes();persist();
+  }));
+}
+
+function escAttr(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
+function noteBtnHTML(ck,label){
+  const note=state.comments[ck];
+  return `<button type="button" class="noteBtn ${note?"has":""}" data-notek="${ck}" data-notelabel="${escAttr(label)}" title="${note?escAttr(note):"Agregar comentario"}">💬</button>`;
+}
+function selHTML(d,loc,shift,role,idx,active,closed){
+  const k=key(d,loc,shift,role,idx);
+  const cur=state.assign[k]||"";
+  if(!active)return `<td class="cell ${isWknd(d)?"wknd":""} ${closed?"closed":"inactive"}"><span class="celloff">${closed?"Cerrado":"·"}</span></td>`;
+  const opts=peopleFor(role,loc).map(p=>{
+    const nm=p.n===cur?nombreDestacadoEnTurno(p.n,d,loc,shift):nombreDestacado(p.n);
+    return `<option value="${p.n}" ${p.n===cur?"selected":""}>${nm}${roleFor(p.n)!==role?" ⤵":""}</option>`;
+  }).join("");
+  // dupe detection for this cell
+  let dupe=false;
+  if(cur){Object.keys(state.assign).forEach(kk=>{if(kk!==k){const[dd,,sh]=kk.split("|");if(+dd===d&&sh===shift&&state.assign[kk]===cur)dupe=true;}});
+    state.ex.forEach(e=>{if(e.n===cur&&e.day===d&&e.shift===shift)dupe=true;});}
+  const he=cur&&isDoubleShift(cur,d);
+  const errMsg=dupe?dupeMsg(cur,d,shift):incompatMsgFor(cur,d,loc,shift);
+  const cls=`cellsel ${cur?"filled":"empty"} ${errMsg?"dupe":""} ${he?"he":""} ${cur&&esExpertoActivo(cur,d,loc,shift)?"expert":cur&&esExperto(cur)?"expert-alt":""}`;
+  const errAttr=errMsg?` data-err="${errMsg}"`:"";
+  const label=(cur?cur+" · ":"")+DAYS[d][1]+" "+(shift==="M"?"mañana":"tarde");
+  return `<td class="cell ${isWknd(d)?"wknd":""}"><select class="${cls}" data-k="${k}"${errAttr}><option value="">—</option>${opts}</select>${expertPickBtn(cur,d,loc,shift)}${noteBtnHTML(k,label)}<button type="button" class="moveOverlay" data-movek="${k}" aria-label="Mover a ${cur||"este casillero"}"></button></td>`;
+}
+// mensaje de la burbuja de error: mismo texto que usa la auditoría para "está en dos lugares a la vez"
+function dupeMsg(name,d,shift){
+  return `⚠️ ${name} está en dos lugares a la vez el ${DAYS[d][1].toLowerCase()} a la ${shift==="M"?"mañana":"tarde"}.`;
+}
+function isDoubleShift(name,d){
+  let m=false,t=false;
+  Object.keys(state.assign).forEach(k=>{const[dd,,sh]=k.split("|");if(+dd===d&&state.assign[k]===name){if(sh==="M")m=true;if(sh==="T")t=true;}});
+  state.ex.forEach(e=>{if(e.n===name&&e.day===d){if(e.shift==="M")m=true;else t=true;}});
+  return m&&t;
+}
+// "X no puede trabajar con Y": se compara el mismo turno (día+mañana/tarde) Y el mismo local — si
+// están en el mismo horario pero en San Luis y SLA respectivamente, no cuenta como choque.
+function sonIncompatibles(a,b){return state.incompat.some(r=>(r.a===a&&r.b===b)||(r.a===b&&r.b===a));}
+// "Experto Candela": marca permanente sobre la persona (no cambia semana a semana), para que se
+// destaque dondequiera que aparezca asignada en la grilla y al imprimir.
+function esExperto(name){return state.expertos.includes(name);}
+function nombreDestacado(name){return esExperto(name)?"⭐ "+name:name;}
+function nombreDestacadoEnTurno(name,d,loc,shift){return esExpertoActivo(name,d,loc,shift)?"⭐ "+name:name;}
+// "no pueden trabajar juntos" es por local: si están en el mismo turno pero en San Luis y SLA
+// respectivamente, no cuenta como choque — solo importa si coinciden en el mismo local.
+function quienesEnTurno(d,loc,shift){
+  const set=new Set();
+  Object.keys(state.assign).forEach(kk=>{const[dd,ll,sh]=kk.split("|");if(+dd===d&&ll===loc&&sh===shift&&state.assign[kk])set.add(state.assign[kk]);});
+  state.ex.forEach(e=>{if(e.day===d&&e.loc===loc&&e.shift===shift&&e.n)set.add(e.n);});
+  return set;
+}
+function incompatMsgFor(name,d,loc,shift){
+  if(!name)return null;
+  const otros=[...quienesEnTurno(d,loc,shift)].filter(o=>o!==name);
+  const choque=otros.find(o=>sonIncompatibles(name,o));
+  return choque?`🚫 ${name} no puede trabajar con ${choque} — los dos están el ${DAYS[d][1].toLowerCase()} a la ${shift==="M"?"mañana":"tarde"} en ${loc==="SL"?"San Luis":"SLA"}.`:null;
+}
+// cuando coinciden dos o más "Experto Candela" en el mismo turno, solo uno de ellos queda destacado
+// con ⭐ ese turno puntual (el resto sigue trabajando ahí, pero sin la estrella) — se elige a mano
+// con el selector que aparece en la grilla; sin elección, gana por defecto el primero que aparece.
+function turnoKey(d,loc,shift){return `${d}|${loc}|${shift}`;}
+function expertosEnTurno(d,loc,shift){return [...quienesEnTurno(d,loc,shift)].filter(esExperto);}
+function expertoActivoEnTurno(d,loc,shift){
+  const exs=expertosEnTurno(d,loc,shift);
+  if(exs.length<=1)return exs[0]||null;
+  const elegido=state.expertoTurno[turnoKey(d,loc,shift)];
+  return elegido&&exs.includes(elegido)?elegido:exs[0];
+}
+function esExpertoActivo(name,d,loc,shift){
+  if(!name||!esExperto(name))return false;
+  return expertosEnTurno(d,loc,shift).length<=1||name===expertoActivoEnTurno(d,loc,shift);
+}
+// botón que aparece junto a un experto que "perdió" la estrella este turno por chocar con otro
+// experto, para poder elegirlo a él en vez del que ganó por defecto.
+function expertPickBtn(name,d,loc,shift){
+  if(!name||!esExperto(name)||esExpertoActivo(name,d,loc,shift))return"";
+  return `<button type="button" class="expertPick" data-expick="${d}|${loc}|${shift}|${escAttr(name)}" title="Hay más de un Experto Candela en este turno — tocá para que ${name} sea el destacado ⭐ acá">⭐?</button>`;
+}
+function exAt(d,loc,shift,role){return state.ex.filter(e=>e.day===d&&e.loc===loc&&e.shift===shift&&e.role===role);}
+function extraCellHTML(e){
+  // a diferencia de la grilla base, "Personas extra" es refuerzo libre: cualquiera puede cubrir
+  // cualquier puesto puntual, no solo quienes ya tienen ese rol como principal o de respaldo.
+  const opts=PEOPLE.map(p=>{
+    const nm=p.n===e.n?nombreDestacadoEnTurno(p.n,e.day,e.loc,e.shift):nombreDestacado(p.n);
+    return `<option value="${p.n}" ${p.n===e.n?"selected":""}>${nm}${roleFor(p.n)!==e.role?" ⤵":""}</option>`;
+  }).join("");
+  let dupe=false;
+  Object.keys(state.assign).forEach(kk=>{const[dd,,sh]=kk.split("|");if(+dd===e.day&&sh===e.shift&&state.assign[kk]===e.n)dupe=true;});
+  state.ex.forEach(o=>{if(o!==e&&o.n===e.n&&o.day===e.day&&o.shift===e.shift)dupe=true;});
+  const he=isDoubleShift(e.n,e.day);
+  const badge=`<button type="button" class="halfbadge ${e.half?"on":"off"}" data-halftoggle="${e.id}" title="${e.half?"Es medio turno / turno cortado — tocá para sacarlo":"Marcar como medio turno / turno cortado"}">½</button>`;
+  const errMsg=dupe?dupeMsg(e.n,e.day,e.shift):incompatMsgFor(e.n,e.day,e.loc,e.shift);
+  const errAttr=errMsg?` data-err="${errMsg}"`:"";
+  const ck="ex:"+e.id;
+  const label=(e.n?e.n+" · ":"")+DAYS[e.day][1]+" "+(e.shift==="M"?"mañana":"tarde");
+  const expCls=e.n&&esExpertoActivo(e.n,e.day,e.loc,e.shift)?"expert":e.n&&esExperto(e.n)?"expert-alt":"";
+  return `<td class="cell extra ${isWknd(e.day)?"wknd":""}"><div class="excell"><select class="cellsel filled ${errMsg?"dupe":""} ${he?"he":""} ${expCls}" data-ex="${e.id}"${errAttr}><option value="">— quitar</option>${opts}</select>${expertPickBtn(e.n,e.day,e.loc,e.shift)}${badge}${noteBtnHTML(ck,label)}</div><button type="button" class="moveOverlay" data-moveex="${e.id}" aria-label="Mover a ${e.n}"></button></td>`;
+}
+// nombre a mostrar para la fila de refuerzo de un puesto: en San Luis los refuerzos de atención se
+// llaman "Refuerzo" (no "Mozo X", para no repetir el nombre de una fila base que ya existe) — en
+// SLA, como "Mozo 2" ya es la fila base de refuerzo (mañana) o la única fila de refuerzo posible
+// (tarde), el refuerzo extra (para medios turnos, por ejemplo) también se llama "Mozo 2" — en el
+// resto de los casos se usa el nombre de la primera fila base de ese puesto.
+function extraLabelFor(loc,role,shift,defaultLabel){
+  if(loc==="SL"&&role==="atencion")return"Refuerzo";
+  if(loc==="SLA"&&role==="atencion")return"Mozo 2";
+  return defaultLabel;
+}
+function locTable(loc,title,worked){
+  let h=`<section class="card"><div class="loc-head"><h2>${title}</h2></div><div class="tbl-scroll"><table class="grid"><thead><tr><th>Puesto</th>`;
+  DAYS.forEach((dd,i)=>h+=`<th class="${isWknd(i)?"wknd":""}">${dd[2]}</th>`);
+  h+=`</tr></thead><tbody>`;
+  [["M","Mañana"],["T","Tarde"]].forEach(([shift,slabel])=>{
+    h+=`<tr class="shift-sep"><td colspan="8">${slabel}</td></tr>`;
+    const base=rowsFor(loc,shift);
+    const roles=[];base.forEach(r=>{if(!roles.includes(r.role))roles.push(r.role);});
+    roles.forEach(role=>{
+      const brows=base.filter(r=>r.role===role);
+      brows.forEach(row=>{
+        h+=`<tr><td class="puesto">${rowLabelFor(loc,shift,row)}${row.wk?' <span class="wktag">refuerzo</span>':""}</td>`;
+        for(let d=0;d<7;d++)h+=selHTML(d,loc,shift,row.role,row.idx,sellable(d,loc,shift),isClosed(d,loc,shift));
+        h+=`</tr>`;
+      });
+      const maxT=maxTurnoFor(loc,shift,role);
+      const cap=maxT!=null?Math.max(0,maxT-brows.length):undefined;
+      h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,shift,rowLabelFor(loc,shift,brows[0])),cap);
+    });
+    // refuerzos con un puesto que este local no tiene como fila base (ej: Bacha/Envíos en SLA):
+    // sin esto, "Personas extra" los guardaba pero no aparecían en ningún lado.
+    const extraOnlyRoles=[...new Set(state.ex.filter(e=>e.loc===loc&&e.shift===shift&&!roles.includes(e.role)).map(e=>e.role))];
+    extraOnlyRoles.forEach(role=>{h+=extraRowsHTML(loc,shift,role,extraLabelFor(loc,role,shift,ROLE_LABEL[role]||role),maxTurnoFor(loc,shift,role));});
+  });
+  h+=restRows(loc,worked);
+  h+=`</tbody></table></div></section>`;
+  return h;
+}
+function extraRowsHTML(loc,shift,role,label,cap){
+  // Una fila por cada "lugar" de refuerzo. Sin tope, siempre hay una fila más de margen al final
+  // (maxE+1) para el día más cargado; con tope, como mucho `cap` filas en total. En cualquier caso,
+  // el "+ agregar" de cada casillero solo aparece en la fila que le toca a ESE día puntual (la
+  // primera libre para ese día) — así nunca se repite la opción de agregar en dos filas distintas
+  // para el mismo día, que era lo que se veía como filas duplicadas/confusas.
+  const maxE=Math.max(0,...DAYS.map((_,d)=>exAt(d,loc,shift,role).length));
+  const totalRows=cap!==undefined?Math.max(cap,maxE):maxE+1;
+  let h="";
+  for(let r=0;r<totalRows;r++){
+    const capOk=cap===undefined||r<cap;
+    h+=filaRefuerzo(loc,shift,role,label,r,capOk);
+  }
+  return h;
+}
+function filaRefuerzo(loc,shift,role,label,r,capOk){
+  let h=`<tr><td class="puesto extra">${label} +</td>`;
+  for(let d=0;d<7;d++){
+    const entradas=exAt(d,loc,shift,role);
+    const e=entradas[r];
+    if(isClosed(d,loc,shift))h+=`<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
+    else if(e)h+=extraCellHTML(e);
+    else if(capOk&&r===entradas.length)h+=newExtraCellHTML(d,loc,shift,role);
+    else h+=`<td class="cell ${isWknd(d)?"wknd":""}"></td>`;
+  }
+  h+=`</tr>`;
+  return h;
+}
+function newExtraCellHTML(d,loc,shift,role){
+  const opts=PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)}${roleFor(p.n)!==role?" ⤵":""}</option>`).join("");
+  return `<td class="cell extra ${isWknd(d)?"wknd":""}"><div class="excell"><select class="cellsel empty" data-newex="${d}|${loc}|${shift}|${role}"><option value="">+ agregar</option>${opts}</select></div><button type="button" class="moveOverlay" data-movenewex="${d}|${loc}|${shift}|${role}" aria-label="Mover acá"></button></td>`;
+}
+function restRows(loc,worked){
+  const roster=PEOPLE.filter(p=>p.loc===loc||p.loc==="both");
+  let h=`<tr class="shift-sep rest-sep"><td colspan="8">Descansos</td></tr><tr class="rest-row"><td class="puesto">Franco del día</td>`;
+  for(let d=0;d<7;d++){
+    const rest=roster.filter(p=>!(worked[p.n]&&worked[p.n].has(d)));
+    const items=rest.map(p=>{
+      const abs=absDaysFor(p.n).includes(d);
+      return `<span class="restname">${p.n}${abs?' <i>(aus.)</i>':""}</span>`;
+    }).join("");
+    h+=`<td class="cell restcell ${isWknd(d)?"wknd":""}"><div class="restlist">${items||'<span class="restnone">—</span>'}</div></td>`;
+  }
+  h+=`</tr>`;
+  return h;
+}
+function renderSched(worked,empty){
+  const sched=document.getElementById("sched");
+  if(empty){
+    sched.innerHTML=`<section class="card cta-empty">
+      <div class="cta-empty-body">
+        <div class="cta-empty-icon">✨</div>
+        <h2>Esta semana todavía no tiene turnos cargados</h2>
+        <p>Cargá abajo los cambios (ausencias, refuerzos, reglas) si hace falta y después tocá el botón para generar la grilla completa respetando todas las reglas.</p>
+        <button class="btn primary cta-empty-btn" id="ctaAutoBtn">✨ Autocompletar esta semana</button>
+      </div>
+    </section>`;
+    document.getElementById("ctaAutoBtn").addEventListener("click",autocomplete);
+    return;
+  }
+  sched.innerHTML=
+    locTable("SL","San Luis",worked)+
+    locTable("SLA","SLA",worked);
+  document.querySelectorAll(".cellsel[data-k]").forEach(sel=>{
+    sel.addEventListener("change",e=>{
+      const k=e.target.dataset.k,val=e.target.value;
+      if(val)state.assign[k]=val;else delete state.assign[k];
+      render();persist();
+    });
+  });
+  document.querySelectorAll(".cellsel[data-ex]").forEach(sel=>{
+    sel.addEventListener("change",e=>{
+      const id=e.target.dataset.ex,idx=state.ex.findIndex(x=>String(x.id)===id);
+      if(idx<0)return;
+      if(e.target.value)state.ex[idx].n=e.target.value;
+      else{
+        delete state.comments["ex:"+id];
+        if(!quitarRefuerzoAuto(state.ex[idx]))state.ex.splice(idx,1);
+      }
+      renderMini();render();persist();
+    });
+  });
+  document.querySelectorAll(".cellsel[data-newex]").forEach(sel=>{
+    sel.addEventListener("change",e=>{
+      const val=e.target.value;if(!val)return;
+      const[d,loc,shift,role]=e.target.dataset.newex.split("|");
+      state.ex.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),n:val,day:+d,shift,loc,role});
+      renderMini();render();persist();
+      toast(`${val} agregado como refuerzo`);
+    });
+  });
+  document.querySelectorAll("[data-halftoggle]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const ex=state.ex.find(x=>String(x.id)===b.dataset.halftoggle);if(!ex)return;
+      ex.half=!ex.half;
+      render();persist();
+      toast(ex.half?`${ex.n} marcado como turno cortado ½`:`${ex.n} vuelve a ser turno completo`);
+    });
+  });
+  document.querySelectorAll("[data-expick]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const[d,loc,shift,name]=b.dataset.expick.split("|");
+      state.expertoTurno[turnoKey(+d,loc,shift)]=name;
+      render();persist();
+      toast(`${name} queda como el Experto Candela destacado ⭐ en este turno`);
+    });
+  });
+  document.querySelectorAll(".moveOverlay").forEach(b=>{
+    b.addEventListener("click",()=>handleMoveOverlayClick(b));
+  });
+  document.querySelectorAll("[data-err]").forEach(el=>{
+    el.addEventListener("mouseenter",()=>showCellTooltip(el,el.dataset.err));
+    el.addEventListener("mouseleave",hideCellTooltip);
+    el.addEventListener("focus",()=>showCellTooltip(el,el.dataset.err));
+    el.addEventListener("blur",hideCellTooltip);
+  });
+  document.querySelectorAll(".noteBtn").forEach(b=>{
+    b.addEventListener("click",()=>openNoteEditor(b.dataset.notek,b.dataset.notelabel));
+  });
+}
+function showCellTooltip(el,msg){
+  const tt=document.getElementById("cellTooltip");
+  tt.textContent=msg;
+  tt.classList.add("show");
+  const r=el.getBoundingClientRect();
+  const w=Math.min(tt.offsetWidth||250,250);
+  let left=r.left+r.width/2-w/2;
+  left=Math.max(8,Math.min(left,window.innerWidth-w-8));
+  tt.style.left=left+"px";
+  tt.style.top=Math.max(8,r.top-tt.offsetHeight-8)+"px";
+}
+function hideCellTooltip(){document.getElementById("cellTooltip").classList.remove("show");}
+// comentario por casillero: se abre con el botón 💬 de cada turno, queda pegado a ese casillero
+// (día/turno/puesto), no a la persona — si cambiás quién trabaja ahí, el comentario se queda.
+function openNoteEditor(ck,label){
+  document.getElementById("noteOverlay")?.remove();
+  const ov=document.createElement("div");
+  ov.className="noteOverlay";
+  ov.id="noteOverlay";
+  ov.innerHTML=`<div class="noteCard">
+    <div class="noteHead"><span>💬 ${label}</span><button type="button" id="noteClose">✕</button></div>
+    <div class="noteBody"><textarea id="noteText" placeholder="Escribí un comentario para este turno…"></textarea></div>
+    <div class="noteActions">
+      <button class="btn primary" id="noteSave" style="flex:1">Guardar</button>
+      <button class="btn" id="noteDelete">Borrar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  document.getElementById("noteText").value=state.comments[ck]||"";
+  const close=()=>ov.remove();
+  ov.addEventListener("click",e=>{if(e.target===ov)close();});
+  document.getElementById("noteClose").addEventListener("click",close);
+  document.getElementById("noteSave").addEventListener("click",()=>{
+    const v=document.getElementById("noteText").value.trim();
+    if(v)state.comments[ck]=v;else delete state.comments[ck];
+    persist();render();close();toast("Comentario guardado 💬");
+  });
+  document.getElementById("noteDelete").addEventListener("click",()=>{
+    delete state.comments[ck];persist();render();close();toast("Comentario borrado");
+  });
+  document.getElementById("noteText").focus();
+}
+
+function fmtSnapshotDate(iso){
+  const d=new Date(iso);
+  const dias=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+  return `${dias[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")} · ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}hs`;
+}
+// panel de versiones guardadas en la nube (independiente del deshacer local, que se pierde al
+// cerrar la pestaña) — la red de seguridad para cuando algo se pisa mal y hay que volver atrás.
+function openHistoryPanel(){
+  document.getElementById("historyOverlay")?.remove();
+  const ov=document.createElement("div");
+  ov.className="noteOverlay";
+  ov.id="historyOverlay";
+  ov.innerHTML=`<div class="noteCard" style="max-width:460px">
+    <div class="noteHead"><span>🕐 Historial de versiones</span><button type="button" id="historyClose">✕</button></div>
+    <div class="noteBody" id="historyBody" style="max-height:60vh;overflow:auto"><p class="sub">Cargando…</p></div>
+  </div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  ov.addEventListener("click",e=>{if(e.target===ov)close();});
+  document.getElementById("historyClose").addEventListener("click",close);
+  const body=document.getElementById("historyBody");
+  if(!window.CloudHistory){
+    body.innerHTML=`<p class="sub" style="padding:0">No se pudo conectar con el historial en la nube ahora mismo (revisá tu conexión) — probá de nuevo en un momento.</p>`;
+    return;
+  }
+  window.CloudHistory.list(items=>{
+    if(items==null){body.innerHTML=`<p class="sub" style="padding:0">No se pudo leer el historial (revisá tu conexión).</p>`;return;}
+    if(!items.length){body.innerHTML=`<p class="sub" style="padding:0">Todavía no hay versiones guardadas — se van creando solas a medida que usás el sistema.</p>`;return;}
+    body.innerHTML=items.map(it=>{
+      const fecha=fmtSnapshotDate(it.state._snapshotAt||it.key);
+      const etiqueta=it.state.label?` · "${it.state.label}"`:"";
+      return `<div class="mini-row"><span>🕐</span> <b>${fecha}</b>${etiqueta} <button class="btn sm" data-restore="${it.key}" style="margin-left:auto">Restaurar</button></div>`;
+    }).join("");
+    body.querySelectorAll("[data-restore]").forEach(b=>b.addEventListener("click",()=>{
+      const item=items.find(i=>i.key===b.dataset.restore);
+      if(!item)return;
+      if(!confirm(`¿Reemplazar todo lo cargado ahora por la versión del ${fmtSnapshotDate(item.state._snapshotAt||item.key)}? Lo que hay ahora mismo no se pierde: queda guardado como una versión más en este mismo historial antes de reemplazarlo.`))return;
+      window.CloudHistory.save(state); // guarda lo actual antes de pisarlo, por si hay que volver
+      const restored=Object.assign({},item.state);
+      delete restored._snapshotAt;
+      restoreHistorySnapshot(JSON.stringify(restored));
+      close();
+      toast("Versión restaurada 🕐");
+    }));
+  });
+}
+function renderTeam(v){
+  const el=document.getElementById("team");
+  el.innerHTML=PEOPLE.map(p=>{
+    const w=v.worked[p.n];const wc=w.size;
+    const francos=DAYS.filter((dd,i)=>!w.has(i)).map(dd=>dd[2]);
+    const bad=wc===7, warn=wc>0&&wc<6;
+    const heTag=(p.he||EVENT_HE.includes(p.n))?`<span class="pill he">HE</span>`:"";
+    const absTag=absDaysFor(p.n).length?`<span class="pill abs">Aus.</span>`:"";
+    const pr=roleFor(p.n);
+    return `<div class="tcard ${bad?"bad":warn?"warn":""}">
+      <div class="nm"><span class="swatch" style="background:${roleColor(pr)}"></span>${p.n} ${heTag}${absTag}</div>
+      <div class="rl">${ROLE_LABEL[pr].toLowerCase()} · ${p.loc==="both"?"rota":p.loc}</div>
+      <div class="dd"><b>${wc}</b> día${wc===1?"":"s"} · franco: ${francos.length?francos.join(" "):"—"}</div>
+    </div>`;
+  }).join("");
+}
+function roleColor(r){return{barista:"#E15D46",cocina:"#C98A1E",ayudante:"#8a7a5c",cajero:"#2C6F63",atencion:"#7FC6BA",compras:"#9b6bd6"}[r]||"#999";}
+
+/* ---------------- DESCARGAR CRONOGRAMA COMO IMAGEN ---------------- */
+function buildScheduleRows(loc,worked){
+  const rows=[];
+  [["M","Mañana"],["T","Tarde"]].forEach(([shift,slabel])=>{
+    rows.push({sep:true,label:slabel});
+    const base=rowsFor(loc,shift);
+    const roles=[];base.forEach(r=>{if(!roles.includes(r.role))roles.push(r.role);});
+    roles.forEach(role=>{
+      const brows=base.filter(r=>r.role===role);
+      brows.forEach(row=>{
+        const cells=DAYS.map((_,d)=>{
+          if(!sellable(d,loc,shift))return{text:"Cerrado",muted:true};
+          const v=state.assign[key(d,loc,shift,row.role,row.idx)];
+          return{text:v?(esExpertoActivo(v,d,loc,shift)?"⭐ ":"")+v:"—",muted:!v,expert:v&&esExpertoActivo(v,d,loc,shift)};
+        });
+        rows.push({label:rowLabelFor(loc,shift,row),cells});
+      });
+      const maxE=Math.max(0,...DAYS.map((_,d)=>exAt(d,loc,shift,role).length));
+      for(let r=0;r<maxE;r++){
+        const cells=DAYS.map((_,d)=>{
+          const e=exAt(d,loc,shift,role)[r];
+          const filled=e&&!isClosed(d,loc,shift);
+          const activo=filled&&esExpertoActivo(e.n,d,loc,shift);
+          return{text:filled?(activo?"⭐ ":"")+e.n+(e.half?" ½":""):"",extra:true,expert:activo};
+        });
+        rows.push({label:`${extraLabelFor(loc,role,shift,rowLabelFor(loc,shift,brows[0]))} +`,cells,extra:true});
+      }
+    });
+  });
+  rows.push({sep:true,label:"Descansos",rest:true});
+  const roster=PEOPLE.filter(p=>p.loc===loc||p.loc==="both");
+  const cells=DAYS.map((_,d)=>{
+    const rest=roster.filter(p=>!(worked[p.n]&&worked[p.n].has(d)));
+    return{text:rest.map(p=>p.n).join(", ")||"—",rest:true};
+  });
+  rows.push({label:"Franco del día",cells,rest:true});
+  return rows;
+}
+function wrapCanvasText(ctx,text,maxWidth){
+  if(!text)return[""];
+  const words=String(text).split(", ");
+  const lines=[];let cur="";
+  words.forEach(w=>{
+    const cand=cur?cur+", "+w:w;
+    if(ctx.measureText(cand).width>maxWidth&&cur){lines.push(cur);cur=w;}
+    else cur=cand;
+  });
+  if(cur)lines.push(cur);
+  return lines.length?lines:[""];
+}
+function renderScheduleCanvas(){
+  const v=validate();
+  const PU_W=142,COL_W=112,ROW_H=28,SEP_H=24,TITLE_H=34,HEAD_H=26,PAD=22,GAP=20,TOP_H=54;
+  const sections=[["San Luis",buildScheduleRows("SL",v.worked)],["SLA",buildScheduleRows("SLA",v.worked)]];
+  const width=PU_W+COL_W*7+PAD*2;
+
+  const mctx=document.createElement("canvas").getContext("2d");
+  function rowH(row){
+    if(row.sep)return SEP_H;
+    if(!row.rest)return ROW_H;
+    mctx.font="500 11px Arial, sans-serif";
+    let maxLines=1;
+    row.cells.forEach(c=>{maxLines=Math.max(maxLines,wrapCanvasText(mctx,c.text,COL_W-10).length);});
+    return Math.max(ROW_H,maxLines*14+10);
+  }
+  function sectionH(rows){return TITLE_H+HEAD_H+rows.reduce((s,r)=>s+rowH(r),0);}
+  const totalH=PAD+TOP_H+sections.reduce((s,[,rows],i)=>s+sectionH(rows)+(i>0?GAP:0),0)+PAD;
+
+  const scale=2;
+  const canvas=document.createElement("canvas");
+  canvas.width=width*scale;canvas.height=totalH*scale;
+  const ctx=canvas.getContext("2d");
+  ctx.scale(scale,scale);
+  ctx.fillStyle="#ffffff";ctx.fillRect(0,0,width,totalH);
+
+  let y=PAD;
+  ctx.fillStyle="#1a1a1a";
+  ctx.font="700 20px Georgia, 'Times New Roman', serif";
+  ctx.textAlign="left";
+  ctx.fillText(`Candela · Cronograma${state.label?" · "+state.label:""}`,PAD,y+20);
+  ctx.font="400 11px Arial, sans-serif";ctx.fillStyle="#777";
+  ctx.fillText(`Generado el ${new Date().toLocaleDateString("es-AR")}`,PAD,y+37);
+  y+=TOP_H;
+
+  sections.forEach(([title,rows],si)=>{
+    ctx.fillStyle="#f2efe3";ctx.fillRect(PAD,y,width-PAD*2,TITLE_H);
+    ctx.fillStyle="#1a1a1a";ctx.font="700 15px Arial, sans-serif";
+    ctx.fillText(title,PAD+10,y+22);
+    y+=TITLE_H;
+
+    ctx.fillStyle="#faf9f3";ctx.fillRect(PAD,y,width-PAD*2,HEAD_H);
+    ctx.font="700 10px Arial, sans-serif";ctx.fillStyle="#555";
+    let x=PAD+PU_W;
+    DAYS.forEach(d=>{ctx.fillText(d[1].toUpperCase(),x+8,y+17);x+=COL_W;});
+    ctx.strokeStyle="#c9c3ac";ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(PAD,y+HEAD_H);ctx.lineTo(width-PAD,y+HEAD_H);ctx.stroke();
+    y+=HEAD_H;
+
+    rows.forEach(row=>{
+      const h=rowH(row);
+      if(row.sep){
+        ctx.fillStyle=row.rest?"#e4f2ef":"#f1eedd";ctx.fillRect(PAD,y,width-PAD*2,h);
+        ctx.fillStyle=row.rest?"#2c6f63":"#5c574e";ctx.font="700 10px Arial, sans-serif";
+        ctx.fillText(row.label.toUpperCase(),PAD+10,y+h/2+3);
+      }else{
+        ctx.fillStyle=row.extra?"#fff7f4":"#ffffff";ctx.fillRect(PAD,y,PU_W,h);
+        ctx.fillStyle=row.extra?"#b23a26":"#1a1a1a";
+        ctx.font=row.extra?"italic 600 11px Arial, sans-serif":"600 11px Arial, sans-serif";
+        ctx.fillText(row.label,PAD+10,y+h/2+3);
+        let cx=PAD+PU_W;
+        row.cells.forEach(c=>{
+          ctx.fillStyle=c.expert?"#fbf0d8":"#ffffff";ctx.fillRect(cx,y,COL_W,h);
+          ctx.fillStyle=c.expert?"#8a5a10":c.muted?"#bbb":c.rest?"#5c574e":"#1a1a1a";
+          ctx.font=c.expert?"700 11.5px Arial, sans-serif":c.rest?"500 10.5px Arial, sans-serif":"500 11.5px Arial, sans-serif";
+          ctx.textAlign="center";
+          if(row.rest){
+            const lines=wrapCanvasText(ctx,c.text,COL_W-10);
+            const startY=y+h/2-((lines.length-1)*14)/2+4;
+            lines.forEach((ln,li)=>ctx.fillText(ln,cx+COL_W/2,startY+li*14));
+          }else{
+            ctx.fillText(c.text,cx+COL_W/2,y+h/2+4);
+          }
+          ctx.textAlign="left";
+          cx+=COL_W;
+        });
+      }
+      ctx.strokeStyle="#e2ddc9";ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(PAD,y+h);ctx.lineTo(width-PAD,y+h);ctx.stroke();
+      y+=h;
+    });
+    if(si<sections.length-1)y+=GAP;
+  });
+  return canvas;
+}
+function openPrintView(){
+  // Confirmado con la usuaria: dentro del visor de artifacts del chat, cualquier acción que dispare
+  // algo del navegador (imprimir, abrir pestaña, descargar archivo) queda bloqueada en silencio,
+  // aunque la imagen se dibuja perfecto. Por eso el único método que ofrecemos es "mantener presionado",
+  // que es un gesto nativo del celular sobre la imagen y no depende de ningún permiso de JavaScript.
+  let ov=document.getElementById("printOverlay");
+  if(!ov){ov=document.createElement("div");ov.id="printOverlay";document.body.appendChild(ov);}
+  ov.innerHTML=`<div class="pv-bar"><b>Compartir cronograma</b><div class="pv-actions">
+      <button class="pv-btn" id="pvCloseBtn">Cerrar</button>
+    </div></div>
+    <p class="pv-hint">📸 Mantené presionada la imagen de abajo y elegí <b>"Guardar imagen"</b> / <b>"Añadir a Fotos"</b> para descargarla.</p>
+    <div class="pv-imgwrap"><img id="pvImg" alt="Cronograma Candela"></div>`;
+  const canvas=renderScheduleCanvas();
+  document.getElementById("pvImg").src=canvas.toDataURL("image/png");
+  document.getElementById("pvCloseBtn").addEventListener("click",()=>ov.remove());
+}
+
+/* ---------------- EXPORTAR / IMPORTAR (sincronizar entre dispositivos a mano) ---------------- */
+// localStorage vive por dispositivo/navegador, no hay servidor compartido detrás.
+// Por eso "sincronizar" acá significa: copiar este texto en un dispositivo y pegarlo en el otro.
+function exportPayload(){
+  return JSON.stringify({
+    label:state.label, weekStart:state.weekStart, assign:state.assign, abs:state.abs,
+    ex:state.ex.filter(e=>!e.auto), // los refuerzos automáticos se regeneran solos, no hace falta llevarlos
+    rules:state.rules, fixed:state.fixed, francoFixed:state.francoFixed,
+  },null,0);
+}
+function getOverlay(){
+  let ov=document.getElementById("printOverlay");
+  if(!ov){ov=document.createElement("div");ov.id="printOverlay";document.body.appendChild(ov);}
+  return ov;
+}
+function openExportView(){
+  const ov=getOverlay();
+  const text=exportPayload();
+  ov.innerHTML=`<div class="pv-bar"><b>Exportar datos</b><div class="pv-actions">
+      <button class="pv-btn primary" id="pvCopyBtn">📋 Copiar</button>
+      <button class="pv-btn" id="pvCloseBtn">Cerrar</button>
+    </div></div>
+    <p class="pv-hint">Tocá el área de abajo y elegí <b>"Seleccionar todo" → "Copiar"</b> (o probá el botón 📋). Pegá ese texto en una nota, mail o WhatsApp, y en el otro dispositivo usá <b>📥 Importar</b> pegándolo ahí.</p>
+    <div class="pv-textwrap"><textarea id="pvExportText" readonly></textarea></div>`;
+  const ta=document.getElementById("pvExportText");
+  ta.value=text;
+  ta.addEventListener("focus",()=>ta.select());
+  ta.select();
+  document.getElementById("pvCloseBtn").addEventListener("click",()=>ov.remove());
+  document.getElementById("pvCopyBtn").addEventListener("click",()=>{
+    ta.select();
+    let ok=false;
+    try{ok=document.execCommand&&document.execCommand("copy");}catch(e){}
+    if(!ok&&navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(()=>toast("Copiado ✅")).catch(()=>toast("No se pudo copiar solo — seleccioná el texto a mano y copialo"));
+      return;
+    }
+    toast(ok?"Copiado ✅":"No se pudo copiar solo — seleccioná el texto a mano y copialo");
+  });
+}
+function openImportView(){
+  const ov=getOverlay();
+  ov.innerHTML=`<div class="pv-bar"><b>Importar datos</b><div class="pv-actions">
+      <button class="pv-btn primary" id="pvLoadBtn">Cargar</button>
+      <button class="pv-btn" id="pvCloseBtn">Cerrar</button>
+    </div></div>
+    <p class="pv-hint">Pegá acá el texto que copiaste con <b>📤 Exportar</b> desde el otro dispositivo. Esto <b>reemplaza</b> lo que tenés cargado ahora en este dispositivo.</p>
+    <div class="pv-textwrap"><textarea id="pvImportText" placeholder="Pegá acá el texto exportado…"></textarea></div>
+    <div id="pvImportConfirm"></div>`;
+  document.getElementById("pvCloseBtn").addEventListener("click",()=>ov.remove());
+  document.getElementById("pvLoadBtn").addEventListener("click",()=>{
+    const raw=document.getElementById("pvImportText").value.trim();
+    if(!raw)return toast("Pegá el texto exportado primero");
+    let data;
+    try{data=JSON.parse(raw);}catch(e){return toast("Ese texto no es válido — copialo completo desde Exportar, sin recortarlo");}
+    if(typeof data!=="object"||!data||!("assign" in data))return toast("Ese texto no parece un export de esta app");
+    document.getElementById("pvImportConfirm").innerHTML=`<div class="pv-confirm">
+        <p>¿Reemplazar todo lo cargado en <b>este dispositivo</b> por los datos pegados?</p>
+        <div class="pv-actions"><button class="pv-btn primary" id="pvConfirmYes">Sí, reemplazar</button><button class="pv-btn" id="pvConfirmNo">Cancelar</button></div>
+      </div>`;
+    document.getElementById("pvConfirmNo").addEventListener("click",()=>{document.getElementById("pvImportConfirm").innerHTML="";});
+    document.getElementById("pvConfirmYes").addEventListener("click",()=>{
+      state.label=data.label||""; state.weekStart=data.weekStart||""; state.assign=data.assign||{}; state.abs=data.abs||[];
+      state.ex=(data.ex||[]).filter(e=>!e.auto);
+      state.rules=data.rules||[]; state.fixed=data.fixed||[]; state.francoFixed=data.francoFixed||{};
+      dedupeFixed(); regenerateFixedHalfExtras(); dedupeEx();
+      useHistoryBucket(weekKeyOf(state)); // los datos importados pueden ser de otra semana: historial propio
+      persist();
+      document.getElementById("weekLabel").value=state.label||"";
+      document.getElementById("weekStart").value=state.weekStart||"";
+      renderMini(); render();
+      renderWeekSwitcher();
+      ov.remove();
+      toast("Datos importados ✅");
+    });
+  });
+}
+
+/* ---------------- CONTROLS ---------------- */
+function fillPersonSelects(){
+  document.getElementById("nuevoRole").innerHTML=Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join("");
+  document.getElementById("nuevoFranco").innerHTML=`<option value="auto">Sin fijar (variable cada semana)</option>`+DAYS.map((d,i)=>`<option value="${i}">${d[1]}</option>`).join("");
+  const incompatOpts=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)}</option>`).join("");
+  document.getElementById("incompatA").innerHTML=incompatOpts;
+  document.getElementById("incompatB").innerHTML=incompatOpts;
+  const opts=`<option value="">Elegí…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
+  document.getElementById("absPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)}</option>`).join("");
+  document.getElementById("exPerson").innerHTML=opts;
+  document.getElementById("exDay").innerHTML=DAYS.map((d,i)=>`<option value="${i}">${d[1]}</option>`).join("");
+  document.getElementById("exRole").innerHTML=Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join("");
+  const dc=document.getElementById("absDays");
+  dc.innerHTML=DAYS.map((d,i)=>`<label>${d[2]}<input type="checkbox" value="${i}"></label>`).join("");
+  const dayOpts=DAYS.map((d,i)=>`<option value="${i}">${d[1]}</option>`).join("");
+  document.getElementById("ruleDay").innerHTML=dayOpts;
+  document.getElementById("ruleNotaDay").innerHTML=dayOpts;
+  document.getElementById("fixedPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
+  document.getElementById("fixedDays").innerHTML=DAYS.map((d,i)=>`<label>${d[2]}<input type="checkbox" value="${i}"></label>`).join("");
+  document.getElementById("fixedRole").innerHTML=Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join("");
+  syncFixedLocVisibility();
+  document.getElementById("francoPerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)}</option>`).join("");
+  document.getElementById("francoDay").innerHTML=`<option value="auto">Automático (variable cada semana)</option>`+DAYS.map((d,i)=>`<option value="${i}">${d[1]}</option>`).join("");
+  syncFrancoDaySelection();
+  document.getElementById("rolePerson").innerHTML=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)} (${ROLE_LABEL[roleFor(p.n)].toLowerCase()})</option>`).join("");
+  document.getElementById("roleMain").innerHTML=Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join("");
+  syncRoleControls();
+  const expertoOpts=`<option value="">Elegí una persona…</option>`+PEOPLE.map(p=>`<option value="${p.n}">${nombreDestacado(p.n)}</option>`).join("");
+  document.getElementById("expertoPerson").innerHTML=expertoOpts;
+}
+// edición de una persona agregada a mano (ver tarjeta "Sumar persona al equipo"): reusa el mismo
+// formulario en vez de duplicarlo, cambiando el botón a "Guardar cambios" mientras dura la edición.
+let editandoPersonaIdx=null;
+function iniciarEdicionPersona(i){
+  const p=state.peopleExtra[i];if(!p)return;
+  editandoPersonaIdx=i;
+  document.getElementById("nuevoNombre").value=p.n;
+  document.getElementById("nuevoNombre").disabled=true;
+  document.getElementById("nuevoRole").value=p.role;
+  document.getElementById("nuevoLoc").value=p.loc;
+  document.getElementById("nuevoFranco").value=p.franco?DAYS.findIndex(d=>d[0]===p.franco):"auto";
+  document.getElementById("btnAddPersona").textContent="Guardar cambios";
+  document.getElementById("btnCancelarEdicionPersona").style.display="";
+  document.getElementById("nuevoRole").scrollIntoView({block:"center",behavior:"smooth"});
+}
+function cancelarEdicionPersona(){
+  editandoPersonaIdx=null;
+  document.getElementById("nuevoNombre").value="";
+  document.getElementById("nuevoNombre").disabled=false;
+  document.getElementById("nuevoLoc").value="SL";
+  document.getElementById("nuevoFranco").value="auto";
+  document.getElementById("btnAddPersona").textContent="+ Agregar persona";
+  document.getElementById("btnCancelarEdicionPersona").style.display="none";
+}
+function syncFrancoDaySelection(){
+  const n=document.getElementById("francoPerson").value;
+  const sel=document.getElementById("francoDay");if(!n||!sel)return;
+  const f=francoFor(n);
+  sel.value=f===undefined?"auto":String(f);
+}
+function syncFixedLocVisibility(){
+  const n=document.getElementById("fixedPerson").value;const p=BY_NAME[n];
+  const wrap=document.getElementById("fixedLoc");if(!wrap)return;
+  if(p&&p.loc!=="both"){wrap.value=p.loc;wrap.disabled=true;}else{wrap.disabled=false;}
+  const roleSel=document.getElementById("fixedRole");if(p&&roleSel)roleSel.value=roleFor(n);
+}
+// puesto de cada persona: sincroniza el selector de puesto principal y las casillas de respaldo
+// con lo que ya tiene esa persona (override si lo cambiaste, si no el default del código)
+function syncRoleControls(){
+  const n=document.getElementById("rolePerson").value;
+  const mainSel=document.getElementById("roleMain");
+  const backupWrap=document.getElementById("roleBackupChecks");
+  if(!n){if(mainSel)mainSel.value="";if(backupWrap)backupWrap.innerHTML="";return;}
+  const main=roleFor(n);
+  if(mainSel)mainSel.value=main;
+  if(backupWrap){
+    const backups=backupFor(n);
+    backupWrap.innerHTML=Object.keys(ROLE_LABEL).filter(r=>r!==main).map(r=>
+      `<label style="flex-direction:row;gap:5px;align-items:center"><input type="checkbox" value="${r}" ${backups.includes(r)?"checked":""}>${ROLE_LABEL[r]}</label>`
+    ).join("");
+  }
+}
+// "Nombres de las filas de la grilla": una fila de texto editable por cada fila real de ese
+// local+turno (rowsFor), precargada con el nombre actual (personalizado o el default del sistema).
+function renderRowLabelFields(){
+  const wrap=document.getElementById("rowLabelFields");if(!wrap)return;
+  const loc=document.getElementById("rowLabelLoc").value;
+  const shift=document.getElementById("rowLabelShift").value;
+  const rows=rowsFor(loc,shift);
+  wrap.innerHTML=rows.map(row=>{
+    const k=rowLabelKey(loc,shift,row.role,row.idx);
+    const cur=rowLabelFor(loc,shift,row);
+    const isCustom=Object.prototype.hasOwnProperty.call(state.rowLabelOverride,k);
+    return `<div class="field" style="margin:0">
+      <label>${row.label}${row.wk?" (refuerzo)":""}</label>
+      <div style="display:flex;gap:6px">
+        <input type="text" data-rowlabelkey="${k}" data-rowlabeldefault="${escAttr(row.label)}" value="${escAttr(cur)}" style="flex:1">
+        ${isCustom?`<button type="button" class="btn ghost icon-btn" data-rowlabelreset="${k}" title="Volver a &quot;${escAttr(row.label)}&quot;">↺</button>`:""}
+      </div>
+    </div>`;
+  }).join("");
+  wrap.querySelectorAll("[data-rowlabelreset]").forEach(b=>b.addEventListener("click",()=>{
+    delete state.rowLabelOverride[b.dataset.rowlabelreset];
+    render();persist();renderRowLabelFields();
+    toast("Nombre restaurado");
+  }));
+}
+function renderMini(){
+  const al=document.getElementById("absList");
+  // cada día de ausencia se puede sacar suelto (xday) sin tener que borrar toda la fila de la
+  // persona — antes el único botón borraba TODOS los días de ausencia juntos, así que si alguien
+  // tenía más de un día cargado no había forma de sacar solo uno.
+  al.innerHTML=state.abs.map((a,i)=>`<div class="mini-row" style="flex-wrap:wrap"><span class="pill abs">Aus.</span> <b>${a.n}</b> ${
+    a.days.length?a.days.map(d=>`<span class="daychip">${DAYS[d][2]}<button class="xday" data-ai="${i}" data-d="${d}" title="Sacar este día">×</button></span>`).join(""):"· —"
+  } <button class="x" data-i="${i}" data-t="abs" title="Sacar todos los días de ausencia de ${a.n}">🗑</button></div>`).join("");
+  const el=document.getElementById("exList");
+  el.innerHTML=state.ex.map((e,i)=>`<div class="mini-row"><span class="pill he">+</span> <b>${e.n}</b> · ${DAYS[e.day][2]} ${e.shift==="M"?"AM":"PM"} · ${e.loc} ${ROLE_LABEL[e.role].toLowerCase()} <button class="x" data-i="${i}" data-t="ex">×</button></div>`).join("");
+  const rl=document.getElementById("ruleList");
+  rl.innerHTML=state.rules.map((r,i)=>{
+    const body=r.type==="cierre"
+      ? `🔒 ${DAYS[r.day][2]} · cierra ${r.shift==="M"?"AM":r.shift==="T"?"PM":"todo"} · ${r.loc==="both"?"ambos":r.loc}`
+      : `📌 ${DAYS[r.day][2]}: ${r.text}`;
+    return `<div class="mini-row">${body} <button class="x" data-i="${i}" data-t="rule">×</button></div>`;
+  }).join("");
+  const fl=document.getElementById("fixedList");
+  fl.innerHTML=state.fixed.map((f,i)=>{
+    const role=f.role||roleFor(f.n);
+    return `<div class="mini-row"><span class="pill he">${f.half?"½ Fijo":"Fijo"}</span> <b>${f.n}</b> · ${f.days.map(d=>DAYS[d][2]).join(",")} · ${f.shift==="M"?"AM":"PM"} · ${fxLocFor(f)} · ${ROLE_LABEL[role].toLowerCase()} <button class="x" data-i="${i}" data-t="fixed">×</button></div>`;
+  }).join("");
+  const frl=document.getElementById("francoList");
+  const francoNames=Object.keys(state.francoFixed);
+  frl.innerHTML=francoNames.length?francoNames.map(n=>{
+    const v=state.francoFixed[n];
+    const label=v==="auto"?"Automático (forzado)":DAYS[v][1];
+    return `<div class="mini-row"><span class="pill he">Franco</span> <b>${n}</b> · ${label} <button class="x" data-i="${n}" data-t="franco">×</button></div>`;
+  }).join(""):`<p class="sub" style="padding:0">Nadie tiene un franco fijado por vos todavía — el resto usa el default del sistema o el automático.</p>`;
+  const pl=document.getElementById("personaList");
+  if(pl){
+    pl.innerHTML=(state.peopleExtra||[]).length?state.peopleExtra.map((p,i)=>
+      `<div class="mini-row"><b>${p.n}</b> · ${ROLE_LABEL[p.role].toLowerCase()} · ${p.loc==="both"?"los dos locales":p.loc}${p.franco?` · franco ${DAYS.find(d=>d[0]===p.franco)[1]}`:""} <button class="editIcon" data-i="${i}" title="Editar puesto/local/franco">✎</button><button class="x" data-i="${i}" data-t="persona">×</button></div>`
+    ).join(""):`<p class="sub" style="padding:0">Todavía no agregaste a nadie nuevo desde acá.</p>`;
+    pl.querySelectorAll(".editIcon").forEach(b=>b.addEventListener("click",()=>iniciarEdicionPersona(+b.dataset.i)));
+  }
+  const il=document.getElementById("incompatList");
+  if(il){
+    il.innerHTML=state.incompat.length?state.incompat.map((r,i)=>
+      `<div class="mini-row"><span class="pill abs">🚫</span> <b>${r.a}</b> con <b>${r.b}</b>${r.nota?` · <i>${r.nota}</i>`:""} <button class="x" data-i="${i}" data-t="incompat">×</button></div>`
+    ).join(""):`<p class="sub" style="padding:0">Todavía no cargaste ninguna incompatibilidad.</p>`;
+  }
+  const el2=document.getElementById("expertoList");
+  if(el2){
+    el2.innerHTML=state.expertos.length?state.expertos.map((n,i)=>
+      `<div class="mini-row"><span class="pill he">⭐</span> <b>${n}</b> <button class="x" data-i="${i}" data-t="experto">×</button></div>`
+    ).join(""):`<p class="sub" style="padding:0">Todavía no marcaste a nadie como experto.</p>`;
+  }
+  const rol=document.getElementById("roleOverrideList");
+  if(rol){
+    const names=new Set([...Object.keys(state.roleOverride),...Object.keys(state.backupOverride)]);
+    const rows=[];
+    names.forEach(n=>{
+      if(Object.prototype.hasOwnProperty.call(state.roleOverride,n))
+        rows.push(`<div class="mini-row"><span class="pill he">Puesto</span> <b>${n}</b> · ahora ${ROLE_LABEL[state.roleOverride[n]].toLowerCase()} <button class="x" data-i="${n}" data-t="role">×</button></div>`);
+      if(Object.prototype.hasOwnProperty.call(state.backupOverride,n)){
+        const bk=state.backupOverride[n];
+        rows.push(`<div class="mini-row"><span class="pill he">Respaldo</span> <b>${n}</b> · ${bk.length?bk.map(r=>ROLE_LABEL[r].toLowerCase()).join(", "):"ninguno"} <button class="x" data-i="${n}" data-t="rolebackup">×</button></div>`);
+      }
+    });
+    rol.innerHTML=rows.length?rows.join(""):`<p class="sub" style="padding:0">Nadie tiene el puesto cambiado todavía — todos usan el default del sistema.</p>`;
+  }
+  renderRowLabelFields();
+  document.querySelectorAll(".daychip .xday").forEach(b=>b.addEventListener("click",()=>{
+    const ai=+b.dataset.ai,d=+b.dataset.d;
+    const a=state.abs[ai];if(!a)return;
+    a.days=a.days.filter(x=>x!==d);
+    // si lo borraste vos a mano, que no se vuelva a poner solo la próxima vez que sincronice con
+    // Vacaciones (era el bug real: la ausencia derivada de una vacación confirmada se reconstruía
+    // sola en cuanto llegaba una actualización de ese módulo, aunque la hubieras borrado acá).
+    const iso=isoDe(d);if(iso)state.ausObviada[a.n+"|"+iso]=true;
+    if(!a.days.length)state.abs.splice(ai,1);
+    renderMini();render();persist();
+  }));
+  document.querySelectorAll(".mini-row .x").forEach(b=>b.addEventListener("click",()=>{
+    const t=b.dataset.t;
+    if(t==="franco"){delete state.francoFixed[b.dataset.i];renderMini();render();persist();return;}
+    if(t==="role"){delete state.roleOverride[b.dataset.i];fillPersonSelects();renderMini();render();persist();return;}
+    if(t==="rolebackup"){delete state.backupOverride[b.dataset.i];fillPersonSelects();renderMini();render();persist();return;}
+    if(t==="persona"){
+      const p=state.peopleExtra[+b.dataset.i];
+      if(!confirm(`¿Sacar a ${p.n} del equipo? También se van a borrar sus turnos, francos y reglas asignadas.`))return;
+      state.peopleExtra.splice(+b.dataset.i,1);
+      cancelarEdicionPersona(); // por si justo estabas editando a esta persona (o a otra que corrió de índice)
+      rebuildPeople();
+      limpiarPersonasDadasDeBaja();
+      dedupeFixed();regenerateFixedHalfExtras();
+      fillPersonSelects();renderMini();render();persist();
+      toast(`${p.n} sacado del equipo`);
+      return;
+    }
+    if(t==="incompat"){state.incompat.splice(+b.dataset.i,1);renderMini();render();persist();return;}
+    if(t==="experto"){state.expertos.splice(+b.dataset.i,1);fillPersonSelects();renderMini();render();persist();return;}
+    const i=+b.dataset.i;
+    if(t==="abs"){
+      const a=state.abs[i];
+      if(a)a.days.forEach(d=>{const iso=isoDe(d);if(iso)state.ausObviada[a.n+"|"+iso]=true;});
+      state.abs.splice(i,1);
+    }
+    else if(t==="ex"){
+      delete state.comments["ex:"+state.ex[i].id];
+      if(!quitarRefuerzoAuto(state.ex[i]))state.ex.splice(i,1);
+    }
+    else if(t==="rule")state.rules.splice(i,1);
+    else state.fixed.splice(i,1);
+    if(t==="fixed")regenerateFixedHalfExtras(); // si borraste una regla fija de medio turno, su refuerzo desaparece del calendario ya mismo
+    renderMini();render();persist();
+  }));
+}
+function initControls(){
+  document.getElementById("btnAddPersona").addEventListener("click",()=>{
+    const nombre=document.getElementById("nuevoNombre").value.trim();
+    if(!nombre)return toast("Escribí un nombre");
+    const role=document.getElementById("nuevoRole").value;
+    const loc=document.getElementById("nuevoLoc").value;
+    const francoVal=document.getElementById("nuevoFranco").value;
+    if(editandoPersonaIdx!=null){
+      // editando a alguien que ya existe: el nombre no se puede tocar acá (si hace falta renombrar,
+      // pedirlo directamente — ver el caso de Leandro Villagra/Tolaba, que necesitó migrar datos ya
+      // guardados). Solo se actualizan puesto/local/franco.
+      const persona=state.peopleExtra[editandoPersonaIdx];
+      persona.role=role;persona.loc=loc;
+      if(francoVal==="auto")delete persona.franco;else persona.franco=DAYS[+francoVal][0];
+      rebuildPeople();
+      fillPersonSelects();renderMini();render();persist();
+      toast(`${persona.n} actualizado`);
+      cancelarEdicionPersona();
+      return;
+    }
+    if(BY_NAME[nombre])return toast(`${nombre} ya está en el equipo`);
+    const persona={n:nombre,role,loc};
+    if(francoVal!=="auto")persona.franco=DAYS[+francoVal][0];
+    state.peopleExtra.push(persona);
+    rebuildPeople();
+    fillPersonSelects();renderMini();render();persist();
+    document.getElementById("nuevoNombre").value="";
+    toast(`${nombre} agregado al equipo 🎉`);
+  });
+  document.getElementById("btnCancelarEdicionPersona").addEventListener("click",cancelarEdicionPersona);
+  document.getElementById("btnAddIncompat").addEventListener("click",()=>{
+    const a=document.getElementById("incompatA").value,b=document.getElementById("incompatB").value;
+    if(!a||!b)return toast("Elegí las dos personas");
+    if(a===b)return toast("Elegí dos personas distintas");
+    if(sonIncompatibles(a,b))return toast("Esa regla ya existe");
+    const nota=document.getElementById("incompatNota").value.trim();
+    state.incompat.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),a,b,nota});
+    renderMini();render();persist();
+    document.getElementById("incompatNota").value="";
+    toast(`Regla agregada: ${a} no trabaja con ${b}`);
+  });
+  document.getElementById("btnAddExperto").addEventListener("click",()=>{
+    const n=document.getElementById("expertoPerson").value;
+    if(!n)return toast("Elegí una persona");
+    if(esExperto(n))return toast(`${n} ya está marcado como Experto Candela`);
+    state.expertos.push(n);
+    fillPersonSelects();renderMini();render();persist();
+    toast(`${n} marcado como Experto Candela ⭐`);
+  });
+  const addSticky=()=>{
+    const inp=document.getElementById("stickyText");
+    const text=inp.value.trim();
+    if(!text)return toast("Escribí el recordatorio primero");
+    state.stickyNotes.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),text});
+    inp.value="";
+    renderStickyNotes();persist();
+  };
+  document.getElementById("btnAddSticky").addEventListener("click",addSticky);
+  document.getElementById("stickyText").addEventListener("keydown",e=>{if(e.key==="Enter")addSticky();});
+  document.getElementById("btnAuto").addEventListener("click",autocomplete);
+  // la fecha ahora identifica QUÉ semana abrir — si ya existe una semana con esa fecha, salta a
+  // ella (sin tocarla ni tocar la que tenías); si es una fecha nueva, ofrece crearla.
+  document.getElementById("weekStart").addEventListener("change",e=>{
+    const val=e.target.value;
+    if(!val){document.getElementById("weekStart").value=state.weekStart||"";return;}
+    if(val===state.weekStart)return;
+    crearOAbrirSemana(val);
+  });
+  document.getElementById("weekSwitcher").addEventListener("change",e=>{
+    if(e.target.value&&e.target.value!==weekKeyOf(state))loadWeek(e.target.value);
+  });
+  document.getElementById("rolePerson").addEventListener("change",syncRoleControls);
+  document.getElementById("btnSetRoleMain").addEventListener("click",()=>{
+    const n=document.getElementById("rolePerson").value;if(!n)return toast("Elegí una persona");
+    const r=document.getElementById("roleMain").value;
+    if(r===roleFor(n))return toast(`${n} ya tiene ese puesto`);
+    state.roleOverride[n]=r;
+    // si el puesto de respaldo elegido pasa a ser el principal, sacalo de los respaldos para no duplicar
+    if(state.backupOverride[n])state.backupOverride[n]=state.backupOverride[n].filter(x=>x!==r);
+    fillPersonSelects();renderMini();render();persist();
+    toast(`${n} ahora es ${ROLE_LABEL[r].toLowerCase()}`);
+  });
+  document.getElementById("btnSetRoleBackup").addEventListener("click",()=>{
+    const n=document.getElementById("rolePerson").value;if(!n)return toast("Elegí una persona");
+    const checked=[...document.querySelectorAll("#roleBackupChecks input:checked")].map(c=>c.value);
+    state.backupOverride[n]=checked;
+    fillPersonSelects();renderMini();render();persist();
+    toast(checked.length?`Respaldos de ${n} guardados`:`${n} ya no tiene puestos de respaldo`);
+  });
+  document.getElementById("rowLabelLoc").addEventListener("change",renderRowLabelFields);
+  document.getElementById("rowLabelShift").addEventListener("change",renderRowLabelFields);
+  document.getElementById("btnSaveRowLabels").addEventListener("click",()=>{
+    let cambios=0;
+    document.querySelectorAll("#rowLabelFields [data-rowlabelkey]").forEach(inp=>{
+      const k=inp.dataset.rowlabelkey,def=inp.dataset.rowlabeldefault,val=inp.value.trim();
+      const yaTenia=Object.prototype.hasOwnProperty.call(state.rowLabelOverride,k);
+      if(!val||val===def){if(yaTenia){delete state.rowLabelOverride[k];cambios++;}return;}
+      if(state.rowLabelOverride[k]!==val){state.rowLabelOverride[k]=val;cambios++;}
+    });
+    if(!cambios)return toast("No había cambios para guardar");
+    render();persist();renderRowLabelFields();
+    toast("Nombres guardados ✅");
+  });
+  document.getElementById("francoPerson").addEventListener("change",syncFrancoDaySelection);
+  document.getElementById("btnSetFranco").addEventListener("click",()=>{
+    const n=document.getElementById("francoPerson").value;if(!n)return toast("Elegí una persona");
+    const v=document.getElementById("francoDay").value;
+    state.francoFixed[n]=v==="auto"?"auto":+v;
+    renderMini();render();persist();
+    toast(v==="auto"?`${n} vuelve a franco automático`:`Franco de ${n} fijado el ${DAYS[+v][1].toLowerCase()}`);
+  });
+  document.getElementById("btnSave").addEventListener("click",()=>{state.label=document.getElementById("weekLabel").value;persist();renderWeekSwitcher();toast("Semana guardada 💾");});
+  document.getElementById("btnUndo").addEventListener("click",undoLast);
+  document.getElementById("btnRedo").addEventListener("click",redoLast);
+  document.getElementById("btnHistory").addEventListener("click",openHistoryPanel);
+  document.addEventListener("keydown",e=>{
+    if(!(e.ctrlKey||e.metaKey))return;
+    const tag=(document.activeElement&&document.activeElement.tagName)||"";
+    if(["INPUT","TEXTAREA","SELECT"].includes(tag))return; // no pisar el deshacer nativo de un campo de texto
+    if(e.key==="z"&&!e.shiftKey){e.preventDefault();undoLast();}
+    else if(e.key==="y"||(e.key==="z"&&e.shiftKey)){e.preventDefault();redoLast();}
+  });
+  document.getElementById("btnNew").addEventListener("click",()=>{
+    // avanza 7 días desde la semana actual (o desde hoy si todavía no había fecha) y abre/crea esa
+    // semana — crearOAbrirSemana ya se encarga de copiarla de la semana anterior como base.
+    const val=state.weekStart?addDaysISO(state.weekStart,7):addDaysISO(new Date().toISOString().slice(0,10),0);
+    crearOAbrirSemana(val);
+  });
+  document.getElementById("ruleType").addEventListener("change",e=>{
+    const cierre=e.target.value==="cierre";
+    document.getElementById("ruleCierre").style.display=cierre?"":"none";
+    document.getElementById("ruleNota").style.display=cierre?"none":"";
+  });
+  document.getElementById("btnAddRule").addEventListener("click",()=>{
+    if(document.getElementById("ruleType").value==="cierre"){
+      state.rules.push({type:"cierre",day:+document.getElementById("ruleDay").value,
+        shift:document.getElementById("ruleShift").value,loc:document.getElementById("ruleLoc").value});
+      toast("Cierre agregado 🔒");
+    }else{
+      const txt=document.getElementById("ruleText").value.trim();if(!txt)return toast("Escribí el recordatorio");
+      state.rules.push({type:"nota",day:+document.getElementById("ruleNotaDay").value,text:txt});
+      document.getElementById("ruleText").value="";toast("Nota agregada 📌");
+    }
+    renderMini();render();persist();
+  });
+  document.getElementById("fixedPerson").addEventListener("change",syncFixedLocVisibility);
+  document.getElementById("btnAddFixed").addEventListener("click",()=>{
+    const n=document.getElementById("fixedPerson").value;if(!n)return toast("Elegí una persona");
+    const days=[...document.querySelectorAll("#fixedDays input:checked")].map(c=>+c.value);
+    if(!days.length)return toast("Marcá al menos un día");
+    const shift=document.getElementById("fixedShift").value;
+    const locSel=document.getElementById("fixedLoc");const loc=locSel.disabled?BY_NAME[n].loc:locSel.value;
+    const role=document.getElementById("fixedRole").value;
+    const half=document.getElementById("fixedHalf").checked;
+    const alreadyCovered=new Set();
+    state.fixed.forEach(f=>{if(f.n===n&&f.shift===shift&&f.loc===loc&&(f.role||roleFor(n))===role&&!!f.half===half)f.days.forEach(d=>alreadyCovered.add(d));});
+    const newDays=days.filter(d=>!alreadyCovered.has(d));
+    if(!newDays.length){renderMini();return toast(`${n} ya tiene esa regla fija — no hace falta repetirla`);}
+    state.fixed.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),n,days:newDays,shift,loc,role,half});
+    dedupeFixed();
+    if(half)regenerateFixedHalfExtras(); // que el refuerzo aparezca en el calendario ya, sin tener que tocar "Autocompletar"
+    document.querySelectorAll("#fixedDays input").forEach(c=>c.checked=false);
+    document.getElementById("fixedHalf").checked=false;
+    renderMini();render();persist();
+    toast(newDays.length<days.length?`Regla de ${n} agregada (algunos días ya estaban cubiertos)`:`Regla fija de ${n} agregada`);
+  });
+  document.getElementById("btnMover").addEventListener("click",()=>toggleMovingMode());
+  document.getElementById("moveHintCancel").addEventListener("click",()=>toggleMovingMode(false));
+  document.getElementById("btnPrint").addEventListener("click",openPrintView);
+  document.getElementById("btnExport").addEventListener("click",openExportView);
+  document.getElementById("btnImport").addEventListener("click",openImportView);
+  const railToggle=document.getElementById("railToggle"),railBody=document.getElementById("railBody");
+  railToggle.addEventListener("click",()=>{
+    const open=railBody.classList.toggle("open");
+    railToggle.setAttribute("aria-expanded",open?"true":"false");
+  });
+  document.getElementById("btnTheme").addEventListener("click",()=>{
+    const cur=document.documentElement.getAttribute("data-theme");
+    const next=cur==="dark"?"light":cur==="light"?"dark":(matchMedia("(prefers-color-scheme:dark)").matches?"light":"dark");
+    document.documentElement.setAttribute("data-theme",next);
+  });
+  document.getElementById("weekLabel").addEventListener("input",e=>{state.label=e.target.value;});
+  document.getElementById("btnAddAbs").addEventListener("click",()=>{
+    const n=document.getElementById("absPerson").value;if(!n)return toast("Elegí una persona");
+    const days=[...document.querySelectorAll("#absDays input:checked")].map(c=>+c.value);
+    if(!days.length)return toast("Marcá al menos un día");
+    const ex=state.abs.find(a=>a.n===n);if(ex)ex.days=[...new Set([...ex.days,...days])];else state.abs.push({n,days});
+    document.getElementById("absPerson").value="";document.querySelectorAll("#absDays input").forEach(c=>c.checked=false);
+    renderMini();render();persist();toast(n+" marcada como ausente");
+  });
+  document.getElementById("btnAddEx").addEventListener("click",()=>{
+    const n=document.getElementById("exPerson").value;if(!n)return toast("Elegí una persona");
+    const day=+document.getElementById("exDay").value,shift=document.getElementById("exShift").value,
+      loc=document.getElementById("exLoc").value,role=document.getElementById("exRole").value;
+    const dupe=state.ex.find(e=>e.n===n&&e.day===day&&e.shift===shift&&e.loc===loc&&e.role===role);
+    if(dupe)return toast(dupe.auto?`${n} ya está ahí por una regla fija permanente — no hace falta agregarlo`:`${n} ya estaba agregado en ese turno`);
+    const maxTotal=maxTurnoFor(loc,shift,role);
+    if(maxTotal!=null){
+      const baseCount=rowsFor(loc,shift).filter(r=>r.role===role).length;
+      const existing=exAt(day,loc,shift,role).length;
+      if(baseCount+existing>=maxTotal)return toast(`${ROLE_LABEL[role]} ya está completo ese turno (máximo ${maxTotal}).`);
+    }
+    state.ex.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),n,day,shift,loc,role,half:document.getElementById("exHalf").checked});
+    document.getElementById("exHalf").checked=false;
+    renderMini();render();persist();toast(n+" agregada/o ese día");
+  });
+}
+
+/* ---------------- SEED: reglas fijas conocidas ---------------- */
+function seedFixedRules(){
+  // v2: reemplaza cualquier resto parcial de v1 (algunas reglas se habían perdido) por el set completo de 8.
+  const OLD_TAG="finde-cortado-matias-gonzalo-v1";
+  const TAG="finde-cortado-matias-gonzalo-v2";
+  if(migrationDone(TAG))return; // ya se aplicó (se haya borrado después o no) — no tocar
+  if(state.fixed.some(f=>f.seedTag===TAG)){marcarMigracion(TAG);return;} // venía de una versión vieja que ya la había cargado
+  state.fixed=state.fixed.filter(f=>f.seedTag!==OLD_TAG);
+  let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,role:"cocina",half:true,...extra});
+  state.fixed.push(
+    // Sábado: se cruzan de local entre la mañana y la tarde
+    mk({n:"Gonzalo",days:[5],shift:"M",loc:"SL"}),
+    mk({n:"Gonzalo",days:[5],shift:"T",loc:"SLA"}),
+    mk({n:"Matías", days:[5],shift:"M",loc:"SLA"}),
+    mk({n:"Matías", days:[5],shift:"T",loc:"SL"}),
+    // Domingo: cada uno se queda en un solo local todo el día
+    mk({n:"Gonzalo",days:[6],shift:"M",loc:"SLA"}),
+    mk({n:"Gonzalo",days:[6],shift:"T",loc:"SLA"}),
+    mk({n:"Matías", days:[6],shift:"M",loc:"SL"}),
+    mk({n:"Matías", days:[6],shift:"T",loc:"SL"}),
+  );
+  marcarMigracion(TAG);
+  persist();
+}
+
+// reglas fijas de cocina/compras/cajero (de lunes a viernes; el finde de cocina lo sigue resolviendo
+// el cruce Gonzalo/Matías de arriba + el autocompletado, para no pisar ese armado especial)
+function seedCocinaComprasCajero(){
+  const TAG="cocina-compras-cajero-v1";
+  if(migrationDone(TAG))return;
+  if(state.fixed.some(f=>f.seedTag===TAG)){marcarMigracion(TAG);return;}
+  let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,...extra});
+  state.fixed.push(
+    // Cocina San Luis
+    mk({n:"Vanesa",role:"cocina",days:[0,1,3,4],shift:"M",loc:"SL"}),
+    mk({n:"Matías",role:"cocina",days:[2],shift:"M",loc:"SL"}),
+    mk({n:"Luis",  role:"cocina",days:[0,1,2,4],shift:"T",loc:"SL"}),
+    mk({n:"Matías",role:"cocina",days:[3],shift:"T",loc:"SL"}),
+    // Cocina SLA
+    mk({n:"Lucas",  role:"cocina",days:[0],shift:"M",loc:"SLA"}),
+    mk({n:"Gonzalo",role:"cocina",days:[1,2,3,4],shift:"M",loc:"SLA"}),
+    mk({n:"Matías", role:"cocina",days:[0,4],shift:"T",loc:"SLA"}),
+    mk({n:"Lucas",  role:"cocina",days:[1,2,3],shift:"T",loc:"SLA"}),
+    // Compras San Luis (el viernes ya está cubierto por la disponibilidad obligatoria de Rodrigo)
+    mk({n:"Rodrigo",role:"compras",days:[0,1,2,3,5],shift:"M",loc:"SL"}),
+    mk({n:"Lázaro", role:"compras",days:[6],shift:"M",loc:"SL"}),
+    // Cajero San Luis, todos los días (el franco de cada uno hace que ese día lo cubra otra persona)
+    mk({n:"Natalia",role:"cajero",days:[0,1,2,3,4,5,6],shift:"M",loc:"SL"}),
+    mk({n:"Javier", role:"cajero",days:[0,1,2,3,4,5,6],shift:"T",loc:"SL"}),
+  );
+  marcarMigracion(TAG);
+  persist();
+}
+
+/* ---------------- AUTH ---------------- */
+const AUTH_KEY="candela_cronogramas_auth";
+const AUTH_PASS="1412";
+function showApp(){
+  document.getElementById("authGate").style.display="none";
+  document.getElementById("appWrap").style.display="";
+}
+function attemptAuth(){
+  const input=document.getElementById("authPass");
+  const err=document.getElementById("authErr");
+  if(input.value===AUTH_PASS){
+    sessionStorage.setItem(AUTH_KEY,"ok");
+    err.style.display="none";
+    input.value="";
+    showApp();
+  }else{
+    err.style.display="block";
+  }
+}
+document.getElementById("authBtn").addEventListener("click",attemptAuth);
+document.getElementById("authPass").addEventListener("keydown",e=>{if(e.key==="Enter")attemptAuth();});
+document.getElementById("authPass").focus();
+
+/* ---------------- SINCRONIZACIÓN ENTRE DISPOSITIVOS ---------------- */
+// reglas semilla + limpieza que hay que correr sí o sí, venga el estado de localStorage
+// (arranque normal) o recién llegado de la nube (por si viene de una versión vieja del código).
+// saca del estado cualquier referencia a alguien que ya no está en el equipo (PEOPLE) — franco fijo,
+// turno fijo, puesto cambiado, ausencias, refuerzos manuales — para que no queden datos fantasma
+// colgados cuando alguien deja de trabajar acá.
+function limpiarPersonasDadasDeBaja(){
+  state.fixed=state.fixed.filter(f=>BY_NAME[f.n]);
+  state.abs=state.abs.filter(a=>BY_NAME[a.n]);
+  state.ex=state.ex.filter(e=>BY_NAME[e.n]);
+  Object.keys(state.francoFixed).forEach(n=>{if(!BY_NAME[n])delete state.francoFixed[n];});
+  Object.keys(state.roleOverride).forEach(n=>{if(!BY_NAME[n])delete state.roleOverride[n];});
+  Object.keys(state.backupOverride).forEach(n=>{if(!BY_NAME[n])delete state.backupOverride[n];});
+  Object.keys(state.assign).forEach(k=>{if(!BY_NAME[state.assign[k]])delete state.assign[k];});
+  if(!state.incompat)state.incompat=[];
+  state.incompat=state.incompat.filter(r=>BY_NAME[r.a]&&BY_NAME[r.b]);
+  if(!state.ausObviada)state.ausObviada={};
+  Object.keys(state.ausObviada).forEach(k=>{if(!BY_NAME[k.split("|")[0]])delete state.ausObviada[k];});
+  if(!state.expertos)state.expertos=[];
+  state.expertos=state.expertos.filter(n=>BY_NAME[n]);
+  if(!state.expertoTurno)state.expertoTurno={};
+  Object.keys(state.expertoTurno).forEach(k=>{if(!BY_NAME[state.expertoTurno[k]])delete state.expertoTurno[k];});
+  if(!state.rowLabelOverride)state.rowLabelOverride={};
+}
+// Leandro (el barista, SLA) pasa a llamarse "Leandro Villagra" para no confundirlo con Leandro
+// Tolaba (persona aparte, solo en el módulo de Vacaciones — producción/Cuadra). Migra cualquier
+// referencia a "Leandro" que ya hubiera quedado guardada en turnos asignados, reglas fijas, franco,
+// etc., para que no se pierdan al cambiar el nombre. Inofensivo correrla de nuevo si ya no queda
+// nada por migrar (por eso va antes de limpiarPersonasDadasDeBaja: si no, esa limpieza borraría
+// todo lo que todavía dijera "Leandro" en vez de renombrarlo).
+function renombrarLeandroVillagra(){
+  const DE="Leandro",A="Leandro Villagra";
+  Object.keys(state.assign).forEach(k=>{if(state.assign[k]===DE)state.assign[k]=A;});
+  state.ex.forEach(e=>{if(e.n===DE)e.n=A;});
+  state.abs.forEach(a=>{if(a.n===DE)a.n=A;});
+  state.fixed.forEach(f=>{if(f.n===DE)f.n=A;});
+  if(Object.prototype.hasOwnProperty.call(state.francoFixed,DE)){state.francoFixed[A]=state.francoFixed[DE];delete state.francoFixed[DE];}
+  if(Object.prototype.hasOwnProperty.call(state.roleOverride,DE)){state.roleOverride[A]=state.roleOverride[DE];delete state.roleOverride[DE];}
+  if(Object.prototype.hasOwnProperty.call(state.backupOverride,DE)){state.backupOverride[A]=state.backupOverride[DE];delete state.backupOverride[DE];}
+}
+function runMigrations(){
+  if(!state.peopleExtra)state.peopleExtra=[];
+  rebuildPeople(); // primero, así BY_NAME ya incluye a la gente agregada a mano antes de todo lo demás
+  state.ex.forEach(e=>{if(e.id==null)e.id=Date.now()+"-"+Math.round(Math.random()*1e6);});
+  renombrarLeandroVillagra();
+  seedFixedRules();
+  seedCocinaComprasCajero();
+  limpiarPersonasDadasDeBaja();
+  dedupeFixed();
+  regenerateFixedHalfExtras();
+  dedupeEx();
+}
+function setSyncStatus(kind){
+  const el=document.getElementById("syncStatus");if(!el)return;
+  el.className="syncStatus "+kind;
+  el.title={connecting:"Conectando con la nube…",ok:"Sincronizado con la nube",saving:"Guardando en la nube…",
+    error:"Sin conexión con la nube — tus cambios se guardan en este dispositivo y se sincronizan apenas vuelva la conexión"}[kind]||"";
+  const banner=document.getElementById("syncBanner");
+  if(banner)banner.classList.toggle("show",kind==="error");
+}
+function showSyncError(detail){
+  setSyncStatus("error");
+  const msgEl=document.getElementById("syncBannerMsg");
+  if(msgEl&&detail&&detail.code)
+    msgEl.textContent=`⚠️ No se pudo conectar con la sincronización en la nube (${detail.code}). Tus cambios se guardan en este dispositivo, pero no van a verse en otros hasta que se resuelva esto.`;
+  console.error("cloudsync error:",detail);
+}
+let cloudConfigFirstSyncDone=false;
+// config global (personas, puestos, reglas fijas, incompatibilidades, expertos...) — igual en
+// todas las semanas, así que un cambio de otro dispositivo se aplica sin importar qué semana
+// estés mirando vos.
+function applyRemoteConfig(remote){
+  const isFirst=!cloudConfigFirstSyncDone; cloudConfigFirstSyncDone=true;
+  if(remote==null){
+    // todavía no hay nada guardado en la nube (primera vez que se usa desde algún dispositivo):
+    // subimos lo que ya tenemos acá para sembrarla.
+    if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(configPart(state));}
+    setSyncStatus("ok");
+    return;
+  }
+  if(JSON.stringify(remote)===JSON.stringify(configPart(state))){setSyncStatus("ok");return;} // ya estábamos al día
+  suspendHistory=true; // esto llega de otro dispositivo, no es una acción de este usuario: no cuenta para deshacer
+  Object.assign(state,remote); // remote solo trae campos de config: no toca la semana activa
+  runMigrations(); // por si este dispositivo tiene reglas nuevas que la nube todavía no vio
+  saveLocalConfig(configPart(state));
+  suspendHistory=false;
+  fillPersonSelects();
+  renderMini();render();
+  syncUndoRedoButtons();
+  persist(); // si las migraciones cambiaron algo, se lo mandamos de vuelta a la nube
+  setSyncStatus("ok");
+  if(!isFirst)toast("Datos del equipo actualizados desde otro dispositivo ☁️");
+}
+// datos de una semana puntual — solo importa si es la semana que tenés abierta ahora mismo: si
+// llega una actualización de una semana de la que ya te fuiste, se ignora sin tocar nada.
+function applyRemoteWeek(detail){
+  const{key,data:remote}=detail;
+  if(key!==weekKeyOf(state))return;
+  if(remote==null){
+    if(window.CloudSyncWeek){setSyncStatus("saving");window.CloudSyncWeek.push(key,weekPart(state));}
+    setSyncStatus("ok");
+    return;
+  }
+  if(JSON.stringify(remote)===JSON.stringify(weekPart(state))){setSyncStatus("ok");return;} // ya estábamos al día
+  suspendHistory=true;
+  Object.assign(state,remote);
+  runMigrations();
+  saveLocalWeek(key,weekPart(state));
+  suspendHistory=false;
+  document.getElementById("weekLabel").value=state.label||"";
+  document.getElementById("weekStart").value=state.weekStart||"";
+  renderMini();render();renderWeekSwitcher();
+  syncUndoRedoButtons();
+  persist();
+  setSyncStatus("ok");
+  toast("Esta semana se actualizó desde otro dispositivo ☁️");
+}
+// lista liviana de semanas (para el selector) — se combina con lo que ya hay en este dispositivo
+// por si una semana nueva creada offline todavía no llegó a la nube.
+let weekIndexCache={};
+function renderWeekSwitcher(){
+  const sel=document.getElementById("weekSwitcher");if(!sel)return;
+  const merged=Object.assign({},weekIndexCache);
+  const localWeeks=loadLocalWeeks();
+  Object.keys(localWeeks).forEach(k=>{if(!merged[k])merged[k]={weekStart:localWeeks[k].weekStart||"",label:localWeeks[k].label||""};});
+  const curKey=weekKeyOf(state);
+  if(!merged[curKey])merged[curKey]={weekStart:state.weekStart||"",label:state.label||""};
+  const entries=Object.keys(merged).map(k=>({key:k,...merged[k]})).sort((a,b)=>(a.weekStart||"").localeCompare(b.weekStart||""));
+  sel.innerHTML=entries.map(e=>{
+    const rango=fmtWeekRange(e.weekStart);
+    const etiqueta=e.label?` · ${e.label}`:"";
+    const texto=rango?rango+etiqueta:(e.key===FALLBACK_WEEK_KEY?"Sin fecha"+etiqueta:e.key+etiqueta);
+    return `<option value="${e.key}" ${e.key===curKey?"selected":""}>${texto}</option>`;
+  }).join("");
+}
+function fmtWeekRange(weekStart){
+  if(!weekStart)return"";
+  const start=new Date(weekStart+"T00:00:00");if(isNaN(start))return"";
+  const end=new Date(start);end.setDate(end.getDate()+6);
+  const f=d=>String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0");
+  return f(start)+"–"+f(end);
+}
+window.addEventListener("cloudsync-update",e=>applyRemoteConfig(e.detail));
+window.addEventListener("weeksync-update",e=>applyRemoteWeek(e.detail));
+window.addEventListener("weekindex-update",e=>{weekIndexCache=e.detail||{};renderWeekSwitcher();});
+window.addEventListener("cloudsync-saving",()=>setSyncStatus("saving"));
+window.addEventListener("cloudsync-saved",()=>setSyncStatus("ok"));
+window.addEventListener("cloudsync-error",e=>showSyncError(e.detail));
+window.addEventListener("vacsync-update",e=>{
+  vacacionesCache=e.detail;
+  if(aplicarAusenciasPorVacaciones()){renderMini();render();persist();toast("Ausencias por vacaciones actualizadas 🏖️");}
+});
+document.getElementById("syncBannerClose").addEventListener("click",()=>document.getElementById("syncBanner").classList.remove("show"));
+
+/* ---------------- BOOT ---------------- */
+document.getElementById("appVersion").textContent="v"+APP_VERSION;
+const bootWeekKey=loadLocalState();
+runMigrations();
+useHistoryBucket(bootWeekKey);
+persist();
+fillPersonSelects();
+initControls();
+document.getElementById("btnLogout").addEventListener("click",()=>{
+  sessionStorage.removeItem(AUTH_KEY);
+  document.getElementById("appWrap").style.display="none";
+  document.getElementById("authGate").style.display="flex";
+  document.getElementById("authPass").focus();
+});
+document.getElementById("weekLabel").value=state.label||"";
+document.getElementById("weekStart").value=state.weekStart||"";
+renderMini();
+render();
+renderWeekSwitcher();
+undoStack.length=0;redoStack.length=0;syncUndoRedoButtons(); // el armado inicial (reglas semilla, etc.) no cuenta como "cambio" deshacible
+if(sessionStorage.getItem(AUTH_KEY)==="ok")showApp();
+</script>
+</body>
+</html>

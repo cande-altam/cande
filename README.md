@@ -27,11 +27,9 @@ propia **subcarpeta**, para que nunca se pisen entre sí.
 | Sistema | Subcarpeta | Branch de origen | Estado |
 |---|---|---|---|
 | Pedidos de Producción | `/produccion/` | `claude/quirky-meitner-fhx26k` | ✅ Importado |
-| Administración | `/administracion/` | (a confirmar) | ⏳ Pendiente |
-| Clientes / Club Candela | `/clientes/` | (a confirmar) | ⏳ Pendiente |
-| Recetario | `/recetario/` | `claude/recetario-cocina` | ⏳ Pendiente |
-| Manuales | `/manuales/` | `claude/manuales-procedimientos-areas-fhxu13` | ⏳ Pendiente |
-| Control de stock | `/stock/` | `claude/stock-control-spreadsheets-pnq4g6` | ⏳ Pendiente |
+| Administración (suite) | `/administracion/` | `claude/business-app-features-9mfa1a` | ✅ Importado |
+| Clientes / Club Candela | `/clientes/` | `club-candela` | ✅ Importado |
 
-> Los sistemas pendientes se importan una vez confirmada cuál es la branch
-> vigente de cada uno (hay varias branches por sistema).
+> Nota: la suite de Administración ya incluye módulos propios (recetario,
+> cronogramas, presupuestos, informes, vacaciones), por lo que no se importaron
+> como sistemas separados para evitar duplicados.

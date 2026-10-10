@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Candela — Presupuestos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --cream:#EEEBD7; --cream-dark:#dedad8; --cream-mid:#e5e1cc;
+  --black:#22201F; --black-soft:#3a3836;
+  --terra:#E15D46; --terra-light:#ea7a65; --terra-pale:#f9ddd8;
+  --turq:#9BD6CC; --turq-dark:#6bbfb4; --turq-pale:#d8f0ed;
+  --gray:#9a9888; --gray-light:#ccc9b5; --white:#ffffff;
+  --green:#27ae60; --green-pale:#e8f8f0;
+  --shadow-sm:0 1px 3px rgba(34,32,31,.06),0 1px 2px rgba(34,32,31,.04);
+  --shadow-md:0 4px 16px rgba(34,32,31,.08),0 2px 6px rgba(34,32,31,.05);
+  --shadow-lg:0 12px 40px rgba(34,32,31,.12),0 4px 12px rgba(34,32,31,.06);
+  --shadow-terra:0 4px 18px rgba(225,93,70,.30);
+  --shadow-turq:0 4px 18px rgba(155,214,204,.35);
+  --r:14px;--r-sm:8px;--r-xs:6px;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--black);min-height:100vh;font-weight:300;font-size:14px;}
+
+/* HEADER */
+.header{background:var(--black);padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;height:68px;box-shadow:0 1px 0 rgba(255,255,255,.06),0 4px 24px rgba(0,0,0,.3);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-text-wrap{display:flex;flex-direction:column;line-height:1.1;}
+.logo-name{font-size:15px;font-weight:600;color:var(--cream);letter-spacing:.2px;}
+.logo-sub{font-size:9px;color:var(--gray);font-weight:400;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+.nav-desktop{display:flex;gap:2px;align-items:center;flex-wrap:wrap;}
+.nav-btn{padding:8px 14px;border:none;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;font-size:12.5px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;border-radius:8px;transition:all .2s cubic-bezier(.25,.8,.25,1);letter-spacing:.2px;white-space:nowrap;}
+.nav-btn:hover{color:var(--cream);background:rgba(255,255,255,.08);}
+.nav-btn.active{color:#fff;background:var(--terra);font-weight:600;box-shadow:var(--shadow-terra);}
+.nav-logout{padding:8px 14px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.6);cursor:pointer;font-size:12px;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;}
+.nav-logout:hover{color:#fff;border-color:rgba(255,255,255,.4);}
+.nav-hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;background:none;border:none;}
+.nav-hamburger span{width:22px;height:2px;background:var(--gray);border-radius:2px;display:block;}
+.nav-mobile-menu{display:none;position:fixed;top:60px;left:0;right:0;background:var(--black);z-index:199;padding:12px;flex-direction:column;gap:4px;border-bottom:1px solid #3a3836;box-shadow:0 8px 24px rgba(0,0,0,.3);}
+.nav-mobile-menu.open{display:flex;}
+.nav-mobile-btn{padding:14px 18px;border:none;background:transparent;color:rgba(255,255,255,.5);cursor:pointer;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;border-radius:10px;text-align:left;}
+.nav-mobile-btn.active{color:#fff;background:var(--terra);font-weight:600;}
+@media(max-width:900px){.nav-desktop{display:none;}.nav-hamburger{display:flex;}}
+
+/* MAIN */
+.main{padding:28px;max-width:1160px;margin:0 auto;width:100%;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.main > *{animation:fadeUp .3s ease both;}
+.page-title{font-size:22px;font-weight:700;color:var(--black);margin-bottom:4px;letter-spacing:-.3px;}
+.page-sub{color:var(--gray);font-size:13px;margin-bottom:24px;font-weight:400;}
+
+/* SECTION BLOCK */
+.section-block{background:var(--white);border:1px solid rgba(34,32,31,.07);border-radius:var(--r);padding:22px 24px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap;}
+.section-title{font-size:14px;font-weight:600;color:var(--black);display:flex;align-items:center;gap:8px;}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1.5px solid var(--cream-dark);margin-bottom:20px;overflow-x:auto;}
+.tab{padding:11px 22px;cursor:pointer;font-size:13px;color:var(--gray);border:none;background:none;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;border-bottom:2px solid transparent;margin-bottom:-1.5px;white-space:nowrap;}
+.tab:hover{color:var(--black);}
+.tab.active{color:var(--terra);border-bottom-color:var(--terra);font-weight:600;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;transition:all .2s cubic-bezier(.25,.8,.25,1);letter-spacing:.2px;}
+.btn-primary{background:var(--terra);color:#fff;box-shadow:var(--shadow-terra);}
+.btn-primary:hover{background:var(--terra-light);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-turq{background:var(--turq);color:var(--black);box-shadow:var(--shadow-turq);}
+.btn-turq:hover{background:var(--turq-dark);color:#fff;}
+.btn-ghost{background:rgba(34,32,31,.04);border:1px solid rgba(34,32,31,.12);color:var(--gray);}
+.btn-ghost:hover{border-color:var(--black);color:var(--black);background:rgba(34,32,31,.06);}
+.btn-danger{background:#fdecea;color:#b83a25;border:1px solid #f5c4bc;}
+.btn-danger:hover{background:var(--terra);color:#fff;border-color:var(--terra);}
+.btn-sm{padding:6px 13px;font-size:12px;border-radius:8px;}
+
+/* BADGES */
+.badge{font-size:11px;padding:3px 10px;border-radius:100px;font-weight:500;letter-spacing:.2px;display:inline-block;}
+.badge-borrador{background:var(--cream);color:var(--gray);}
+.badge-enviado{background:var(--turq-pale);color:var(--turq-dark);}
+.badge-aceptado{background:var(--green-pale);color:var(--green);}
+.badge-rechazado{background:#fdecea;color:#b83a25;}
+
+/* FORMS */
+.form-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;}
+.form-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:150px;}
+.form-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+.form-input,.form-select{padding:10px 14px;background:var(--cream);border:1.5px solid var(--cream-dark);border-radius:var(--r-sm);color:var(--black);font-size:13px;outline:none;width:100%;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;transition:border-color .15s,box-shadow .15s;}
+.form-input:focus,.form-select:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(225,93,70,.12);}
+textarea.form-input{resize:vertical;min-height:60px;}
+
+/* TABLE */
+.data-table-wrap{overflow-x:auto;}
+.data-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--white);}
+.data-table th{text-align:left;padding:10px 14px;color:var(--gray);border-bottom:1.5px solid var(--cream-dark);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;}
+.data-table td{padding:10px 14px;border-bottom:1px solid var(--cream-mid);color:var(--black);font-weight:300;vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(155,214,204,.08);}
+
+/* ITEM ROWS */
+.item-row{display:grid;grid-template-columns:1.8fr 1.1fr .8fr 1fr 1fr 32px;gap:8px;align-items:center;padding:6px 0;}
+.item-row-header{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--cream-dark);margin-bottom:4px;}
+.item-row-wrap{overflow-x:auto;}
+@media(max-width:700px){.item-row,.item-row-header{grid-template-columns:repeat(6,140px);min-width:780px;}}
+/* Los adicionales no llevan la columna de área: son una cotización opcional, no algo que haya que
+   mandar a producir. Una columna menos que la fila de ítems. */
+.adicional-row{grid-template-columns:1.8fr .8fr 1fr 1fr 32px;}
+@media(max-width:700px){.adicional-row{grid-template-columns:repeat(5,140px);min-width:640px;}}
+/* En el PDF, el bloque de adicionales se separa del total con una línea, y no se parte entre
+   páginas: si el título queda en una hoja y los precios en la otra, se lee como si estuvieran
+   incluidos. */
+.bloque-adicionales{margin-top:20px;padding-top:14px;border-top:2px dashed var(--cream-dark);break-inside:avoid;page-break-inside:avoid;}
+
+/* CARDS LIST */
+.card-list{display:flex;flex-direction:column;gap:10px;}
+.mini-card{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--r-sm);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow-sm);}
+.mini-card-title{font-size:13.5px;font-weight:600;color:var(--black);}
+.mini-card-sub{font-size:11.5px;color:var(--gray);margin-top:2px;}
+
+/* LOGIN */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:80vh;}
+.login-card{background:var(--white);border:1px solid rgba(34,32,31,.08);border-radius:20px;padding:44px 40px;width:360px;max-width:90vw;box-shadow:var(--shadow-lg);}
+.login-title{font-size:22px;font-weight:700;color:var(--black);margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--gray);margin-bottom:26px;font-weight:400;}
+.admin-form{display:flex;flex-direction:column;gap:14px;}
+
+/* MISC */
+.loading{text-align:center;padding:80px 24px;color:var(--gray);font-size:13px;}
+.empty-state{text-align:center;padding:48px 24px;color:var(--gray);font-size:13px;}
+.spinner{width:34px;height:34px;border:3px solid var(--cream-dark);border-top-color:var(--terra);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#toast{position:fixed;bottom:24px;right:24px;left:auto;max-width:340px;background:var(--black);color:var(--cream);padding:14px 20px;border-radius:12px;font-size:13px;font-weight:500;opacity:0;transform:translateY(12px) scale(.97);transition:all .3s cubic-bezier(.25,.8,.25,1);pointer-events:none;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.25);}
+#toast.show{opacity:1;transform:translateY(0) scale(1);}
+#toast.success{border-left:3px solid var(--turq);}
+#toast.warn{border-left:3px solid var(--terra);}
+#toast.danger{border-left:3px solid #b83a25;}
+.text-muted{color:var(--gray);font-size:12px;}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--white);border-radius:var(--r);padding:16px 18px;border:1px solid rgba(34,32,31,.07);box-shadow:var(--shadow-sm);}
+.stat-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;font-weight:500;}
+.stat-value{font-size:22px;font-weight:700;color:var(--black);}
+.total-line{display:flex;justify-content:flex-end;gap:24px;font-size:14px;padding:8px 0;}
+.total-line.grand{font-size:18px;font-weight:700;border-top:1.5px solid var(--cream-dark);padding-top:12px;margin-top:6px;}
+@media(max-width:640px){
+  .main{padding:14px 12px;}
+  .header{padding:0 14px;height:60px;}
+  .page-title{font-size:19px;}
+  .section-block{padding:16px 14px;}
+  .form-group{min-width:100%;}
+}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(34,32,31,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:500;}
+.modal-card{background:var(--white);border-radius:18px;padding:26px 24px;max-width:480px;width:100%;box-shadow:var(--shadow-lg);max-height:90vh;overflow-y:auto;}
+
+/* PRINT */
+.print-only{display:none;}
+/* margin:0 es lo que saca el pie de página que agrega el NAVEGADOR al imprimir (la URL del sitio,
+   la fecha y el número de página). No hay forma de ocultarlo desde el HTML: el navegador lo dibuja
+   dentro del margen de la hoja, así que sin margen no tiene dónde escribirlo.
+   Los márgenes visuales se devuelven como padding del contenido, para que el documento se siga
+   viendo igual. */
+@page{margin:0;}
+@media print{
+  .header,.nav-mobile-menu,.tabs,.no-print,#toast{display:none!important;}
+  body{background:#fff;font-size:12px;-webkit-print-color-adjust:exact;-moz-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
+  .main{max-width:100%;padding:16mm 14mm;}
+  .print-only{display:block;}
+  .section-block{box-shadow:none;border:none;padding:0 4mm;}
+  .doc-header{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
+}
+
+/* CANDELA BRAND SVGS — real vectors extracted from the isologotipo PDF, sized via wrapper. */
+.brand-mark-nav svg{display:block;width:28px;height:auto;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
+.brand-wordmark svg{display:block;width:230px;max-width:100%;height:auto;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
+
+/* DOC HEADER (printed / downloaded presupuesto) */
+.doc-header{background:#fff;padding:6px 0 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+.doc-header-num{text-align:right;}
+.doc-header-num .num-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray);}
+.doc-header-num .num-value{font-size:18px;font-weight:700;color:var(--black);}
+.doc-accent-bar{height:5px;border-radius:100px;background:linear-gradient(90deg,var(--terra),var(--turq));margin-bottom:20px;}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading"><div class="spinner"></div>Conectando con Firebase...</div></div>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, push, update, remove, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// Firebase project for THIS app — presupuestos/* lives here, isolated from everything else.
+const firebaseConfig = {
+  apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
+  authDomain: "pedidos-de-produccion-ee3cb.firebaseapp.com",
+  databaseURL: "https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-produccion-ee3cb",
+  storageBucket: "pedidos-de-produccion-ee3cb.firebasestorage.app",
+  messagingSenderId: "744141794971",
+  appId: "1:744141794971:web:9639c8bf3834e4978ae03e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Second, separate Firebase project: the existing "Pedidos de Clientes" system
+// (branch claude/stoic-cori-7e9bj9). We only ever WRITE a new order there when a
+// quote is accepted — we don't render or manage its data, that system already does.
+const clientesFirebaseConfig = {
+  apiKey: "AIzaSyDFqS6RG1fkOZGo1x2-WcfT82am7ERHgyY",
+  authDomain: "pedidos-de-clientes-4775b.firebaseapp.com",
+  databaseURL: "https://pedidos-de-clientes-4775b-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-clientes-4775b",
+  storageBucket: "pedidos-de-clientes-4775b.firebasestorage.app",
+  messagingSenderId: "702040534350",
+  appId: "1:702040534350:web:af4acddff23ee2db24c21f"
+};
+const clientesApp = initializeApp(clientesFirebaseConfig, "clientesApp");
+const clientesDb = getDatabase(clientesApp);
+
+// Must mirror TEAMS / VENDEDORES / local values from the Pedidos de Clientes system exactly,
+// so orders created here render correctly over there. If that system's roster changes, update here too.
+// NOTE: "cafe" (Cafetería) was added here on the Presupuestos side — the Pedidos de Clientes
+// system (separate branch/codebase) needs to recognize this same key for it to render with a
+// proper label there too; otherwise the order still gets created fine, but that team may show
+// unlabeled/default until its own TEAMS list is updated to match.
+const TEAMS = {
+  pan:  { name: "Panadería",      icon: "🥖" },
+  past: { name: "Pastelería",     icon: "🎂" },
+  fact: { name: "Facturería",     icon: "🥐" },
+  esp:  { name: "Especialidades", icon: "🍩" },
+  sand: { name: "Sándwiches",     icon: "🥪" },
+  cafe: { name: "Cafetería",      icon: "☕" },
+};
+const LOCALES_CLIENTE = ["San Luis", "SLA"];
+const VENDEDORES = ["Aaron", "Brenda", "Dana", "Erica", "Guadalupe", "Javier", "Margarita", "Natalia", "Paula", "Valentina"];
+
+// Real Candela brand vectors, extracted 1:1 from the provided isologotipo PDF (no redrawing/approximation).
+const LOGO_MARK_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\" version=\"1.1\" width=\"204.90003\" height=\"246.5\" viewBox=\"0 0 204.90003 246.5\">\n<defs>\n<clipPath id=\"lmark_clip_1\">\n<path transform=\"matrix(1,0,0,-1,-573.8,353.9)\" d=\"M573.8 107.4H778.7V353.9H573.8Z\" clip-rule=\"evenodd\"/>\n</clipPath>\n<clipPath id=\"lmark_clip_2\">\n<path transform=\"matrix(1,0,0,-1,-573.8,353.9)\" d=\"M0 0H810V424.5H0Z\"/>\n</clipPath>\n</defs>\n<g>\n<g clip-path=\"url(#lmark_clip_1)\">\n<g>\n<g clip-path=\"url(#lmark_clip_2)\">\n<path transform=\"matrix(1,0,0,-1,-573.8,353.9)\" d=\"M0 0H810V424.5H0Z\" fill=\"#ffffff\" fill-opacity=\"0\"/>\n</g>\n</g>\n<path transform=\"matrix(1,0,0,-1,-375.6482,244.9966)\" d=\"M0 0V.069C0 4.664 3.658 8.651 8.357 8.651 11.443 8.651 13.384 7.23 14.927 5.617L13.801 4.473C12.379 5.912 10.766 7.178 8.322 7.178 4.594 7.178 1.699 4.057 1.699 .121V.069C1.699-3.901 4.698-7.039 8.461-7.039 10.766-7.039 12.57-5.86 13.957-4.317L15.049-5.271C13.384-7.178 11.391-8.53 8.357-8.53 3.641-8.53 0-4.594 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-344.86219,246.9939)\" d=\"M0 0V1.872C-1.387 2.219-3.225 2.601-5.565 2.601-9.033 2.601-10.975 1.058-10.975-1.214V-1.283C-10.975-3.658-8.721-5.045-6.207-5.045-2.861-5.045 0-2.999 0 0M-12.639-1.387V-1.318C-12.639 2.098-9.709 4.022-5.461 4.022-3.19 4.022-1.612 3.728-.035 3.311V4.022C-.035 7.334-2.063 9.033-5.427 9.033-7.438 9.033-9.067 8.495-10.576 7.715L-11.165 9.102C-9.362 9.934-7.594 10.524-5.34 10.524-3.121 10.524-1.352 9.9-.156 8.721 .936 7.628 1.508 6.12 1.508 4.092V-6.137H-.035V-3.415C-1.162-4.976-3.19-6.536-6.311-6.536-9.362-6.536-12.639-4.785-12.639-1.387\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-336.72059,238.1813)\" d=\"M0 0H-2.375V1.439H0V3.051C0 4.924 .52 6.397 1.439 7.334 2.289 8.166 3.433 8.617 4.889 8.617 5.877 8.617 6.588 8.495 7.334 8.235V6.744C6.398 7.039 5.721 7.178 4.889 7.178 2.635 7.178 1.578 5.825 1.578 3.017V1.439H7.299V0H1.578V-14.945H0Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-317.5488,229.72409)\" d=\"M0 0 1.959-.971-1.474-4.282H-2.826Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-313.8838,244.16269)\" d=\"M0 0C-.225 3.311-2.115 6.363-5.877 6.363-9.137 6.363-11.633 3.641-11.928 0ZM-13.592-.798V-.745C-13.592 4.022-10.264 7.819-5.825 7.819-1.214 7.819 1.699 4.092 1.699-.763 1.699-1.058 1.699-1.162 1.664-1.422H-11.928C-11.633-5.496-8.721-7.889-5.496-7.889-2.965-7.889-1.214-6.762 .139-5.305L1.231-6.276C-.451-8.079-2.41-9.362-5.565-9.362-9.865-9.362-13.592-5.912-13.592-.798\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-288.17588,236.2499)\" d=\"M0 0V.069C0 1.352-.867 2.15-2.132 2.15-3.45 2.15-4.3 1.214-4.3-.139V-.191C-4.3-1.196-3.918-1.924-2.999-2.999-1.023-2.254 0-1.422 0 0M-.26-11.876-4.56-7.49C-6.051-8.27-6.658-9.362-6.658-10.454V-10.524C-6.658-12.102-5.34-13.159-3.502-13.159-2.375-13.159-1.283-12.674-.26-11.876M2.514-14.702C.676-16.21-1.474-17.199-4.092-17.199-8.391-17.199-11.651-14.702-11.651-10.715V-10.645C-11.651-7.785-10.09-5.756-7.264-4.473-8.357-2.93-8.842-1.508-8.842 .035V.087C-8.842 3.19-6.363 6.016-2.028 6.016 1.803 6.016 4.317 3.502 4.317 .347V.295C4.317-2.739 2.375-4.508-.416-5.6L2.566-8.582C3.311-7.438 4.057-6.12 4.768-4.733L8.391-6.727C7.524-8.305 6.554-9.969 5.427-11.477L8.755-14.789 5.115-17.337Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-251.2749,244.9966)\" d=\"M0 0V.069C0 4.369-2.999 7.143-6.432 7.143-9.848 7.143-13.124 4.282-13.124 .087V.035C-13.124-4.178-9.848-7.022-6.432-7.022-2.861-7.022 0-4.404 0 0M-14.598 8.27H-13.02V4.594C-11.616 6.744-9.518 8.651-6.276 8.651-2.323 8.651 1.699 5.461 1.699 .121V.069C1.699-5.271-2.323-8.53-6.276-8.53-9.553-8.53-11.668-6.658-13.02-4.594V-13.28H-14.598Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-233.3533,246.9939)\" d=\"M0 0V1.872C-1.387 2.219-3.225 2.601-5.565 2.601-9.033 2.601-10.975 1.058-10.975-1.214V-1.283C-10.975-3.658-8.721-5.045-6.207-5.045-2.861-5.045 0-2.999 0 0M-12.639-1.387V-1.318C-12.639 2.098-9.709 4.022-5.461 4.022-3.19 4.022-1.612 3.728-.035 3.311V4.022C-.035 7.334-2.063 9.033-5.427 9.033-7.42 9.033-9.067 8.495-10.576 7.715L-11.165 9.102C-9.362 9.934-7.594 10.524-5.34 10.524-3.121 10.524-1.352 9.9-.156 8.721 .936 7.628 1.508 6.12 1.508 4.092V-6.137H-.035V-3.415C-1.162-4.976-3.19-6.536-6.311-6.536-9.362-6.536-12.639-4.785-12.639-1.387\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-225.4682,248.9235)\" d=\"M0 0V10.749H-2.375V12.188H0V17.424H1.578V12.188H7.334V10.749H1.578V.156C1.578-2.185 2.965-3.017 4.854-3.017 5.669-3.017 6.328-2.861 7.264-2.445V-3.918C6.432-4.3 5.635-4.508 4.594-4.508 2.063-4.508 0-3.121 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-573.8,353.9)\" d=\"M360.563 117.17H362.141V100.769H360.563Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-573.8,353.9)\" d=\"M360.373 123.602H362.332V121.435H360.373Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-206.87039,251.0769)\" d=\"M0 0 .936 1.248C2.739-.121 4.733-.902 6.814-.902 9.033-.902 10.766 .329 10.766 2.219V2.289C10.766 4.213 8.721 4.924 6.432 5.565 3.762 6.328 .798 7.143 .798 10.073V10.125C.798 12.76 3.017 14.667 6.207 14.667 8.166 14.667 10.385 13.957 12.032 12.864L11.183 11.547C9.674 12.535 7.871 13.194 6.137 13.194 3.884 13.194 2.41 11.963 2.41 10.316V10.264C2.41 8.426 4.629 7.75 6.97 7.074 9.622 6.328 12.379 5.375 12.379 2.479V2.41C12.379-.52 9.865-2.375 6.727-2.375 4.334-2.375 1.734-1.404 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-191.20258,251.0769)\" d=\"M0 0 .936 1.248C2.739-.121 4.733-.902 6.814-.902 9.033-.902 10.766 .329 10.766 2.219V2.289C10.766 4.213 8.721 4.924 6.432 5.565 3.762 6.328 .798 7.143 .798 10.073V10.125C.798 12.76 3.017 14.667 6.207 14.667 8.166 14.667 10.385 13.957 12.032 12.864L11.183 11.547C9.674 12.535 7.871 13.194 6.137 13.194 3.884 13.194 2.41 11.963 2.41 10.316V10.264C2.41 8.426 4.629 7.75 6.97 7.074 9.622 6.328 12.379 5.375 12.379 2.479V2.41C12.379-.52 9.865-2.375 6.727-2.375 4.334-2.375 1.734-1.404 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-161.3216,244.16269)\" d=\"M0 0C-.225 3.311-2.115 6.363-5.877 6.363-9.137 6.363-11.633 3.641-11.928 0ZM-13.61-.798V-.745C-13.61 4.022-10.264 7.819-5.825 7.819-1.214 7.819 1.699 4.092 1.699-.763 1.699-1.058 1.699-1.162 1.664-1.404H-11.928C-11.633-5.496-8.721-7.889-5.496-7.889-2.965-7.889-1.214-6.762 .139-5.305L1.214-6.276C-.451-8.079-2.41-9.362-5.565-9.362-9.865-9.362-13.61-5.912-13.61-.798\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-155.0109,236.7354)\" d=\"M0 0H1.578V-4.664C2.861-1.734 5.6 .381 8.842 .26V-1.474H8.686C4.889-1.474 1.578-4.334 1.578-9.674V-16.401H0Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-573.8,353.9)\" d=\"M431.889 117.17H433.467V100.769H431.889Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-573.8,353.9)\" d=\"M431.699 123.602H433.65803V121.435H431.699Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-121.65369,244.16269)\" d=\"M0 0C-.225 3.311-2.115 6.363-5.877 6.363-9.137 6.363-11.633 3.641-11.928 0ZM-13.61-.798V-.745C-13.61 4.022-10.264 7.819-5.825 7.819-1.214 7.819 1.699 4.092 1.699-.763 1.699-1.058 1.699-1.162 1.664-1.404H-11.928C-11.633-5.496-8.721-7.889-5.496-7.889-2.965-7.889-1.214-6.762 .139-5.305L1.214-6.276C-.451-8.079-2.41-9.362-5.565-9.362-9.865-9.362-13.61-5.912-13.61-.798\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-216.0159,106.7343)\" d=\"M0 0 .347-104.354H20.163V0Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-152.14658,169.54079)\" d=\"M0 0C15.725 1.526 16.141 16.02 0 16.471-15.586 16.869-15.413 .572 0 0M11.477-1.768C2.93-5.635-5.392-8.565-13.055-13.679-25.607-28.295 6.588-34.519 11.477-1.768M32.126-41.644H12.292V-16.644C10.142-21.654 8.686-25.833 6.658-29.699-1.144-47.799-31.277-50.001-35.819-29.56-39.911-12.778-21.758-7.524-9.033-3.693-18.274-2.202-29.959-.277-31.866 10.749-34.189 36.825 6.935 39.668 22.833 28.121 27.965 24.48 31.814 19.505 31.97 13.315 32.404-4.889 32.126-23.111 32.126-41.644\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-321.6544,61.769807)\" d=\"M0 0C-2.861-1.3-5.704-2.497-8.513-3.693-8.513-8.651-8.495-13.61-8.495-18.568-4.629-14.806-1.318-8.825 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-342.80769,195.11859)\" d=\"M0 0C14.771-.832 19.557 17.025 20.562 29.161 22.105 33.669 18.308 35.992 15.326 38.472 12.726 40.569 10.194 41.835 7.767 42.477 4.057 29.976-1.872 18.343-10.229 7.767-8.27 3.71-5.132 .711 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-330.1844,43.797883)\" d=\"M0 0C0-5.236 .017-10.489 .017-15.725 11.876-13.003 12.136-1.89 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-330.1584,65.467807)\" d=\"M0 0C-5.548-2.393-10.94-4.82-16.02-8.218-25.191-18.898-10.489-25.07 0-14.875Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-333.1248,43.5343)\" d=\"M0 0C-15.586 .399-15.413-15.898 0-16.471 1.058-16.366 2.046-16.21 2.965-15.985 2.965-10.749 2.947-5.513 2.947-.26 2.028-.121 1.058-.035 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-375.005,161.61069)\" d=\"M0 0C3.329 23.301 27.376 33.496 43.083 22.435 44.228 29.196 44.8 36.183 44.8 43.361 44.817 50.937 44.817 58.514 44.835 66.09 33.86 53.607 10.056 54.075 6.068 72.037 1.976 88.837 20.111 94.073 32.854 97.922 23.614 99.395 11.928 101.337 10.021 112.364 9.119 122.471 14.754 129.077 22.92 132.718 6.9 128.019-6.397 118.432-16.765 103.764-26.197 90.432-29.942 75.348-29.751 59.121-29.664 52.064-29.56 44.956-30.167 37.934-37.657-12.535-110.786-2.306-104.25 48.562-99.985 74.187-71.239 86.808-48.649 74.967-44.436 164.688-177.171 156.401-179.321 46.707-184.019-52.498-63.732-107.041 7.316-41.471-.295-31.866-4.334-16.783 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-354.60939,183.0519)\" d=\"M0 0C.416-1.526 .936-2.965 1.578-4.3 9.934 6.276 15.846 17.91 19.574 30.41 5.045 34.293-5.271 14.702 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-321.08229,106.7343)\" d=\"M0 0V-47.574C-2.445-40.604-6.293-35.646-10.836-32.438-11.599-37.033-12.656-41.523-13.957-45.909-11.529-46.551-8.998-47.817-6.398-49.897-3.415-52.394 .381-54.717-1.162-59.207-2.167-71.361-6.952-89.218-21.724-88.386-26.856-87.675-29.994-84.676-31.953-80.619-34.241-83.514-36.721-86.358-39.373-89.08-41.714-91.663-44.124-94.073-46.603-96.344-33.479-112.866-9.744-113.161 .347-77.949V-104.354H20.163V0Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-301.15629,46.694887)\" d=\"M0 0C-.139 6.189-4.005 11.183-9.137 14.823-14.39 18.62-22.365 20.84-30.635 21.204-29.214 20.909-29.058 19.869-29.04 17.06-29.023 12.344-29.04 7.611-29.023 2.895-16.887 1.023-17.147-10.108-29.006-12.83V-18.776C-26.197-17.563-23.371-16.367-20.493-15.066-21.811-23.908-25.122-29.89-29.006-33.652-29.006-38.714-29.006-43.76-29.023-48.822-27.515-47.123-26.249-45.181-25.313-43.014-23.284-39.131-21.828-34.97-19.678-29.942V-54.96H.156C.156-36.426 .433-18.204 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-275.7606,180.8673)\" d=\"M0 0C.537-.069 1.075-.121 1.612-.173 3.138 13.645 14.407 12.448 24.706 13.419 33.305 14.719 30.444 27.133 22.989 27.809 4.421 31.589-.988 15.274 0 0M44.887-5.808C44.887-12.067 44.956-18.395 44.817-24.723 30.479-37.067 .416-35.368-13.09-17.597-32.664 6.276-16.228 46.794 15.725 46.222 51.163 50.33 65.709 4.456 33.912-.087 27.74-1.734 5.981 2.393 5.687-5.288 5.115-9.189 7.871-11.096 11.027-12.24 23.562-17.389 34.709-12.691 44.887-5.808\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-229.1091,101.61809)\" d=\"M0 0H-20.094C-20.094 13.454-20.042 26.977-20.129 40.431-19.799 47.539-22.868 57.421-30.306 58.132-56.312 61.461-46.135 16.124-48.077 .104H-68.188V74.083H-48.163V58.774C-38.61 81.416-7.264 83.948-.971 57.855 1.63 38.888 .607 18.95 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,121.2876,80.31369)\" d=\"M0 0C3.767 80.274-114.99 72.848-116.922-25.289-121.261-117.125-5.883-166.208 56.539-97.69 75.12-78.576 83.575-54.888 83.614-28.279 83.653-1.854 83.468 24.571 83.391 51.005 83.371 54.568 83.371 54.733 79.915 54.481 58.325 52.918 41.055 43.472 28.522 25.755 20.086 13.824 16.746 .33 16.911-14.173 16.979-20.493 17.086-26.852 16.532-33.143 9.834-78.304-55.607-69.149-49.743-23.629-45.938-.699-20.212 10.591 0 0\" fill=\"#e15d46\"/>\n</g>\n</g>\n</svg>\n";
+const LOGO_WORDMARK_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\" version=\"1.1\" width=\"450\" height=\"285\" viewBox=\"0 0 450 285\">\n<defs>\n<clipPath id=\"lword_clip_1\">\n<path transform=\"matrix(1,0,0,-1,-10,364.5)\" d=\"M10 79.5H460V364.5H10Z\" clip-rule=\"evenodd\"/>\n</clipPath>\n<clipPath id=\"lword_clip_2\">\n<path transform=\"matrix(1,0,0,-1,-10,364.5)\" d=\"M0 0H810V424.5H0Z\"/>\n</clipPath>\n</defs>\n<g>\n<g clip-path=\"url(#lword_clip_1)\">\n<g>\n<g clip-path=\"url(#lword_clip_2)\">\n<path transform=\"matrix(1,0,0,-1,-10,364.5)\" d=\"M0 0H810V424.5H0Z\" fill=\"#ffffff\" fill-opacity=\"0\"/>\n</g>\n</g>\n<path transform=\"matrix(1,0,0,-1,188.1518,255.5966)\" d=\"M0 0V.069C0 4.664 3.658 8.651 8.357 8.651 11.443 8.651 13.384 7.23 14.927 5.617L13.801 4.473C12.379 5.912 10.766 7.178 8.322 7.178 4.594 7.178 1.699 4.057 1.699 .121V.069C1.699-3.901 4.698-7.039 8.461-7.039 10.766-7.039 12.57-5.86 13.957-4.317L15.049-5.271C13.384-7.178 11.391-8.53 8.357-8.53 3.641-8.53 0-4.594 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,218.9378,257.5939)\" d=\"M0 0V1.872C-1.387 2.219-3.225 2.601-5.565 2.601-9.033 2.601-10.975 1.058-10.975-1.214V-1.283C-10.975-3.658-8.721-5.045-6.207-5.045-2.861-5.045 0-2.999 0 0M-12.639-1.387V-1.318C-12.639 2.098-9.709 4.022-5.461 4.022-3.19 4.022-1.612 3.728-.035 3.311V4.022C-.035 7.334-2.063 9.033-5.427 9.033-7.438 9.033-9.067 8.495-10.576 7.715L-11.165 9.102C-9.362 9.934-7.594 10.524-5.34 10.524-3.121 10.524-1.352 9.9-.156 8.721 .936 7.628 1.508 6.12 1.508 4.092V-6.137H-.035V-3.415C-1.162-4.976-3.19-6.536-6.311-6.536-9.362-6.536-12.639-4.785-12.639-1.387\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,227.0794,248.78131)\" d=\"M0 0H-2.375V1.439H0V3.051C0 4.924 .52 6.397 1.439 7.334 2.289 8.166 3.433 8.617 4.889 8.617 5.877 8.617 6.588 8.495 7.334 8.235V6.744C6.398 7.039 5.721 7.178 4.889 7.178 2.635 7.178 1.578 5.825 1.578 3.017V1.439H7.299V0H1.578V-14.945H0Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,246.25119,240.3241)\" d=\"M0 0 1.959-.971-1.474-4.282H-2.826Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,249.9162,254.7627)\" d=\"M0 0C-.225 3.311-2.115 6.363-5.877 6.363-9.137 6.363-11.633 3.641-11.928 0ZM-13.592-.798V-.745C-13.592 4.022-10.264 7.819-5.825 7.819-1.214 7.819 1.699 4.092 1.699-.763 1.699-1.058 1.699-1.162 1.664-1.422H-11.928C-11.633-5.496-8.721-7.889-5.496-7.889-2.965-7.889-1.214-6.762 .139-5.305L1.231-6.276C-.451-8.079-2.41-9.362-5.565-9.362-9.865-9.362-13.592-5.912-13.592-.798\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,275.6241,246.8499)\" d=\"M0 0V.069C0 1.352-.867 2.15-2.132 2.15-3.45 2.15-4.3 1.214-4.3-.139V-.191C-4.3-1.196-3.918-1.924-2.999-2.999-1.023-2.254 0-1.422 0 0M-.26-11.876-4.56-7.49C-6.051-8.27-6.658-9.362-6.658-10.454V-10.524C-6.658-12.102-5.34-13.159-3.502-13.159-2.375-13.159-1.283-12.674-.26-11.876M2.514-14.702C.676-16.21-1.474-17.199-4.092-17.199-8.391-17.199-11.651-14.702-11.651-10.715V-10.645C-11.651-7.785-10.09-5.756-7.264-4.473-8.357-2.93-8.842-1.508-8.842 .035V.087C-8.842 3.19-6.363 6.016-2.028 6.016 1.803 6.016 4.317 3.502 4.317 .347V.295C4.317-2.739 2.375-4.508-.416-5.6L2.566-8.582C3.311-7.438 4.057-6.12 4.768-4.733L8.391-6.727C7.524-8.305 6.554-9.969 5.427-11.477L8.755-14.789 5.115-17.337Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,312.5251,255.5966)\" d=\"M0 0V.069C0 4.369-2.999 7.143-6.432 7.143-9.848 7.143-13.124 4.282-13.124 .087V.035C-13.124-4.178-9.848-7.022-6.432-7.022-2.861-7.022 0-4.404 0 0M-14.598 8.27H-13.02V4.594C-11.616 6.744-9.518 8.651-6.276 8.651-2.323 8.651 1.699 5.461 1.699 .121V.069C1.699-5.271-2.323-8.53-6.276-8.53-9.553-8.53-11.668-6.658-13.02-4.594V-13.28H-14.598Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,330.4467,257.5939)\" d=\"M0 0V1.872C-1.387 2.219-3.225 2.601-5.565 2.601-9.033 2.601-10.975 1.058-10.975-1.214V-1.283C-10.975-3.658-8.721-5.045-6.207-5.045-2.861-5.045 0-2.999 0 0M-12.639-1.387V-1.318C-12.639 2.098-9.709 4.022-5.461 4.022-3.19 4.022-1.612 3.728-.035 3.311V4.022C-.035 7.334-2.063 9.033-5.427 9.033-7.42 9.033-9.067 8.495-10.576 7.715L-11.165 9.102C-9.362 9.934-7.594 10.524-5.34 10.524-3.121 10.524-1.352 9.9-.156 8.721 .936 7.628 1.508 6.12 1.508 4.092V-6.137H-.035V-3.415C-1.162-4.976-3.19-6.536-6.311-6.536-9.362-6.536-12.639-4.785-12.639-1.387\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,338.3318,259.5235)\" d=\"M0 0V10.749H-2.375V12.188H0V17.424H1.578V12.188H7.334V10.749H1.578V.156C1.578-2.185 2.965-3.017 4.854-3.017 5.669-3.017 6.328-2.861 7.264-2.445V-3.918C6.432-4.3 5.635-4.508 4.594-4.508 2.063-4.508 0-3.121 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-10,364.5)\" d=\"M360.563 117.17H362.141V100.769H360.563Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-10,364.5)\" d=\"M360.373 123.602H362.332V121.435H360.373Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,356.9296,261.6769)\" d=\"M0 0 .936 1.248C2.739-.121 4.733-.902 6.814-.902 9.033-.902 10.766 .329 10.766 2.219V2.289C10.766 4.213 8.721 4.924 6.432 5.565 3.762 6.328 .798 7.143 .798 10.073V10.125C.798 12.76 3.017 14.667 6.207 14.667 8.166 14.667 10.385 13.957 12.032 12.864L11.183 11.547C9.674 12.535 7.871 13.194 6.137 13.194 3.884 13.194 2.41 11.963 2.41 10.316V10.264C2.41 8.426 4.629 7.75 6.97 7.074 9.622 6.328 12.379 5.375 12.379 2.479V2.41C12.379-.52 9.865-2.375 6.727-2.375 4.334-2.375 1.734-1.404 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,372.5974,261.6769)\" d=\"M0 0 .936 1.248C2.739-.121 4.733-.902 6.814-.902 9.033-.902 10.766 .329 10.766 2.219V2.289C10.766 4.213 8.721 4.924 6.432 5.565 3.762 6.328 .798 7.143 .798 10.073V10.125C.798 12.76 3.017 14.667 6.207 14.667 8.166 14.667 10.385 13.957 12.032 12.864L11.183 11.547C9.674 12.535 7.871 13.194 6.137 13.194 3.884 13.194 2.41 11.963 2.41 10.316V10.264C2.41 8.426 4.629 7.75 6.97 7.074 9.622 6.328 12.379 5.375 12.379 2.479V2.41C12.379-.52 9.865-2.375 6.727-2.375 4.334-2.375 1.734-1.404 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,402.4784,254.7627)\" d=\"M0 0C-.225 3.311-2.115 6.363-5.877 6.363-9.137 6.363-11.633 3.641-11.928 0ZM-13.61-.798V-.745C-13.61 4.022-10.264 7.819-5.825 7.819-1.214 7.819 1.699 4.092 1.699-.763 1.699-1.058 1.699-1.162 1.664-1.404H-11.928C-11.633-5.496-8.721-7.889-5.496-7.889-2.965-7.889-1.214-6.762 .139-5.305L1.214-6.276C-.451-8.079-2.41-9.362-5.565-9.362-9.865-9.362-13.61-5.912-13.61-.798\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,408.7891,247.3354)\" d=\"M0 0H1.578V-4.664C2.861-1.734 5.6 .381 8.842 .26V-1.474H8.686C4.889-1.474 1.578-4.334 1.578-9.674V-16.401H0Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-10,364.5)\" d=\"M431.889 117.17H433.467V100.769H431.889Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,-10,364.5)\" d=\"M431.699 123.602H433.65803V121.435H431.699Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,442.1463,254.7627)\" d=\"M0 0C-.225 3.311-2.115 6.363-5.877 6.363-9.137 6.363-11.633 3.641-11.928 0ZM-13.61-.798V-.745C-13.61 4.022-10.264 7.819-5.825 7.819-1.214 7.819 1.699 4.092 1.699-.763 1.699-1.058 1.699-1.162 1.664-1.404H-11.928C-11.633-5.496-8.721-7.889-5.496-7.889-2.965-7.889-1.214-6.762 .139-5.305L1.214-6.276C-.451-8.079-2.41-9.362-5.565-9.362-9.865-9.362-13.61-5.912-13.61-.798\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,347.7841,117.334308)\" d=\"M0 0 .347-104.354H20.163V0Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,411.6534,180.1408)\" d=\"M0 0C15.725 1.526 16.141 16.02 0 16.471-15.586 16.869-15.413 .572 0 0M11.477-1.768C2.93-5.635-5.392-8.565-13.055-13.679-25.607-28.295 6.588-34.519 11.477-1.768M32.126-41.644H12.292V-16.644C10.142-21.654 8.686-25.833 6.658-29.699-1.144-47.799-31.277-50.001-35.819-29.56-39.911-12.778-21.758-7.524-9.033-3.693-18.274-2.202-29.959-.277-31.866 10.749-34.189 36.825 6.935 39.668 22.833 28.121 27.965 24.48 31.814 19.505 31.97 13.315 32.404-4.889 32.126-23.111 32.126-41.644\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,242.1456,72.36981)\" d=\"M0 0C-2.861-1.3-5.704-2.497-8.513-3.693-8.513-8.651-8.495-13.61-8.495-18.568-4.629-14.806-1.318-8.825 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,220.9923,205.7186)\" d=\"M0 0C14.771-.832 19.557 17.025 20.562 29.161 22.105 33.669 18.308 35.992 15.326 38.472 12.726 40.569 10.194 41.835 7.767 42.477 4.057 29.976-1.872 18.343-10.229 7.767-8.27 3.71-5.132 .711 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,233.6156,54.39789)\" d=\"M0 0C0-5.236 .017-10.489 .017-15.725 11.876-13.003 12.136-1.89 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,233.6416,76.06781)\" d=\"M0 0C-5.548-2.393-10.94-4.82-16.02-8.218-25.191-18.898-10.489-25.07 0-14.875Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,230.6752,54.134309)\" d=\"M0 0C-15.586 .399-15.413-15.898 0-16.471 1.058-16.366 2.046-16.21 2.965-15.985 2.965-10.749 2.947-5.513 2.947-.26 2.028-.121 1.058-.035 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,188.795,172.2107)\" d=\"M0 0C3.329 23.301 27.376 33.496 43.083 22.435 44.228 29.196 44.8 36.183 44.8 43.361 44.817 50.937 44.817 58.514 44.835 66.09 33.86 53.607 10.056 54.075 6.068 72.037 1.976 88.837 20.111 94.073 32.854 97.922 23.614 99.395 11.928 101.337 10.021 112.364 9.119 122.471 14.754 129.077 22.92 132.718 6.9 128.019-6.397 118.432-16.765 103.764-26.197 90.432-29.942 75.348-29.751 59.121-29.664 52.064-29.56 44.956-30.167 37.934-37.657-12.535-110.786-2.306-104.25 48.562-99.985 74.187-71.239 86.808-48.649 74.967-44.436 164.688-177.171 156.401-179.321 46.707-184.019-52.498-63.732-107.041 7.316-41.471-.295-31.866-4.334-16.783 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,209.1906,193.6519)\" d=\"M0 0C.416-1.526 .936-2.965 1.578-4.3 9.934 6.276 15.846 17.91 19.574 30.41 5.045 34.293-5.271 14.702 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,242.7177,117.334308)\" d=\"M0 0V-47.574C-2.445-40.604-6.293-35.646-10.836-32.438-11.599-37.033-12.656-41.523-13.957-45.909-11.529-46.551-8.998-47.817-6.398-49.897-3.415-52.394 .381-54.717-1.162-59.207-2.167-71.361-6.952-89.218-21.724-88.386-26.856-87.675-29.994-84.676-31.953-80.619-34.241-83.514-36.721-86.358-39.373-89.08-41.714-91.663-44.124-94.073-46.603-96.344-33.479-112.866-9.744-113.161 .347-77.949V-104.354H20.163V0Z\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,262.6437,57.29489)\" d=\"M0 0C-.139 6.189-4.005 11.183-9.137 14.823-14.39 18.62-22.365 20.84-30.635 21.204-29.214 20.909-29.058 19.869-29.04 17.06-29.023 12.344-29.04 7.611-29.023 2.895-16.887 1.023-17.147-10.108-29.006-12.83V-18.776C-26.197-17.563-23.371-16.367-20.493-15.066-21.811-23.908-25.122-29.89-29.006-33.652-29.006-38.714-29.006-43.76-29.023-48.822-27.515-47.123-26.249-45.181-25.313-43.014-23.284-39.131-21.828-34.97-19.678-29.942V-54.96H.156C.156-36.426 .433-18.204 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,288.0394,191.4673)\" d=\"M0 0C.537-.069 1.075-.121 1.612-.173 3.138 13.645 14.407 12.448 24.706 13.419 33.305 14.719 30.444 27.133 22.989 27.809 4.421 31.589-.988 15.274 0 0M44.887-5.808C44.887-12.067 44.956-18.395 44.817-24.723 30.479-37.067 .416-35.368-13.09-17.597-32.664 6.276-16.228 46.794 15.725 46.222 51.163 50.33 65.709 4.456 33.912-.087 27.74-1.734 5.981 2.393 5.687-5.288 5.115-9.189 7.871-11.096 11.027-12.24 23.562-17.389 34.709-12.691 44.887-5.808\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,334.6909,112.218097)\" d=\"M0 0H-20.094C-20.094 13.454-20.042 26.977-20.129 40.431-19.799 47.539-22.868 57.421-30.306 58.132-56.312 61.461-46.135 16.124-48.077 .104H-68.188V74.083H-48.163V58.774C-38.61 81.416-7.264 83.948-.971 57.855 1.63 38.888 .607 18.95 0 0\" fill=\"#e15d46\"/>\n<path transform=\"matrix(1,0,0,-1,685.0876,90.9137)\" d=\"M0 0C3.767 80.274-114.99 72.848-116.922-25.289-121.261-117.125-5.883-166.208 56.539-97.69 75.12-78.576 83.575-54.888 83.614-28.279 83.653-1.854 83.468 24.571 83.391 51.005 83.371 54.568 83.371 54.733 79.915 54.481 58.325 52.918 41.055 43.472 28.522 25.755 20.086 13.824 16.746 .33 16.911-14.173 16.979-20.493 17.086-26.852 16.532-33.143 9.834-78.304-55.607-69.149-49.743-23.629-45.938-.699-20.212 10.591 0 0\" fill=\"#e15d46\"/>\n</g>\n</g>\n</svg>\n";
+
+function clienteKey(phone, name) {
+  if (phone) return "p_" + phone.replace(/\D/g, "");
+  return "n_" + name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+}
+function uidLike() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+async function crearPedidoCliente({ presupuesto, local, vendedor, hora, sena }) {
+  const counterSnap = await runTransaction(ref(clientesDb, "orderCounter"), current => (current || 0) + 1);
+  const num = counterSnap.snapshot.val();
+  const orderNum = String(num).padStart(4, "0");
+
+  const items = {};
+  (presupuesto.items || []).forEach(it => {
+    const id = uidLike();
+    items[id] = { id, menuId: "", name: it.descripcion, team: it.area || "pan", qty: it.cantidad, acl: "", done: false };
+  });
+
+  const order = {
+    client: presupuesto.cliente?.nombre || "",
+    phone: presupuesto.cliente?.telefono || "",
+    local,
+    vendedor,
+    deliveryDateTime: `${presupuesto.fechaEntrega}T${hora}`,
+    sena: sena || "",
+    notes: `${presupuesto.notas ? presupuesto.notas + " — " : ""}Presupuesto #${presupuesto.numero} · Total: ${fmtMoney(presupuesto.total)}`,
+    items,
+    status: "pending",
+    orderNum,
+    createdAt: new Date().toISOString()
+  };
+
+  const orderRef = await push(ref(clientesDb, "orders"), order);
+
+  const key = clienteKey(order.phone, order.client);
+  await runTransaction(ref(clientesDb, `clients/${key}`), cur => {
+    const now = new Date().toISOString();
+    if (!cur) {
+      return { key, name: order.client, phone: order.phone || "", firstOrderAt: now, lastOrderAt: now, totalOrders: 1, orderIds: { [orderRef.key]: true } };
+    }
+    return { ...cur, name: order.client, phone: order.phone || cur.phone || "", lastOrderAt: now, totalOrders: (cur.totalOrders || 0) + 1, orderIds: { ...(cur.orderIds || {}), [orderRef.key]: true } };
+  });
+
+  return { orderId: orderRef.key, orderNum };
+}
+
+const DEFAULT_ADMIN_PASS = "presupuestos2025";
+const ESTADOS = ["borrador", "enviado", "aceptado", "rechazado"];
+const ESTADO_LABELS = { borrador: "Borrador", enviado: "Enviado", aceptado: "Aceptado", rechazado: "Rechazado" };
+
+const TABS = [
+  { key: "nuevo",         label: "📝 Nuevo presupuesto" },
+  { key: "presupuestos",  label: "📄 Presupuestos" },
+  { key: "clientes",      label: "👥 Clientes" },
+  { key: "cantidades",    label: "🧮 Cantidades por evento" },
+  { key: "config",        label: "⚙️ Configuración" },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CALCULADORA DE CANTIDADES POR EVENTO
+// Sirve de borrador y ayuda memoria: "para 40 personas en un coffee break, ¿cuánto
+// de cada cosa hago?". Las plantillas son EDITABLES — las cantidades por persona son
+// conocimiento del negocio, no del sistema; estas son solo un punto de partida para
+// no arrancar de una pantalla vacía.
+// ─────────────────────────────────────────────────────────────────────────────
+const PLANTILLAS_EVENTO_INICIALES = [
+  { nombre: "☕ Coffee break", notas: "Media mañana o media tarde, 30–45 min.", renglones: [
+    { nombre: "Bocaditos dulces (mini facturas, alfajorcitos)", porPersona: 3, unidad: "unidades", modo: "persona", nota: "" },
+    { nombre: "Bocaditos salados (mini sándwiches, tartaletas)", porPersona: 2, unidad: "unidades", modo: "persona", nota: "" },
+    { nombre: "Café / té / infusiones", porPersona: 1.5, unidad: "tazas", modo: "persona", nota: "Siempre se sirve más de una vuelta." },
+    { nombre: "Jugo / agua saborizada", porPersona: 0.25, unidad: "litros", modo: "persona", nota: "" }
+  ]},
+  { nombre: "🥐 Desayuno / Merienda", notas: "Servicio sentado.", renglones: [
+    { nombre: "Medialunas", porPersona: 2, unidad: "unidades", modo: "persona", nota: "" },
+    { nombre: "Sándwiches de miga (triángulos)", porPersona: 3, unidad: "unidades", modo: "persona", nota: "" },
+    { nombre: "Café con leche / infusión", porPersona: 1, unidad: "tazas", modo: "persona", nota: "" },
+    { nombre: "Jugo de naranja", porPersona: 0.2, unidad: "litros", modo: "persona", nota: "" }
+  ]},
+  { nombre: "🎂 Cumpleaños infantil", notas: "2–3 horas. Los chicos comen bastante menos que un adulto.", renglones: [
+    { nombre: "Bocaditos salados", porPersona: 5, unidad: "unidades", modo: "persona", nota: "Contar los adultos aparte: comen el doble." },
+    { nombre: "Bocaditos dulces / mesa dulce", porPersona: 4, unidad: "unidades", modo: "persona", nota: "" },
+    { nombre: "Torta (porciones)", porPersona: 1, unidad: "porciones", modo: "persona", nota: "" },
+    { nombre: "Gaseosa / jugo", porPersona: 0.4, unidad: "litros", modo: "persona", nota: "" }
+  ]},
+  { nombre: "🥂 Cumpleaños adulto / After office", notas: "3–4 horas, servicio de pie.", renglones: [
+    { nombre: "Bocaditos salados", porPersona: 8, unidad: "unidades", modo: "persona", nota: "Si reemplaza la cena, subir a 12." },
+    { nombre: "Bocaditos dulces / mesa dulce", porPersona: 4, unidad: "unidades", modo: "persona", nota: "" },
+    { nombre: "Torta (porciones)", porPersona: 1, unidad: "porciones", modo: "persona", nota: "" },
+    { nombre: "Bebida sin alcohol", porPersona: 0.5, unidad: "litros", modo: "persona", nota: "" }
+  ]},
+  { nombre: "💍 Casamiento / Mesa dulce", notas: "Mesa dulce de cierre.", renglones: [
+    { nombre: "Piezas de mesa dulce", porPersona: 7, unidad: "unidades", modo: "persona", nota: "Entre 6 y 8 según cuántas variedades haya." },
+    { nombre: "Torta (porciones)", porPersona: 1, unidad: "porciones", modo: "persona", nota: "" },
+    { nombre: "Torta principal", porPersona: 1, unidad: "unidad", modo: "fijo", nota: "Una sola, sin importar los invitados." }
+  ]}
+];
+
+const state = {
+  loggedIn: false,
+  view: "nuevo",
+  formOpen: false,
+  mobileNavOpen: false,
+  presupuestos: {},
+  config: {},
+  filtro: "todos",
+  busqueda: "",
+  viewingId: null,
+  aceptandoId: null,
+  plantillasEvento: {},
+  borradores: {},
+  calcPlantillaId: "",
+  calcPersonas: 40,
+  calcRenglones: null,   // null = todavía no se eligió plantilla
+  calcNombre: "",
+  calcNotas: "",
+  editandoPlantillaId: null,
+  verBorradorId: null,
+  editandoId: null,
+  _duplicando: null,
+  clientesBusqueda: "",
+  verClienteKey: null,
+};
+
+// ── Helpers ──────────────────────────────────────────────
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function todayISO() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+function fmtMoney(n) {
+  const num = Number(n) || 0;
+  return "$" + num.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function showToast(msg, type = "success") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "show " + type;
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.className = ""; }, 3200);
+}
+function objToSortedEntries(obj, cmp) {
+  return Object.entries(obj || {}).sort(cmp);
+}
+function stripAccents(s) {
+  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+const CAFETERIA_LEGEND = "*El servicio de cafetería incluye personal capacitado durante 2 horas, mantel, café caliente, vasos descartables, endulzantes, servilletas, removedores y variedad de tés, a libre demanda.";
+function esItemCafeteria(it) {
+  if (!it) return false;
+  if (it.area === "cafe") return true;
+  return stripAccents(it.descripcion || "").toLowerCase().includes("cafeteria");
+}
+function calcTotales(items, descuento) {
+  const subtotal = (items || []).reduce((sum, it) => sum + (Number(it.cantidad) || 0) * (Number(it.precioUnitario) || 0), 0);
+  const total = Math.max(0, subtotal - (Number(descuento) || 0));
+  return { subtotal, total };
+}
+
+// ── Auth ─────────────────────────────────────────────────
+async function attemptLogin(password) {
+  // La contraseña vive en la base y llega por onValue, que es ASINCRÓNICO: al abrir la app,
+  // state.config todavía está vacío. Antes, si alguien apretaba "Ingresar" en ese instante (o con
+  // la conexión lenta), el código concluía que no había ninguna contraseña guardada y ESCRIBÍA la
+  // de fábrica ENCIMA de la real — y a partir de ahí la contraseña buena dejaba de funcionar.
+  // Por eso, antes de dar por hecho que no hay contraseña, se lee el valor autoritativo de la base.
+  let pass = state.config.adminPassword;
+  if (!pass) {
+    try {
+      const snap = await get(ref(db, "presupuestos/config/adminPassword"));
+      pass = snap.val() || "";
+    } catch (e) {
+      // Sin conexión no se puede verificar nada; es preferible fallar el login a pisar la
+      // contraseña guardada con la de fábrica.
+      console.error("No se pudo leer la contraseña guardada:", e);
+      throw e;
+    }
+  }
+  if (!pass) {
+    // Recién acá se puede afirmar que la base no tiene ninguna contraseña: primer uso.
+    pass = DEFAULT_ADMIN_PASS;
+    await set(ref(db, "presupuestos/config/adminPassword"), pass);
+  }
+  if (password === pass) { state.loggedIn = true; return true; }
+  return false;
+}
+
+window.handleLoginSubmit = async function() {
+  const input = document.getElementById("login-pass");
+  const err = document.getElementById("login-err");
+  const btn = document.getElementById("login-btn");
+  btn.disabled = true; btn.textContent = "Ingresando...";
+  try {
+    const ok = await attemptLogin(input.value);
+    if (ok) { err.style.display = "none"; render(); }
+    else { err.style.display = "block"; btn.disabled = false; btn.textContent = "Ingresar"; }
+  } catch (e) {
+    console.error(e);
+    err.textContent = "Error de conexión. Verificá tu internet.";
+    err.style.display = "block";
+    btn.disabled = false; btn.textContent = "Ingresar";
+  }
+};
+
+window.handleLogout = function() {
+  state.loggedIn = false;
+  state.view = "nuevo";
+  state.formOpen = false;
+  render();
+};
+
+// ── Navigation ───────────────────────────────────────────
+// Cambiar de pestaña sí debe volver al tope; el resto de los re-render conservan la posición
+// (ver render()), porque si no la página salta al inicio en cada click.
+let _resetScrollEnProximoRender = false;
+window.navigate = function(view) {
+  state.view = view;
+  state.formOpen = false;
+  state.mobileNavOpen = false;
+  state.viewingId = null;
+  _resetScrollEnProximoRender = true;
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+window.toggleMobileNav = function() { state.mobileNavOpen = !state.mobileNavOpen; render(); };
+
+// ── Root render ──────────────────────────────────────────
+function render() {
+  const root = document.getElementById("app");
+  if (!state.loggedIn) { root.innerHTML = renderLogin(); return; }
+
+  // render() reconstruye todo el DOM y eso resetea el scroll: se guarda y restaura la posición.
+  const scrollPrevio = _resetScrollEnProximoRender ? 0 : window.scrollY;
+  _resetScrollEnProximoRender = false;
+  root.innerHTML = `
+    <div class="header no-print">
+      <div class="logo">
+        <div class="brand-mark-nav">${LOGO_MARK_SVG}</div>
+        <div class="logo-text-wrap"><span class="logo-name">Candela</span><span class="logo-sub">Presupuestos</span></div>
+      </div>
+      <div class="nav-desktop">
+        ${TABS.map(t => `<button class="nav-btn ${state.view === t.key ? "active" : ""}" onclick="navigate('${t.key}')">${t.label}</button>`).join("")}
+        <button class="nav-logout" onclick="handleLogout()">Salir</button>
+      </div>
+      <button class="nav-hamburger" onclick="toggleMobileNav()"><span></span><span></span><span></span></button>
+    </div>
+    <div class="nav-mobile-menu no-print ${state.mobileNavOpen ? "open" : ""}">
+      ${TABS.map(t => `<button class="nav-mobile-btn ${state.view === t.key ? "active" : ""}" onclick="navigate('${t.key}')">${t.label}</button>`).join("")}
+      <button class="nav-mobile-btn" onclick="handleLogout()">🚪 Salir</button>
+    </div>
+    <div class="main" id="main-content"></div>`;
+
+  const container = document.getElementById("main-content");
+  switch (state.view) {
+    case "nuevo": renderNuevoView(container); break;
+    case "presupuestos": renderListadoView(container); break;
+    case "clientes": renderClientesView(container); break;
+    case "cantidades": renderCantidadesView(container); break;
+    case "config": renderConfigView(container); break;
+    default: container.innerHTML = `<div class="empty-state">Vista no encontrada.</div>`;
+  }
+  if (scrollPrevio > 0) window.scrollTo(0, scrollPrevio);
+}
+
+function renderLogin() {
+  return `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-title">Presupuestos</div>
+        <div class="login-sub">Acceso exclusivo de administración</div>
+        <div class="admin-form">
+          <div class="form-group"><label class="form-label">Contraseña</label>
+            <input class="form-input" type="password" id="login-pass" placeholder="••••••" onkeydown="if(event.key==='Enter')handleLoginSubmit()"></div>
+          <button class="btn btn-primary" id="login-btn" onclick="handleLoginSubmit()">Ingresar</button>
+          <div id="login-err" style="color:var(--terra);font-size:12px;display:none">Contraseña incorrecta.<div style="color:var(--gray);margin-top:6px;line-height:1.5">Si no la recordás, se puede ver y cambiar en la consola de Firebase (Realtime Database → <code>presupuestos/config/adminPassword</code>). La de fábrica es <code>presupuestos2025</code>.</div></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Firebase listeners ───────────────────────────────────
+function attachListeners() {
+  onValue(ref(db, "presupuestos/items"), snap => { state.presupuestos = snap.val() || {}; if (!state.formOpen) render(); });
+  onValue(ref(db, "presupuestos/config"), snap => { state.config = snap.val() || {}; });
+  onValue(ref(db, "presupuestos/plantillasEvento"), snap => { state.plantillasEvento = snap.val() || {}; if (!state.formOpen) render(); });
+  onValue(ref(db, "presupuestos/borradoresCantidades"), snap => { state.borradores = snap.val() || {}; if (!state.formOpen) render(); });
+}
+
+// =============================================================
+// ÍTEMS LIBRES (fila de presupuesto)
+// =============================================================
+function itemRowHtml({ descripcion = "", area = "pan", cantidad = "", precioUnitario = "" } = {}) {
+  const subtotal = (Number(cantidad) > 0 && Number(precioUnitario) > 0) ? fmtMoney(Number(cantidad) * Number(precioUnitario)) : "—";
+  const areaOptions = Object.entries(TEAMS).map(([k, t]) => `<option value="${k}" ${k === area ? "selected" : ""}>${t.icon} ${t.name}</option>`).join("");
+  return `
+    <div class="item-row">
+      <input type="text" class="form-input item-descripcion" placeholder="Descripción (ej. Torta temática Frozen 30 personas)" value="${escapeHtml(descripcion)}">
+      <select class="form-select item-area">${areaOptions}</select>
+      <input type="number" step="0.01" min="0" class="form-input item-cantidad" placeholder="Cant." value="${cantidad ?? ""}" oninput="updateItemSubtotal(this)">
+      <input type="number" step="0.01" min="0" class="form-input item-precio" placeholder="$ unit." value="${precioUnitario ?? ""}" oninput="updateItemSubtotal(this)">
+      <div class="text-muted item-subtotal">${subtotal}</div>
+      <button type="button" class="btn btn-danger btn-sm no-print" onclick="this.closest('.item-row').remove();updateTotalPreview()">✕</button>
+    </div>`;
+}
+window.addItemRow = function() {
+  document.getElementById("items-container").insertAdjacentHTML("beforeend", itemRowHtml());
+};
+
+// =============================================================
+// ADICIONALES / EXTRAS
+// =============================================================
+// Van al final del presupuesto y NO se suman al total. Son cosas que el cliente puede sumar si
+// quiere: se cotizan para que sepa cuánto costarían, pero lo presupuestado es lo de arriba. Por
+// eso viven en su propia lista y en su propio bloque impreso — meterlos entre los ítems, aunque
+// fuera con una marca, es pedirle a quien lee el PDF que descuente de memoria.
+function adicionalRowHtml({ descripcion = "", cantidad = "", precioUnitario = "" } = {}) {
+  const subtotal = (Number(cantidad) > 0 && Number(precioUnitario) > 0) ? fmtMoney(Number(cantidad) * Number(precioUnitario)) : "—";
+  return `
+    <div class="item-row adicional-row">
+      <input type="text" class="form-input adic-descripcion" placeholder="Descripción (ej. Servicio de mozo por hora)" value="${escapeHtml(descripcion)}">
+      <input type="number" step="0.01" min="0" class="form-input adic-cantidad" placeholder="Cant." value="${cantidad ?? ""}" oninput="updateAdicionalSubtotal(this)">
+      <input type="number" step="0.01" min="0" class="form-input adic-precio" placeholder="$ unit." value="${precioUnitario ?? ""}" oninput="updateAdicionalSubtotal(this)">
+      <div class="text-muted adic-subtotal">${subtotal}</div>
+      <button type="button" class="btn btn-danger btn-sm no-print" onclick="this.closest('.adicional-row').remove();updateTotalPreview()">✕</button>
+    </div>`;
+}
+window.addAdicionalRow = function() {
+  document.getElementById("adicionales-container").insertAdjacentHTML("beforeend", adicionalRowHtml());
+};
+window.updateAdicionalSubtotal = function(el) {
+  const row = el.closest(".adicional-row");
+  const cant = parseFloat(row.querySelector(".adic-cantidad").value) || 0;
+  const precio = parseFloat(row.querySelector(".adic-precio").value) || 0;
+  row.querySelector(".adic-subtotal").textContent = (cant > 0 && precio > 0) ? fmtMoney(cant * precio) : "—";
+  updateTotalPreview();
+};
+function leerAdicionalesDelForm() {
+  return Array.from(document.querySelectorAll("#adicionales-container .adicional-row")).map(row => ({
+    descripcion: row.querySelector(".adic-descripcion").value.trim(),
+    cantidad: parseFloat(row.querySelector(".adic-cantidad").value) || 0,
+    precioUnitario: parseFloat(row.querySelector(".adic-precio").value) || 0
+  })).filter(a => a.descripcion);
+}
+function totalAdicionales(adicionales) {
+  return (adicionales || []).reduce((sum, a) => sum + (Number(a.cantidad) || 0) * (Number(a.precioUnitario) || 0), 0);
+}
+window.updateItemSubtotal = function(el) {
+  const row = el.closest(".item-row");
+  const cant = parseFloat(row.querySelector(".item-cantidad").value) || 0;
+  const precio = parseFloat(row.querySelector(".item-precio").value) || 0;
+  row.querySelector(".item-subtotal").textContent = (cant > 0 && precio > 0) ? fmtMoney(cant * precio) : "—";
+  updateTotalPreview();
+};
+window.updateTotalPreview = function() {
+  const rows = Array.from(document.querySelectorAll("#items-container .item-row"));
+  const items = rows.map(row => ({
+    cantidad: parseFloat(row.querySelector(".item-cantidad").value) || 0,
+    precioUnitario: parseFloat(row.querySelector(".item-precio").value) || 0
+  }));
+  const descuento = parseFloat(document.getElementById("p-descuento")?.value) || 0;
+  const { subtotal, total } = calcTotales(items, descuento);
+  const subEl = document.getElementById("subtotal-preview");
+  const totEl = document.getElementById("total-preview");
+  if (subEl) subEl.textContent = fmtMoney(subtotal);
+  if (totEl) totEl.textContent = fmtMoney(total);
+  // El total de los adicionales se muestra SIEMPRE aparte y nunca entra en `total`: si se sumara
+  // acá, el presupuesto diría un número que el cliente no pidió.
+  const adicEl = document.getElementById("adicionales-preview");
+  if (adicEl) {
+    const suma = totalAdicionales(leerAdicionalesDelForm());
+    adicEl.textContent = suma > 0 ? `Adicionales (aparte, no incluidos): ${fmtMoney(suma)}` : "";
+  }
+};
+
+// =============================================================
+// NUEVO PRESUPUESTO
+// =============================================================
+function renderNuevoView(container) {
+  // Si se viene desde la calculadora de cantidades, las líneas ya vienen con la descripción y la
+  // cantidad calculada: solo falta ponerles precio. Se consumen una sola vez.
+  const desdeCantidades = state._itemsDesdeCantidades;
+  state._itemsDesdeCantidades = null;
+  // Editar o duplicar un presupuesto ya hecho: se precargan sus datos para no reescribir todo.
+  // Editar conserva el número y el estado; duplicar arma uno nuevo con los mismos ítems.
+  const editando = state.editandoId ? state.presupuestos[state.editandoId] : null;
+  const base = editando || (state._duplicando || null);
+  const itemsPrecargados = base && Array.isArray(base.items) && base.items.length
+    ? base.items.map(it => itemRowHtml(it)).join("")
+    : (desdeCantidades && desdeCantidades.length ? desdeCantidades.map(it => itemRowHtml(it)).join("") : itemRowHtml());
+  const adicionalesPrecargados = (base && Array.isArray(base.adicionales) && base.adicionales.length)
+    ? base.adicionales.map(a => adicionalRowHtml(a)).join("")
+    : "";
+  const notasGuardadas = Array.isArray(state.config.notasGuardadas) ? state.config.notasGuardadas : [];
+  state.formOpen = true;
+  container.innerHTML = `
+    <div class="page-title">${editando ? `Editar presupuesto #${editando.numero}` : (base ? "Nuevo presupuesto (copia)" : "Nuevo presupuesto")}</div>
+    <div class="page-sub">${editando
+      ? "Estás modificando un presupuesto ya guardado: conserva su número y su estado."
+      : (base ? "Copia de un presupuesto anterior: cambiá lo que haga falta y guardalo como uno nuevo." : "Armá una cotización para un cliente con ítems libres. El total se calcula solo.")}</div>
+    ${editando && editando.estado === "aceptado" ? `<div class="section-block" style="border-color:var(--terra)"><strong>⚠️ Este presupuesto ya fue aceptado</strong><div class="text-muted">Ya se generó el pedido del cliente con estos valores. Si lo cambiás acá, el pedido que ya salió no se actualiza solo.</div></div>` : ""}
+    <div id="nuevo-form" class="section-block">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre del cliente</label>
+          <input class="form-input" id="p-cliente-nombre" placeholder="Nombre y apellido" list="clientes-conocidos" value="${escapeHtml(base ? (base.cliente?.nombre || "") : "")}" oninput="mostrarHistorialCliente(this.value)">
+          <datalist id="clientes-conocidos">${listaClientes().map(c => `<option value="${escapeHtml(c.nombre)}">`).join("")}</datalist>
+          <div id="cliente-historial" class="text-muted" style="font-size:11px;margin-top:4px"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Teléfono</label><input class="form-input" id="p-cliente-telefono" placeholder="11-2345-6789" value="${escapeHtml(base ? (base.cliente?.telefono || "") : "")}"></div>
+        <div class="form-group"><label class="form-label">Fecha de entrega / evento</label><input type="date" class="form-input" id="p-fecha-entrega" value="${escapeHtml(editando ? (editando.fechaEntrega || todayISO()) : todayISO())}"></div>
+      </div>
+
+      <div class="section-header" style="margin-top:10px">
+        <div class="section-title">🧾 Ítems del presupuesto</div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addItemRow()">+ Agregar ítem</button>
+      </div>
+      <div class="item-row-wrap">
+        <div class="item-row item-row-header"><div>Descripción</div><div>Área que lo prepara</div><div>Cantidad</div><div>Precio unit.</div><div>Subtotal</div><div></div></div>
+        <div id="items-container">${itemsPrecargados}</div>
+      </div>
+
+      <div class="form-row" style="margin-top:14px">
+        <div class="form-group" style="max-width:220px"><label class="form-label">Descuento (monto, opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="p-descuento" value="${editando ? (editando.descuento || 0) : 0}" oninput="updateTotalPreview()"></div>
+      </div>
+
+      <div class="section-header" style="margin-top:16px">
+        <div class="section-title">➕ Adicionales / extras (no entran en el total)</div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addAdicionalRow()">+ Agregar adicional</button>
+      </div>
+      <div class="text-muted" style="font-size:11px;margin-bottom:8px">Se imprimen al final, en un bloque aparte y con su precio, para que el cliente sepa cuánto costarían si los suma. El total presupuestado no los incluye.</div>
+      <div class="item-row-wrap">
+        <div class="item-row adicional-row item-row-header"><div>Descripción</div><div>Cantidad</div><div>Precio unit.</div><div>Subtotal</div><div></div></div>
+        <div id="adicionales-container">${adicionalesPrecargados}</div>
+      </div>
+      <div class="form-group" style="margin-top:4px">
+        <label class="form-label">Notas y aclaraciones (opcional)</label>
+        <textarea class="form-input" id="p-notas" rows="4" placeholder="Una aclaración por párrafo. Ej.:&#10;Seña del 50% al confirmar.&#10;Presupuesto válido por 15 días.&#10;La entrega incluye traslado dentro de la ciudad.">${escapeHtml(editando ? (editando.notas || "") : "")}</textarea>
+        <div class="text-muted" style="font-size:11px;margin-top:4px">Cada renglón se imprime como un párrafo aparte en el presupuesto.</div>
+        ${notasGuardadas.length ? `<div style="margin-top:8px">
+          <div class="text-muted" style="font-size:11px;margin-bottom:4px">Aclaraciones que usás seguido — tocá para agregarlas:</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${notasGuardadas.map((n, i) => `<button type="button" class="btn btn-ghost btn-sm" onclick="agregarNotaGuardada(${i})">+ ${escapeHtml(n.length > 42 ? n.slice(0, 42) + "…" : n)}</button>`).join("")}
+          </div>
+        </div>` : ""}
+      </div>
+
+      <div class="total-line">Subtotal: <span id="subtotal-preview">—</span></div>
+      <div class="total-line grand">Total: <span id="total-preview">$0,00</span></div>
+      <div class="text-muted" id="adicionales-preview" style="text-align:right;font-size:12px;margin-top:2px"></div>
+
+      <button class="btn btn-primary" style="margin-top:10px" onclick="guardarPresupuesto()" id="guardar-btn">💾 ${editando ? "Guardar cambios" : "Guardar presupuesto"}</button>
+      ${editando || base ? `<button class="btn btn-ghost" style="margin-top:10px" onclick="cancelarEdicion()">Cancelar</button>` : ""}
+    </div>`;
+}
+
+window.guardarPresupuesto = async function() {
+  const nombre = document.getElementById("p-cliente-nombre").value.trim();
+  const telefono = document.getElementById("p-cliente-telefono").value.trim();
+  const fechaEntrega = document.getElementById("p-fecha-entrega").value;
+  const descuento = parseFloat(document.getElementById("p-descuento").value) || 0;
+  const notas = document.getElementById("p-notas").value.trim();
+
+  if (!nombre) { showToast("⚠️ Ingresá el nombre del cliente.", "warn"); return; }
+  if (!fechaEntrega) { showToast("⚠️ Elegí la fecha de entrega.", "warn"); return; }
+
+  const rows = Array.from(document.querySelectorAll("#items-container .item-row"));
+  const items = rows.map(row => ({
+    descripcion: row.querySelector(".item-descripcion").value.trim(),
+    area: row.querySelector(".item-area").value,
+    cantidad: parseFloat(row.querySelector(".item-cantidad").value) || 0,
+    precioUnitario: parseFloat(row.querySelector(".item-precio").value) || 0
+  })).filter(it => it.descripcion && it.cantidad > 0);
+
+  if (items.length === 0) { showToast("⚠️ Agregá al menos un ítem con descripción y cantidad.", "warn"); return; }
+
+  // Los adicionales se guardan aparte y NO tocan subtotal ni total: son una cotización opcional.
+  const adicionales = leerAdicionalesDelForm();
+
+  const btn = document.getElementById("guardar-btn");
+  btn.disabled = true; btn.textContent = "Guardando...";
+
+  try {
+    const { subtotal, total } = calcTotales(items, descuento);
+    const editandoId = state.editandoId;
+    const previo = editandoId ? state.presupuestos[editandoId] : null;
+    if (previo) {
+      // Editar conserva lo que identifica al presupuesto —su número, su estado y el pedido que
+      // haya generado— y cambia solo el contenido. Si no, cada corrección crearía un duplicado.
+      await update(ref(db, `presupuestos/items/${editandoId}`), {
+        cliente: { nombre, telefono },
+        fechaEntrega, items, adicionales, descuento, subtotal, total, notas,
+        actualizadoTs: Date.now()
+      });
+      state.editandoId = null;
+      showToast(`✅ Presupuesto #${previo.numero} actualizado.`, "success");
+    } else {
+      const numero = Object.keys(state.presupuestos).length + 1;
+      await set(push(ref(db, "presupuestos/items")), {
+        numero,
+        cliente: { nombre, telefono },
+        fechaEntrega, items, adicionales, descuento, subtotal, total, notas,
+        estado: "borrador",
+        pedidoClienteOrderId: null,
+        pedidoClienteOrderNum: null,
+        creadoTs: Date.now(), actualizadoTs: Date.now()
+      });
+      showToast("✅ Presupuesto guardado como borrador.", "success");
+    }
+    state._duplicando = null;
+    navigate("presupuestos");
+  } catch (err) {
+    console.error(err);
+    showToast("❌ Error al guardar el presupuesto.", "danger");
+    btn.disabled = false; btn.textContent = "💾 Guardar presupuesto";
+  }
+};
+
+// =============================================================
+// LISTADO DE PRESUPUESTOS
+// =============================================================
+window.setFiltro = function(f) { state.filtro = f; render(); };
+window.setBusqueda = function(val) { state.busqueda = val; render(); };
+// ── Clientes ────────────────────────────────────────────────────────────────
+// No hace falta una carga aparte: los clientes SON los que ya aparecen en los presupuestos.
+// Se agrupan por teléfono (lo más estable) y, si no hay, por nombre normalizado.
+function claveCliente(c) {
+  const tel = String(c?.telefono || "").replace(/\D/g, "");
+  if (tel.length >= 6) return "t:" + tel.slice(-8);
+  return "n:" + stripAccents(String(c?.nombre || "")).toLowerCase().trim();
+}
+function listaClientes() {
+  const mapa = new Map();
+  for (const [id, p] of Object.entries(state.presupuestos)) {
+    const c = p.cliente || {};
+    if (!c.nombre) continue;
+    const k = claveCliente(c);
+    const acc = mapa.get(k) || { key: k, nombre: c.nombre, telefono: c.telefono || "", presupuestos: [], total: 0, aceptados: 0, ultimaFecha: "" };
+    acc.nombre = c.nombre || acc.nombre;
+    if (c.telefono) acc.telefono = c.telefono;
+    acc.presupuestos.push({ id, ...p });
+    acc.total += Number(p.total) || 0;
+    if (p.estado === "aceptado") acc.aceptados++;
+    const f = p.fechaEntrega || "";
+    if (f > acc.ultimaFecha) acc.ultimaFecha = f;
+    mapa.set(k, acc);
+  }
+  return Array.from(mapa.values())
+    .map(c => ({ ...c, presupuestos: c.presupuestos.sort((a, b) => (b.creadoTs || 0) - (a.creadoTs || 0)) }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+
+// Al escribir el nombre en un presupuesto nuevo, mostrar lo que ya se le cotizó a ese cliente:
+// es la información que permite ofrecerle algo mejor (o al menos coherente con lo anterior).
+window.mostrarHistorialCliente = function(nombre) {
+  const cont = document.getElementById("cliente-historial");
+  if (!cont) return;
+  const n = stripAccents(String(nombre || "")).toLowerCase().trim();
+  if (n.length < 3) { cont.innerHTML = ""; return; }
+  const cli = listaClientes().find(c => stripAccents(c.nombre).toLowerCase().trim() === n);
+  if (!cli) { cont.innerHTML = ""; return; }
+  const ult = cli.presupuestos[0];
+  const tel = document.getElementById("p-cliente-telefono");
+  if (tel && !tel.value && cli.telefono) tel.value = cli.telefono;
+  cont.innerHTML = `📋 Ya tiene <strong>${cli.presupuestos.length}</strong> presupuesto${cli.presupuestos.length === 1 ? "" : "s"}${cli.aceptados ? ` (${cli.aceptados} aceptado${cli.aceptados === 1 ? "" : "s"})` : ""}. El último: ${fmtMoney(ult.total)} para el ${fmtDate(ult.fechaEntrega)}. <a href="#" onclick="duplicarPresupuesto('${ult.id}');return false;">Copiar ese presupuesto</a>`;
+};
+
+window.setClientesBusqueda = function(v) { state.clientesBusqueda = v; render(); };
+window.verCliente = function(k) { state.verClienteKey = state.verClienteKey === k ? null : k; render(); };
+
+function renderClientesView(container) {
+  state.formOpen = false;
+  const q = stripAccents(state.clientesBusqueda).toLowerCase().trim();
+  const clientes = listaClientes().filter(c => !q || stripAccents(c.nombre).toLowerCase().includes(q) || (c.telefono || "").includes(q));
+  container.innerHTML = `
+    <div class="page-title">Clientes</div>
+    <div class="page-sub">Se arman solos con los presupuestos que vas cargando. Sirven para ver qué le cotizaste a cada uno y volver a usarlo sin reescribirlo.</div>
+    <div class="form-row" style="margin-bottom:14px"><div class="form-group" style="max-width:320px">
+      <input class="form-input" id="buscador-clientes" placeholder="🔎 Buscar por nombre o teléfono..." value="${escapeHtml(state.clientesBusqueda)}" oninput="setClientesBusqueda(this.value)">
+    </div></div>
+    ${clientes.length ? `<div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>Cliente</th><th>Teléfono</th><th>Presupuestos</th><th>Aceptados</th><th>Total cotizado</th><th></th></tr></thead>
+      <tbody>${clientes.map(c => `
+        <tr>
+          <td><strong>${escapeHtml(c.nombre)}</strong></td>
+          <td>${escapeHtml(c.telefono) || "—"}</td>
+          <td>${c.presupuestos.length}</td>
+          <td>${c.aceptados || "—"}</td>
+          <td>${fmtMoney(c.total)}</td>
+          <td><button class="btn btn-ghost btn-sm" onclick="verCliente('${c.key}')">${state.verClienteKey === c.key ? "▴ Ocultar" : "▾ Ver presupuestos"}</button></td>
+        </tr>
+        ${state.verClienteKey === c.key ? `<tr><td colspan="6" style="background:var(--cream);padding:14px 16px">
+          <table class="data-table"><thead><tr><th>N°</th><th>Fecha</th><th>Total</th><th>Estado</th><th></th></tr></thead><tbody>
+            ${c.presupuestos.map(p => `<tr>
+              <td>#${p.numero}</td><td>${fmtDate(p.fechaEntrega)}</td><td>${fmtMoney(p.total)}</td>
+              <td><span class="badge">${escapeHtml(p.estado)}</span></td>
+              <td style="white-space:nowrap">
+                <button class="btn btn-ghost btn-sm" onclick="verPresupuesto('${p.id}')">Ver</button>
+                <button class="btn btn-turq btn-sm" onclick="duplicarPresupuesto('${p.id}')">📋 Copiar</button>
+              </td>
+            </tr>`).join("")}
+          </tbody></table>
+        </td></tr>` : ""}`).join("")}</tbody>
+    </table></div>` : `<div class="empty-state">${state.clientesBusqueda ? "Ningún cliente coincide con la búsqueda." : "Todavía no hay clientes: se crean solos al guardar presupuestos."}</div>`}`;
+}
+
+window.verPresupuesto = function(id) { state.viewingId = id; render(); };
+
+// Editar un presupuesto ya guardado, en vez de rehacerlo de cero.
+window.editarPresupuesto = function(id) {
+  state.editandoId = id;
+  state._duplicando = null;
+  state.viewingId = null;
+  navigate("nuevo");
+};
+// Duplicar: para el cliente que vuelve a pedir lo mismo con algún cambio.
+window.duplicarPresupuesto = function(id) {
+  const p = state.presupuestos[id];
+  if (!p) return;
+  state._duplicando = p;
+  state.editandoId = null;
+  state.viewingId = null;
+  showToast("📋 Copia lista — cambiá lo que haga falta y guardala como un presupuesto nuevo.", "success");
+  navigate("nuevo");
+};
+window.cancelarEdicion = function() {
+  state.editandoId = null;
+  state._duplicando = null;
+  navigate("presupuestos");
+};
+window.agregarNotaGuardada = function(idx) {
+  const notas = Array.isArray(state.config.notasGuardadas) ? state.config.notasGuardadas : [];
+  const txt = notas[idx];
+  if (!txt) return;
+  const ta = document.getElementById("p-notas");
+  if (!ta) return;
+  ta.value = ta.value.trim() ? ta.value.replace(/\s*$/, "") + "\n" + txt : txt;
+  ta.focus();
+};
+window.cerrarVista = function() { state.viewingId = null; render(); };
+
+window.cambiarEstado = async function(id, nuevoEstado) {
+  const p = state.presupuestos[id];
+  if (!p) return;
+
+  if (nuevoEstado === "aceptado" && p.estado !== "aceptado" && !p.pedidoClienteOrderId) {
+    state.aceptandoId = id;
+    state.formOpen = true;
+    render();
+    return;
+  }
+
+  await update(ref(db, `presupuestos/items/${id}`), { estado: nuevoEstado, actualizadoTs: Date.now() });
+  showToast(`Estado actualizado a "${ESTADO_LABELS[nuevoEstado]}".`, "success");
+};
+
+window.cerrarAceptarModal = function() {
+  state.aceptandoId = null;
+  state.formOpen = false;
+  render();
+};
+
+window.confirmarAceptacion = async function(id) {
+  const p = state.presupuestos[id];
+  if (!p) return;
+
+  const local = document.getElementById("acept-local").value;
+  const vendedor = document.getElementById("acept-vendedor").value;
+  const hora = document.getElementById("acept-hora").value;
+  const sena = document.getElementById("acept-sena").value.trim();
+
+  if (!local) { showToast("⚠️ Elegí el local de retiro.", "warn"); return; }
+  if (!vendedor) { showToast("⚠️ Elegí quién vende.", "warn"); return; }
+  if (!hora) { showToast("⚠️ Ingresá la hora de entrega.", "warn"); return; }
+
+  const btn = document.getElementById("acept-confirm-btn");
+  btn.disabled = true; btn.textContent = "Registrando...";
+
+  try {
+    const { orderId, orderNum } = await crearPedidoCliente({ presupuesto: p, local, vendedor, hora, sena });
+    await update(ref(db, `presupuestos/items/${id}`), {
+      estado: "aceptado", pedidoClienteOrderId: orderId, pedidoClienteOrderNum: orderNum, actualizadoTs: Date.now()
+    });
+    showToast(`✅ Presupuesto aceptado. Pedido #${orderNum} registrado en Pedidos de Clientes.`, "success");
+    state.aceptandoId = null;
+    state.formOpen = false;
+    render();
+  } catch (err) {
+    console.error(err);
+    showToast("❌ Error al registrar el pedido en Pedidos de Clientes.", "danger");
+    btn.disabled = false; btn.textContent = "✅ Confirmar y registrar pedido";
+  }
+};
+
+function renderAceptarModal(id) {
+  const p = state.presupuestos[id];
+  if (!p) return "";
+  const localOptions = LOCALES_CLIENTE.map(l => `<option value="${l}">${l}</option>`).join("");
+  const vendedorOptions = VENDEDORES.map(v => `<option value="${v}">${v}</option>`).join("");
+  return `
+    <div class="modal-overlay no-print">
+      <div class="modal-card">
+        <div class="section-title" style="margin-bottom:6px">✅ Aceptar presupuesto #${p.numero}</div>
+        <div class="text-muted" style="margin-bottom:16px">Estos datos son los que necesita el sistema de Pedidos de Clientes para registrar el pedido.</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Local de retiro</label>
+            <select class="form-select" id="acept-local"><option value="">— Elegí —</option>${localOptions}</select></div>
+          <div class="form-group"><label class="form-label">Vendedor/a</label>
+            <select class="form-select" id="acept-vendedor"><option value="">— Elegí —</option>${vendedorOptions}</select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Hora de entrega</label><input type="time" class="form-input" id="acept-hora" value="10:00"></div>
+          <div class="form-group"><label class="form-label">Seña ($, opcional)</label><input type="number" step="0.01" min="0" class="form-input" id="acept-sena"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-primary" id="acept-confirm-btn" onclick="confirmarAceptacion('${id}')">✅ Confirmar y registrar pedido</button>
+          <button class="btn btn-ghost" onclick="cerrarAceptarModal()">Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+window.eliminarPresupuesto = async function(id) {
+  if (!confirm("¿Eliminar este presupuesto? Esta acción no se puede deshacer.")) return;
+  await remove(ref(db, `presupuestos/items/${id}`));
+  showToast("🗑️ Presupuesto eliminado.", "success");
+};
+
+function renderListadoView(container) {
+  state.formOpen = false;
+
+  if (state.viewingId) {
+    renderDetalleImprimible(container, state.viewingId);
+    return;
+  }
+
+  const busqueda = state.busqueda.trim().toLowerCase();
+  const entries = objToSortedEntries(state.presupuestos, (a, b) => (b[1].creadoTs || 0) - (a[1].creadoTs || 0))
+    .filter(([, p]) => state.filtro === "todos" || p.estado === state.filtro)
+    .filter(([, p]) => !busqueda || (p.cliente?.nombre || "").toLowerCase().includes(busqueda) || String(p.numero ?? "").includes(busqueda));
+
+  const rows = entries.map(([id, p]) => `
+    <tr>
+      <td>#${p.numero ?? "—"}</td>
+      <td>${escapeHtml(p.cliente?.nombre)}</td>
+      <td>${fmtDate(p.fechaEntrega)}</td>
+      <td>${(p.items || []).length} ítem(s)</td>
+      <td>${fmtMoney(p.total)}</td>
+      <td><span class="badge badge-${p.estado}">${ESTADO_LABELS[p.estado] || p.estado}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="verPresupuesto('${id}')">Ver / Imprimir</button>
+        <button class="btn btn-turq btn-sm" onclick="editarPresupuesto('${id}')">✏️ Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="duplicarPresupuesto('${id}')" title="Crear uno nuevo con los mismos ítems">📋 Copiar</button>
+        ${p.estado === "borrador" ? `<button class="btn btn-turq btn-sm" onclick="cambiarEstado('${id}','enviado')">Marcar enviado</button>` : ""}
+        ${p.estado !== "aceptado" && p.estado !== "rechazado" ? `<button class="btn btn-primary btn-sm" onclick="cambiarEstado('${id}','aceptado')">Aceptar</button>` : ""}
+        ${p.estado !== "aceptado" && p.estado !== "rechazado" ? `<button class="btn btn-danger btn-sm" onclick="cambiarEstado('${id}','rechazado')">Rechazar</button>` : ""}
+        ${p.pedidoClienteOrderId ? `<span class="badge badge-aceptado" title="Registrado en Pedidos de Clientes">→ Pedido #${p.pedidoClienteOrderNum}</span>` : ""}
+        <button class="btn btn-danger btn-sm" onclick="eliminarPresupuesto('${id}')">Eliminar</button>
+      </td>
+    </tr>`).join("");
+
+  container.innerHTML = `
+    <div class="page-title">Presupuestos</div>
+    <div class="page-sub">Cotizaciones armadas para clientes.</div>
+    <div class="tabs">
+      ${["todos", ...ESTADOS].map(f => `<button class="tab ${state.filtro === f ? "active" : ""}" onclick="setFiltro('${f}')">${f === "todos" ? "Todos" : ESTADO_LABELS[f]}</button>`).join("")}
+    </div>
+    <div class="form-row" style="margin-bottom:14px"><div class="form-group" style="max-width:320px"><input class="form-input" placeholder="🔎 Buscar por cliente o N°..." value="${escapeHtml(state.busqueda)}" oninput="setBusqueda(this.value)"></div></div>
+    <div class="section-block">
+      ${entries.length === 0 ? `<div class="empty-state">${busqueda ? "Ningún presupuesto coincide con la búsqueda." : "No hay presupuestos en esta categoría."}</div>` : `
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>N°</th><th>Cliente</th><th>Entrega</th><th>Ítems</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`}
+    </div>
+    ${state.aceptandoId ? renderAceptarModal(state.aceptandoId) : ""}`;
+}
+
+function renderDetalleImprimible(container, id) {
+  const p = state.presupuestos[id];
+  if (!p) { state.viewingId = null; container.innerHTML = `<div class="empty-state">Presupuesto no encontrado.</div>`; return; }
+
+  const itemsRows = (p.items || []).map(it => `
+    <tr><td>${escapeHtml(it.descripcion)}${it.area && TEAMS[it.area] ? `<div class="text-muted" style="font-size:11px">${TEAMS[it.area].icon} ${TEAMS[it.area].name}</div>` : ""}</td><td style="text-align:center">${it.cantidad}</td><td style="text-align:right">${fmtMoney(it.precioUnitario)}</td><td style="text-align:right">${fmtMoney(it.cantidad * it.precioUnitario)}</td></tr>`).join("");
+
+  // Los adicionales van DESPUÉS del total, en su propia tabla y con el aviso de que no están
+  // incluidos. Es la única forma de que quien lee el PDF no tenga que descontarlos de memoria.
+  const adicionales = Array.isArray(p.adicionales) ? p.adicionales.filter(a => a && a.descripcion) : [];
+  const adicionalesHtml = adicionales.length ? `
+    <div class="bloque-adicionales">
+      <div class="section-title" style="margin-bottom:4px">Adicionales opcionales</div>
+      <div class="text-muted" style="font-size:11.5px;margin-bottom:10px">Estos valores <strong>no están incluidos</strong> en el total de arriba. Se cotizan por si querés sumarlos.</div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr style="background:var(--cream)"><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:right">Precio unit.</th><th style="text-align:right">Subtotal</th></tr></thead>
+          <tbody>${adicionales.map(a => `
+            <tr><td>${escapeHtml(a.descripcion)}</td><td style="text-align:center">${a.cantidad || "—"}</td><td style="text-align:right">${fmtMoney(a.precioUnitario)}</td><td style="text-align:right">${(Number(a.cantidad) > 0 && Number(a.precioUnitario) > 0) ? fmtMoney(a.cantidad * a.precioUnitario) : "—"}</td></tr>`).join("")}</tbody>
+        </table>
+      </div>
+      <div class="total-line" style="font-style:italic">Si se suman todos: ${fmtMoney(totalAdicionales(adicionales))} <span class="text-muted">(aparte del total)</span></div>
+    </div>` : "";
+
+  container.innerHTML = `
+    <div class="no-print" style="margin-bottom:16px;display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="cerrarVista()">← Volver</button>
+      <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+    </div>
+    <div class="section-block">
+      <div class="doc-header">
+        <div class="brand-wordmark">${LOGO_WORDMARK_SVG}</div>
+        <div class="doc-header-num">
+          <div class="num-label">Presupuesto</div>
+          <div class="num-value">N° ${p.numero ?? "—"}</div>
+        </div>
+      </div>
+      <div class="doc-accent-bar"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+        <div class="text-muted">Fecha de entrega: <strong style="color:var(--black)">${fmtDate(p.fechaEntrega)}</strong></div>
+        <span class="badge badge-${p.estado}">${ESTADO_LABELS[p.estado] || p.estado}</span>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Cliente</div><div class="stat-value" style="font-size:16px">${escapeHtml(p.cliente?.nombre)}</div>${p.cliente?.telefono ? `<div class="text-muted">${escapeHtml(p.cliente.telefono)}</div>` : ""}</div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr style="background:var(--turq-pale)"><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:right">Precio unit.</th><th style="text-align:right">Subtotal</th></tr></thead>
+          <tbody>${itemsRows}</tbody>
+        </table>
+      </div>
+      <div class="total-line">Subtotal: ${fmtMoney(p.subtotal)}</div>
+      ${p.descuento > 0 ? `<div class="total-line">Descuento: -${fmtMoney(p.descuento)}</div>` : ""}
+      <div class="total-line grand" style="color:var(--terra)">Total: ${fmtMoney(p.total)}</div>
+      ${adicionalesHtml}
+      ${p.notas ? `<div style="margin-top:16px"><div class="form-label">Notas</div><div style="white-space:pre-wrap;line-height:1.6">${escapeHtml(p.notas)}</div></div>` : ""}
+      ${(p.items || []).some(esItemCafeteria) ? `<div class="text-muted" style="margin-top:18px;font-style:italic;font-size:11px;line-height:1.5;border-top:1px solid var(--cream-dark);padding-top:12px">${escapeHtml(CAFETERIA_LEGEND)}</div>` : ""}
+    </div>`;
+}
+
+// =============================================================
+// CONFIG
+// =============================================================
+// =============================================================
+// CANTIDADES POR EVENTO (borrador y ayuda memoria)
+// =============================================================
+// Las unidades contables se redondean para arriba: no se puede servir media medialuna.
+// Las de peso o volumen conservan un decimal, porque ahí sí tiene sentido "3,5 litros".
+const UNIDADES_CONTINUAS = ["kg", "kilo", "litro", "lt", "l", "gr", "gramo", "cc", "ml"];
+function esUnidadContinua(unidad) {
+  const u = stripAccents(String(unidad || "")).toLowerCase();
+  return UNIDADES_CONTINUAS.some(x => u.startsWith(x));
+}
+function calcularTotalRenglon(renglon, personas) {
+  const por = Number(renglon?.porPersona) || 0;
+  if (renglon?.modo === "fijo") return por;
+  const bruto = por * (Number(personas) || 0);
+  return esUnidadContinua(renglon?.unidad) ? Math.round(bruto * 10) / 10 : Math.ceil(bruto);
+}
+function fmtCantidad(n) {
+  const num = Number(n) || 0;
+  return Number.isInteger(num) ? String(num) : num.toLocaleString("es-AR", { maximumFractionDigits: 2 });
+}
+
+// La primera vez no hay plantillas guardadas: se siembran las iniciales para no dejar la
+// pantalla vacía. A partir de ahí manda lo que el usuario haya editado.
+window.sembrarPlantillasEvento = async function() {
+  if (Object.keys(state.plantillasEvento).length) {
+    if (!confirm("Ya tenés plantillas cargadas. Esto agrega las sugeridas SIN borrar las tuyas. ¿Seguir?")) return;
+  }
+  for (const pl of PLANTILLAS_EVENTO_INICIALES) {
+    const renglones = {};
+    pl.renglones.forEach((r, i) => { renglones["r" + i] = { ...r, orden: i }; });
+    await set(push(ref(db, "presupuestos/plantillasEvento")), { nombre: pl.nombre, notas: pl.notas, renglones, creadoTs: Date.now() });
+  }
+  showToast("✅ Se cargaron las plantillas sugeridas. Editalas con tus cantidades reales.", "success");
+  render();
+};
+
+window.setCalcPlantilla = function(id) {
+  state.calcPlantillaId = id;
+  const pl = state.plantillasEvento[id];
+  // Se copian los renglones al borrador: tocar una cantidad acá NO cambia la plantilla.
+  state.calcRenglones = pl
+    ? objToSortedEntries(pl.renglones, (a, b) => (a[1].orden || 0) - (b[1].orden || 0)).map(([, r]) => ({ ...r }))
+    : null;
+  state.calcNombre = pl ? pl.nombre : "";
+  state.calcNotas = pl ? (pl.notas || "") : "";
+  render();
+};
+window.setCalcPersonas = function(v) {
+  state.calcPersonas = Math.max(0, parseInt(v, 10) || 0);
+  render();
+};
+window.setCalcRenglon = function(idx, campo, valor) {
+  const r = (state.calcRenglones || [])[idx];
+  if (!r) return;
+  r[campo] = campo === "porPersona" ? (parseFloat(valor) || 0) : valor;
+  render();
+};
+window.quitarCalcRenglon = function(idx) {
+  if (!state.calcRenglones) return;
+  state.calcRenglones.splice(idx, 1);
+  render();
+};
+window.agregarCalcRenglon = function() {
+  if (!state.calcRenglones) state.calcRenglones = [];
+  state.calcRenglones.push({ nombre: "", porPersona: 1, unidad: "unidades", modo: "persona", nota: "" });
+  render();
+};
+window.setCalcNotas = function(v) { state.calcNotas = v; };
+window.setCalcNombre = function(v) { state.calcNombre = v; };
+
+window.guardarBorradorCantidades = async function() {
+  if (!state.calcRenglones || !state.calcRenglones.length) { showToast("⚠️ No hay renglones para guardar.", "warn"); return; }
+  const personas = state.calcPersonas;
+  const renglones = state.calcRenglones.map(r => ({ ...r, total: calcularTotalRenglon(r, personas) }));
+  await set(push(ref(db, "presupuestos/borradoresCantidades")), {
+    nombre: state.calcNombre || "Sin nombre",
+    plantillaId: state.calcPlantillaId || "",
+    personas, notas: state.calcNotas || "",
+    renglones, fecha: todayISO(), creadoTs: Date.now()
+  });
+  showToast("✅ Borrador guardado.", "success");
+  render();
+};
+
+// Guardar los cambios del borrador COMO plantilla: es lo que convierte el ayuda memoria en
+// conocimiento reutilizable — la próxima vez ya arranca con las cantidades corregidas.
+window.guardarComoPlantilla = async function() {
+  if (!state.calcRenglones || !state.calcRenglones.length) { showToast("⚠️ No hay renglones para guardar.", "warn"); return; }
+  const nombre = prompt("¿Con qué nombre guardar esta plantilla?\n\nSi usás el mismo nombre de una existente, se actualiza esa.", state.calcNombre || "");
+  if (nombre === null || !nombre.trim()) return;
+  const renglones = {};
+  state.calcRenglones.forEach((r, i) => { renglones["r" + i] = { ...r, orden: i }; });
+  const existente = Object.entries(state.plantillasEvento).find(([, pl]) => (pl.nombre || "").trim().toLowerCase() === nombre.trim().toLowerCase());
+  const datos = { nombre: nombre.trim(), notas: state.calcNotas || "", renglones };
+  if (existente) {
+    await update(ref(db, `presupuestos/plantillasEvento/${existente[0]}`), datos);
+    showToast(`✅ Plantilla "${nombre.trim()}" actualizada.`, "success");
+    render();
+  } else {
+    await set(push(ref(db, "presupuestos/plantillasEvento")), { ...datos, creadoTs: Date.now() });
+    showToast(`✅ Plantilla "${nombre.trim()}" creada.`, "success");
+    render();
+  }
+};
+
+window.eliminarPlantillaEvento = async function(id) {
+  const pl = state.plantillasEvento[id];
+  if (!pl) return;
+  if (!confirm(`¿Borrar la plantilla "${pl.nombre}"? Los borradores ya guardados no se tocan.`)) return;
+  await remove(ref(db, `presupuestos/plantillasEvento/${id}`));
+  if (state.calcPlantillaId === id) { state.calcPlantillaId = ""; state.calcRenglones = null; }
+  showToast("🗑️ Plantilla eliminada.", "success");
+  render();
+};
+
+window.verBorrador = function(id) { state.verBorradorId = state.verBorradorId === id ? null : id; render(); };
+window.eliminarBorrador = async function(id) {
+  const b = state.borradores[id];
+  if (!b) return;
+  if (!confirm(`¿Borrar el borrador "${b.nombre}" (${b.personas} personas)?`)) return;
+  await remove(ref(db, `presupuestos/borradoresCantidades/${id}`));
+  showToast("🗑️ Borrador eliminado.", "success");
+  render();
+};
+window.retomarBorrador = function(id) {
+  const b = state.borradores[id];
+  if (!b) return;
+  state.calcRenglones = (b.renglones || []).map(r => ({ ...r }));
+  state.calcPersonas = b.personas || 0;
+  state.calcNombre = b.nombre || "";
+  state.calcNotas = b.notas || "";
+  state.calcPlantillaId = b.plantillaId || "";
+  state.verBorradorId = null;
+  showToast("📋 Borrador retomado — podés seguir ajustándolo.", "success");
+  render();
+};
+
+// Puente con lo que el módulo ya hace: el borrador se convierte en las líneas de un
+// presupuesto, así no hay que volver a tipear las cantidades para cotizarlo.
+window.pasarAPresupuesto = function() {
+  if (!state.calcRenglones || !state.calcRenglones.length) { showToast("⚠️ No hay renglones para pasar.", "warn"); return; }
+  const personas = state.calcPersonas;
+  state._itemsDesdeCantidades = state.calcRenglones
+    .filter(r => (r.nombre || "").trim())
+    .map(r => ({
+      descripcion: `${r.nombre}${r.unidad ? ` (${r.unidad})` : ""}`,
+      cantidad: calcularTotalRenglon(r, personas),
+      precioUnitario: ""
+    }));
+  showToast(`📝 ${state._itemsDesdeCantidades.length} renglones pasados al presupuesto — completá los precios.`, "success");
+  navigate("nuevo");
+};
+
+function renderCantidadesView(container) {
+  state.formOpen = true;
+  const plantillas = objToSortedEntries(state.plantillasEvento, (a, b) => (a[1].nombre || "").localeCompare(b[1].nombre || ""));
+  const personas = state.calcPersonas;
+  const renglones = state.calcRenglones;
+
+  const filas = (renglones || []).map((r, idx) => {
+    const total = calcularTotalRenglon(r, personas);
+    return `
+      <tr>
+        <td><input class="form-input" style="min-width:200px" value="${escapeHtml(r.nombre || "")}" placeholder="Producto" onchange="setCalcRenglon(${idx},'nombre',this.value)"></td>
+        <td><input type="number" step="0.01" min="0" class="form-input" style="max-width:90px" value="${r.porPersona ?? ""}" onchange="setCalcRenglon(${idx},'porPersona',this.value)"></td>
+        <td><input class="form-input" style="max-width:100px" value="${escapeHtml(r.unidad || "")}" placeholder="unidades" onchange="setCalcRenglon(${idx},'unidad',this.value)"></td>
+        <td><select class="form-select" style="max-width:130px" onchange="setCalcRenglon(${idx},'modo',this.value)">
+          <option value="persona" ${r.modo !== "fijo" ? "selected" : ""}>Por persona</option>
+          <option value="fijo" ${r.modo === "fijo" ? "selected" : ""}>Cantidad fija</option>
+        </select></td>
+        <td style="white-space:nowrap"><strong style="font-size:16px">${fmtCantidad(total)}</strong> <span class="text-muted">${escapeHtml(r.unidad || "")}</span></td>
+        <td><input class="form-input" style="min-width:170px" value="${escapeHtml(r.nota || "")}" placeholder="Ayuda memoria..." onchange="setCalcRenglon(${idx},'nota',this.value)"></td>
+        <td><button class="btn btn-danger btn-sm" onclick="quitarCalcRenglon(${idx})">✕</button></td>
+      </tr>`;
+  }).join("");
+
+  const borradores = objToSortedEntries(state.borradores, (a, b) => (b[1].creadoTs || 0) - (a[1].creadoTs || 0));
+
+  container.innerHTML = `
+    <div class="page-title">Cantidades por evento</div>
+    <div class="page-sub">Borrador y ayuda memoria: elegí el tipo de evento y la cantidad de invitados, y ajustá lo que haga falta. No compromete nada — es para pensar el evento antes de cotizarlo.</div>
+
+    ${!plantillas.length ? `
+      <div class="section-block">
+        <div class="section-title" style="margin-bottom:8px">Todavía no hay plantillas cargadas</div>
+        <div class="text-muted" style="margin-bottom:12px">Podés arrancar con unas sugeridas (coffee break, desayuno, cumpleaños, mesa dulce) y después ajustarlas con tus cantidades reales — las de arranque son solo para no partir de cero.</div>
+        <button class="btn btn-primary" onclick="sembrarPlantillasEvento()">✨ Cargar plantillas sugeridas</button>
+      </div>` : ""}
+
+    <div class="section-block">
+      <div class="form-row" style="align-items:flex-end">
+        <div class="form-group" style="max-width:280px">
+          <label class="form-label">Tipo de evento</label>
+          <select class="form-select" id="calc-plantilla" onchange="setCalcPlantilla(this.value)">
+            <option value="">— Elegir —</option>
+            ${plantillas.map(([id, pl]) => `<option value="${id}" ${state.calcPlantillaId === id ? "selected" : ""}>${escapeHtml(pl.nombre)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="form-group" style="max-width:160px">
+          <label class="form-label">¿Cuántas personas?</label>
+          <input type="number" min="0" step="1" class="form-input" id="calc-personas" value="${personas}" onchange="setCalcPersonas(this.value)" oninput="setCalcPersonas(this.value)">
+        </div>
+        ${renglones ? `<div class="form-group" style="max-width:220px">
+          <label class="form-label">Nombre del borrador</label>
+          <input class="form-input" value="${escapeHtml(state.calcNombre)}" placeholder="Ej. Cumple Sofía 12/09" onchange="setCalcNombre(this.value)">
+        </div>` : ""}
+      </div>
+      ${state.calcNotas ? `<div class="text-muted" style="margin-top:4px">📌 ${escapeHtml(state.calcNotas)}</div>` : ""}
+    </div>
+
+    ${renglones ? `
+    <div class="section-block">
+      <div class="section-header">
+        <div class="section-title">Para ${personas} persona${personas === 1 ? "" : "s"}</div>
+        <button class="btn btn-ghost btn-sm" onclick="agregarCalcRenglon()">+ Agregar renglón</button>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Producto</th><th>Por persona</th><th>Unidad</th><th>Cálculo</th><th>Total a preparar</th><th>Ayuda memoria</th><th></th></tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+      <div class="form-group" style="margin-top:12px">
+        <label class="form-label">Notas del evento</label>
+        <textarea class="form-input" rows="2" placeholder="Ej. la mamá pidió sin TACC para 3 chicos" onchange="setCalcNotas(this.value)">${escapeHtml(state.calcNotas)}</textarea>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn btn-primary" onclick="guardarBorradorCantidades()">💾 Guardar borrador</button>
+        <button class="btn btn-ghost" onclick="guardarComoPlantilla()" title="Para que la próxima vez este tipo de evento ya arranque con estas cantidades">⭐ Guardar como plantilla</button>
+        <button class="btn btn-ghost" onclick="pasarAPresupuesto()" title="Pasa estos renglones al formulario de presupuesto, con las cantidades ya calculadas">📝 Pasar a presupuesto</button>
+      </div>
+    </div>` : ""}
+
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">Borradores guardados</div>
+      ${borradores.length ? `<div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th>Nombre</th><th>Evento</th><th>Personas</th><th>Fecha</th><th></th></tr></thead>
+        <tbody>${borradores.map(([id, b]) => `
+          <tr>
+            <td>${escapeHtml(b.nombre)}</td>
+            <td>${escapeHtml(state.plantillasEvento[b.plantillaId]?.nombre || "—")}</td>
+            <td>${b.personas}</td>
+            <td>${fmtDate(b.fecha)}</td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-ghost btn-sm" onclick="verBorrador('${id}')">${state.verBorradorId === id ? "▴" : "▾"}</button>
+              <button class="btn btn-turq btn-sm" onclick="retomarBorrador('${id}')">↩️ Retomar</button>
+              <button class="btn btn-danger btn-sm" onclick="eliminarBorrador('${id}')">🗑️</button>
+            </td>
+          </tr>
+          ${state.verBorradorId === id ? `<tr><td colspan="5" style="background:var(--cream);padding:14px 16px">
+            ${b.notas ? `<div class="text-muted" style="margin-bottom:8px">📌 ${escapeHtml(b.notas)}</div>` : ""}
+            <table class="data-table"><thead><tr><th>Producto</th><th>Por persona</th><th>Total</th><th>Nota</th></tr></thead><tbody>
+              ${(b.renglones || []).map(r => `<tr><td>${escapeHtml(r.nombre)}</td><td>${fmtCantidad(r.porPersona)}${r.modo === "fijo" ? " (fijo)" : ""}</td><td><strong>${fmtCantidad(r.total)}</strong> ${escapeHtml(r.unidad || "")}</td><td class="text-muted">${escapeHtml(r.nota || "")}</td></tr>`).join("")}
+            </tbody></table>
+          </td></tr>` : ""}`).join("")}</tbody>
+      </table></div>` : `<div class="empty-state">Todavía no guardaste ningún borrador.</div>`}
+    </div>
+
+    ${plantillas.length ? `
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">Plantillas de evento</div>
+      <div class="text-muted" style="margin-bottom:10px">Son las cantidades por persona con las que arranca cada tipo de evento. Para cambiarlas, elegí el evento arriba, ajustá los renglones y usá "⭐ Guardar como plantilla".</div>
+      <div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th>Evento</th><th>Renglones</th><th></th></tr></thead>
+        <tbody>${plantillas.map(([id, pl]) => `<tr>
+          <td>${escapeHtml(pl.nombre)}${pl.notas ? `<div class="text-muted" style="font-size:11px">${escapeHtml(pl.notas)}</div>` : ""}</td>
+          <td>${Object.keys(pl.renglones || {}).length}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-ghost btn-sm" onclick="setCalcPlantilla('${id}')">Usar</button>
+            <button class="btn btn-danger btn-sm" onclick="eliminarPlantillaEvento('${id}')">🗑️</button>
+          </td>
+        </tr>`).join("")}</tbody>
+      </table></div>
+    </div>` : ""}`;
+}
+
+window.guardarNotasGuardadas = async function() {
+  const lineas = document.getElementById("cfg-notas").value.split("\n").map(l => l.trim()).filter(Boolean);
+  await set(ref(db, "presupuestos/config/notasGuardadas"), lineas);
+  state.config = { ...state.config, notasGuardadas: lineas };
+  showToast(`✅ ${lineas.length} aclaración(es) guardadas.`, "success");
+  render();
+};
+
+window.cambiarPasswordAdmin = async function() {
+  const nueva = document.getElementById("cfg-nueva-pass").value;
+  if (!nueva || nueva.length < 4) { showToast("⚠️ La contraseña debe tener al menos 4 caracteres.", "warn"); return; }
+  await set(ref(db, "presupuestos/config/adminPassword"), nueva);
+  showToast("✅ Contraseña actualizada.", "success");
+  document.getElementById("cfg-nueva-pass").value = "";
+};
+
+function renderConfigView(container) {
+  state.formOpen = true;
+  container.innerHTML = `
+    <div class="page-title">Configuración</div>
+    <div class="page-sub">Ajustes del módulo de Presupuestos.</div>
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:14px">🔑 Contraseña de acceso</div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Nueva contraseña</label><input type="password" class="form-input" id="cfg-nueva-pass" placeholder="••••••"></div></div>
+      <button class="btn btn-primary" onclick="cambiarPasswordAdmin()">Actualizar contraseña</button>
+    </div>
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">🔗 Pedidos de Clientes</div>
+      <div class="text-muted">Al aceptar un presupuesto, se pide el local de retiro, vendedor/a, hora de entrega y seña, y se registra automáticamente como pedido nuevo en el sistema de Pedidos de Clientes (proyecto Firebase separado: <code>pedidos-de-clientes-4775b</code>). Esta app solo escribe ese pedido — no lo edita ni lo muestra después; el seguimiento de producción y entrega se hace desde el sistema de Pedidos de Clientes.</div>
+    </div>` + `
+    <div class="section-block">
+      <div class="section-title" style="margin-bottom:8px">📝 Aclaraciones que usás seguido</div>
+      <div class="text-muted" style="margin-bottom:10px">Las que escribas acá aparecen como botones en el presupuesto, para agregarlas de a una sin volver a tipearlas (seña, validez, condiciones de entrega...). Una por renglón.</div>
+      <textarea class="form-input" id="cfg-notas" rows="5" placeholder="Seña del 50% al confirmar.&#10;Presupuesto válido por 15 días.&#10;La entrega incluye traslado dentro de la ciudad.">${escapeHtml((state.config.notasGuardadas || []).join("\n"))}</textarea>
+      <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="guardarNotasGuardadas()">Guardar aclaraciones</button>
+    </div>`;
+}
+
+// ── Bootstrap ────────────────────────────────────────────
+attachListeners();
+render();
+</script>
+</body>
+</html>

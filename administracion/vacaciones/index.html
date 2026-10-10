@@ -1,0 +1,1065 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Candela · Vacaciones</title>
+<style>
+  :root{
+    --crema:#EEEBD7; --terracota:#E15D46; --turquesa:#9BD6CC; --negro:#22201F;
+    --bg:#F5F3E7; --panel:#FFFFFF; --panel-2:#FBFAF2; --ink:#22201F; --ink-soft:#5C574E;
+    --line:#DED9C4; --line-strong:#C9C3AC; --accent:#E15D46; --accent-ink:#B23a26;
+    --teal:#7FC6BA; --teal-ink:#2C6F63; --teal-soft:#E4F2EF;
+    --warn:#C98A1E; --warn-soft:#FBF0D8; --crit:#C23A22; --crit-soft:#F8E2DC;
+    --ok:#2C6F63; --ok-soft:#E4F2EF;
+    --chip:#F1EEDD; --shadow:0 1px 2px rgba(34,32,31,.06),0 6px 20px rgba(34,32,31,.06);
+    --font-display:'DM Serif Display','Playfair Display',Georgia,'Times New Roman',serif;
+    --font-body:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#1A1917; --panel:#242220; --panel-2:#2B2825; --ink:#EEEBD7; --ink-soft:#B4AE9C;
+      --line:#3A362F; --line-strong:#4A453B; --accent:#E9765F; --accent-ink:#F0937F;
+      --teal:#6FB7AB; --teal-ink:#9BD6CC; --teal-soft:#233531;
+      --warn:#E0B54C; --warn-soft:#3A3220; --crit:#E9765F; --crit-soft:#3B2621;
+      --ok:#9BD6CC; --ok-soft:#233531; --chip:#2F2C28; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1A1917; --panel:#242220; --panel-2:#2B2825; --ink:#EEEBD7; --ink-soft:#B4AE9C;
+    --line:#3A362F; --line-strong:#4A453B; --accent:#E9765F; --accent-ink:#F0937F;
+    --teal:#6FB7AB; --teal-ink:#9BD6CC; --teal-soft:#233531;
+    --warn:#E0B54C; --warn-soft:#3A3220; --crit:#E9765F; --crit-soft:#3B2621;
+    --ok:#9BD6CC; --ok-soft:#233531; --chip:#2F2C28; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --bg:#F5F3E7; --panel:#FFFFFF; --panel-2:#FBFAF2; --ink:#22201F; --ink-soft:#5C574E;
+    --line:#DED9C4; --line-strong:#C9C3AC; --accent:#E15D46; --accent-ink:#B23a26;
+    --teal:#7FC6BA; --teal-ink:#2C6F63; --teal-soft:#E4F2EF;
+    --warn:#C98A1E; --warn-soft:#FBF0D8; --crit:#C23A22; --crit-soft:#F8E2DC;
+    --ok:#2C6F63; --ok-soft:#E4F2EF; --chip:#F1EEDD; --shadow:0 1px 2px rgba(34,32,31,.06),0 6px 20px rgba(34,32,31,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:var(--font-display);font-weight:400;margin:0;text-wrap:balance}
+  button,select,input,textarea{font-family:inherit;font-size:inherit;color:inherit}
+  .wrap{max-width:1320px;margin:0 auto;padding:18px 20px 80px}
+
+  .top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);position:sticky;top:8px;z-index:40}
+  .brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+  .mark{width:38px;height:38px;border-radius:11px;background:radial-gradient(120% 120% at 30% 20%,var(--terracota),#c74027);display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-size:22px;line-height:1;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+  .brand h1{font-size:20px;letter-spacing:.2px}
+  .brand p{margin:1px 0 0;font-size:11.5px;color:var(--ink-soft);letter-spacing:.4px;text-transform:uppercase}
+  .appVersion{text-transform:none;letter-spacing:0;opacity:.55;cursor:default}
+  .btn{border:1px solid var(--line-strong);background:var(--panel-2);border-radius:9px;padding:8px 13px;cursor:pointer;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:.12s}
+  .btn:hover{border-color:var(--ink-soft)}
+  .btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:5px 9px;font-size:11.5px}
+  .icon-btn{width:38px;height:38px;padding:0;justify-content:center;border-radius:10px}
+  .noteOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:550;display:flex;align-items:center;justify-content:center;padding:20px}
+  .noteCard{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+  .noteCard .noteHead{padding:15px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .noteCard .noteHead button{border:none;background:transparent;color:var(--ink-soft);font-size:19px;cursor:pointer;line-height:1;padding:2px}
+  .noteCard .noteBody{padding:16px 18px}
+  .syncStatus{font-size:16px;opacity:.45;cursor:default;user-select:none;line-height:1}
+  .syncStatus.saving{opacity:1;animation:syncPulse 1s ease-in-out infinite}
+  .syncStatus.ok{opacity:.75}
+  .syncStatus.error{opacity:1;filter:grayscale(.3)}
+  @keyframes syncPulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .syncBanner{display:none;align-items:center;gap:10px;background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:11px;padding:10px 14px;font-size:12.5px;font-weight:600;margin-bottom:14px}
+  .syncBanner.show{display:flex}
+  .syncBanner button{margin-left:auto;border:none;background:transparent;color:inherit;font-size:16px;cursor:pointer;line-height:1;padding:2px;opacity:.7}
+  .syncBanner button:hover{opacity:1}
+
+  .layout{display:grid;grid-template-columns:340px 1fr;gap:18px;margin-top:18px;align-items:start}
+  @media (max-width:1000px){.layout{grid-template-columns:1fr;display:flex;flex-direction:column}main{order:1}.rail{order:2}}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+  .card h2{font-size:16px;padding:14px 16px 0}
+  .card .sub{font-size:12px;color:var(--ink-soft);padding:2px 16px 0}
+  .card-body{padding:14px 16px}
+  .rail{display:flex;flex-direction:column;gap:16px;position:sticky;top:88px}
+  @media (max-width:1000px){.rail{position:static}}
+  .railToggle{display:none}
+  .railBody{display:flex;flex-direction:column;gap:16px}
+  @media (max-width:1000px){
+    .railToggle{display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px;font-weight:700;font-size:14px;box-shadow:var(--shadow);cursor:pointer;color:var(--ink)}
+    .railToggle .car{transition:transform .15s}
+    .railToggle[aria-expanded="true"] .car{transform:rotate(180deg)}
+    .railBody{display:none;margin-top:14px}
+    .railBody.open{display:flex}
+  }
+
+  .eyebrow{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent-ink);font-weight:700}
+  .field{margin-top:12px}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:600}
+  .field select,.field input[type=text],.field input[type=date],.field input[type=number],.field textarea{width:100%;background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 10px}
+  .field textarea{resize:vertical;min-height:56px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+  .mini-list{margin-top:10px;display:flex;flex-direction:column;gap:7px;max-height:340px;overflow:auto}
+  .mini-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:7px 9px;font-size:12.5px;flex-wrap:wrap}
+  .mini-row .x{margin-left:auto;cursor:pointer;color:var(--ink-soft);border:none;background:none;font-size:15px;line-height:1;padding:2px 4px}
+  .mini-row .x:hover{color:var(--crit)}
+  .rowActions{margin-left:auto;display:flex;align-items:center;gap:2px}
+  .rowActions .x{margin-left:0}
+  .confirmIcon{border:none;background:transparent;color:var(--ok);cursor:pointer;font-size:14px;font-weight:800;padding:1px 3px;opacity:.75}
+  .confirmIcon:hover{opacity:1}
+  .pill{display:inline-block;padding:1px 7px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.3px}
+  .pill.conf{background:var(--ok-soft);color:var(--ok)}
+  .pill.pend{background:var(--warn-soft);color:var(--warn)}
+  .pill.aprox{background:var(--chip);color:var(--ink-soft)}
+
+  /* balance table */
+  .tbl-scroll{overflow-x:auto;padding:12px 16px 16px}
+  table.bal{border-collapse:separate;border-spacing:0;width:100%;min-width:760px}
+  table.bal th,table.bal td{padding:8px 10px;text-align:center;font-variant-numeric:tabular-nums}
+  table.bal thead th{position:sticky;top:0;background:var(--panel);z-index:2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-soft);border-bottom:2px solid var(--line-strong)}
+  table.bal thead th:first-child,table.bal td:first-child{text-align:left}
+  table.bal td{border-bottom:1px solid var(--line)}
+  table.bal tr:hover td{background:var(--panel-2)}
+  .persona-cell{font-weight:600;white-space:nowrap}
+  .persona-cell .ant{display:block;font-weight:400;font-size:10.5px;color:var(--ink-soft);text-transform:none;letter-spacing:0}
+  .saldo-cell{font-weight:800;font-family:var(--font-display)}
+  .saldo-cell.pos{color:var(--ok)}
+  .saldo-cell.zero{color:var(--ink-soft)}
+  .saldo-cell.warn{color:var(--warn)}
+  .editIcon{border:none;background:transparent;color:var(--ink-soft);cursor:pointer;font-size:11px;margin-left:4px;opacity:.55;padding:1px 3px}
+  .editIcon:hover{opacity:1;color:var(--accent-ink)}
+
+  /* calendario */
+  .calHead{display:flex;align-items:center;gap:10px;padding:14px 16px 0}
+  .calHead h2{flex:1}
+  .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:12px 16px 16px}
+  .calGrid .dow{background:var(--panel-2);padding:6px 4px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--ink-soft)}
+  .calGrid .day{background:var(--panel);min-height:78px;padding:5px;font-size:11px}
+  .calGrid .day.otherMonth{background:var(--panel-2);opacity:.4}
+  .calGrid .day.today{box-shadow:inset 0 0 0 2px var(--accent)}
+  .calGrid .daynum{font-weight:700;font-size:11px;color:var(--ink-soft);margin-bottom:3px}
+  .calChip{display:block;font-size:10px;font-weight:700;border-radius:5px;padding:1px 5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .calChip.conf{background:var(--ok-soft);color:var(--ok)}
+  .calChip.pend{background:var(--warn-soft);color:var(--warn)}
+
+  .alert{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:10px;margin-top:8px;font-size:12.5px;border:1px solid transparent}
+  .alert .dot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex:none}
+  .alert.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+  .alert.warn .dot{background:var(--warn)}
+  .alert.ok{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 30%,transparent)}
+  .alert.ok .dot{background:var(--ok)}
+  .alert b{font-weight:700}
+  .alert-empty{color:var(--ok);font-weight:600;display:flex;align-items:center;gap:8px;padding:6px 0}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--negro);color:var(--crema);padding:11px 18px;border-radius:11px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .footer-note{font-size:11.5px;color:var(--ink-soft);margin-top:14px;text-align:center}
+
+  /* auth gate (igual que Cronogramas) */
+  .authGate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;z-index:100}
+  .authCard{width:100%;max-width:340px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:32px 28px;box-shadow:var(--shadow);text-align:center}
+  .authCard .mark{width:44px;height:44px;border-radius:12px;background:radial-gradient(120% 120% at 30% 20%,var(--terracota),#c74027);display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-size:24px;line-height:1;margin:0 auto 16px}
+  .authCard h2{font-size:20px;margin-bottom:6px}
+  .authSub{color:var(--ink-soft);font-size:12.5px;margin-bottom:22px}
+  .authCard input{width:100%;background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:11px 13px;font-size:14px;text-align:center;letter-spacing:2px;margin-bottom:12px}
+  .authCard .btn{width:100%;justify-content:center}
+  .authErr{color:var(--crit);font-size:12.5px;margin-top:12px}
+
+  @media (max-width:640px){
+    .wrap{padding:12px 12px 70px}
+    .top{position:static;padding:12px 14px;gap:10px}
+    .brand{width:100%}
+  }
+</style>
+</head>
+<body>
+
+<div id="authGate" class="authGate">
+  <div class="authCard">
+    <div class="mark">C</div>
+    <h2>Vacaciones</h2>
+    <p class="authSub">Acceso exclusivo del equipo de Candela</p>
+    <input id="authPass" type="password" placeholder="Contraseña" autocomplete="off" inputmode="numeric">
+    <button class="btn primary" id="authBtn">Ingresar</button>
+    <p id="authErr" class="authErr" style="display:none">Contraseña incorrecta.</p>
+  </div>
+</div>
+<div class="wrap" id="appWrap" style="display:none">
+  <header class="top">
+    <div class="brand">
+      <div class="mark">C</div>
+      <div>
+        <h1>Vacaciones</h1>
+        <p>Candela · Café &amp; Patisserie <span class="appVersion" id="appVersion" title="Versión que está corriendo en este navegador."></span></p>
+      </div>
+    </div>
+    <span id="syncStatus" class="syncStatus" title="Conectando…">☁️</span>
+    <button class="btn ghost icon-btn" id="btnUndo" title="Deshacer el último cambio" disabled>↩️</button>
+    <button class="btn ghost icon-btn" id="btnRedo" title="Rehacer" disabled>↪️</button>
+    <button class="btn ghost icon-btn" id="btnHistory" title="Ver versiones anteriores guardadas en la nube">🕐</button>
+    <button class="btn ghost icon-btn" id="btnTheme" title="Cambiar tema">◐</button>
+    <button class="btn ghost icon-btn" id="btnLogout" title="Cerrar sesión">🚪</button>
+  </header>
+
+  <div class="syncBanner" id="syncBanner">
+    <span id="syncBannerMsg">⚠️ No se pudo conectar con la sincronización en la nube. Tus cambios se guardan en este dispositivo, pero no van a verse en otros hasta que vuelva la conexión.</span>
+    <button type="button" id="syncBannerClose" title="Cerrar">✕</button>
+  </div>
+
+  <div class="layout">
+    <aside class="rail">
+      <button class="railToggle" id="railToggle" aria-expanded="false" aria-controls="railBody">
+        <span>🏖️ Agregar / ajustar vacaciones</span><span class="car">▾</span>
+      </button>
+      <div class="railBody" id="railBody">
+      <section class="card">
+        <div class="card-body" style="padding-bottom:16px">
+          <span class="eyebrow">Cargar vacaciones tomadas</span>
+          <p class="sub" style="padding:4px 0 0">El período sugerido es el más viejo que todavía tenga saldo — cambialo si corresponde a otro año.</p>
+          <div class="field">
+            <label for="vPerson">Persona</label>
+            <select id="vPerson"></select>
+          </div>
+          <div class="row2 field">
+            <div><label for="vDesde">Desde</label><input type="date" id="vDesde"></div>
+            <div><label for="vHasta">Hasta</label><input type="date" id="vHasta"></div>
+          </div>
+          <div class="row2 field">
+            <div><label for="vPeriodo">Del período</label><select id="vPeriodo"></select></div>
+            <div><label for="vEstado">Estado</label><select id="vEstado"><option value="confirmada">Confirmada</option><option value="pendiente">A confirmar</option></select></div>
+          </div>
+          <div class="field"><label for="vNota">Nota (opcional)</label><input type="text" id="vNota" placeholder="Ej: se adelantan 2 días"></div>
+          <button class="btn primary" id="btnAddVac" style="margin-top:11px;width:100%">+ Agregar vacación</button>
+          <button class="btn ghost" id="btnCancelEditVac" style="margin-top:7px;width:100%;display:none">Cancelar edición</button>
+          <div class="mini-list" id="vacList"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body">
+          <span class="eyebrow">Cómo se calculan los días</span>
+          <ul style="margin:8px 0 0;padding-left:18px;font-size:12px;color:var(--ink-soft);line-height:1.7">
+            <li>Ley de Contrato de Trabajo, art. 150: 14 / 21 / 28 / 35 días corridos según antigüedad al 31/12 de cada año (≤5, ≤10, ≤20, +20 años).</li>
+            <li>Quien ingresó a mitad de año: si trabajó al menos medio año, día completo; si no, proporcional (1 día cada 20 trabajados).</li>
+            <li>Podés ajustar el número a mano con el lápiz ✎ si el valor real difiere (por convenio, acuerdo particular, etc.).</li>
+          </ul>
+        </div>
+      </section>
+      </div>
+    </aside>
+
+    <main>
+      <section class="card alerts" style="margin-bottom:18px">
+        <h2>Vencidos / a programar</h2>
+        <div class="card-body" id="alertList"></div>
+      </section>
+
+      <section class="card" style="margin-bottom:18px">
+        <div class="calHead" style="padding-bottom:6px">
+          <h2 style="flex:1">Pedidos para <span id="solicitudesAnio"></span></h2>
+          <button class="btn sm" id="btnCopiarLink" type="button" title="Copiar el link para mandarles a todos">🔗 Copiar link para compartir</button>
+        </div>
+        <p class="sub">Cada persona carga sus fechas preferidas desde ese link (sin necesitar esta contraseña) — queda registrado el día y la hora en que lo mandó.</p>
+        <div class="card-body" id="solicitudesList"></div>
+      </section>
+
+      <section class="card" style="margin-bottom:18px">
+        <h2>Balance por persona</h2>
+        <p class="sub">Días que corresponden por ley, menos lo ya tomado, por período.</p>
+        <div class="tbl-scroll">
+          <table class="bal" id="balTable"></table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="calHead">
+          <button class="btn icon-btn" id="calPrev" title="Mes anterior">‹</button>
+          <h2 id="calTitle">Calendario</h2>
+          <button class="btn icon-btn" id="calNext" title="Mes siguiente">›</button>
+        </div>
+        <div class="calGrid" id="calGrid"></div>
+      </section>
+
+      <p class="footer-note">Hecho para Candela · los datos se sincronizan entre dispositivos.</p>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+// Sincronización entre dispositivos (Firebase Realtime Database) — mismo proyecto y patrón que
+// usan Cronogramas y Presupuestos en este sitio. Ver comentarios equivalentes en cronogramas/index.html.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
+  authDomain: "pedidos-de-produccion-ee3cb.firebaseapp.com",
+  databaseURL: "https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com",
+  projectId: "pedidos-de-produccion-ee3cb",
+  storageBucket: "pedidos-de-produccion-ee3cb.firebasestorage.app",
+  messagingSenderId: "744141794971",
+  appId: "1:744141794971:web:9639c8bf3834e4978ae03e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const cloudRef = ref(db, "vacaciones/state");
+
+// ver el comentario equivalente en cronogramas/index.html: guardamos CADA guardado pendiente
+// (no solo el último), para que dos guardados en el aire al mismo tiempo no se confundan entre sí.
+let pendingEchoes = [];
+let pushTimer = null;
+
+window.CloudSync = {
+  push(stateObj){
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(()=>{
+      const json = JSON.stringify(stateObj);
+      pendingEchoes.push(json);
+      if(pendingEchoes.length>25)pendingEchoes.shift();
+      window.dispatchEvent(new CustomEvent("cloudsync-saving"));
+      set(cloudRef, stateObj)
+        .then(()=>window.dispatchEvent(new CustomEvent("cloudsync-saved")))
+        .catch(err=>{
+          pendingEchoes=pendingEchoes.filter(j=>j!==json);
+          console.error("cloudsync:",err);window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
+        });
+    }, 400);
+  }
+};
+
+onValue(cloudRef, snap=>{
+  const remote = snap.val();
+  const remoteJSON = remote==null ? null : JSON.stringify(remote);
+  if(remoteJSON!==null){
+    const idx=pendingEchoes.indexOf(remoteJSON);
+    if(idx>=0){pendingEchoes.splice(idx,1);return;}
+  }
+  window.dispatchEvent(new CustomEvent("cloudsync-update",{detail:remote}));
+}, err=>{
+  console.error("cloudsync onValue:",err);
+  window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
+});
+
+// Historial de versiones aparte del estado "vivo" — ver el comentario equivalente en
+// cronogramas/index.html. Misma protección para los datos de vacaciones.
+const historyRef = ref(db, "vacaciones/history");
+const HISTORY_MAX = 40;
+window.CloudHistory = {
+  save(stateObj){
+    const key = new Date().toISOString().replace(/[:.]/g,"-");
+    const snap = Object.assign({}, stateObj, {_snapshotAt:new Date().toISOString()});
+    set(ref(db, "vacaciones/history/"+key), snap).catch(err=>console.error("history save:",err));
+    get(historyRef).then(s=>{
+      const val=s.val(); if(!val)return;
+      const keys=Object.keys(val).sort();
+      const exceso=keys.length-HISTORY_MAX;
+      if(exceso>0)keys.slice(0,exceso).forEach(k=>remove(ref(db,"vacaciones/history/"+k)).catch(()=>{}));
+    }).catch(()=>{});
+  },
+  list(cb){
+    get(historyRef).then(s=>{
+      const val=s.val()||{};
+      cb(Object.keys(val).sort().reverse().map(k=>({key:k,state:val[k]})));
+    }).catch(err=>{console.error("history list:",err);cb(null);});
+  }
+};
+
+// Pedidos de vacaciones para el año que viene, cargados por cada persona desde pedido.html (página
+// pública, sin la contraseña de acá). Viven en un nodo aparte de vacaciones/state para que esa
+// página no necesite tocar (ni conocer) el resto del estado de la app — solo escribe acá.
+const solicitudesRef = ref(db, "vacaciones/solicitudes");
+onValue(solicitudesRef, snap=>{
+  window.dispatchEvent(new CustomEvent("solicitudes-update",{detail:snap.val()||{}}));
+}, err=>console.error("solicitudes onValue:",err));
+window.SolicitudesSync = {
+  remove(id){ remove(ref(db,"vacaciones/solicitudes/"+id)).catch(err=>console.error("solicitudes remove:",err)); }
+};
+</script>
+
+<script>
+"use strict";
+const APP_VERSION="2026-09-26 confirmar-editar-rechazar-a-confirmar";
+/* ---------------- DATOS DEL EQUIPO ---------------- */
+const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+// fecha de ingreso de cada persona (aprox:true = fecha aproximada, ajustar si hace falta precisión).
+const PEOPLE=[
+  {n:"Lucía",ingreso:"2023-12-01"},
+  {n:"Luciana",ingreso:"2023-12-01"},
+  {n:"Gabriel",ingreso:"2024-06-01"},
+  // Leandro Villagra, el barista — no confundir con Leandro Tolaba (producción/Cuadra, más abajo).
+  {n:"Leandro Villagra",ingreso:"2026-06-15"},
+  {n:"Leandro Tolaba",ingreso:"2024-08-01"},
+  {n:"Mariano",ingreso:"2025-10-01"},
+  {n:"Luis",ingreso:"2023-12-01"},
+  {n:"Vanesa",ingreso:"2025-06-18"},
+  {n:"Rodrigo",ingreso:"2024-01-01"},
+  {n:"Lucas",ingreso:"2024-05-01"},
+  {n:"Matías",ingreso:"2026-06-01",aprox:true},
+  {n:"Lázaro",ingreso:"2025-01-01",aprox:true},
+  {n:"Gonzalo",ingreso:"2025-01-01",aprox:true},
+  {n:"Jhon",ingreso:"2026-06-01",aprox:true},
+  {n:"Natalia",ingreso:"2019-11-21"},
+  {n:"Javier",ingreso:"2019-11-21"},
+  {n:"Aaron",ingreso:"2023-12-01"},
+  {n:"Érica",ingreso:"2019-11-21"},
+  {n:"Paula",ingreso:"2022-10-05"},
+  {n:"Margarita",ingreso:"2023-01-01"},
+  {n:"Brenda",ingreso:"2024-04-01"},
+  {n:"Valentina",ingreso:"2024-08-08"},
+  {n:"Guadalupe",ingreso:"2024-04-24"},
+  {n:"Dana",ingreso:"2024-08-06"},
+  {n:"Milagros",ingreso:"2023-12-01"},
+  {n:"Zoe",ingreso:"2024-08-01"},
+  {n:"Rebeca",ingreso:"2024-06-01"},
+  // sumados desde la planilla de personal (RRHH): figuran como activos ahí y en la de vacaciones
+  // 2025, pero no estaban en ninguno de los dos módulos. Por ahora solo en Vacaciones (a pedido).
+  {n:"Hugo",ingreso:"2019-11-21"},
+  {n:"Tamara",ingreso:"2022-10-16"},
+  {n:"Magali",ingreso:"2023-02-13"},
+  {n:"Juan",ingreso:"2025-07-17"},
+  {n:"Laura",ingreso:"2022-02-02"},
+  {n:"Tatiana",ingreso:"2023-10-01"},
+  {n:"Walter",ingreso:"2022-02-23"},
+];
+const BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
+
+/* ---------------- CÁLCULO DE DÍAS (Ley de Contrato de Trabajo, art. 150/151/153) ----------------
+   Días según antigüedad al 31/12 del año que corresponde (art. 150): ≤5 años → 14, ≤10 → 21, ≤20 → 28, +20 → 35.
+   Quien no trabajó el año completo: día completo si llegó a la mitad del año (art. 151, aproximando "días
+   hábiles" con días corridos por simplicidad); si no, proporcional a 1 día cada 20 trabajados (art. 153).
+   No se suman días extra de convenio (Panaderos/Pastelería/Gastronómicos): solo Ley, según lo pedido. */
+function tramoLCT(anios){
+  if(anios<=5)return 14;
+  if(anios<=10)return 21;
+  if(anios<=20)return 28;
+  return 35;
+}
+const MS_DIA=86400000;
+function fecha(iso){return new Date(iso+"T00:00:00");}
+function hoy(){return new Date();}
+function isoHoy(){const d=hoy();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function diffDias(a,b){return Math.round((b-a)/MS_DIA);}
+function anioActual(){return hoy().getFullYear();}
+
+function diasCorresponden(ingresoISO,anio){
+  const ingreso=fecha(ingresoISO);
+  const inicioAnio=fecha(anio+"-01-01");
+  const finAnio=fecha(anio+"-12-31");
+  if(ingreso>finAnio)return{dias:0,proporcional:false,diasTrabajados:0,tramo:0};
+  const anios=diffDias(ingreso,finAnio)/365.2425;
+  const tramo=tramoLCT(anios);
+  const trabajoTodoElAnio=ingreso<=inicioAnio;
+  const desde=trabajoTodoElAnio?inicioAnio:ingreso;
+  const diasTrabajados=diffDias(desde,finAnio)+1;
+  if(trabajoTodoElAnio||diasTrabajados>=182)return{dias:tramo,proporcional:false,anioIncompleto:!trabajoTodoElAnio,diasTrabajados,tramo};
+  return{dias:Math.floor(diasTrabajados/20),proporcional:true,diasTrabajados,tramo};
+}
+function diasCorrespondenEfectivos(name,anio){
+  const p=BY_NAME[name];if(!p)return{dias:0,proporcional:false,manual:false};
+  if(state.overrides[name]&&state.overrides[name][anio]!=null)
+    return{dias:state.overrides[name][anio],proporcional:false,manual:true};
+  return diasCorresponden(p.ingreso,anio);
+}
+function rangoDias(desdeISO,hastaISO){return diffDias(fecha(desdeISO),fecha(hastaISO))+1;}
+// suma de los rangos cargados (lo que da cargar cada vacación con sus fechas)
+function tomadosCalculado(name,periodo){
+  return state.taken.filter(t=>t.n===name&&t.periodo===periodo).reduce((s,t)=>s+rangoDias(t.desde,t.hasta),0);
+}
+// lo que se usa de verdad: prioriza el ajuste manual (útil si no querés cargar cada rango de fechas,
+// o si el total real difiere de lo que dan los rangos cargados) por sobre la suma calculada.
+function tomadosEfectivos(name,periodo){
+  if(state.overridesTomado[name]&&state.overridesTomado[name][periodo]!=null)
+    return{dias:state.overridesTomado[name][periodo],manual:true};
+  return{dias:tomadosCalculado(name,periodo),manual:false};
+}
+function saldoPeriodo(name,periodo){
+  return diasCorrespondenEfectivos(name,periodo).dias-tomadosEfectivos(name,periodo).dias;
+}
+const PRIMER_PERIODO=2025; // el balance solo trackea desde acá (saldo 2025/26 + lo que se va sumando); coincide con las columnas de la tabla
+function aniosDesdeIngreso(name){
+  const p=BY_NAME[name];if(!p)return[anioActual()];
+  const anioIngreso=Math.max(fecha(p.ingreso).getFullYear(),PRIMER_PERIODO);
+  const arr=[];for(let y=anioIngreso;y<=anioActual();y++)arr.push(y);
+  return arr.length?arr:[anioActual()];
+}
+function periodosConSaldo(name){
+  return aniosDesdeIngreso(name).filter(y=>saldoPeriodo(name,y)>0);
+}
+function periodoSugerido(name){
+  const c=periodosConSaldo(name);
+  return c.length?c[0]:anioActual();
+}
+function saldoTotal(name){
+  return aniosDesdeIngreso(name).reduce((s,y)=>s+saldoPeriodo(name,y),0);
+}
+
+/* ---------------- ESTADO ---------------- */
+function defaultState(){return{taken:[],overrides:{},overridesTomado:{}};}
+let state=defaultState();
+const LS="candela_vacaciones_v1";
+const UNDO_LIMIT=60;
+let undoStack=[],redoStack=[],suspendHistory=false;
+// foto aparte en la nube cada tanto (ver comentario equivalente en cronogramas/index.html):
+// sobrevive aunque cierres la pestaña, a diferencia del deshacer local.
+let lastSnapshotAt=0;
+const SNAPSHOT_MIN_INTERVAL=10*60*1000;
+function maybeSnapshot(){
+  if(!window.CloudHistory)return;
+  const now=Date.now();
+  if(now-lastSnapshotAt<SNAPSHOT_MIN_INTERVAL)return;
+  lastSnapshotAt=now;
+  window.CloudHistory.save(state);
+}
+function persist(){
+  if(!suspendHistory){
+    const prev=localStorage.getItem(LS);
+    if(prev&&prev!==JSON.stringify(state)){undoStack.push(prev);if(undoStack.length>UNDO_LIMIT)undoStack.shift();redoStack.length=0;}
+  }
+  localStorage.setItem(LS,JSON.stringify(state));
+  syncUndoRedoButtons();
+  if(!suspendHistory&&window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);maybeSnapshot();}
+}
+function loadLS(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.taken){state=Object.assign(defaultState(),s);}}catch(e){}}
+function restoreSnapshot(json){
+  state=Object.assign(defaultState(),JSON.parse(json));
+  suspendHistory=true;
+  limpiarPersonasDadasDeBaja(); // por si el snapshot es viejo y tiene a alguien que ya no está
+  localStorage.setItem(LS,JSON.stringify(state));
+  suspendHistory=false;
+  render();
+  syncUndoRedoButtons();
+  if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(state);}
+}
+function undoLast(){if(!undoStack.length)return;redoStack.push(localStorage.getItem(LS));restoreSnapshot(undoStack.pop());toast("Cambio deshecho ↩️");}
+function redoLast(){if(!redoStack.length)return;undoStack.push(localStorage.getItem(LS));restoreSnapshot(redoStack.pop());toast("Cambio rehecho ↪️");}
+function syncUndoRedoButtons(){
+  const u=document.getElementById("btnUndo"),r=document.getElementById("btnRedo");
+  if(u)u.disabled=!undoStack.length;
+  if(r)r.disabled=!redoStack.length;
+}
+
+/* ---------------- SINCRONIZACIÓN EN LA NUBE ---------------- */
+function setSyncStatus(kind){
+  const el=document.getElementById("syncStatus");if(!el)return;
+  el.className="syncStatus "+kind;
+  el.title={connecting:"Conectando con la nube…",ok:"Sincronizado con la nube",saving:"Guardando en la nube…",
+    error:"Sin conexión con la nube — tus cambios se guardan en este dispositivo y se sincronizan apenas vuelva la conexión"}[kind]||"";
+  const banner=document.getElementById("syncBanner");
+  if(banner)banner.classList.toggle("show",kind==="error");
+}
+function showSyncError(detail){
+  setSyncStatus("error");
+  const msgEl=document.getElementById("syncBannerMsg");
+  if(msgEl&&detail&&detail.code)
+    msgEl.textContent=`⚠️ No se pudo conectar con la sincronización en la nube (${detail.code}). Tus cambios se guardan en este dispositivo, pero no van a verse en otros hasta que se resuelva esto.`;
+  console.error("cloudsync error:",detail);
+}
+let cloudFirstSyncDone=false;
+function applyRemoteState(remote){
+  const isFirst=!cloudFirstSyncDone; cloudFirstSyncDone=true;
+  if(remote==null){persist();setSyncStatus("ok");return;}
+  if(JSON.stringify(remote)===JSON.stringify(state)){setSyncStatus("ok");return;}
+  suspendHistory=true;
+  state=Object.assign(defaultState(),remote);
+  runMigrations(); // por si este dispositivo tiene semillas nuevas que la nube todavía no vio
+  localStorage.setItem(LS,JSON.stringify(state));
+  suspendHistory=false;
+  render();
+  syncUndoRedoButtons();
+  persist(); // por si la limpieza sacó algo, se lo mandamos de vuelta a la nube
+  setSyncStatus("ok");
+  if(!isFirst)toast("Vacaciones actualizadas desde otro dispositivo ☁️");
+}
+window.addEventListener("cloudsync-update",e=>applyRemoteState(e.detail));
+window.addEventListener("cloudsync-saving",()=>setSyncStatus("saving"));
+window.addEventListener("cloudsync-saved",()=>setSyncStatus("ok"));
+window.addEventListener("cloudsync-error",e=>showSyncError(e.detail));
+
+/* ---------------- AUTH (misma contraseña que Cronogramas) ---------------- */
+const AUTH_KEY="candela_vacaciones_auth";
+const AUTH_PASS="1412";
+function showApp(){document.getElementById("authGate").style.display="none";document.getElementById("appWrap").style.display="";}
+function attemptAuth(){
+  const input=document.getElementById("authPass");const err=document.getElementById("authErr");
+  if(input.value===AUTH_PASS){sessionStorage.setItem(AUTH_KEY,"ok");err.style.display="none";input.value="";showApp();}
+  else err.style.display="block";
+}
+
+/* ---------------- RENDER ---------------- */
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1900);}
+
+function fmtSnapshotDate(iso){
+  const d=new Date(iso);
+  const dias=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+  return `${dias[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")} · ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}hs`;
+}
+// panel de versiones guardadas en la nube — ver el comentario equivalente en cronogramas/index.html.
+function openHistoryPanel(){
+  document.getElementById("historyOverlay")?.remove();
+  const ov=document.createElement("div");
+  ov.className="noteOverlay";
+  ov.id="historyOverlay";
+  ov.innerHTML=`<div class="noteCard" style="max-width:460px">
+    <div class="noteHead"><span>🕐 Historial de versiones</span><button type="button" id="historyClose">✕</button></div>
+    <div class="noteBody" id="historyBody" style="max-height:60vh;overflow:auto"><p class="sub">Cargando…</p></div>
+  </div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  ov.addEventListener("click",e=>{if(e.target===ov)close();});
+  document.getElementById("historyClose").addEventListener("click",close);
+  const body=document.getElementById("historyBody");
+  if(!window.CloudHistory){
+    body.innerHTML=`<p class="sub" style="padding:0">No se pudo conectar con el historial en la nube ahora mismo (revisá tu conexión) — probá de nuevo en un momento.</p>`;
+    return;
+  }
+  window.CloudHistory.list(items=>{
+    if(items==null){body.innerHTML=`<p class="sub" style="padding:0">No se pudo leer el historial (revisá tu conexión).</p>`;return;}
+    if(!items.length){body.innerHTML=`<p class="sub" style="padding:0">Todavía no hay versiones guardadas — se van creando solas a medida que usás el sistema.</p>`;return;}
+    body.innerHTML=items.map(it=>{
+      const fecha=fmtSnapshotDate(it.state._snapshotAt||it.key);
+      return `<div class="mini-row"><span>🕐</span> <b>${fecha}</b> <button class="btn sm" data-restore="${it.key}" style="margin-left:auto">Restaurar</button></div>`;
+    }).join("");
+    body.querySelectorAll("[data-restore]").forEach(b=>b.addEventListener("click",()=>{
+      const item=items.find(i=>i.key===b.dataset.restore);
+      if(!item)return;
+      if(!confirm(`¿Reemplazar todo lo cargado ahora por la versión del ${fmtSnapshotDate(item.state._snapshotAt||item.key)}? Lo que hay ahora mismo no se pierde: queda guardado como una versión más en este mismo historial antes de reemplazarlo.`))return;
+      window.CloudHistory.save(state);
+      const restored=Object.assign({},item.state);
+      delete restored._snapshotAt;
+      restoreSnapshot(JSON.stringify(restored));
+      close();
+      toast("Versión restaurada 🕐");
+    }));
+  });
+}
+
+function fmtFecha(iso){const d=fecha(iso);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();}
+function antiguedadTexto(name){
+  const p=BY_NAME[name];if(!p)return"";
+  const anios=diffDias(fecha(p.ingreso),hoy())/365.2425;
+  return`ingresó ${fmtFecha(p.ingreso)}${p.aprox?" (aprox.)":""} · ${anios.toFixed(1)} años`;
+}
+
+function render(){
+  renderBalance();
+  renderVacList();
+  renderAlerts();
+  renderSolicitudes();
+  renderCalendar();
+  fillFormSelects();
+}
+
+function renderBalance(){
+  const anios=[];for(let y=PRIMER_PERIODO;y<=anioActual();y++)anios.push(y);
+  const tbl=document.getElementById("balTable");
+  let h="<thead><tr><th>Persona</th>";
+  anios.forEach(y=>h+=`<th>Corresponde ${y}</th><th>Tomado ${y}</th>`);
+  h+="<th>Pendiente total</th></tr></thead><tbody>";
+  PEOPLE.forEach(p=>{
+    h+=`<tr><td class="persona-cell">${p.n}<span class="ant">${antiguedadTexto(p.n)}</span></td>`;
+    anios.forEach(y=>{
+      const c=diasCorrespondenEfectivos(p.n,y);
+      const t=tomadosEfectivos(p.n,y);
+      h+=`<td>${c.dias}${c.proporcional?"*":""}<button class="editIcon" data-edit="${p.n}|${y}" title="Ajustar manualmente">✎</button></td>`;
+      h+=`<td>${t.dias}${t.manual?"*":""}<button class="editIcon" data-edittom="${p.n}|${y}" title="${t.manual?"Ajustado a mano — click para editar o volver al cálculo automático":"Ajustar manualmente"}">✎</button></td>`;
+    });
+    const tot=saldoTotal(p.n);
+    const cls=tot>0?(tot>=10?"pos":"warn"):"zero";
+    h+=`<td class="saldo-cell ${cls}">${tot}</td></tr>`;
+  });
+  h+="</tbody>";
+  tbl.innerHTML=h;
+  tbl.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>{
+    const[n,y]=b.dataset.edit.split("|");
+    const cur=diasCorrespondenEfectivos(n,+y).dias;
+    const v=prompt(`Días que corresponden a ${n} en ${y} (dejar como está: ${cur}). Escribí "auto" para volver al cálculo automático.`,String(cur));
+    if(v==null)return;
+    if(!state.overrides[n])state.overrides[n]={};
+    if(v.trim().toLowerCase()==="auto")delete state.overrides[n][y];
+    else{const num=parseInt(v,10);if(!isNaN(num))state.overrides[n][y]=num;}
+    persist();render();
+  }));
+  tbl.querySelectorAll("[data-edittom]").forEach(b=>b.addEventListener("click",()=>{
+    const[n,y]=b.dataset.edittom.split("|");
+    const calculado=tomadosCalculado(n,+y);
+    const cur=tomadosEfectivos(n,+y).dias;
+    const v=prompt(`Días que ${n} ya tomó en ${y} (calculado según las vacaciones cargadas: ${calculado}). Escribí "auto" para volver a usar ese cálculo en vez de un número fijo.`,String(cur));
+    if(v==null)return;
+    if(!state.overridesTomado[n])state.overridesTomado[n]={};
+    if(v.trim().toLowerCase()==="auto")delete state.overridesTomado[n][y];
+    else{const num=parseInt(v,10);if(!isNaN(num))state.overridesTomado[n][y]=num;}
+    persist();render();
+  }));
+}
+
+// edición en el formulario de "Cargar vacaciones tomadas": reutiliza los mismos campos para
+// cargar una nueva o editar una ya cargada (confirmada o a confirmar) — igual que el resto de la
+// app, no hay un formulario aparte para cada caso.
+let editandoVacId=null;
+function iniciarEdicionVac(id){
+  const t=state.taken.find(x=>String(x.id)===id);
+  if(!t)return;
+  editandoVacId=id;
+  document.getElementById("vPerson").value=t.n;
+  syncPeriodoOptions();
+  document.getElementById("vDesde").value=t.desde;
+  document.getElementById("vHasta").value=t.hasta;
+  document.getElementById("vPeriodo").value=String(t.periodo);
+  document.getElementById("vEstado").value=t.estado;
+  document.getElementById("vNota").value=t.nota||"";
+  document.getElementById("btnAddVac").textContent="💾 Guardar cambios";
+  document.getElementById("btnCancelEditVac").style.display="";
+  toast(`Editando la vacación de ${t.n} — corregí lo que haga falta y tocá "Guardar cambios"`);
+}
+function cancelarEdicionVac(){
+  editandoVacId=null;
+  document.getElementById("vDesde").value="";document.getElementById("vHasta").value="";document.getElementById("vNota").value="";
+  document.getElementById("vEstado").value="confirmada";
+  document.getElementById("btnAddVac").textContent="+ Agregar vacación";
+  document.getElementById("btnCancelEditVac").style.display="none";
+}
+function renderVacList(){
+  const el=document.getElementById("vacList");
+  const sorted=state.taken.slice().sort((a,b)=>a.desde<b.desde?-1:1);
+  el.innerHTML=sorted.length?sorted.map((t)=>{
+    const dias=rangoDias(t.desde,t.hasta);
+    const pendiente=t.estado==="pendiente";
+    // las "a confirmar" se pueden confirmar, editar o rechazar de una; las ya confirmadas solo se
+    // editan o se borran (no tiene sentido "confirmar" ni "rechazar" algo que ya está aprobado).
+    const acciones=pendiente
+      ?`<span class="rowActions"><button type="button" class="confirmIcon" data-confirmvac="${t.id}" title="Confirmar">✓</button><button type="button" class="editIcon" data-editvac="${t.id}" title="Editar">✎</button><button type="button" class="x" data-rejectvac="${t.id}" title="Rechazar pedido">×</button></span>`
+      :`<span class="rowActions"><button type="button" class="editIcon" data-editvac="${t.id}" title="Editar">✎</button><button type="button" class="x" data-id="${t.id}" title="Borrar">×</button></span>`;
+    return`<div class="mini-row"><span class="pill ${t.estado==="confirmada"?"conf":"pend"}">${t.estado==="confirmada"?"✓":"?"}</span> <b>${t.n}</b> · ${fmtFecha(t.desde)} al ${fmtFecha(t.hasta)} (${dias}d) · período ${t.periodo}${t.nota?` · <i>${t.nota}</i>`:""} ${acciones}</div>`;
+  }).join(""):`<p class="sub" style="padding:0">Todavía no cargaste ninguna vacación tomada.</p>`;
+  el.querySelectorAll("[data-editvac]").forEach(b=>b.addEventListener("click",()=>iniciarEdicionVac(b.dataset.editvac)));
+  el.querySelectorAll("[data-confirmvac]").forEach(b=>b.addEventListener("click",()=>{
+    const t=state.taken.find(x=>String(x.id)===b.dataset.confirmvac);
+    if(!t)return;
+    t.estado="confirmada";
+    persist();render();
+    toast(`Vacación de ${t.n} confirmada ✓`);
+  }));
+  el.querySelectorAll("[data-rejectvac]").forEach(b=>b.addEventListener("click",()=>{
+    const idx=state.taken.findIndex(x=>String(x.id)===b.dataset.rejectvac);
+    if(idx<0)return;
+    const t=state.taken[idx];
+    if(!confirm(`¿Rechazar la vacación de ${t.n} del ${fmtFecha(t.desde)} al ${fmtFecha(t.hasta)}? Se borra, no queda guardada.`))return;
+    if(editandoVacId===String(t.id))cancelarEdicionVac();
+    state.taken.splice(idx,1);
+    persist();render();
+    toast("Pedido rechazado");
+  }));
+  el.querySelectorAll("[data-id]").forEach(b=>b.addEventListener("click",()=>{
+    const idx=state.taken.findIndex(t=>String(t.id)===b.dataset.id);
+    if(idx<0)return;
+    if(editandoVacId===b.dataset.id)cancelarEdicionVac();
+    state.taken.splice(idx,1);
+    persist();render();
+    toast("Vacación borrada");
+  }));
+}
+
+function renderAlerts(){
+  const el=document.getElementById("alertList");
+  const anioAct=anioActual();
+  const alerts=[];
+  PEOPLE.forEach(p=>{
+    aniosDesdeIngreso(p.n).forEach(y=>{
+      const s=saldoPeriodo(p.n,y);
+      if(y<anioAct&&s>0)alerts.push({t:"warn",h:p.n,m:`tiene ${s} día${s===1?"":"s"} pendientes del período ${y} sin programar.`});
+    });
+  });
+  if(!alerts.length){el.innerHTML=`<div class="alert-empty">✓ Nadie tiene saldo vencido de períodos anteriores.</div>`;return;}
+  el.innerHTML=alerts.map(a=>`<div class="alert ${a.t}"><span class="dot"></span><div><b>${a.h}</b> ${a.m}</div></div>`).join("");
+}
+
+// Pedidos de vacaciones para el año que viene, cargados desde pedido.html (ver evento
+// "solicitudes-update" en el módulo Firebase de arriba). Viven aparte de `state`: no pasan por
+// persist()/undo/historial, son solo lo que cada persona mandó desde afuera.
+let solicitudes={};
+const ANIO_PEDIDO=anioActual()+1;
+function renderSolicitudes(){
+  document.getElementById("solicitudesAnio").textContent=ANIO_PEDIDO;
+  const el=document.getElementById("solicitudesList");
+  const filas=Object.entries(solicitudes).map(([id,s])=>({id,...s})).filter(s=>s.periodo===ANIO_PEDIDO);
+  if(!filas.length){el.innerHTML=`<p class="sub" style="padding:0">Todavía no llegó ningún pedido para ${ANIO_PEDIDO}.</p>`;return;}
+  filas.sort((a,b)=>(a.enviadoEn||"").localeCompare(b.enviadoEn||""));
+  // superposición: dos pedidos de PERSONAS DISTINTAS con fechas que se cruzan
+  function seSuperponen(a,b){return a.n!==b.n&&a.desde<=b.hasta&&b.desde<=a.hasta;}
+  el.innerHTML=filas.map(s=>{
+    const dias=rangoDias(s.desde,s.hasta);
+    const corresponde=diasCorrespondenEfectivos(s.n,ANIO_PEDIDO).dias;
+    const excede=corresponde>0&&dias>corresponde;
+    const cruces=filas.filter(o=>o.id!==s.id&&seSuperponen(s,o));
+    const enviado=s.enviadoEn?new Date(s.enviadoEn).toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"}):"—";
+    const avisos=[
+      excede?`<span class="pill pend" title="Le corresponden ${corresponde} días para ${ANIO_PEDIDO}">⚠ pide ${dias}d, le corresponden ${corresponde}</span>`:"",
+      cruces.length?`<span class="pill pend" title="${cruces.map(c=>c.n).join(', ')}">⚠ se cruza con ${cruces.map(c=>c.n).join(', ')}</span>`:"",
+    ].filter(Boolean).join(" ");
+    return`<div class="mini-row"><b>${s.n}</b>${s.orden>1?` (opción ${s.orden})`:""} · ${fmtFecha(s.desde)} al ${fmtFecha(s.hasta)} (${dias}d) ${avisos}${s.nota?` · <i>${s.nota}</i>`:""} · <span style="color:var(--ink-soft)">enviado ${enviado}</span> <button class="x" data-id="${s.id}" title="Borrar pedido">×</button></div>`;
+  }).join("");
+  el.querySelectorAll(".x").forEach(b=>b.addEventListener("click",()=>{
+    if(!confirm("¿Borrar este pedido?"))return;
+    window.SolicitudesSync&&window.SolicitudesSync.remove(b.dataset.id);
+    toast("Pedido borrado");
+  }));
+}
+window.addEventListener("solicitudes-update",e=>{solicitudes=e.detail||{};renderSolicitudes();});
+
+let calMonth=hoy().getMonth(),calYear=hoy().getFullYear();
+function vacacionesEnDia(iso){
+  return state.taken.filter(t=>t.desde<=iso&&iso<=t.hasta);
+}
+function renderCalendar(){
+  document.getElementById("calTitle").textContent=`${MESES[calMonth]} ${calYear}`;
+  const primerDia=new Date(calYear,calMonth,1);
+  const ultimoDia=new Date(calYear,calMonth+1,0);
+  let startOffset=primerDia.getDay()-1;if(startOffset<0)startOffset=6; // lunes=0
+  const totalCeldas=Math.ceil((startOffset+ultimoDia.getDate())/7)*7;
+  const grid=document.getElementById("calGrid");
+  let h=DAYS.map(d=>`<div class="dow">${d}</div>`).join("");
+  const todayISO=isoHoy();
+  for(let i=0;i<totalCeldas;i++){
+    const dayNum=i-startOffset+1;
+    const d=new Date(calYear,calMonth,dayNum);
+    const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    const otherMonth=d.getMonth()!==calMonth;
+    const vac=otherMonth?[]:vacacionesEnDia(iso);
+    h+=`<div class="day ${otherMonth?"otherMonth":""} ${iso===todayISO?"today":""}"><div class="daynum">${d.getDate()}</div>${vac.map(v=>`<span class="calChip ${v.estado==="confirmada"?"conf":"pend"}" title="${v.n} · ${fmtFecha(v.desde)} al ${fmtFecha(v.hasta)}">${v.n}</span>`).join("")}</div>`;
+  }
+  grid.innerHTML=h;
+}
+
+function fillFormSelects(){
+  const vp=document.getElementById("vPerson");
+  const cur=vp.value;
+  vp.innerHTML=PEOPLE.map(p=>`<option value="${p.n}">${p.n}</option>`).join("");
+  if(cur)vp.value=cur;
+  syncPeriodoOptions();
+}
+function syncPeriodoOptions(){
+  const n=document.getElementById("vPerson").value;
+  const sel=document.getElementById("vPeriodo");
+  const anios=aniosDesdeIngreso(n);
+  sel.innerHTML=anios.map(y=>`<option value="${y}">${y} (saldo: ${saldoPeriodo(n,y)})</option>`).join("");
+  sel.value=String(periodoSugerido(n));
+}
+
+/* ---------------- CONTROLES ---------------- */
+function initControls(){
+  document.getElementById("authBtn").addEventListener("click",attemptAuth);
+  document.getElementById("authPass").addEventListener("keydown",e=>{if(e.key==="Enter")attemptAuth();});
+  document.getElementById("btnLogout").addEventListener("click",()=>{
+    sessionStorage.removeItem(AUTH_KEY);
+    document.getElementById("appWrap").style.display="none";
+    document.getElementById("authGate").style.display="flex";
+    document.getElementById("authPass").focus();
+  });
+  document.getElementById("btnUndo").addEventListener("click",undoLast);
+  document.getElementById("btnRedo").addEventListener("click",redoLast);
+  document.getElementById("btnHistory").addEventListener("click",openHistoryPanel);
+  document.addEventListener("keydown",e=>{
+    if(!(e.ctrlKey||e.metaKey))return;
+    const tag=(document.activeElement&&document.activeElement.tagName)||"";
+    if(["INPUT","TEXTAREA","SELECT"].includes(tag))return;
+    if(e.key==="z"&&!e.shiftKey){e.preventDefault();undoLast();}
+    else if(e.key==="y"||(e.key==="z"&&e.shiftKey)){e.preventDefault();redoLast();}
+  });
+  document.getElementById("btnTheme").addEventListener("click",()=>{
+    const cur=document.documentElement.getAttribute("data-theme");
+    const next=cur==="dark"?"light":cur==="light"?"dark":(matchMedia("(prefers-color-scheme:dark)").matches?"light":"dark");
+    document.documentElement.setAttribute("data-theme",next);
+    localStorage.setItem("candela_theme",next);
+  });
+  const savedTheme=localStorage.getItem("candela_theme");
+  if(savedTheme)document.documentElement.setAttribute("data-theme",savedTheme);
+
+  const railToggle=document.getElementById("railToggle"),railBody=document.getElementById("railBody");
+  railToggle.addEventListener("click",()=>{
+    const open=railBody.classList.toggle("open");
+    railToggle.setAttribute("aria-expanded",open?"true":"false");
+  });
+
+  document.getElementById("btnCopiarLink").addEventListener("click",async ()=>{
+    const url=new URL("pedido.html",location.href).href;
+    try{await navigator.clipboard.writeText(url);toast("Link copiado 🔗");}
+    catch(e){prompt("Copiá el link:",url);}
+  });
+
+  document.getElementById("vPerson").addEventListener("change",syncPeriodoOptions);
+  document.getElementById("btnAddVac").addEventListener("click",()=>{
+    const n=document.getElementById("vPerson").value;if(!n)return toast("Elegí una persona");
+    const desde=document.getElementById("vDesde").value;
+    const hasta=document.getElementById("vHasta").value;
+    if(!desde||!hasta)return toast("Completá las dos fechas");
+    if(hasta<desde)return toast("La fecha 'hasta' no puede ser antes que 'desde'");
+    const periodo=+document.getElementById("vPeriodo").value;
+    const estado=document.getElementById("vEstado").value;
+    const nota=document.getElementById("vNota").value.trim();
+    if(editandoVacId){
+      const t=state.taken.find(x=>String(x.id)===editandoVacId);
+      if(!t)return;
+      Object.assign(t,{n,desde,hasta,periodo,estado,nota});
+      cancelarEdicionVac();
+      persist();render();
+      toast(`Vacación de ${n} actualizada`);
+      return;
+    }
+    state.taken.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),n,desde,hasta,periodo,estado,nota});
+    document.getElementById("vDesde").value="";document.getElementById("vHasta").value="";document.getElementById("vNota").value="";
+    persist();render();
+    toast(`Vacación de ${n} agregada`);
+  });
+  document.getElementById("btnCancelEditVac").addEventListener("click",cancelarEdicionVac);
+
+  document.getElementById("calPrev").addEventListener("click",()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();});
+  document.getElementById("calNext").addEventListener("click",()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();});
+
+  document.getElementById("syncBannerClose").addEventListener("click",()=>document.getElementById("syncBanner").classList.remove("show"));
+}
+
+/* ---------------- SEMILLA: vacaciones ya tomadas (cargadas de los calendarios enviados) ----------------
+   Todas corresponden al período 2025, tomadas durante 2026 (confirmado explícitamente). */
+// ajuste manual: la fórmula de la ley le da a Érica 21 días para 2025 (antigüedad ~6,7 años),
+// pero se confirmó que tiene 28 días pendientes de ese período — puede deberse a un acuerdo
+// previo o arrastre de otro período. Queda como ajuste editable, no oculto.
+function seedOverrides(){
+  if(state.overrides["Érica"]&&state.overrides["Érica"][2025]!=null)return;
+  if(!state.overrides["Érica"])state.overrides["Érica"]={};
+  state.overrides["Érica"][2025]=28;
+  persist();
+}
+function seedTaken(){
+  const TAG="seed-2026-v1";
+  if(state.taken.some(t=>t.seedTag===TAG))return;
+  let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,periodo:2025,estado:"confirmada",nota:"",...extra});
+  state.taken.push(
+    mk({n:"Zoe",desde:"2026-06-01",hasta:"2026-06-11"}),
+    mk({n:"Javier",desde:"2026-07-13",hasta:"2026-07-26"}),
+    mk({n:"Luis",desde:"2026-07-28",hasta:"2026-07-29"}),
+    mk({n:"Mariano",desde:"2026-07-31",hasta:"2026-08-03"}),
+    mk({n:"Luciana",desde:"2026-09-03",hasta:"2026-09-08"}),
+    mk({n:"Rodrigo",desde:"2026-09-03",hasta:"2026-09-08"}),
+    mk({n:"Érica",desde:"2026-11-17",hasta:"2026-12-14"}),
+  );
+  persist();
+}
+
+/* ---------------- SEMILLA 2: vacaciones tomadas nov 2025 – abr 2026, reconstruida originalmente
+   desde el calendario escaneado "Horarios y calendarios" (los nombres de gente que ya no está en el
+   equipo se dejaron afuera). Paula, Brenda y el tramo de Leandro se corrigieron después con la
+   planilla real ("Vacaciones 2025", ver corregirSemillaNov2025Abr2026 más abajo) — no tocar los
+   valores de acá, las correcciones viven aparte para no reordenar los ids ya guardados en la nube.
+   Ojo: Javier y Natalia quedan con más días tomados que los que les corresponden por antigüedad para
+   2025 (a Javier ya le habíamos cargado otro tramo en julio, y acá suma otro de casi un mes en
+   febrero-marzo; a Natalia le da un mes seguido en marzo) — puede ser una excepción de la empresa o
+   que alguno de estos rangos en realidad sea de otro período; revisalo si el saldo negativo que van a
+   mostrar no es lo que esperás. */
+function seedTakenNov2025Abr2026(){
+  const TAG="seed-nov2025-abr2026-v1";
+  if(state.taken.some(t=>t.seedTag===TAG))return;
+  let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,periodo:2025,estado:"confirmada",nota:"",...extra});
+  state.taken.push(
+    mk({n:"Paula",desde:"2026-02-01",hasta:"2026-02-13"}),
+    mk({n:"Javier",desde:"2026-02-02",hasta:"2026-03-01"}),
+    mk({n:"Luis",desde:"2026-02-15",hasta:"2026-02-25"}),
+    mk({n:"Brenda",desde:"2026-02-26",hasta:"2026-02-26",estado:"pendiente",nota:"día suelto de un calendario escaneado: confirmar la fecha exacta en la planilla original"}),
+    mk({n:"Brenda",desde:"2026-03-01",hasta:"2026-03-01",estado:"pendiente",nota:"día suelto de un calendario escaneado: confirmar la fecha exacta en la planilla original"}),
+    mk({n:"Luciana",desde:"2026-02-24",hasta:"2026-03-03"}),
+    mk({n:"Vanesa",desde:"2026-03-02",hasta:"2026-03-14"}),
+    mk({n:"Aaron",desde:"2026-03-02",hasta:"2026-03-15"}),
+    mk({n:"Natalia",desde:"2026-03-02",hasta:"2026-03-29"}),
+    mk({n:"Zoe",desde:"2026-03-09",hasta:"2026-03-11",nota:"vacaciones junto con Lucas"}),
+    mk({n:"Lucas",desde:"2026-03-09",hasta:"2026-03-11",nota:"vacaciones junto con Zoe"}),
+    mk({n:"Margarita",desde:"2026-03-23",hasta:"2026-04-05"}),
+    mk({n:"Valentina",desde:"2026-03-30",hasta:"2026-04-12"}),
+    mk({n:"Rebeca",desde:"2026-04-06",hasta:"2026-04-16"}),
+    mk({n:"Dana",desde:"2026-04-13",hasta:"2026-04-26"}),
+  );
+  persist();
+}
+
+// saca del estado cualquier referencia a alguien que ya no está en el equipo (PEOPLE), para que no
+// queden vacaciones o ajustes colgados de gente que dejó de trabajar acá.
+function limpiarPersonasDadasDeBaja(){
+  state.taken=state.taken.filter(t=>BY_NAME[t.n]);
+  Object.keys(state.overrides).forEach(n=>{if(!BY_NAME[n])delete state.overrides[n];});
+  Object.keys(state.overridesTomado).forEach(n=>{if(!BY_NAME[n])delete state.overridesTomado[n];});
+}
+
+/* Correcciones sobre la semilla nov2025-abr2026, hechas después de conseguir la planilla real
+   ("Vacaciones 2025", con columna "Fecha definida/Hasta" confirmada) en vez de reconstruir todo a
+   ojo desde el calendario escaneado:
+   - Paula: eran 13 días (01/02-13/02), la planilla real dice 14 días (01/02-14/02).
+   - Brenda: eran dos días sueltos sin confirmar (26/02 y 01/03); la planilla real los junta en un
+     solo tramo seguido, 28/02-01/03.
+   - El tramo de 2 días (16/02-17/02) que se había sacado por estar mal atribuido a "Leandro" en
+     realidad es de Leandro Tolaba (producción/Cuadra), no de Leandro Villagra (el barista) — se
+     vuelve a cargar, pero en la ficha correcta. */
+function corregirSemillaNov2025Abr2026(){
+  const TAG="seed-nov2025-abr2026-v1";
+  if(!state.taken.some(t=>t.seedTag===TAG))return; // todavía no corrió la semilla base
+  const paula=state.taken.find(t=>t.seedTag===TAG&&t.n==="Paula"&&t.hasta==="2026-02-13");
+  if(paula)paula.hasta="2026-02-14";
+  const brendaSueltos=state.taken.filter(t=>t.seedTag===TAG&&t.n==="Brenda"&&t.estado==="pendiente");
+  if(brendaSueltos.length){
+    state.taken=state.taken.filter(t=>!(t.seedTag===TAG&&t.n==="Brenda"&&t.estado==="pendiente"));
+    state.taken.push({id:`seed-${TAG}-brenda-fix`,seedTag:TAG,n:"Brenda",desde:"2026-02-28",hasta:"2026-03-01",periodo:2025,estado:"confirmada",nota:""});
+  }
+  if(!state.taken.some(t=>t.seedTag===TAG&&t.n==="Leandro Tolaba"))
+    state.taken.push({id:`seed-${TAG}-leandro-tolaba`,seedTag:TAG,n:"Leandro Tolaba",desde:"2026-02-16",hasta:"2026-02-17",periodo:2025,estado:"confirmada",nota:""});
+}
+
+/* SEMILLA 3: Hugo, Tamara, Magali, Juan, Laura, Tatiana y Walter — activos según la planilla de
+   personal (RRHH) pero ausentes de este módulo. Fechas tomadas desde la planilla "Vacaciones 2025"
+   (columna "Fecha definida/Hasta" cuando estaba confirmada). Tatiana y Walter no tienen fecha
+   definida ahí ("a charlar" / rango con datos inconsistentes) así que se cargan como ajuste manual
+   del total (mismo mecanismo que ya se usaba para Érica), no como rango de fechas. */
+function seedTakenPersonalAdicional(){
+  const TAG="seed-personal-adicional-v1";
+  if(state.taken.some(t=>t.seedTag===TAG))return;
+  let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,periodo:2025,estado:"confirmada",nota:"",...extra});
+  state.taken.push(
+    mk({n:"Hugo",desde:"2026-03-02",hasta:"2026-03-29"}),
+    mk({n:"Tamara",desde:"2026-03-16",hasta:"2026-03-22"}),
+    mk({n:"Magali",desde:"2026-03-18",hasta:"2026-03-28"}),
+    mk({n:"Juan",desde:"2026-02-02",hasta:"2026-02-15"}),
+    mk({n:"Laura",desde:"2026-02-01",hasta:"2026-02-12"}),
+  );
+  if(!state.overridesTomado["Tatiana"])state.overridesTomado["Tatiana"]={};
+  if(state.overridesTomado["Tatiana"][2025]==null)state.overridesTomado["Tatiana"][2025]=2;
+  if(!state.overridesTomado["Walter"])state.overridesTomado["Walter"]={};
+  if(state.overridesTomado["Walter"][2025]==null)state.overridesTomado["Walter"][2025]=2;
+  persist();
+}
+
+// agrupa todas las semillas + limpieza para poder reaplicarlas también cuando llega el estado de la
+// nube (ver applyRemoteState): si no se reaplican ahí, una nube desactualizada que llega justo después
+// del arranque pisa las semillas recién cargadas en este dispositivo y las borra para siempre (bug real:
+// pasó con la semilla de vacaciones nov 2025 - abr 2026, que desaparecía al recargar).
+function runMigrations(){
+  seedOverrides();
+  seedTaken();
+  seedTakenNov2025Abr2026();
+  corregirSemillaNov2025Abr2026();
+  seedTakenPersonalAdicional();
+  limpiarPersonasDadasDeBaja();
+}
+
+/* ---------------- BOOT ---------------- */
+document.getElementById("appVersion").textContent="v"+APP_VERSION;
+loadLS();
+runMigrations();
+initControls();
+render();
+undoStack.length=0;redoStack.length=0;syncUndoRedoButtons();
+if(sessionStorage.getItem(AUTH_KEY)==="ok")showApp();
+</script>
+
+</body>
+</html>
