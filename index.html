@@ -505,6 +505,8 @@
     .qty-input-new::-webkit-outer-spin-button,.qty-input-new::-webkit-inner-spin-button{-webkit-appearance:none;}
     .qty-input-new:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(225,93,70,.12);}
     .qty-input-new.has-value{border-color:var(--terra);color:var(--terra);background:var(--terra-pale);}
+    .qty-input-new.saving{border-color:#f0a500;background:#fffbe6;}
+    .qty-input-new.saved{border-color:var(--turq-dark);background:var(--turq-pale);}
     .qty-unit-lbl{font-size:11px;color:var(--gray);min-width:28px;text-align:left;}
 
     /* ── DASHBOARD ── */
@@ -1134,7 +1136,12 @@ function showToast(msg,type='success'){
 }
 function safeRender(){
   const active=document.activeElement;
-  if(active && active.classList.contains('qty-input')) return;
+  // No re-dibujar mientras el usuario está editando un campo: un render en
+  // medio de la edición descarta lo que está escribiendo y le saca el foco.
+  if(active){
+    const tag = active.tagName;
+    if(tag==='INPUT' || tag==='TEXTAREA' || tag==='SELECT') return;
+  }
   render();
 }
 
@@ -1149,7 +1156,7 @@ async function saveQty(local, area, pid, val) {
   state.savingPaths.add(path);
   // Mark input as saving in DOM (if still mounted)
   const inputEl = document.querySelector(
-    `.qty-input[data-local="${local}"][data-area="${area}"][data-pid="${pid}"]`
+    `.qty-input-new[data-local="${local}"][data-area="${area}"][data-pid="${pid}"]`
   );
   if (inputEl) { inputEl.classList.add('saving'); inputEl.classList.remove('saved'); }
   state.savingCount++;
@@ -1201,7 +1208,7 @@ async function saveQty(local, area, pid, val) {
     // no sobrescriba el estado correcto antes del render final
     safeRender();
     const savedEl = document.querySelector(
-      `.qty-input[data-local="${local}"][data-area="${area}"][data-pid="${pid}"]`
+      `.qty-input-new[data-local="${local}"][data-area="${area}"][data-pid="${pid}"]`
     );
     if (savedEl) {
       savedEl.classList.remove('saving');
