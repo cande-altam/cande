@@ -330,11 +330,12 @@ Ubicado en `recetario/`. Fichas técnicas de **Cocina**: las carga el encargado 
 
 | Pantalla | Qué tiene |
 |---|---|
-| **Listado** | Búsqueda por nombre o código, filtros por tipo (plato / subreceta) y grupo. Cada receta muestra líneas, lo que produce y la última actualización. |
+| **Inicio (categorías)** | Las recetas ordenadas por **categoría** (el campo "Categoría" de cada receta: Combos, Bases, Salsas…; una subreceta sin categoría va a "Bases", un plato a "Sin categoría"). Dentro de cada categoría, las recetas en **cards**: adelante el nombre y la foto del plato; al tocarla **se da vuelta** y muestra el resumen con la cantidad de cada ingrediente, subreceta y empaque, y un botón a la ficha completa. Búsqueda por nombre o código. Arriba, las **recetas en curso sin publicar**. Desde cualquier pantalla, **🏠 Inicio del recetario** (o el título) vuelve acá. |
+| **Autoguardado** | Lo que se carga en el editor se guarda **solo**: al instante en el dispositivo y, a los pocos segundos, como **borrador** en la base (`recetario/areas/{área}/borradores`, la foto aparte en `borradoresFotos`). Antes se guardaba únicamente al tocar "Guardar", y en el celular abrir la cámara o cambiar de app podía recargar la pestaña y perder la receta entera. Si la página se recarga en medio de una carga, el editor se reabre solo con lo cargado. Salir del editor no descarta nada: queda en "recetas en curso" (y la ficha avisa "cambios sin publicar"). **💾 Guardar y publicar** la pasa a la ficha, al PDF y a Costeo, y borra el borrador; **🗑️ Descartar cambios** lo tira. |
 | **Ficha** | Foto, preparación paso a paso, alérgenos, ingredientes con cantidad neta / merma / cantidad bruta, empaque, observaciones, y en qué recetas se usa cada subreceta. |
 | **Editar / Nueva** | Datos generales, ingredientes y subrecetas con merma, empaque, pasos (uno por línea), foto, observaciones, alérgenos y datos para el costeo (margen de seguridad, costeo por unidad de rendimiento). |
 | **📥 Importar bases de Costeo** | Lista las bases (insumos con receta) de Costeo para tildar las del área. Cada una se crea como subreceta que rinde 1 unidad, con sus ingredientes; si usa otra base, esa se importa también. Las que ya están en el recetario no se duplican, y quedan hechos los vínculos ingrediente→insumo en `costeo/vinculosRecetario`. |
-| **PDF** | **⬇️ Descargar ficha (PDF)** abre la ficha lista para imprimir o "Guardar como PDF". **🖨️ Imprimir recetario** junta todas las recetas filtradas, una por hoja, para la carpeta de la cocina. |
+| **PDF** | **⬇️ Descargar ficha (PDF)** abre la ficha lista para imprimir o "Guardar como PDF". **🖨️ Imprimir** junta todas las recetas de la categoría abierta (o todas, desde el inicio), una por hoja, para la carpeta de la cocina. |
 
 Reglas que aplica:
 - **Subrecetas** (masas, salsas, rellenos) se usan dentro de otras recetas. Nunca se puede formar un ciclo, y no se puede borrar una subreceta mientras otra receta la use.

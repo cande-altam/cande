@@ -156,7 +156,18 @@ let draft = null;            // receta en edición
 let draftBase = 0;           // "actualizada" de la receta al empezar a editar
 let dirty = false;
 let guardando = false;
-const filtros = { q: "", tipo: "todos", grupo: "" };
+const filtros = { q: "" };
+let categoriaActual = "";    // "" = inicio del recetario (las categorías); si no, las cards de esa categoría
+let borradores = {};         // recetario/areas/{área}/borradores/{id}: lo que se está cargando, sin publicar
+
+// ── Autoguardado ─────────────────────────────────────────────
+// Antes el editor guardaba SOLO al tocar "Guardar": todo lo cargado vivía en la memoria de la página.
+// En el celular, abrir la cámara para la foto o cambiar de app puede recargar la pestaña, y se
+// perdía la receta entera sin aviso. Ahora cada cambio se guarda al instante en el dispositivo
+// (localStorage) y, unos segundos después, como borrador en la base. Al volver se recupera solo.
+// "Publicar" es lo que la pasa a la ficha, al PDF y a Costeo (y borra el borrador).
+const AUTOGUARDADO_MS = 1500;
+const autosave = { timer: null, pendiente: false, ultimo: 0, error: false, fotoSubida: undefined, recuperado: false };
 
 let rootEl = null;
 
@@ -167,8 +178,10 @@ function init(firebaseConfig, opts = {}) {
   const app = initializeApp(firebaseConfig, "recetario");
   fb = { app, db: getDatabase(app), auth: getAuth(app) };
   inyectarCss();
-  window.addEventListener("beforeunload", ev => {
-    if (vista === "editar" && dirty) { ev.preventDefault(); ev.returnValue = ""; }
+  // Lo que se escribe ya quedó en el dispositivo; al irse se intenta además subir el borrador.
+  window.addEventListener("pagehide", () => { guardarBorradorServidor(); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") guardarBorradorServidor();
   });
   onAuthStateChanged(fb.auth, async u => {
     authListo = true;
@@ -197,6 +210,10 @@ function mount(el) {
     el.addEventListener("input", onInput);
     el.addEventListener("change", onChange);
     el.addEventListener("submit", onSubmit);
+    el.addEventListener("keydown", ev => {
+      const card = ev.target.closest && ev.target.closest('[data-act="girar"]');
+      if (card && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); card.click(); }
+    });
   }
   pintar();
 }
@@ -208,7 +225,7 @@ function areasDelMiembro() {
 function elegirArea(a) {
   area = a;
   vista = "lista"; actualId = null; draft = null; dirty = false;
-  filtros.q = ""; filtros.tipo = "todos"; filtros.grupo = "";
+  filtros.q = ""; categoriaActual = "";
   escucharDatos();
 }
 
@@ -216,7 +233,11 @@ function escucharDatos() {
   detenerDatos();
   datosListos = false;
   let pendientes = 2;
-  const listo = () => { if (--pendientes === 0) datosListos = true; };
+  const listo = () => { if (--pendientes === 0) { datosListos = true; intentarRecuperarEdicion(); } };
+  unsubs.push(onValue(ref(fb.db, `recetario/areas/${area}/borradores`), s => {
+    borradores = s.val() || {};
+    refrescar();
+  }, err => { console.error(err); }));
   let r1 = true, r2 = true;
   unsubs.push(onValue(ref(fb.db, `recetario/areas/${area}/recetas`), s => {
     const antes = recetas;
@@ -239,8 +260,113 @@ function escucharDatos() {
 function detenerDatos() {
   unsubs.forEach(u => u());
   unsubs = [];
-  recetas = {}; ingredientes = {}; fotos = {};
+  recetas = {}; ingredientes = {}; fotos = {}; borradores = {};
   datosListos = false;
+}
+
+// ── Borradores: dispositivo + base ───────────────────────────
+const lsClave = id => `recetario:borrador:${area}:${id}`;
+const lsAbierto = () => `recetario:editando:${area}`;
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } }
+function lsDel(k) { try { localStorage.removeItem(k); } catch { /* sin almacenamiento local */ } }
+
+// Lo que se guarda de un borrador: el draft tal cual, sin la foto (va aparte, pesa) ni campos internos.
+function borradorDeDraft() {
+  const { foto, _fotoCargando, ...resto } = draft;
+  return JSON.parse(JSON.stringify({ ...resto, guardadoEn: Date.now(), base: draftBase }));
+}
+function normalizarDraft(b) {
+  const d = { ...nuevoDraft(), ...b };
+  d.ingredientes = aArray(b.ingredientes);
+  d.empaque = aArray(b.empaque);
+  d.alergenos = b.alergenos || {};
+  d.pasosTexto = b.pasosTexto || "";
+  d.observaciones = b.observaciones || "";
+  delete d.guardadoEn; delete d.base;
+  return d;
+}
+// La copia más nueva entre la del dispositivo y la de la base.
+function borradorMasNuevo(id) {
+  const local = lsGet(lsClave(id));
+  const servidor = borradores[id] || null;
+  if (local && servidor) return (local.guardadoEn || 0) >= (servidor.guardadoEn || 0) ? local : servidor;
+  return local || servidor;
+}
+// Borradores vigentes: los de la base y los de este dispositivo, menos los que ya se publicaron.
+function listaBorradores() {
+  const ids = new Set(Object.keys(borradores));
+  try {
+    const pre = `recetario:borrador:${area}:`;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(pre)) ids.add(k.slice(pre.length));
+    }
+  } catch { /* sin almacenamiento local */ }
+  return [...ids].map(id => ({ id, b: borradorMasNuevo(id) }))
+    .filter(({ id, b }) => b && !(recetas[id] && (recetas[id].actualizada || 0) >= (b.guardadoEn || 0)))
+    .sort((x, y) => (y.b.guardadoEn || 0) - (x.b.guardadoEn || 0));
+}
+
+function marcarCambio() {
+  if (!draft) return;
+  dirty = true;
+  guardarLocal();
+  autosave.pendiente = true;
+  pintarEstadoAutoguardado();
+  clearTimeout(autosave.timer);
+  autosave.timer = setTimeout(guardarBorradorServidor, AUTOGUARDADO_MS);
+}
+function guardarLocal() {
+  const id = draft.borradorId;
+  const datos = { ...borradorDeDraft(), foto: draft.fotoCambiada ? draft.foto || null : null };
+  if (!lsSet(lsClave(id), datos)) lsSet(lsClave(id), { ...datos, foto: null });  // sin lugar: sin la foto
+  lsSet(lsAbierto(), id);
+}
+async function guardarBorradorServidor() {
+  clearTimeout(autosave.timer); autosave.timer = null;
+  if (!draft || !autosave.pendiente || !fb) return;
+  const id = draft.borradorId;
+  const upd = { [`recetario/areas/${area}/borradores/${id}`]: borradorDeDraft() };
+  if (draft.fotoCambiada && autosave.fotoSubida !== draft.foto) upd[`recetario/areas/${area}/borradoresFotos/${id}`] = draft.foto || null;
+  autosave.pendiente = false;
+  try {
+    await update(ref(fb.db), upd);
+    if (draft && draft.fotoCambiada) autosave.fotoSubida = draft.foto;
+    autosave.ultimo = Date.now(); autosave.error = false;
+  } catch (err) {
+    console.error(err);
+    autosave.pendiente = true; autosave.error = true;
+  }
+  pintarEstadoAutoguardado();
+}
+function textoAutoguardado() {
+  if (autosave.error) return "⚠️ Sin conexión: los cambios quedan guardados en este dispositivo";
+  if (autosave.pendiente) return "Guardando borrador…";
+  if (autosave.ultimo) return `✓ Borrador guardado ${new Date(autosave.ultimo).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}`;
+  if (autosave.recuperado) return "📝 Borrador recuperado";
+  return "Se guarda solo mientras cargás";
+}
+function pintarEstadoAutoguardado() {
+  const el = document.getElementById("rec-autosave");
+  if (el) el.textContent = textoAutoguardado();
+}
+async function borrarBorrador(id) {
+  lsDel(lsClave(id));
+  if (lsGet(lsAbierto()) === id) lsDel(lsAbierto());
+  delete borradores[id];
+  try {
+    await update(ref(fb.db), { [`recetario/areas/${area}/borradores/${id}`]: null, [`recetario/areas/${area}/borradoresFotos/${id}`]: null });
+  } catch (err) { console.error(err); }
+}
+// Si la página se recargó en medio de una carga (típico en el celular al sacar la foto), se vuelve
+// a abrir el editor con lo que se había cargado.
+function intentarRecuperarEdicion() {
+  const id = lsGet(lsAbierto());
+  if (!id || vista === "editar") return;
+  if (!borradorMasNuevo(id)) { lsDel(lsAbierto()); return; }
+  abrirEditor(recetas[id] ? id : null, id);
+  toast("📝 Se recuperó la receta que estabas cargando.");
 }
 
 function normalizar(r) {
@@ -297,11 +423,38 @@ function listaRecetas() {
 function grupos() {
   return [...new Set(Object.values(recetas).map(r => (r.grupo || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
 }
+// ── Categorías ───────────────────────────────────────────────
+// La categoría es el campo "grupo" de la receta. Sin categoría cargada, una subreceta va a "Bases"
+// (es lo que son: masas, salsas, rellenos) y un plato a "Sin categoría".
+const CATEGORIAS_SUGERIDAS = ["Bases", "Combos", "Platos", "Postres", "Salsas", "Sándwiches"];
+const SIN_CATEGORIA = "Sin categoría";
+function categoriaDe(r) {
+  const g = (r.grupo || "").trim();
+  return g || (r.tipo === "subreceta" ? "Bases" : SIN_CATEGORIA);
+}
+function categorias() {
+  const m = new Map();
+  Object.values(recetas).forEach(r => { const c = categoriaDe(r); m.set(c, (m.get(c) || 0) + 1); });
+  return [...m.entries()].sort((a, b) => (a[0] === SIN_CATEGORIA) - (b[0] === SIN_CATEGORIA) || a[0].localeCompare(b[0], "es"));
+}
+function iconoCategoria(c) {
+  const k = clave(c);
+  if (k.includes("base")) return "🥣";
+  if (k.includes("combo")) return "🍱";
+  if (k.includes("postre") || k.includes("dulce") || k.includes("torta")) return "🍰";
+  if (k.includes("salsa") || k.includes("aderezo")) return "🫙";
+  if (k.includes("masa") || k.includes("pan")) return "🥖";
+  if (k.includes("bebida") || k.includes("trago")) return "🥤";
+  if (k.includes("entrada") || k.includes("ensalada")) return "🥗";
+  if (k.includes("sandw") || k.includes("sanwi") || k.includes("tostado")) return "🥪";
+  if (k.includes("desayuno") || k.includes("merienda")) return "☕";
+  if (c === SIN_CATEGORIA) return "📁";
+  return "🍽️";
+}
 function recetasFiltradas() {
   const q = clave(filtros.q);
   return listaRecetas().filter(r =>
-    (filtros.tipo === "todos" || r.tipo === filtros.tipo) &&
-    (!filtros.grupo || (r.grupo || "").trim() === filtros.grupo) &&
+    (!categoriaActual || categoriaDe(r) === categoriaActual) &&
     (!q || clave(r.nombre).includes(q) || clave(r.codigo).includes(q)));
 }
 // Recetas que usan (directa o indirectamente) a `id` como subreceta.
@@ -391,13 +544,15 @@ function cardMsg(t) { return `<div class="section-block" style="text-align:cente
 
 function barra() {
   const areas = areasDelMiembro();
+  const enInicio = vista === "lista" && !categoriaActual && !filtros.q;
   return `
     <div class="rec-bar">
       <div>
-        <div class="page-title">${areaIcon(area)} Recetario · ${esc(areaLabel(area))}</div>
+        <div class="page-title"><a href="#" data-act="home" class="rec-titulo-link" title="Inicio del recetario">${areaIcon(area)} Recetario · ${esc(areaLabel(area))}</a></div>
         <div class="page-sub" style="margin-bottom:0">Fichas técnicas para imprimir. Acceso restringido.</div>
       </div>
       <div class="rec-user">
+        ${enInicio ? "" : `<button class="btn btn-turq btn-sm" data-act="home" title="Volver al inicio del recetario">🏠 Inicio del recetario</button>`}
         ${areas.length > 1 ? `<div class="cat-tabs" style="margin:0">${areas.map(a =>
           `<button class="cat-tab ${a === area ? "active" : ""}" data-act="area" data-v="${esc(a)}">${areaIcon(a)} ${esc(areaLabel(a))}</button>`).join("")}</div>` : ""}
         <button class="btn btn-ghost btn-sm" data-act="salir" title="${esc(user?.email || "")}">Salir (${esc(miembro?.nombre || usuarioCorto())})</button>
@@ -454,59 +609,105 @@ function pintarErrorReglas(c) {
 
 // ── 1. Listado ───────────────────────────────────────────────
 function pintarLista(c) {
-  const gs = grupos();
-  if (filtros.grupo && !gs.includes(filtros.grupo)) filtros.grupo = "";
+  if (categoriaActual && !categorias().some(([cat]) => cat === categoriaActual)) categoriaActual = "";
+  const enInicio = !categoriaActual;
   c.innerHTML = `
     ${barra()}
     <div class="rec-actions" style="margin:20px 0 16px">
       <button class="btn btn-primary" data-act="nueva">＋ Nueva receta</button>
       <button class="btn btn-ghost" data-act="importar">📥 Importar bases de Costeo</button>
-      <button class="btn btn-ghost" data-act="imprimir-todo">🖨️ Imprimir recetario</button>
+      <button class="btn btn-ghost" data-act="imprimir-todo">🖨️ Imprimir ${categoriaActual ? `“${esc(categoriaActual)}”` : "recetario"}</button>
     </div>
+    ${enInicio ? pintarBorradores() : ""}
     <div class="section-block">
-      <div class="rec-filtros">
-        <div class="form-group" style="flex:2"><label class="form-label" for="rec-q">Buscar</label>
-          <input class="form-input" id="rec-q" data-filtro="q" placeholder="Nombre o código de la receta" value="${esc(filtros.q)}"></div>
-        <div class="form-group"><label class="form-label" for="rec-ftipo">Tipo</label>
-          <select class="form-select" id="rec-ftipo" data-filtro="tipo">
-            <option value="todos" ${filtros.tipo === "todos" ? "selected" : ""}>Platos y subrecetas</option>
-            <option value="plato" ${filtros.tipo === "plato" ? "selected" : ""}>Solo platos</option>
-            <option value="subreceta" ${filtros.tipo === "subreceta" ? "selected" : ""}>Solo subrecetas</option>
-          </select></div>
-        <div class="form-group"><label class="form-label" for="rec-fgrupo">Grupo</label>
-          <select class="form-select" id="rec-fgrupo" data-filtro="grupo">
-            <option value="">Todos los grupos</option>
-            ${gs.map(g => `<option ${g === filtros.grupo ? "selected" : ""}>${esc(g)}</option>`).join("")}
-          </select></div>
-      </div>
+      ${categoriaActual ? `<div class="rec-migas"><a href="#" data-act="home">🏠 Recetas</a><span>›</span><b>${iconoCategoria(categoriaActual)} ${esc(categoriaActual)}</b></div>` : ""}
+      <div class="form-group" style="margin-bottom:16px"><label class="form-label" for="rec-q">Buscar</label>
+        <input class="form-input" id="rec-q" data-filtro="q" placeholder="${categoriaActual ? `Buscar en ${esc(categoriaActual)}` : "Buscar una receta por nombre o código"}" value="${esc(filtros.q)}"></div>
       <div id="rec-tabla"></div>
     </div>`;
   pintarTabla();
 }
 
+// Recetas sin publicar (se estaban cargando): quedan acá para retomarlas.
+function pintarBorradores() {
+  const bs = listaBorradores();
+  if (!bs.length) return "";
+  return `
+    <div class="section-block rec-borradores">
+      <div class="section-title" style="margin-bottom:4px">📝 Recetas en curso, sin publicar</div>
+      <div class="rec-help" style="margin-bottom:12px">Se guardan solas mientras se cargan. Para que aparezcan en la ficha, el PDF y Costeo, abrilas y tocá “Guardar y publicar”.</div>
+      ${bs.map(({ id, b }) => `
+        <div class="rec-borrador">
+          <div><b>${esc(b.nombre || "(sin nombre)")}</b>
+            <div class="rec-sub">${recetas[id] ? "Cambios sin publicar en una receta existente" : "Receta nueva"} · guardado ${b.guardadoEn ? new Date(b.guardadoEn).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</div></div>
+          <div class="rec-actions">
+            <button class="btn btn-primary btn-sm" data-act="continuar" data-id="${esc(id)}">Continuar</button>
+            <button class="btn btn-ghost btn-sm" data-act="descartar-borrador" data-id="${esc(id)}">Descartar</button>
+          </div>
+        </div>`).join("")}
+    </div>`;
+}
+
+// Inicio: las categorías. Dentro de una categoría (o buscando): las recetas en cards.
 function pintarTabla() {
   const t = document.getElementById("rec-tabla");
   if (!t) return;
   const total = Object.keys(recetas).length;
-  const rs = recetasFiltradas();
   if (!total) {
     t.innerHTML = `<div class="rec-vacio"><div style="font-size:34px">📖</div><b>Todavía no hay recetas</b><div>Empezá con “Nueva receta”. Conviene cargar primero las subrecetas (masas, salsas, rellenos) para después usarlas en los platos.</div></div>`;
     return;
   }
+  if (!categoriaActual && !filtros.q) {
+    t.innerHTML = `<div class="rec-cats">${categorias().map(([cat, n]) => `
+      <button class="rec-cat" data-act="categoria" data-v="${esc(cat)}">
+        <span class="rec-cat-ico">${iconoCategoria(cat)}</span>
+        <b>${esc(cat)}</b>
+        <span class="rec-sub">${n} receta${n === 1 ? "" : "s"}</span>
+      </button>`).join("")}</div>`;
+    return;
+  }
+  const rs = recetasFiltradas();
   if (!rs.length) { t.innerHTML = `<div class="rec-vacio">Ninguna receta coincide con la búsqueda.</div>`; return; }
   t.innerHTML = `
-    <div class="rec-tablewrap"><table class="rec-tabla">
-      <thead><tr><th>Receta</th><th>Tipo</th><th class="num">Líneas</th><th class="num">Produce</th><th class="num">Actualizada</th></tr></thead>
-      <tbody>${rs.map(r => `
-        <tr data-act="ver" data-id="${esc(r.id)}">
-          <td><div class="rec-nom">${esc(r.nombre)}</div><div class="rec-sub">${esc([r.codigo, r.grupo].filter(Boolean).join(" · "))}</div></td>
-          <td><span class="rec-badge rec-${esc(r.tipo)}">${esc(TIPOS[r.tipo] || r.tipo)}</span></td>
-          <td class="num">${r.ingredientes.length}<div class="rec-sub">${r.empaque.length} de empaque</div></td>
-          <td class="num">${r.rendimiento != null ? esc(fmtCant(r.rendimiento, r.unidadRendimiento)) : "—"}<div class="rec-sub">${r.porciones ? `${fmt(r.porciones)} ${r.porciones == 1 ? "porción" : "porciones"}` : ""}</div></td>
-          <td class="num rec-sub">${fmtFecha(r.actualizada)}</td>
-        </tr>`).join("")}
-      </tbody></table></div>
-    <div class="rec-sub" style="margin-top:10px">${rs.length} de ${total} receta${total === 1 ? "" : "s"}</div>`;
+    <div class="rec-cards">${rs.map(cardReceta).join("")}</div>
+    <div class="rec-sub" style="margin-top:12px">${rs.length} receta${rs.length === 1 ? "" : "s"} · tocá una card para ver el resumen del otro lado</div>`;
+  cargarFotosCards(rs);
+}
+
+// Card con dos caras: adelante el nombre y la foto del plato; atrás, un resumen con las cantidades.
+function cardReceta(r) {
+  const lineas = r.ingredientes.map(l => `<li><span>${esc(nombreLinea(l))}${l.tipo === "subreceta" ? ` <small>(subreceta)</small>` : ""}</span><b>${esc(fmtCant(l.cantidad, l.unidad))}</b></li>`).join("");
+  const empaque = r.empaque.map(l => `<li><span>${esc(nombreLinea(l))}</span><b>${esc(fmtCant(l.cantidad, l.unidad))}</b></li>`).join("");
+  return `
+    <div class="rec-card">
+      <div class="rec-card-inner" data-act="girar" role="button" tabindex="0" aria-label="${esc(r.nombre)}: dar vuelta la card">
+        <div class="rec-card-cara rec-card-frente">
+          <div class="rec-card-foto" data-foto="${esc(r.id)}">${r.tieneFoto ? `<span class="rec-sub">Cargando foto…</span>` : `<span class="rec-card-sinfoto">${iconoCategoria(categoriaDe(r))}</span>`}</div>
+          <div class="rec-card-pie">
+            <div class="rec-card-nombre">${esc(r.nombre)}</div>
+            <div class="rec-sub">${esc([r.codigo, TIPOS[r.tipo] || r.tipo, categoriaActual ? "" : categoriaDe(r)].filter(Boolean).join(" · "))}</div>
+          </div>
+        </div>
+        <div class="rec-card-cara rec-card-dorso">
+          <div class="rec-card-nombre">${esc(r.nombre)}</div>
+          ${descRendimiento(r) ? `<div class="rec-sub" style="margin-bottom:8px">${esc(descRendimiento(r))}</div>` : ""}
+          <div class="rec-card-cuerpo">
+            ${lineas ? `<ul class="rec-card-lista">${lineas}</ul>` : `<div class="rec-sub">Sin ingredientes cargados.</div>`}
+            ${empaque ? `<div class="rec-card-sec">Empaque</div><ul class="rec-card-lista">${empaque}</ul>` : ""}
+          </div>
+          <button class="btn btn-primary btn-sm rec-card-ver" data-act="ver" data-id="${esc(r.id)}">Ver ficha completa →</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function cargarFotosCards(rs) {
+  rs.filter(r => r.tieneFoto).forEach(r => {
+    cargarFoto(r.id).then(src => {
+      const el = rootEl && rootEl.querySelector(`[data-foto="${r.id}"]`);
+      if (el) el.innerHTML = src ? `<img src="${src}" alt="${esc(r.nombre)}" loading="lazy">` : `<span class="rec-card-sinfoto">${iconoCategoria(categoriaDe(r))}</span>`;
+    });
+  });
 }
 
 // ── 3. Detalle ───────────────────────────────────────────────
@@ -534,6 +735,13 @@ function pintarDetalle(c) {
         <button class="btn btn-ghost btn-sm" data-act="volver">← Volver</button>
       </div>
     </div>
+    ${(() => {
+      const bd = borradorMasNuevo(r.id);
+      return bd && (bd.guardadoEn || 0) > (r.actualizada || 0)
+        ? `<div class="section-block rec-borradores rec-borrador"><div><b>📝 Esta receta tiene cambios sin publicar</b><div class="rec-sub">Guardados ${new Date(bd.guardadoEn).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}. La ficha de abajo es la versión publicada.</div></div>
+           <button class="btn btn-primary btn-sm" data-act="editar" data-id="${esc(r.id)}">Continuar editando</button></div>`
+        : "";
+    })()}
 
     <div class="section-block rec-hero">
       <div class="rec-foto" id="rec-foto-det">${r.tieneFoto ? `<span class="rec-sub">Cargando foto…</span>` : `<span class="rec-sub">Sin foto</span>`}</div>
@@ -599,28 +807,81 @@ function lineaVacia(tipo) {
        : { tipo: "ingrediente", nombre: "", cantidad: null, unidad: "g", merma: null };
 }
 
-async function abrirEditor(id) {
-  if (id) {
-    const r = recetas[id];
-    if (!r) return;
+// id: receta publicada a editar (o null si es nueva). borradorId: borrador a retomar.
+// Si hay un borrador más nuevo que la receta publicada, se abre el borrador: es lo último que se cargó.
+async function abrirEditor(id, borradorId) {
+  const bid = id || borradorId || null;
+  const r = id ? recetas[id] : null;
+  if (id && !r) return;
+  const guardado = bid ? borradorMasNuevo(bid) : null;
+  clearTimeout(autosave.timer);
+  Object.assign(autosave, { timer: null, pendiente: false, ultimo: 0, error: false, fotoSubida: undefined, recuperado: false });
+  if (guardado && (!r || (guardado.guardadoEn || 0) > (r.actualizada || 0))) {
+    draft = normalizarDraft(guardado);
+    draft.id = r ? id : null;
+    draft.borradorId = bid;
+    draft.foto = guardado.foto || null;
+    draftBase = guardado.base || r?.actualizada || 0;
+    autosave.recuperado = true;
+    dirty = true;
+  } else if (r) {
     draft = JSON.parse(JSON.stringify(r));
     draft.ingredientes = r.ingredientes.map(l => ({ ...l, nombre: l.tipo === "subreceta" ? l.nombre : nombreLinea(l) }));
     draft.empaque = r.empaque.map(l => ({ ...l, nombre: ingredientes[l.ingredienteId]?.nombre || l.nombre || "" }));
     draft.pasosTexto = r.pasos.join("\n");
     draft.foto = null; draft.fotoCambiada = false;
+    draft.borradorId = id;
     draftBase = r.actualizada || 0;
+    dirty = false;
   } else {
     draft = nuevoDraft();
+    // El borrador de una receta nueva usa el mismo id que va a tener al publicarse.
+    draft.borradorId = push(ref(fb.db, `recetario/areas/${area}/recetas`)).key;
     draftBase = 0;
+    dirty = false;
   }
-  dirty = false;
   vista = "editar";
   pintar();
   window.scrollTo(0, 0);
-  if (id && draft.tieneFoto) {
+  const d = draft;
+  if (d.fotoCambiada && !d.foto) {
+    // Foto nueva del borrador que no estaba en el dispositivo: está en la base.
+    d._fotoCargando = true; pintarFotoEditor();
+    try { d.foto = (await get(ref(fb.db, `recetario/areas/${area}/borradoresFotos/${bid}`))).val() || null; }
+    catch (err) { console.error(err); }
+    d._fotoCargando = false;
+    autosave.fotoSubida = d.foto;
+    if (draft === d) pintarFotoEditor();
+  } else if (id && d.tieneFoto && !d.fotoCambiada) {
     const src = await cargarFoto(id);
-    if (draft && draft.id === id && !draft.fotoCambiada) { draft.foto = src; pintarFotoEditor(); }
+    if (draft === d && !d.fotoCambiada) { d.foto = src; pintarFotoEditor(); }
   }
+}
+
+// Salir del editor nunca pierde nada: lo cargado queda como borrador (en la base y en el dispositivo).
+async function salirDelEditor(destino) {
+  const habiaCambios = dirty;
+  if (autosave.pendiente) await guardarBorradorServidor();
+  lsDel(lsAbierto());
+  const id = draft?.id;
+  draft = null; dirty = false;
+  if (destino === "home") { vista = "lista"; categoriaActual = ""; filtros.q = ""; actualId = null; }
+  else if (id && recetas[id]) { vista = "detalle"; actualId = id; }
+  else vista = "lista";
+  if (habiaCambios) toast("📝 Lo que cargaste quedó guardado como borrador. Para que aparezca en la ficha, abrilo y tocá “Guardar y publicar”.");
+  pintar();
+}
+
+async function descartarBorradorEditor() {
+  const d = draft;
+  if (!d) return;
+  if (!confirm(d.id ? "¿Descartar los cambios sin publicar? La receta vuelve a como estaba publicada." : "¿Descartar esta receta nueva? Se borra todo lo que cargaste.")) return;
+  clearTimeout(autosave.timer); autosave.pendiente = false;
+  await borrarBorrador(d.borradorId);
+  draft = null; dirty = false;
+  vista = d.id && recetas[d.id] ? "detalle" : "lista";
+  toast("Borrador descartado");
+  pintar();
 }
 
 function pintarEditor(c) {
@@ -633,15 +894,19 @@ function pintarEditor(c) {
   c.innerHTML = `
     ${barra()}
     <div class="rec-detalle-head">
-      <div class="rec-titulo">${esNueva ? "Nueva receta" : `Editar · ${esc(recetas[d.id]?.nombre || d.nombre)}`}</div>
+      <div>
+        <div class="rec-titulo">${esNueva ? "Nueva receta" : `Editar · ${esc(recetas[d.id]?.nombre || d.nombre)}`}</div>
+        <div class="rec-sub" id="rec-autosave" style="margin-top:4px">${esc(textoAutoguardado())}</div>
+      </div>
       <div class="rec-actions">
-        <button class="btn btn-ghost btn-sm" data-act="cancelar">Cancelar</button>
-        <button class="btn btn-primary btn-sm" data-act="guardar" ${guardando ? "disabled" : ""}>${guardando ? "Guardando…" : "💾 Guardar"}</button>
+        <button class="btn btn-ghost btn-sm" data-act="cancelar" title="Lo cargado queda guardado como borrador">← Salir</button>
+        ${dirty || !esNueva ? `<button class="btn btn-ghost btn-sm" data-act="descartar-editor">🗑️ Descartar cambios</button>` : ""}
+        <button class="btn btn-primary btn-sm" data-act="guardar" ${guardando ? "disabled" : ""}>${guardando ? "Guardando…" : "💾 Guardar y publicar"}</button>
       </div>
     </div>
     <datalist id="rec-dl-ing">${nomsIng.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
     <datalist id="rec-dl-emp">${nomsEmp.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
-    <datalist id="rec-dl-grupo">${gs.map(g => `<option value="${esc(g)}">`).join("")}</datalist>
+    <datalist id="rec-dl-grupo">${[...new Set([...gs, ...CATEGORIAS_SUGERIDAS])].sort((a, b) => a.localeCompare(b, "es")).map(g => `<option value="${esc(g)}">`).join("")}</datalist>
 
     <div class="section-block">
       <div class="section-title" style="margin-bottom:14px">Datos generales</div>
@@ -656,8 +921,9 @@ function pintarEditor(c) {
         <div class="form-group"><label class="form-label">Código</label>
           <input class="form-input" data-f="codigo" value="${esc(d.codigo)}" placeholder="${esc(siguienteCodigo(d.tipo))}">
           ${d.codigo ? "" : `<small class="rec-help">Si lo dejás vacío se asigna ${esc(siguienteCodigo(d.tipo))}.</small>`}</div>
-        <div class="form-group"><label class="form-label">Grupo</label>
-          <input class="form-input" data-f="grupo" list="rec-dl-grupo" value="${esc(d.grupo)}" placeholder="Ej: Entradas, Masas, Salsas"></div>
+        <div class="form-group"><label class="form-label">Categoría</label>
+          <input class="form-input" data-f="grupo" list="rec-dl-grupo" value="${esc(d.grupo)}" placeholder="Ej: Combos, Bases, Salsas">
+          <small class="rec-help">Ordena el inicio del recetario.${d.grupo ? "" : ` Vacía: va a “${d.tipo === "subreceta" ? "Bases" : "Sin categoría"}”.`}</small></div>
         <div class="form-group"><label class="form-label">Rendimiento</label>
           <div class="rec-inline">
             <input class="form-input" type="number" step="any" min="0" data-f="rendimiento" data-num value="${d.rendimiento ?? ""}">
@@ -735,8 +1001,8 @@ function pintarEditor(c) {
     </div>
 
     <div class="rec-actions rec-pie">
-      <button class="btn btn-ghost" data-act="cancelar">Cancelar</button>
-      <button class="btn btn-primary" data-act="guardar" ${guardando ? "disabled" : ""}>${guardando ? "Guardando…" : "💾 Guardar receta"}</button>
+      <button class="btn btn-ghost" data-act="cancelar">← Salir (queda como borrador)</button>
+      <button class="btn btn-primary" data-act="guardar" ${guardando ? "disabled" : ""}>${guardando ? "Guardando…" : "💾 Guardar y publicar"}</button>
     </div>`;
   pintarFotoEditor();
 }
@@ -788,7 +1054,7 @@ function lineaEmpaque(l, i) {
 function pintarFotoEditor() {
   const el = document.getElementById("rec-foto-edit");
   if (!el || !draft) return;
-  const cargando = draft.tieneFoto && !draft.foto && !draft.fotoCambiada;
+  const cargando = (draft.tieneFoto && !draft.foto && !draft.fotoCambiada) || draft._fotoCargando;
   el.innerHTML = `
     ${draft.foto ? `<img src="${draft.foto}" alt="">` : cargando ? `<div class="rec-foto-vacia">Cargando…</div>` : `<div class="rec-foto-vacia">Sin foto</div>`}
     <div class="rec-actions">
@@ -823,6 +1089,7 @@ function comprimirFoto(file) {
 async function guardar() {
   if (guardando) return;
   const d = draft;
+  if (d._fotoCargando) { toast("Esperá un segundo: todavía se está cargando la foto del borrador.", "warn"); return; }
   const errores = [];
   const nombre = (d.nombre || "").trim();
   if (!nombre) errores.push("Poné un nombre a la receta.");
@@ -860,7 +1127,7 @@ async function guardar() {
       return porClave[k];
     };
 
-    const id = d.id || push(ref(fb.db, `recetario/areas/${area}/recetas`)).key;
+    const id = d.id || d.borradorId || push(ref(fb.db, `recetario/areas/${area}/recetas`)).key;
     const receta = {
       nombre, codigo, tipo: d.tipo,
       grupo: (d.grupo || "").trim(),
@@ -886,15 +1153,23 @@ async function guardar() {
     Object.entries(nuevos).forEach(([k, v]) => { upd[`recetario/ingredientes/${k}`] = v; });
     upd[`recetario/areas/${area}/recetas/${id}`] = receta;
     if (d.fotoCambiada) upd[`recetario/areas/${area}/fotos/${id}`] = d.foto || null;
+    // Publicada: el borrador ya no hace falta.
+    const bid = d.borradorId || id;
+    upd[`recetario/areas/${area}/borradores/${bid}`] = null;
+    upd[`recetario/areas/${area}/borradoresFotos/${bid}`] = null;
+    clearTimeout(autosave.timer); autosave.pendiente = false;
     await update(ref(fb.db), upd);
     if (d.fotoCambiada) fotos[id] = d.foto || null;
+    lsDel(lsClave(bid)); lsDel(lsAbierto()); delete borradores[bid];
 
-    toast(d.id ? "Receta actualizada" : "Receta creada");
+    toast(d.id ? "Receta actualizada y publicada" : "Receta creada y publicada");
     draft = null; dirty = false;
     vista = "detalle"; actualId = id;
   } catch (err) {
     console.error(err);
-    toast("No se pudo guardar. Revisá la conexión e intentá de nuevo.", "warn");
+    // No se pierde nada: sigue en el dispositivo y se reintenta como borrador.
+    if (draft) marcarCambio();
+    toast("No se pudo publicar. Lo cargado sigue guardado como borrador; revisá la conexión e intentá de nuevo.", "warn");
   } finally {
     guardando = false;
     pintar();
@@ -952,18 +1227,20 @@ function mensajeDeError(code, email) {
   return "No se pudo ingresar (" + code + ").";
 }
 
-function confirmarDescartar() {
-  return !(vista === "editar" && dirty) || confirm("Hay cambios sin guardar. ¿Descartarlos?");
+// Antes de salir del editor por cualquier camino: lo pendiente se sube como borrador.
+async function soltarEditor() {
+  if (vista === "editar" && draft && autosave.pendiente) await guardarBorradorServidor();
+  lsDel(lsAbierto());
 }
 
-function onClick(ev) {
+async function onClick(ev) {
   const b = ev.target.closest("[data-act]");
   if (!b || !rootEl.contains(b)) return;
   const act = b.dataset.act;
   if (b.tagName === "A") ev.preventDefault();
   switch (act) {
     case "salir":
-      if (!confirmarDescartar()) return;
+      await soltarEditor();
       vista = "lista"; draft = null; dirty = false;
       signOut(fb.auth);
       break;
@@ -971,9 +1248,32 @@ function onClick(ev) {
       areaLogin = b.dataset.v; pintar();
       break;
     case "area":
-      if (b.dataset.v === area || !confirmarDescartar()) return;
+      if (b.dataset.v === area) return;
+      await soltarEditor();
       elegirArea(b.dataset.v); pintar();
       break;
+    case "home":
+      if (vista === "editar" && draft) return salirDelEditor("home");
+      vista = "lista"; categoriaActual = ""; filtros.q = ""; actualId = null;
+      pintar(); window.scrollTo(0, 0);
+      break;
+    case "categoria":
+      categoriaActual = b.dataset.v; filtros.q = ""; pintar(); window.scrollTo(0, 0);
+      break;
+    case "girar":
+      b.closest(".rec-card")?.classList.toggle("girada");
+      break;
+    case "continuar":
+      abrirEditor(recetas[b.dataset.id] ? b.dataset.id : null, b.dataset.id);
+      break;
+    case "descartar-borrador": {
+      const bb = borradorMasNuevo(b.dataset.id);
+      if (!confirm(`¿Descartar el borrador “${bb?.nombre || "sin nombre"}”? Se borra lo que no se publicó.`)) return;
+      await borrarBorrador(b.dataset.id);
+      toast("Borrador descartado"); pintar();
+      break;
+    }
+    case "descartar-editor": descartarBorradorEditor(); break;
     case "nueva": abrirEditor(null); break;
     case "importar": abrirImportar(); break;
     case "imp-toggle": impToggle(b.dataset.id); break;
@@ -986,24 +1286,19 @@ function onClick(ev) {
     case "volver": vista = "lista"; actualId = null; pintar(); break;
     case "editar": abrirEditor(b.dataset.id); break;
     case "eliminar": eliminar(b.dataset.id); break;
-    case "cancelar":
-      if (!confirmarDescartar()) return;
-      draft = null; dirty = false;
-      vista = actualId && recetas[actualId] ? "detalle" : "lista";
-      pintar();
-      break;
+    case "cancelar": salirDelEditor("atras"); break;
     case "guardar": guardar(); break;
     case "agregar":
       draft[b.dataset.row].push(lineaVacia(b.dataset.v));
-      dirty = true; pintar();
+      marcarCambio(); pintar();
       enfocarUltimaLinea(b.dataset.row);
       break;
     case "quitar":
       draft[b.dataset.row].splice(+b.dataset.i, 1);
-      dirty = true; pintar();
+      marcarCambio(); pintar();
       break;
     case "quitar-foto":
-      draft.foto = null; draft.fotoCambiada = true; dirty = true; pintarFotoEditor();
+      draft.foto = null; draft.fotoCambiada = true; marcarCambio(); pintarFotoEditor();
       break;
     case "pdf": imprimirFichas([b.dataset.id]); break;
     case "imprimir-todo": {
@@ -1057,7 +1352,7 @@ function onInput(ev) {
   } else {
     draft[f] = valorCampo(el);
   }
-  dirty = true;
+  marcarCambio();
 }
 
 async function onChange(ev) {
@@ -1072,7 +1367,7 @@ async function onChange(ev) {
     if (!file) return;
     try {
       draft.foto = await comprimirFoto(file);
-      draft.fotoCambiada = true; dirty = true;
+      draft.fotoCambiada = true; marcarCambio();
       pintarFotoEditor();
     } catch { toast("No se pudo leer la imagen", "warn"); }
     return;
@@ -1080,7 +1375,7 @@ async function onChange(ev) {
   if (el.dataset.aler) {
     draft.alergenos[el.dataset.aler] = el.checked;
     el.closest(".rec-check")?.classList.toggle("on", el.checked);
-    dirty = true;
+    marcarCambio();
     return;
   }
   onInput(ev);
@@ -1096,6 +1391,7 @@ async function onChange(ev) {
     const chica = { kg: "g", g: "g", l: "ml", ml: "ml", u: "u" };
     if (sub) { l.nombre = sub.nombre; if (chica[sub.unidadRendimiento]) l.unidad = chica[sub.unidadRendimiento]; }
   }
+  if (fila && (el.dataset.f === "tipo" || el.dataset.f === "recetaId")) marcarCambio();
   if (el.dataset.redibujar !== undefined) {
     const y = window.scrollY;
     pintar();
@@ -1312,7 +1608,7 @@ async function impConfirmar() {
     } catch (err) { console.error("vínculos costeo:", err); }
     toast(`Se importaron ${ids.length} subreceta${ids.length === 1 ? "" : "s"}${vinculados ? ` y ${vinculados} vínculo${vinculados === 1 ? "" : "s"} con Costeo` : ""}`);
     imp.sel = new Set();
-    filtros.tipo = "subreceta"; filtros.grupo = ""; filtros.q = "";
+    categoriaActual = "Bases"; filtros.q = "";
     vista = "lista";
   } catch (err) {
     console.error(err);
@@ -1509,6 +1805,42 @@ function inyectarCss() {
   .rec-check.on{border-color:var(--terra);background:#fff7f5}
   .rec-check.heredado{cursor:default;opacity:.85}
   .rec-pie{justify-content:flex-end;position:sticky;bottom:0;background:linear-gradient(transparent,var(--cream) 30%);padding:18px 0 14px;margin-top:4px}
+  .rec-titulo-link{color:inherit;text-decoration:none}
+  .rec-titulo-link:hover{color:var(--terra)}
+  .rec-migas{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:14px}
+  .rec-migas a{color:var(--terra);text-decoration:none;font-weight:600}
+  .rec-migas span{color:var(--gray)}
+  .rec-borradores{border-color:var(--terra);background:#fff7f5}
+  .rec-borrador{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 0;border-top:1px solid rgba(34,32,31,.07)}
+  .rec-borradores > .rec-borrador:first-of-type{border-top:none}
+  .rec-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+  .rec-cat{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:18px 16px;border-radius:var(--r);border:1.5px solid var(--cream-dark);background:var(--cream);cursor:pointer;font-family:inherit;text-align:left;transition:all .2s}
+  .rec-cat:hover{border-color:var(--terra);background:var(--white);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+  .rec-cat b{font-size:15px;color:var(--black)}
+  .rec-cat-ico{font-size:30px;line-height:1;margin-bottom:6px}
+  .rec-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+  .rec-card{perspective:1200px;height:300px}
+  .rec-card-inner{position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.25,.8,.25,1);transform-style:preserve-3d;cursor:pointer;border-radius:var(--r);outline:none}
+  .rec-card-inner:focus-visible{box-shadow:0 0 0 3px rgba(225,93,70,.35)}
+  .rec-card.girada .rec-card-inner{transform:rotateY(180deg)}
+  .rec-card-cara{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--r);background:var(--white);border:1px solid rgba(34,32,31,.08);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column}
+  .rec-card-frente:hover{box-shadow:var(--shadow-md)}
+  .rec-card-foto{flex:1;min-height:0;background:var(--cream);display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .rec-card-foto img{width:100%;height:100%;object-fit:cover;display:block}
+  .rec-card-sinfoto{font-size:56px;opacity:.55}
+  .rec-card-pie{padding:12px 14px}
+  .rec-card-nombre{font-size:15px;font-weight:700;color:var(--black);line-height:1.25}
+  .rec-card-dorso{transform:rotateY(180deg);padding:14px 16px;background:var(--black);color:var(--cream)}
+  .rec-card-dorso .rec-card-nombre{color:var(--cream);margin-bottom:4px}
+  .rec-card-dorso .rec-sub{color:var(--gray-light)}
+  .rec-card-cuerpo{flex:1;min-height:0;overflow:auto;margin-right:-6px;padding-right:6px}
+  .rec-card-lista{list-style:none;margin:0;padding:0;font-size:12px}
+  .rec-card-lista li{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid rgba(238,235,215,.12)}
+  .rec-card-lista li b{white-space:nowrap;font-weight:600;color:var(--turq)}
+  .rec-card-lista small{color:var(--gray-light)}
+  .rec-card-sec{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--gray-light);margin:8px 0 2px}
+  .rec-card-ver{margin-top:10px;justify-content:center}
+  @media (prefers-reduced-motion: reduce){.rec-card-inner{transition:none}}
   @media(max-width:760px){
     .rec-grid{grid-template-columns:1fr 1fr}
     .rec-span2{grid-column:1/-1}
