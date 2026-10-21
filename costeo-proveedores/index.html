@@ -220,6 +220,81 @@ textarea.form-input{resize:vertical;min-height:60px;}
   .section-block{padding:16px 14px;}
   .form-group{min-width:100%;}
 }
+/* ── Barra de filtros, chips y herramientas (todas las listas) ── */
+.filtros-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
+.filtros-bar .form-input,.filtros-bar .form-select{width:auto;}
+.filtros-buscar{flex:1 1 260px;min-width:200px;}
+.filtros-bar .form-select{flex:0 1 220px;}
+.chips-fila{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.chips-fila:empty{display:none;}
+.chip{padding:6px 14px;border-radius:100px;border:1.5px solid var(--cream-dark);background:var(--cream);color:var(--black-soft);cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;transition:all .15s;white-space:nowrap;}
+.chip:hover{border-color:var(--terra);}
+.chip-on{background:var(--terra);border-color:var(--terra);color:#fff;}
+.filtros-resumen{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;font-size:12px;color:var(--gray);min-height:30px;}
+.filtros-resumen b{color:var(--black);}
+.stat-filtro{cursor:pointer;text-align:left;font-family:inherit;transition:all .15s;}
+.stat-filtro:hover{border-color:var(--terra);transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.stat-on{border:2px solid var(--terra);background:#fff7f5;}
+.menu-herr{position:relative;display:inline-block;}
+.menu-herr>summary{list-style:none;cursor:pointer;}
+.menu-herr>summary::-webkit-details-marker{display:none;}
+.menu-herr-items{position:absolute;right:0;top:calc(100% + 6px);z-index:150;background:var(--white);border:1px solid rgba(34,32,31,.1);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;min-width:260px;display:flex;flex-direction:column;}
+.menu-herr-items button{background:none;border:none;text-align:left;padding:10px 12px;border-radius:8px;font-family:inherit;font-size:13px;cursor:pointer;color:var(--black);}
+.menu-herr-items button:hover{background:var(--cream);}
+.menu-badge{background:var(--terra);color:#fff;border-radius:100px;padding:1px 7px;font-size:11px;margin-left:2px;}
+.precio-delivery b{color:var(--black);font-weight:600;}
+/* ── Buscador general ── */
+.buscador-global{position:fixed;inset:0;z-index:600;background:rgba(34,32,31,.45);display:flex;align-items:flex-start;justify-content:center;padding:70px 14px 14px;}
+.buscador-global-card{background:var(--white);border-radius:16px;box-shadow:var(--shadow-lg);width:640px;max-width:100%;max-height:calc(100vh - 100px);display:flex;flex-direction:column;overflow:hidden;}
+.buscador-global-card .form-input{border:none;border-bottom:1px solid var(--cream-dark);border-radius:0;font-size:16px;padding:16px 18px;background:var(--white);}
+.buscador-global-res{overflow:auto;padding:6px;}
+.bg-grupo{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--gray);padding:10px 12px 4px;font-weight:600;}
+.bg-item{display:flex;justify-content:space-between;gap:12px;width:100%;background:none;border:none;text-align:left;padding:10px 12px;border-radius:8px;font-family:inherit;font-size:13px;cursor:pointer;color:var(--black);}
+.bg-item:hover,.bg-item.activo{background:var(--cream);}
+.bg-item small{color:var(--gray);white-space:nowrap;}
+.btn-buscar-global{margin-left:auto;margin-right:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.75);border-radius:10px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:inherit;display:inline-flex;gap:8px;align-items:center;}
+.btn-buscar-global:hover{background:rgba(255,255,255,.14);color:#fff;}
+.btn-buscar-global kbd{font-family:inherit;font-size:10px;border:1px solid rgba(255,255,255,.25);border-radius:4px;padding:0 5px;}
+.lote-panel{border:2px solid var(--terra);}
+.lote-sel{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 12px;font-size:13px;}
+.lote-preview-tabla{max-height:340px;overflow:auto;border:1px solid var(--cream-dark);border-radius:10px;}
+.lote-check{display:inline-flex;align-items:center;margin-right:8px;vertical-align:middle;}
+.lote-check input{width:18px;height:18px;accent-color:var(--terra);cursor:pointer;}
+tr.fila-lote>td{background:#fff7f5;}
+.tabla-editados .precio-antes{color:var(--gray);text-decoration:line-through;}
+.tabla-editados .precio-ahora{font-weight:700;font-size:15px;color:var(--black);}
+.tabla-editados tr.fila-grupo td{background:var(--cream);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--black-soft);padding-top:10px;}
+.tabla-editados tr.fila-grupo td span{font-weight:400;color:var(--gray);}
+/* ── Índice de secciones (Análisis) ── */
+.indice-secciones a{padding:6px 12px;border-radius:100px;border:1.5px solid var(--cream-dark);background:var(--white);color:var(--black-soft);font-size:12px;text-decoration:none;white-space:nowrap;}
+.indice-secciones a:hover{border-color:var(--terra);color:var(--terra);}
+.indice-secciones{position:sticky;top:68px;z-index:90;display:flex;gap:6px;flex-wrap:wrap;padding:10px 0;margin-bottom:6px;background:var(--cream);}
+/* ── Tablas en el celular: cada fila pasa a ser una tarjeta ── */
+@media(max-width:700px){
+  .filtros-bar .form-select,.filtros-buscar{flex:1 1 100%;width:100%;}
+  .menu-herr-items{left:0;right:auto;}
+  .btn-buscar-global kbd{display:none;}
+  .indice-secciones{overflow-x:auto;flex-wrap:nowrap;}
+  .tabla-movil thead{display:none;}
+  .tabla-movil,.tabla-movil tbody{display:block;width:100%;}
+  .tabla-movil tr{display:block;border:1px solid rgba(34,32,31,.08);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--white);}
+  .tabla-movil td{display:block;padding:6px 0;border:none;text-align:left;min-width:0;}
+  .tabla-movil tbody tr:not(.fila-grupo):not(.fila-detalle){display:grid;grid-template-columns:1fr 1fr;column-gap:14px;}
+  .tabla-movil td:first-child,.tabla-movil td.celda-acciones,.tabla-movil td[colspan]{grid-column:1/-1;}
+  .tabla-movil tbody tr:hover td,.tabla-movil tr.fila-lote>td{background:none;}
+  .tabla-movil tr.fila-lote{background:#fff7f5;border-color:var(--terra);}
+  .tabla-movil td[data-label]::before{content:attr(data-label);display:block;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray);font-weight:600;margin-bottom:3px;}
+  .tabla-movil td:first-child{font-weight:600;font-size:14px;padding-bottom:8px;border-bottom:1px solid rgba(34,32,31,.06);margin-bottom:4px;}
+  .tabla-movil td:first-child::before{display:none;}
+  .tabla-movil .form-input{max-width:100%!important;}
+  .tabla-movil .celda-acciones .row-actions{justify-content:flex-start;}
+  .row-actions{flex-wrap:wrap;justify-content:flex-start;}
+  .section-header > .row-actions .btn{padding:8px 12px;font-size:12px;}
+  .tabla-movil tr.fila-grupo{border:none;background:none;padding:6px 2px 0;margin-bottom:4px;}
+  .tabla-movil tr.fila-grupo td{background:none;padding:0;}
+  .tabla-movil tr.fila-detalle,.tabla-movil tr.fila-detalle td{display:block;text-align:left;}
+  .data-table-wrap:has(.tabla-movil){overflow-x:visible;}
+}
 </style>
 </head>
 <body>
@@ -261,7 +336,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-10-10 13:54";
+const APP_VERSION = "2026-10-21 11:14";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -318,15 +393,24 @@ const state = {
   _ultimaNormalizacionEscaneo: null,
   facturasFiltro: "todas",
   facturasBusqueda: "",
+  facturasProveedorFiltro: "",
+  facturasMesFiltro: "",
   facturaDetalleId: null,
   editandoFacturaId: null,
   pagosFiltro: "no_pagado",
   pagosBusqueda: "",
   productosFiltro: "",
-  productosSoloAlertas: false,
   productosClasificacionFiltro: "todos",
+  productosCategoriaFiltro: "",
+  productosEstadoFiltro: "",
+  productosOrden: "nombre",
   mostrarCambiosPrecio: false,
   mostrarPendientesFudo: false,
+  modoLote: false,
+  loteSeleccion: new Set(),
+  loteModo: "pct",
+  loteValor: "",
+  loteRedondeo: 100,
   pendientesFudo: {},
   mostrarUnificarProductos: false,
   mostrarGemelosVincular: false,
@@ -343,6 +427,8 @@ const state = {
   vinculosRecetario: {},    // { [ingredienteId]: insumoId } — vive en costeo/vinculosRecetario
   proveedoresBusqueda: "",
   insumosBusqueda: "",
+  insumosProveedorFiltro: "",
+  insumosEstadoFiltro: "",
   recetasBasesBusqueda: "",
   recetasBasesTab: "recetas",
   recetasBasesAbiertaId: null,
@@ -533,6 +619,110 @@ function enfocarFormularioAbierto(inputId) {
   }, 0);
 }
 
+// ── Buscador general ─────────────────────────────────────
+// Un solo lugar para encontrar cualquier cosa sin saber en qué pestaña está: productos, insumos,
+// proveedores, facturas (también por lo que se compró) y las pestañas mismas. Vive fuera de #app
+// para que los re-render de la vista no lo cierren mientras se escribe.
+let _bgResultados = [], _bgSel = 0;
+function resultadosBusquedaGlobal(q) {
+  const k = claveBusqueda(q);
+  if (!k) return [];
+  const coincide = v => claveBusqueda(String(v || "")).includes(k);
+  const porNombre = (a, b) => String(a[1].nombre || "").localeCompare(String(b[1].nombre || ""));
+  const out = [];
+  const agregar = (grupo, lista, max) => lista.slice(0, max).forEach(x => out.push({ grupo, ...x }));
+  agregar("Pestañas", TABS.filter(t => coincide(t.label) || coincide(t.key)).map(t => ({
+    titulo: TAB_LABEL[t.key], detalle: "Ir a la pestaña", ir: () => window.navigate(t.key) })), 3);
+  agregar("Productos", objToSortedEntries(state.productos, porNombre).filter(([, p]) => coincide(p.nombre) || coincide(p.categoria)).map(([id, p]) => ({
+    titulo: p.nombre, detalle: [p.categoria, p.precioVenta ? fmtMoney(p.precioVenta) : ""].filter(Boolean).join(" · "),
+    ir: () => {
+      Object.assign(state, { productosFiltro: p.nombre || "", productosClasificacionFiltro: "todos", productosCategoriaFiltro: "", productosEstadoFiltro: "" });
+      window.navigate("productos");
+    } })), 6);
+  agregar("Insumos", objToSortedEntries(state.insumos, porNombre).filter(([, ins]) => coincide(ins.nombre) || Object.values(ins.precios || {}).some(pr => coincide(pr.marca))).map(([id, ins]) => ({
+    titulo: ins.nombre, detalle: [ins.unidad, fmtMoney(precioEfectivoInsumo(id))].filter(Boolean).join(" · "),
+    ir: () => {
+      Object.assign(state, { insumosBusqueda: ins.nombre || "", insumosProveedorFiltro: "", insumosEstadoFiltro: "" });
+      window.navigate("insumos");
+    } })), 6);
+  agregar("Proveedores", objToSortedEntries(state.proveedores, porNombre).filter(([, pr]) => [pr.nombre, pr.cuit, pr.rubro, pr.contacto].some(coincide)).map(([id, pr]) => ({
+    titulo: pr.nombre, detalle: [pr.rubro, pr.cuit].filter(Boolean).join(" · "),
+    ir: () => { state.proveedoresBusqueda = pr.nombre || ""; window.navigate("proveedores"); } })), 4);
+  const facturas = objToSortedEntries(state.facturas, (a, b) => (b[1].creadoTs || 0) - (a[1].creadoTs || 0))
+    .map(([id, f]) => {
+      const item = (f.items || []).find(it => coincide(it.nombre) || (it.insumoId && state.insumos[it.insumoId] && coincide(state.insumos[it.insumoId].nombre)));
+      return (coincide(f.proveedorNombre) || coincide(f.numeroFactura) || item) ? { id, f, item } : null;
+    }).filter(Boolean);
+  agregar("Facturas", facturas.map(({ id, f, item }) => ({
+    titulo: `${f.proveedorNombre || "—"}${f.numeroFactura ? " · N° " + f.numeroFactura : ""}`,
+    detalle: [fmtDate(f.fecha), fmtMoney(f.montoTotal), item ? "trae " + (item.nombre || "") : ""].filter(Boolean).join(" · "),
+    ir: () => {
+      Object.assign(state, { facturasBusqueda: f.numeroFactura || f.proveedorNombre || "", facturasProveedorFiltro: "", facturasMesFiltro: "", facturasFiltro: "todas", facturaDetalleId: id });
+      window.navigate("facturas");
+    } })), 5);
+  return out;
+}
+function pintarResultadosGlobal() {
+  const cont = document.getElementById("bg-resultados");
+  const input = document.getElementById("bg-input");
+  if (!cont || !input) return;
+  if (!input.value.trim()) { cont.innerHTML = `<div class="empty-state" style="padding:18px">Escribí un producto, insumo, marca, proveedor, N° de factura o pestaña.</div>`; return; }
+  if (!_bgResultados.length) { cont.innerHTML = `<div class="empty-state" style="padding:18px">Nada coincide con "${escapeHtml(input.value)}".</div>`; return; }
+  let grupo = "";
+  cont.innerHTML = _bgResultados.map((r, i) => {
+    const cab = r.grupo !== grupo ? `<div class="bg-grupo">${escapeHtml(r.grupo)}</div>` : "";
+    grupo = r.grupo;
+    return `${cab}<button type="button" class="bg-item ${i === _bgSel ? "activo" : ""}" data-i="${i}" onmousedown="event.preventDefault()" onclick="irResultadoGlobal(${i})"><span>${escapeHtml(r.titulo)}</span><small>${escapeHtml(r.detalle || "")}</small></button>`;
+  }).join("");
+  const act = cont.querySelector(".bg-item.activo");
+  if (act && act.scrollIntoView) try { act.scrollIntoView({ block: "nearest" }); } catch {}
+}
+window.buscarGlobal = function(q) {
+  _bgResultados = resultadosBusquedaGlobal(q);
+  _bgSel = 0;
+  pintarResultadosGlobal();
+};
+window.abrirBuscadorGlobal = function() {
+  if (!state.loggedIn) return;
+  let root = document.getElementById("buscador-global-root");
+  if (!root) { root = document.createElement("div"); root.id = "buscador-global-root"; document.body.appendChild(root); }
+  root.innerHTML = `<div class="buscador-global" onclick="if(event.target===this)cerrarBuscadorGlobal()">
+    <div class="buscador-global-card" role="dialog" aria-label="Buscar">
+      <input class="form-input" id="bg-input" autocomplete="off" placeholder="🔎 Buscar en todo: productos, insumos, proveedores, facturas…" oninput="buscarGlobal(this.value)" onkeydown="teclaBuscadorGlobal(event)">
+      <div class="buscador-global-res" id="bg-resultados"></div>
+    </div>
+  </div>`;
+  _bgResultados = []; _bgSel = 0;
+  pintarResultadosGlobal();
+  try { document.getElementById("bg-input").focus(); } catch {}
+};
+window.cerrarBuscadorGlobal = function() {
+  const root = document.getElementById("buscador-global-root");
+  if (root) root.innerHTML = "";
+};
+window.irResultadoGlobal = function(i) {
+  const r = _bgResultados[i];
+  window.cerrarBuscadorGlobal();
+  if (r) r.ir();
+};
+window.teclaBuscadorGlobal = function(e) {
+  if (e.key === "Escape") { e.preventDefault(); window.cerrarBuscadorGlobal(); return; }
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    if (!_bgResultados.length) return;
+    _bgSel = (_bgSel + (e.key === "ArrowDown" ? 1 : -1) + _bgResultados.length) % _bgResultados.length;
+    pintarResultadosGlobal();
+    return;
+  }
+  if (e.key === "Enter") { e.preventDefault(); if (_bgResultados.length) window.irResultadoGlobal(_bgSel); }
+};
+document.addEventListener("keydown", e => {
+  if (!state.loggedIn) return;
+  const t = e.target, escribiendo = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable);
+  if ((e.key === "k" || e.key === "K") && (e.ctrlKey || e.metaKey)) { e.preventDefault(); window.abrirBuscadorGlobal(); return; }
+  if (e.key === "/" && !escribiendo && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); window.abrirBuscadorGlobal(); }
+});
+
 // Elegir un grupo lleva a su primera pestaña — la más usada de cada uno — en vez de dejar al
 // usuario en una pantalla intermedia vacía.
 window.navigateGrupo = function(grupoKey) {
@@ -577,6 +767,7 @@ function render() {
           <span class="logo-sub">Costeo &amp; Proveedores <span class="logo-version" title="Versión que está corriendo en este navegador. Si no coincide con la del último deploy, estás viendo una copia guardada: recargá forzando la actualización.">v${escapeHtml(APP_VERSION)}</span></span>
         </div>
       </div>
+      <button class="btn-buscar-global" onclick="abrirBuscadorGlobal()" title="Buscar productos, insumos, proveedores y facturas (atajo: / o Ctrl+K)">🔎 <span class="bg-txt">Buscar</span> <kbd>/</kbd></button>
       <div class="nav-desktop">
         ${GRUPOS.map(g => `<button class="nav-btn ${grupoActivo === g.key ? "active" : ""}" onclick="navigateGrupo('${g.key}')">${g.label}</button>`).join("")}
         <button class="nav-logout" onclick="handleLogout()">Salir</button>
@@ -2807,6 +2998,11 @@ window.setFacturasBusqueda = function(val) {
   state.facturasBusqueda = val;
   render();
 };
+window.setFacturasProveedor = function(val) { state.facturasProveedorFiltro = val; render(); };
+window.setFacturasMes = function(val) { state.facturasMesFiltro = val; render(); };
+window.limpiarFiltrosFacturas = function() { state.facturasBusqueda = ""; state.facturasProveedorFiltro = ""; state.facturasMesFiltro = ""; state.facturasFiltro = "todas"; render(); };
+const MESES_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+function nombreMes(ym) { const [y, m] = ym.split("-"); return `${MESES_ES[Number(m) - 1] || m} ${y}`; }
 
 // Las fotos de las facturas son data URLs de base64 de ~100-200 KB cada una. Meterlas en el HTML
 // de la lista (una por fila) hacía que la vista de Facturas generara decenas de MB de HTML y
@@ -2987,22 +3183,33 @@ window.copiarDiagnosticoFactura = async function(id) {
 
 function renderFacturasView(container) {
   state.formOpen = false;
-  const busqueda = state.facturasBusqueda.trim().toLowerCase();
-  const entries = objToSortedEntries(state.facturas, (a, b) => (b[1].creadoTs || 0) - (a[1].creadoTs || 0))
+  // La búsqueda también mira los ítems: escribir "harina" muestra las facturas donde se compró harina.
+  const busqueda = claveBusqueda(state.facturasBusqueda);
+  const todasFacturas = objToSortedEntries(state.facturas, (a, b) => (b[1].creadoTs || 0) - (a[1].creadoTs || 0));
+  const provF = state.facturasProveedorFiltro, mesF = state.facturasMesFiltro;
+  const entries = todasFacturas
     .filter(([, f]) => state.facturasFiltro === "todas" || f.estado === state.facturasFiltro)
-    .filter(([, f]) => !busqueda || (f.proveedorNombre || "").toLowerCase().includes(busqueda) || (f.numeroFactura || "").toLowerCase().includes(busqueda));
+    .filter(([, f]) => !provF || (f.proveedorNombre || "").trim() === provF)
+    .filter(([, f]) => !mesF || String(f.fecha || "").slice(0, 7) === mesF)
+    .filter(([, f]) => !busqueda || claveBusqueda(f.proveedorNombre || "").includes(busqueda) || claveBusqueda(f.numeroFactura || "").includes(busqueda)
+      || (f.items || []).some(it => claveBusqueda(it.nombre || "").includes(busqueda) || (it.insumoId && state.insumos[it.insumoId] && claveBusqueda(state.insumos[it.insumoId].nombre).includes(busqueda))));
+  const provsFacturas = [...todasFacturas.reduce((m, [, f]) => { const n = (f.proveedorNombre || "").trim(); if (n) m.set(n, (m.get(n) || 0) + 1); return m; }, new Map())].sort((a, b) => a[0].localeCompare(b[0]));
+  const mesesFacturas = [...new Set(todasFacturas.map(([, f]) => String(f.fecha || "").slice(0, 7)).filter(m => /^\d{4}-\d{2}$/.test(m)))].sort().reverse();
+  const totalFiltrado = entries.reduce((a, [, f]) => a + (Number(f.montoTotal) || 0), 0);
+  const totalNoPagado = entries.reduce((a, [, f]) => a + (f.estado === "pagado" ? 0 : (Number(f.montoTotal) || 0)), 0);
+  const hayFiltrosFacturas = !!(busqueda || provF || mesF || state.facturasFiltro !== "todas");
 
   const rows = entries.map(([id, f]) => `
     <tr>
-      <td>${fmtDate(f.fecha)}</td>
-      <td>${escapeHtml(f.proveedorNombre)}</td>
-      <td>${escapeHtml(f.numeroFactura) || "—"}</td>
-      <td>${fmtMoney(f.montoTotal)}</td>
-      <td>${f.iva > 0 ? fmtMoney(f.iva) : "—"}</td>
-      <td>${(f.items || []).length} ítem(s)</td>
-      <td>${(f.foto || f.tieneFoto) ? `<button class="btn btn-ghost btn-sm btn-icon" onclick="verFotoFactura('${id}')" title="Ver la foto de esta factura">🖼️</button>` : "—"}</td>
-      <td><span class="badge ${f.estado === "pagado" ? "badge-pagado" : "badge-no-pagado"}">${f.estado === "pagado" ? "Pagado" : "No pagado"}</span></td>
-      <td>
+      <td data-label="Fecha">${fmtDate(f.fecha)}</td>
+      <td data-label="Proveedor">${escapeHtml(f.proveedorNombre)}</td>
+      <td data-label="N° Factura">${escapeHtml(f.numeroFactura) || "—"}</td>
+      <td data-label="Monto">${fmtMoney(f.montoTotal)}</td>
+      <td data-label="IVA">${f.iva > 0 ? fmtMoney(f.iva) : "—"}</td>
+      <td data-label="Ítems">${(f.items || []).length} ítem(s)</td>
+      <td data-label="Foto">${(f.foto || f.tieneFoto) ? `<button class="btn btn-ghost btn-sm btn-icon" onclick="verFotoFactura('${id}')" title="Ver la foto de esta factura">🖼️</button>` : "—"}</td>
+      <td data-label="Estado"><span class="badge ${f.estado === "pagado" ? "badge-pagado" : "badge-no-pagado"}">${f.estado === "pagado" ? "Pagado" : "No pagado"}</span></td>
+      <td class="celda-acciones">
         <button class="btn btn-ghost btn-sm btn-icon" onclick="toggleFacturaDetalle('${id}')" title="Ver qué cargó el sistema de esta factura">${state.facturaDetalleId === id ? "▴" : "🔎"}</button>
         <button class="btn btn-ghost btn-sm" onclick="toggleFacturaEstado('${id}')">${f.estado === "pagado" ? "Marcar no pagada" : "Marcar pagada"}</button>
       </td>
@@ -3026,11 +3233,22 @@ function renderFacturasView(container) {
       <button class="tab ${state.facturasFiltro === "no_pagado" ? "active" : ""}" onclick="setFacturasFiltro('no_pagado')">No pagadas</button>
       <button class="tab ${state.facturasFiltro === "pagado" ? "active" : ""}" onclick="setFacturasFiltro('pagado')">Pagadas</button>
     </div>
-    ${buscadorHtml(state.facturasBusqueda, "Buscar por proveedor o N° de factura...", "setFacturasBusqueda")}
+    <div class="filtros-bar">
+      <input class="form-input filtros-buscar" id="buscador-setFacturasBusqueda" placeholder="🔎 Proveedor, N° de factura o producto comprado…" value="${escapeHtml(state.facturasBusqueda)}" oninput="setFacturasBusqueda(this.value)">
+      <select class="form-select" id="facturas-proveedor" onchange="setFacturasProveedor(this.value)" title="Proveedor">
+        <option value="">Todos los proveedores</option>
+        ${provsFacturas.map(([n, c]) => `<option value="${escapeHtml(n)}" ${provF === n ? "selected" : ""}>${escapeHtml(n)} (${c})</option>`).join("")}
+      </select>
+      <select class="form-select" id="facturas-mes" onchange="setFacturasMes(this.value)" title="Mes">
+        <option value="">Todos los meses</option>
+        ${mesesFacturas.map(m => `<option value="${m}" ${mesF === m ? "selected" : ""}>${nombreMes(m)}</option>`).join("")}
+      </select>
+    </div>
     <div class="section-block">
-      ${entries.length === 0 ? `<div class="empty-state">${busqueda ? "No hay facturas que coincidan con la búsqueda." : "No hay facturas en esta categoría."}</div>` : `
+      ${todasFacturas.length ? `<div class="filtros-resumen"><span>Mostrando <b>${entries.length}</b> de ${todasFacturas.length} facturas · Total <b>${fmtMoney(totalFiltrado)}</b>${totalNoPagado > 0 ? ` · Sin pagar <b>${fmtMoney(totalNoPagado)}</b>` : ""}</span>${hayFiltrosFacturas ? `<button class="btn btn-ghost btn-sm" onclick="limpiarFiltrosFacturas()">✕ Limpiar filtros</button>` : ""}</div>` : ""}
+      ${entries.length === 0 ? `<div class="empty-state">${hayFiltrosFacturas ? "No hay facturas que coincidan con los filtros." : "No hay facturas en esta categoría."}</div>` : `
         <div class="data-table-wrap">
-          <table class="data-table">
+          <table class="data-table tabla-movil">
             <thead><tr><th>Fecha</th><th>Proveedor</th><th>N° Factura</th><th>Monto</th><th>IVA</th><th>Ítems</th><th>Foto</th><th>Estado</th><th></th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
@@ -3324,6 +3542,25 @@ window.setInsumosBusqueda = function(val) {
   state.insumosBusqueda = val;
   render();
 };
+window.setInsumosProveedor = function(val) { state.insumosProveedorFiltro = val; render(); };
+window.setInsumosEstado = function(val) { state.insumosEstadoFiltro = state.insumosEstadoFiltro === val ? "" : val; render(); };
+window.limpiarFiltrosInsumos = function() { state.insumosBusqueda = ""; state.insumosProveedorFiltro = ""; state.insumosEstadoFiltro = ""; render(); };
+// Filtros rápidos de Insumos: cada uno recibe (id, insumo).
+const ESTADOS_INSUMO = {
+  bases: { label: "🧪 Bases", test: (id, ins) => esBaseInsumo(ins) },
+  subas: { label: "🔺 Con suba reciente", test: (id, ins) => !!alertaPrecioVigente(ins.alertaPrecio) },
+  baratos: { label: "💡 Se consigue más barato", test: (id, ins) => !!alertaPrecioVigente(ins.alertaBaja) && !esBaseInsumo(ins) },
+  varios: { label: "👥 Varios proveedores", test: (id, ins) => Object.keys(ins.precios || {}).length > 1 },
+  sinPrecio: { label: "⚠️ Sin precio", test: (id, ins) => !(precioEfectivoInsumo(id) > 0) },
+};
+function proveedoresDeInsumos() {
+  const cuenta = new Map();
+  for (const ins of Object.values(state.insumos || {})) {
+    const nombres = new Set(Object.values(ins.precios || {}).map(p => (p.proveedorNombre || "").trim()).filter(Boolean));
+    for (const n of nombres) cuenta.set(n, (cuenta.get(n) || 0) + 1);
+  }
+  return [...cuenta.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+}
 // Guarda el costo calculado de una base/preparación elaborada como su precio "_manual" — una vez
 // que un insumo tiene receta propia, esa receta manda sobre cualquier proveedor preferido anterior
 // (mismo criterio que un producto: si hay receta, el costo sale de ahí). Deja constancia en historial.
@@ -3511,6 +3748,18 @@ window.abrirCargaPrecioInsumo = function(id) {
 
 function stripAccentsCosteo(s) {
   return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+// Para buscar: sin tildes, sin mayúsculas, espacios simples. "cafe" encuentra "Café".
+function claveBusqueda(s) {
+  return stripAccentsCosteo(s).toLowerCase().replace(/\s+/g, " ").trim();
+}
+// Menú desplegable "🧰 Herramientas": las acciones que se usan cada tanto, para que no ocupen el
+// lugar de las de todos los días. items: [{ onclick, label, title }]. badge: número a destacar.
+function menuHerramientas(items, badge) {
+  return `<details class="menu-herr">
+    <summary class="btn btn-ghost">🧰 Herramientas${badge ? ` <span class="menu-badge">${badge}</span>` : ""} ▾</summary>
+    <div class="menu-herr-items">${items.map(it => `<button type="button" onclick="this.closest('details').removeAttribute('open');${it.onclick}" title="${escapeHtml(it.title || "")}">${it.label}</button>`).join("")}</div>
+  </details>`;
 }
 function normalizeInsumoNombre(s) {
   let n = stripAccentsCosteo(s).toLowerCase().trim();
@@ -4001,9 +4250,17 @@ function renderInsumosView(container) {
       <button class="btn btn-ghost" onclick="cerrarFormInsumo()">Cancelar</button>
     </div>` : "";
 
-  const busquedaInsumos = state.insumosBusqueda.trim().toLowerCase();
-  const rows = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
-    .filter(([, ins]) => !busquedaInsumos || ins.nombre.toLowerCase().includes(busquedaInsumos) || Object.values(ins.precios || {}).some(p => (p.proveedorNombre || "").toLowerCase().includes(busquedaInsumos) || (p.marca || "").toLowerCase().includes(busquedaInsumos)))
+  // Búsqueda sin tildes ni mayúsculas ("azucar" encuentra "Azúcar"), por nombre, proveedor o marca.
+  const busquedaInsumos = claveBusqueda(state.insumosBusqueda);
+  const provFiltro = state.insumosProveedorFiltro;
+  const estadoInsumo = ESTADOS_INSUMO[state.insumosEstadoFiltro];
+  const todosInsumos = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre));
+  const insumosFiltrados = todosInsumos
+    .filter(([, ins]) => !busquedaInsumos || claveBusqueda(ins.nombre).includes(busquedaInsumos) || Object.values(ins.precios || {}).some(p => claveBusqueda(p.proveedorNombre || "").includes(busquedaInsumos) || claveBusqueda(p.marca || "").includes(busquedaInsumos)))
+    .filter(([, ins]) => !provFiltro || Object.values(ins.precios || {}).some(p => (p.proveedorNombre || "").trim() === provFiltro))
+    .filter(([id, ins]) => !estadoInsumo || estadoInsumo.test(id, ins));
+  const hayFiltrosInsumos = !!(busquedaInsumos || provFiltro || estadoInsumo);
+  const rows = insumosFiltrados
     .map(([id, ins]) => {
     const hist = objToSortedEntries(ins.historial, (a, b) => a[1].fecha.localeCompare(b[1].fecha));
     const isOpen = state.viewingInsumoHistId === id;
@@ -4057,15 +4314,15 @@ function renderInsumosView(container) {
     return `
       <tr class="${isOpen ? "fila-abierta" : ""}">
         ${state.insumosMergeMode ? `<td><input type="checkbox" ${checked ? "checked" : ""} onchange="toggleInsumoMergeCheck('${id}', this.checked)"></td>` : ""}
-        <td>${escapeHtml(ins.nombre)}${esElaborado ? ` <span class="badge badge-ok" title="Base/preparación con receta propia">🧪 Base</span>` : ""}</td>
-        <td>${escapeHtml(ins.unidad) || "—"}</td>
-        <td>${proveedoresCell}</td>
-        <td>${esElaborado
+        <td data-label="Insumo">${escapeHtml(ins.nombre)}${esElaborado ? ` <span class="badge badge-ok" title="Base/preparación con receta propia">🧪 Base</span>` : ""}</td>
+        <td data-label="Unidad">${escapeHtml(ins.unidad) || "—"}</td>
+        <td data-label="Proveedores">${proveedoresCell}</td>
+        <td data-label="Precio de costeo">${esElaborado
           ? `<span class="${precioCellClass}">${fmtMoney(costoVivo)}</span><div class="text-muted" style="font-size:11px">receta propia</div>`
           : `<input type="number" step="0.01" min="0" class="form-input precio-inline ${precioCellClass}" style="max-width:120px" value="${Math.round(costoVivo * 100) / 100}" title="Escribí el precio nuevo y salí del campo (o apretá Enter) para guardarlo" onchange="guardarPrecioInsumoInline('${id}', this.value)" onkeydown="if(event.key==='Enter'){this.blur();}">${preferidoNombre ? `<div class="text-muted" style="font-size:11px">${escapeHtml(preferidoNombre)}</div>` : ""}`
         }${alertaBadge}${bajaBadge}</td>
-        <td>${hist.length}</td>
-        <td style="white-space:nowrap">
+        <td data-label="Registros">${hist.length}</td>
+        <td class="celda-acciones" style="white-space:nowrap">
           <div class="row-actions">
             ${!esElaborado ? `<button class="btn btn-turq btn-sm" onclick="abrirCargaPrecioInsumo('${id}')" title="Cargar un precio nuevo de este insumo (otro proveedor, otra marca, o actualizar el actual)">➕ Precio</button>` : ""}
             <button class="btn btn-ghost btn-sm btn-icon" onclick="abrirFormInsumo('${id}')" title="Editar nombre y unidad">✏️</button>
@@ -4135,10 +4392,29 @@ function renderInsumosView(container) {
         <div class="page-title">Insumos</div>
         <div class="page-sub" style="margin-bottom:0">Precio actual e historial de cada insumo.</div>
       </div>
-      ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${state.mostrarDuplicados ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarDuplicados()">${state.mostrarDuplicados ? "✕ Cerrar búsqueda" : "🔍 Buscar posibles duplicados"}</button><button class="btn ${state.mostrarVariantesMarca ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarVariantesMarca()">${state.mostrarVariantesMarca ? "✕ Cerrar búsqueda" : "🏷️ Detectar variantes de marca"}</button><button class="btn ${state.mostrarProductosEnInsumos ? "btn-turq" : "btn-ghost"}" onclick="toggleBuscarProductosEnInsumos()">${state.mostrarProductosEnInsumos ? "✕ Cerrar búsqueda" : "🍞 Insumos que son productos"}</button><button class="btn ${state.insumosMergeMode ? "btn-turq" : "btn-ghost"}" onclick="toggleInsumosMergeMode()">${state.insumosMergeMode ? "✕ Cancelar" : "🔀 Agrupar insumos a mano"}</button><button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
+      ${!editing ? `<div class="row-actions">${menuHerramientas([
+        { label: state.mostrarDuplicados ? "✕ Cerrar: posibles duplicados" : "🔍 Buscar posibles duplicados", onclick: "toggleBuscarDuplicados()" },
+        { label: state.mostrarVariantesMarca ? "✕ Cerrar: variantes de marca" : "🏷️ Detectar variantes de marca", onclick: "toggleBuscarVariantesMarca()" },
+        { label: state.mostrarProductosEnInsumos ? "✕ Cerrar: insumos que son productos" : "🍞 Insumos que son productos", onclick: "toggleBuscarProductosEnInsumos()" },
+        { label: state.insumosMergeMode ? "✕ Cancelar agrupado a mano" : "🔀 Agrupar insumos a mano", onclick: "toggleInsumosMergeMode()" },
+      ], [state.mostrarDuplicados, state.mostrarVariantesMarca, state.mostrarProductosEnInsumos, state.insumosMergeMode].filter(Boolean).length || "")}<button class="btn btn-primary" onclick="abrirFormInsumo()">+ Nuevo insumo</button></div>` : ""}
     </div>
     ${formHtml}
-    ${!editing ? buscadorHtml(state.insumosBusqueda, "Buscar por nombre, proveedor o marca...", "setInsumosBusqueda") : ""}
+    ${!editing ? `
+    <div class="filtros-bar">
+      <input class="form-input filtros-buscar" id="buscador-setInsumosBusqueda" placeholder="🔎 Buscar por nombre, proveedor o marca…" value="${escapeHtml(state.insumosBusqueda)}" oninput="setInsumosBusqueda(this.value)">
+      <select class="form-select" id="insumos-proveedor" onchange="setInsumosProveedor(this.value)" title="Proveedor">
+        <option value="">Todos los proveedores</option>
+        ${proveedoresDeInsumos().map(([n, c]) => `<option value="${escapeHtml(n)}" ${provFiltro === n ? "selected" : ""}>${escapeHtml(n)} (${c})</option>`).join("")}
+      </select>
+    </div>
+    <div class="chips-fila">
+      ${Object.entries(ESTADOS_INSUMO).map(([k, e]) => `<button class="chip ${state.insumosEstadoFiltro === k ? "chip-on" : ""}" onclick="setInsumosEstado('${k}')">${e.label}</button>`).join("")}
+    </div>
+    ${[["mostrarDuplicados", "🔍 Posibles duplicados", "toggleBuscarDuplicados"], ["mostrarVariantesMarca", "🏷️ Variantes de marca", "toggleBuscarVariantesMarca"], ["mostrarProductosEnInsumos", "🍞 Insumos que son productos", "toggleBuscarProductosEnInsumos"], ["insumosMergeMode", "🔀 Agrupando a mano", "toggleInsumosMergeMode"]].some(([k]) => state[k]) ? `
+    <div class="chips-fila"><span class="text-muted" style="font-size:12px">Herramienta abierta:</span>
+      ${[["mostrarDuplicados", "🔍 Posibles duplicados", "toggleBuscarDuplicados"], ["mostrarVariantesMarca", "🏷️ Variantes de marca", "toggleBuscarVariantesMarca"], ["mostrarProductosEnInsumos", "🍞 Insumos que son productos", "toggleBuscarProductosEnInsumos"], ["insumosMergeMode", "🔀 Agrupando a mano", "toggleInsumosMergeMode"]].filter(([k]) => state[k]).map(([, l, fn]) => `<button class="chip chip-on" onclick="${fn}()" title="Cerrar">${l} ✕</button>`).join("")}
+    </div>` : ""}` : ""}
     ${state.mostrarDuplicados ? `
       <div class="section-block">
         <div class="section-title" style="margin-bottom:10px">🔍 Posibles duplicados</div>
@@ -4195,7 +4471,8 @@ function renderInsumosView(container) {
       </div>` : ""}
     ${mergeBarHtml}
     <div class="section-block">
-      ${rows ? `<div class="data-table-wrap"><table class="data-table"><thead><tr>${state.insumosMergeMode ? "<th></th>" : ""}<th>Nombre</th><th>Unidad</th><th>Proveedores</th><th>Precio de costeo ✏️</th><th>Registros</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">${busquedaInsumos ? "Ningún insumo coincide con la búsqueda." : "Todavía no hay insumos cargados. Se crean automáticamente al registrar una factura, o podés agregarlos a mano."}</div>`}
+      ${!editing && todosInsumos.length ? `<div class="filtros-resumen"><span>Mostrando <b>${insumosFiltrados.length}</b> de ${todosInsumos.length} insumos${estadoInsumo ? ` · <b>${estadoInsumo.label}</b>` : ""}</span>${hayFiltrosInsumos ? `<button class="btn btn-ghost btn-sm" onclick="limpiarFiltrosInsumos()">✕ Limpiar filtros</button>` : ""}</div>` : ""}
+      ${rows ? `<div class="data-table-wrap"><table class="data-table tabla-movil"><thead><tr>${state.insumosMergeMode ? "<th></th>" : ""}<th>Nombre</th><th>Unidad</th><th>Proveedores</th><th>Precio de costeo ✏️</th><th>Registros</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">${hayFiltrosInsumos ? "Ningún insumo coincide con los filtros." : "Todavía no hay insumos cargados. Se crean automáticamente al registrar una factura, o podés agregarlos a mano."}</div>`}
     </div>`;
 }
 
@@ -5061,9 +5338,13 @@ function renderProductosView(container) {
       </div>
       ${!editing ? `<div class="row-actions">
         <button class="btn ${pendientesFudo.length ? "btn-primary" : "btn-ghost"}" onclick="togglePendientesFudo()" title="Los precios de venta que editaste, para copiarlos fácil en FUDO">📤 Precios editados${pendientesFudo.length ? ` (${pendientesFudo.length})` : ""}</button>
+        <button class="btn ${state.modoLote ? "btn-primary" : "btn-ghost"}" onclick="toggleModoLote()" title="Cambiar el precio de muchos productos a la vez: por porcentaje, monto fijo o precio nuevo">✏️ Editar en lote</button>
         <button class="btn btn-turq" onclick="toggleCambiosPrecio()" title="Los productos cuyo precio de venta quedó distinto del sugerido, para ir a actualizarlos en la caja">🔄 Precios a actualizar${cambiosPrecio.length ? ` (${cambiosPrecio.length})` : ""}</button>
-        <button class="btn btn-ghost" onclick="toggleGemelosVincular()" title="Productos de reventa que también están cargados como insumo (por las facturas): vincularlos deja el costo en un solo lugar, que actualizan facturas y listas">🔗 Vincular con insumos</button>
-        <button class="btn ${gruposUnificar.length ? "btn-primary" : "btn-ghost"}" onclick="toggleUnificarProductos()" title="Productos de retail que probablemente sean el mismo (variante de sabor o familia de marca), para revisar y unificar">🧃 Unificar similares${gruposUnificar.length ? ` (${gruposUnificar.length})` : ""}</button>
+        ${menuHerramientas([
+          { onclick: "toggleGemelosVincular()", label: "🔗 Vincular con insumos", title: "Productos de reventa que también están cargados como insumo (por las facturas): vincularlos deja el costo en un solo lugar" },
+          { onclick: "toggleUnificarProductos()", label: `🧃 Unificar similares${gruposUnificar.length ? ` (${gruposUnificar.length})` : ""}`, title: "Productos de retail que probablemente sean el mismo (variante de sabor o familia de marca)" },
+          { onclick: "descargarProductosCsv()", label: "📥 Descargar productos (CSV)", title: "Todos los productos con costo, precio de venta, mesa, delivery y margen, para abrir en Excel" }
+        ], gruposUnificar.length)}
         <button class="btn btn-primary" onclick="abrirFormProducto()">+ Nuevo producto</button>
       </div>` : ""}
     </div>
@@ -5126,21 +5407,13 @@ function renderProductosView(container) {
           <div class="text-muted" style="font-size:12px">Cada precio de venta que tocaste desde acá, del más reciente al más viejo, con el valor de antes de que empezaras a editarlo. Cuando ya los pasaste a la caja, marcalos como listo para vaciar la lista.</div>
         </div>
         <div class="row-actions">
-          ${pendientesFudo.length ? `<button class="btn btn-ghost btn-sm" onclick="copiarPendientesFudoTexto()" title="Copia nombre y precio nuevo, uno por línea">📋 Copiar</button>
+          ${pendientesFudo.length ? `<button class="btn btn-primary btn-sm" onclick="imprimirPreciosEditados()" title="Lista limpia, agrupada por categoría, lista para imprimir o guardar en PDF">🖨️ Imprimir</button>
+          <button class="btn btn-ghost btn-sm" onclick="copiarPendientesFudoTexto()" title="Copia nombre y precio nuevo, uno por línea">📋 Copiar</button>
           <button class="btn btn-ghost btn-sm" onclick="descargarPendientesFudo()" title="Descarga un CSV que se abre en Excel">📤 Descargar CSV</button>
           <button class="btn btn-ghost btn-sm" onclick="marcarTodoPendienteFudoListo()">✅ Ya lo pasé a FUDO</button>` : ""}
         </div>
       </div>
-      ${pendientesFudo.length ? `<div class="data-table-wrap"><table class="data-table">
-        <thead><tr><th>Producto</th><th>Precio anterior</th><th>Precio nuevo</th><th>Diferencia</th><th></th></tr></thead>
-        <tbody>${pendientesFudo.map(f => `<tr>
-          <td>${escapeHtml(f.nombre)}</td>
-          <td>${fmtMoney(f.precioAnterior)}</td>
-          <td><strong>${fmtMoney(f.precioNuevo)}</strong></td>
-          <td><span class="badge ${f.diferencia > 0 ? "badge-suba" : "badge-baja"}">${f.diferencia > 0 ? "🔺" : "🔻"} ${fmtMoney(Math.abs(f.diferencia))}</span></td>
-          <td><button class="btn btn-ghost btn-sm btn-icon" onclick="quitarPendienteFudo('${f.id}')" title="Ya lo pasé a FUDO">✕</button></td>
-        </tr>`).join("")}</tbody>
-      </table></div>` : `<div class="empty-state">No editaste ningún precio de venta todavía. Cuando cambies uno acá abajo, aparece en esta lista.</div>`}
+      ${pendientesFudo.length ? tablaPreciosEditadosHtml(pendientesFudo) : `<div class="empty-state">No editaste ningún precio de venta todavía. Cuando cambies uno acá abajo, aparece en esta lista.</div>`}
     </div>` : ""}
     ${!editing && state.mostrarCambiosPrecio ? `
     <div class="section-block" style="border-color:var(--turq)">
@@ -5149,10 +5422,13 @@ function renderProductosView(container) {
           <div class="section-title">🔄 Precios pendientes de actualizar en la caja</div>
           <div class="text-muted" style="font-size:12px">Cambió el costo, así que el precio sugerido se movió — pero el precio de venta sigue como estaba hasta que lo cambies en FUDO. Esta es la lista de lo que hay que tocar. El campo "Precio nuevo" ya viene precargado con el sugerido: tocá <strong>✓</strong> para aceptarlo tal cual, o escribí otro valor vos y guardalo con Tab/Enter.</div>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="descargarCambiosPrecio()" title="Descarga un CSV que se abre en Excel">📤 Descargar CSV</button>
+        <div class="row-actions">
+          ${cambiosPrecio.length ? `<button class="btn btn-ghost btn-sm" onclick="imprimirCambiosPrecio()" title="Lista para imprimir o guardar en PDF">🖨️ Imprimir</button>` : ""}
+          <button class="btn btn-ghost btn-sm" onclick="descargarCambiosPrecio()" title="Descarga un CSV que se abre en Excel">📤 Descargar CSV</button>
+        </div>
       </div>
       ${cambiosPrecio.length ? `<div class="data-table-wrap"><table class="data-table">
-        <thead><tr><th>Producto</th><th>Costo</th><th>Precio actual</th><th>Precio nuevo</th><th>Diferencia</th></tr></thead>
+        <thead><tr><th>Producto</th><th>Costo</th><th>Precio actual</th><th>Precio nuevo</th><th>Diferencia</th><th>🛵 Delivery (+${recargoDeliveryPct()}%)</th></tr></thead>
         <tbody>${cambiosPrecio.map(f => `<tr>
           <td>${escapeHtml(f.nombre)}<div class="text-muted" style="font-size:11px">${escapeHtml(f.tipo)}${f.costoSinIva !== null ? ` · ${fmtMoney(f.costoSinIva)} + IVA + ${f.gananciaPct}%` : ""}</div></td>
           <td>${fmtMoney(f.costo)}</td>
@@ -5164,16 +5440,26 @@ function renderProductosView(container) {
             </div>
           </td>
           <td><span class="badge ${f.diferencia > 0 ? "badge-suba" : "badge-baja"}">${f.diferencia > 0 ? "🔺" : "🔻"} ${fmtMoney(Math.abs(f.diferencia))} (${fmtPct(f.pct)})</span></td>
+          <td title="Precio nuevo + ${recargoDeliveryPct()}%, redondeado a la centena">${fmtMoney(precioDelivery(f.precioSugerido))}</td>
         </tr>`).join("")}</tbody>
       </table></div>` : `<div class="empty-state">✅ No hay precios pendientes: todos los precios de venta coinciden con el sugerido.</div>`}
     </div>` : ""}
-    ${!editing ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-      <button class="btn ${state.productosClasificacionFiltro === "todos" ? "btn-turq" : "btn-ghost"} btn-sm" onclick="setProductosClasificacionFiltro('todos')">Todos</button>
-      <button class="btn ${state.productosClasificacionFiltro === "elaborado" ? "btn-turq" : "btn-ghost"} btn-sm" onclick="setProductosClasificacionFiltro('elaborado')">🥐 Elaborados</button>
-      <button class="btn ${state.productosClasificacionFiltro === "preparacion" ? "btn-turq" : "btn-ghost"} btn-sm" onclick="setProductosClasificacionFiltro('preparacion')">☕ Preparaciones</button>
-      <button class="btn ${state.productosClasificacionFiltro === "retail" ? "btn-turq" : "btn-ghost"} btn-sm" onclick="setProductosClasificacionFiltro('retail')">🛒 Retail</button>
+    ${!editing ? `
+    <div class="filtros-bar">
+      <input class="form-input filtros-buscar" id="productos-filtro-input" placeholder="🔎 Buscar por nombre o categoría…" value="${escapeHtml(state.productosFiltro)}" oninput="setProductosFiltro(this.value)">
+      <select class="form-select" id="productos-categoria" onchange="setProductosCategoria(this.value)" title="Categoría">
+        <option value="">Todas las categorías</option>
+        ${categoriasDeProductos().map(([c, n]) => `<option value="${escapeHtml(c)}" ${state.productosCategoriaFiltro === c ? "selected" : ""}>${escapeHtml(c)} (${n})</option>`).join("")}
+      </select>
+      <select class="form-select" id="productos-orden" onchange="setProductosOrden(this.value)" title="Ordenar">
+        ${Object.entries(ORDEN_PRODUCTOS).map(([k, o]) => `<option value="${k}" ${state.productosOrden === k ? "selected" : ""}>↕ ${o.label}</option>`).join("")}
+      </select>
+    </div>
+    <div class="chips-fila">
+      ${[["todos", "Todos"], ["elaborado", "🥐 Elaborados"], ["preparacion", "☕ Preparaciones"], ["retail", "🛒 Retail"]].map(([k, l]) =>
+        `<button class="chip ${state.productosClasificacionFiltro === k ? "chip-on" : ""}" onclick="setProductosClasificacionFiltro('${k}')">${l}</button>`).join("")}
     </div>` : ""}
-    ${!editing && todosProductos.length > 8 ? `<div class="form-row"><div class="form-group" style="max-width:320px"><input class="form-input" id="productos-filtro-input" placeholder="🔎 Buscar producto..." value="${escapeHtml(state.productosFiltro)}" oninput="setProductosFiltro(this.value)"></div></div>` : ""}
+    ${!editing && state.modoLote ? panelLoteHtml() : ""}
     ${formHtml}
     <div class="section-block" id="productos-table-wrap"></div>`;
 
@@ -5181,7 +5467,7 @@ function renderProductosView(container) {
 }
 window.setProductosClasificacionFiltro = function(val) {
   state.productosClasificacionFiltro = val;
-  renderProductosTable();
+  render();
 };
 
 // Umbral de margen "bajo" — no es pérdida todavía, pero está cerca; solo para alertar, no bloquea nada.
@@ -5271,13 +5557,13 @@ window.toggleCambiosPrecio = function() {
 window.descargarCambiosPrecio = function() {
   const filas = productosConCambioDePrecio();
   if (!filas.length) { showToast("✅ No hay precios pendientes de actualizar.", "success"); return; }
-  const encabezado = ["Producto", "Categoria", "Tipo", "Costo s/IVA", "Impuestos", "Costo total", "% Ganancia", "Precio actual", "Precio nuevo", "Diferencia", "% Variacion"];
+  const encabezado = ["Producto", "Categoria", "Tipo", "Costo s/IVA", "Impuestos", "Costo total", "% Ganancia", "Precio actual", "Precio nuevo", "Diferencia", "% Variacion", `Delivery (+${recargoDeliveryPct()}%)`];
   const num = n => (n === null || n === undefined) ? "" : String(Math.round(n * 100) / 100).replace(".", ",");
   const txt = t => `"${String(t ?? "").replace(/"/g, '""')}"`;
   const lineas = [encabezado.join(";")].concat(filas.map(f => [
     txt(f.nombre), txt(f.categoria), txt(f.tipo),
     num(f.costoSinIva), num(f.impuestos), num(f.costo), num(f.gananciaPct),
-    num(f.precioActual), num(f.precioSugerido), num(f.diferencia), num(f.pct)
+    num(f.precioActual), num(f.precioSugerido), num(f.diferencia), num(f.pct), num(precioDelivery(f.precioSugerido))
   ].join(";")));
   const blob = new Blob(["\ufeff" + lineas.join("\r\n")], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -5301,24 +5587,97 @@ function clasificarProducto(p) {
 }
 const CLASIFICACION_LABEL = { elaborado: "🥐 Elaborado", preparacion: "☕ Preparación", retail: "🛒 Retail" };
 
+// ── Delivery ─────────────────────────────────────────────────
+// Precio sugerido para las apps de delivery: el precio de venta (o el sugerido, si todavía no hay
+// uno cargado) más el recargo de delivery, redondeado a la centena como el resto de los sugeridos.
+// El recargo se cambia en Configuración (las apps cambian su comisión); por defecto 30%.
+const RECARGO_DELIVERY_DEFAULT = 30;
+function recargoDeliveryPct() {
+  const v = state.config ? state.config.recargoDelivery : null;
+  return v === null || v === undefined || v === "" || !Number.isFinite(Number(v)) ? RECARGO_DELIVERY_DEFAULT : Number(v);
+}
+function precioDelivery(base) {
+  return base > 0 ? Math.round(base * (1 + recargoDeliveryPct() / 100) / 100) * 100 : null;
+}
+
+// ── Filtros y orden de Productos ─────────────────────────────
+// Antes había tres lugares distintos para filtrar (chips de tipo, buscador, "Ver solo alertas"),
+// los cuadros de resumen no se podían tocar, y no había forma de ver una categoría sola ni de
+// ordenar (ej. "los de peor margen primero"). Ahora todo filtra desde la misma barra, y los
+// cuadros de resumen son filtros: tocás "Vendiendo a pérdida" y ves esos productos.
+function categoriaProductoTexto(p) { return (p.categoria || "").trim() || "Sin categoría"; }
+function categoriasDeProductos() {
+  const m = new Map();
+  Object.values(state.productos).forEach(p => { if (p && p.nombre) { const c = categoriaProductoTexto(p); m.set(c, (m.get(c) || 0) + 1); } });
+  return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], "es"));
+}
+const ORDEN_PRODUCTOS = {
+  nombre:       { label: "Nombre (A-Z)" },
+  margenAsc:    { label: "Menor margen primero" },
+  margenDesc:   { label: "Mayor margen primero" },
+  subir:        { label: "Más para subir de precio" },
+  costoDesc:    { label: "Mayor costo" },
+  precioDesc:   { label: "Mayor precio de venta" },
+  categoria:    { label: "Categoría" }
+};
+const ESTADOS_PRODUCTO = {
+  perdida:     { label: "❌ Vendiendo a pérdida", test: (p, a) => a.perdida },
+  margenBajo:  { label: `⚠️ Margen bajo (<${MARGEN_BAJO_UMBRAL}%)`, test: (p, a) => a.margenBajo },
+  actualizar:  { label: "🔄 Precio a actualizar", test: (p, a, x) => x.actualizar.has(p) },
+  subas:       { label: "🔺 Suba de costo reciente", test: (p, a) => !!a.alertaSuba },
+  costoActualizado: { label: "🔁 Costo actualizado (14 días)", test: (p, a) => a.costoActualizado },
+  sinPrecio:   { label: "Sin precio de venta", test: (p) => !(Number(p.precioVenta) > 0) },
+  sinCosto:    { label: "Sin costo", test: (p) => costoProductoFuente(p) === "sin_datos" }
+};
+window.setProductosCategoria = function(v) { state.productosCategoriaFiltro = v; render(); };
+window.setProductosOrden = function(v) { state.productosOrden = v; render(); };
+window.setProductosEstado = function(v) { state.productosEstadoFiltro = state.productosEstadoFiltro === v ? "" : v; renderProductosTable(); };
+window.limpiarFiltrosProductos = function() {
+  state.productosFiltro = ""; state.productosClasificacionFiltro = "todos"; state.productosCategoriaFiltro = ""; state.productosEstadoFiltro = "";
+  render();
+};
+
 function renderProductosTable() {
   const wrap = document.getElementById("productos-table-wrap");
   if (!wrap) return;
-  const filtro = state.productosFiltro.trim().toLowerCase();
+  const filtro = claveBusqueda(state.productosFiltro);
   const todosProductos = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre));
-  let productosFiltrados = filtro ? todosProductos.filter(([, p]) => p.nombre.toLowerCase().includes(filtro)) : todosProductos;
+  // La búsqueda mira el nombre Y la categoría, sin importar tildes ni mayúsculas.
+  let productosFiltrados = filtro ? todosProductos.filter(([, p]) => claveBusqueda(p.nombre).includes(filtro) || claveBusqueda(p.categoria).includes(filtro)) : todosProductos;
   if (state.productosClasificacionFiltro !== "todos") {
     productosFiltrados = productosFiltrados.filter(([, p]) => clasificarProducto(p) === state.productosClasificacionFiltro);
   }
+  if (state.productosCategoriaFiltro) {
+    productosFiltrados = productosFiltrados.filter(([, p]) => categoriaProductoTexto(p) === state.productosCategoriaFiltro);
+  }
 
   const evaluados = productosFiltrados.map(([id, p]) => [id, p, evaluarAlertaProducto(p)]);
-  const numPerdida = evaluados.filter(([, , a]) => a.perdida).length;
-  const numMargenBajo = evaluados.filter(([, , a]) => a.margenBajo).length;
-  const numCostoActualizado = evaluados.filter(([, , a]) => a.costoActualizado).length;
-  const numAlertaSuba = evaluados.filter(([, , a]) => a.alertaSuba).length;
+  const extra = { actualizar: new Set(productosConCambioDePrecio().map(c => state.productos[c.id])) };
+  const cuenta = k => evaluados.filter(([, p, a]) => ESTADOS_PRODUCTO[k].test(p, a, extra)).length;
+  const numPerdida = cuenta("perdida");
+  const numMargenBajo = cuenta("margenBajo");
+  const numCostoActualizado = cuenta("costoActualizado");
+  const numAlertaSuba = cuenta("subas");
 
-  const filasFinal = state.productosSoloAlertas ? evaluados.filter(([, , a]) => a.perdida || a.margenBajo) : evaluados;
+  const estado = ESTADOS_PRODUCTO[state.productosEstadoFiltro] ? state.productosEstadoFiltro : "";
+  let filasFinal = estado ? evaluados.filter(([, p, a]) => ESTADOS_PRODUCTO[estado].test(p, a, extra)) : evaluados;
+  const orden = state.productosOrden || "nombre";
+  if (orden !== "nombre") {
+    const margenDe = a => (a.margen === null ? Infinity : a.margen);
+    const sugeridos = new Map(filasFinal.map(([id, p]) => [id, precioSugeridoProducto(p)]));
+    const paraSubir = (id, p) => { const s = sugeridos.get(id); return s !== null && Number(p.precioVenta) > 0 ? s - Number(p.precioVenta) : -Infinity; };
+    const cmp = {
+      margenAsc: (x, y) => margenDe(x[2]) - margenDe(y[2]),
+      margenDesc: (x, y) => (y[2].margen ?? -Infinity) - (x[2].margen ?? -Infinity),
+      subir: (x, y) => paraSubir(y[0], y[1]) - paraSubir(x[0], x[1]),
+      costoDesc: (x, y) => (y[2].costo || 0) - (x[2].costo || 0),
+      precioDesc: (x, y) => (Number(y[1].precioVenta) || 0) - (Number(x[1].precioVenta) || 0),
+      categoria: (x, y) => categoriaProductoTexto(x[1]).localeCompare(categoriaProductoTexto(y[1]), "es")
+    }[orden];
+    if (cmp) filasFinal = filasFinal.slice().sort((x, y) => cmp(x, y) || x[1].nombre.localeCompare(y[1].nombre));
+  }
 
+  state._productosVisibles = filasFinal.map(([id]) => id);
   const rows = filasFinal.map(([id, p, a]) => {
     const { costo, margen, perdida, margenBajo, costoActualizado, alertaSuba } = a;
     const fuente = costoProductoFuente(p);
@@ -5340,7 +5699,7 @@ function renderProductosTable() {
       ? `<span class="${alertaSuba ? "precio-subio" : ""}">${fmtMoney(costo)}</span> <span class="text-muted" style="font-size:11px">(receta)</span>`
       : fuente === "insumo"
         ? `<span class="${alertaSuba ? "precio-subio" : ""}">${fmtMoney(costo)}</span> <div class="text-muted" style="font-size:11px">🔗 ${escapeHtml(state.insumos[p.insumoVinculadoId]?.nombre || "")}</div>`
-        : `<input type="number" step="0.01" min="0" class="form-input ${alertaSuba ? "precio-subio" : ""}" style="max-width:120px" value="${retail && retail.costoSinIva > 0 ? retail.costoSinIva : ""}" placeholder="Costo sin IVA" onchange="guardarCostoSinIvaRapido('${id}', this.value)">`;
+        : `<input type="number" step="0.01" min="0" class="form-input ${alertaSuba ? "precio-subio" : ""}" style="max-width:120px" value="${retail && retail.costoSinIva > 0 ? Math.round(retail.costoSinIva * 100) / 100 : ""}" placeholder="Costo sin IVA" onchange="guardarCostoSinIvaRapido('${id}', this.value)">`;
     const alertaSubaBadge = alertaSuba
       ? `<div><span class="badge ${alertaSuba.abrupta ? "badge-suba-abrupta" : "badge-suba"}">${alertaSuba.abrupta ? "🚨 SUBA ABRUPTA" : "🔺 Subió"} ${fmtPct(alertaSuba.pct)}</span></div>`
       : "";
@@ -5371,15 +5730,22 @@ function renderProductosTable() {
       ${precioSugeridoRedondeado !== null ? `<div class="text-muted" style="font-size:11px">Sugerido: ${fmtMoney(precioSugeridoRedondeado)}</div>` : ""}
       ${desgloseRetail}${badgeAjuste}
       ${pendienteFudo ? `<div><span class="badge" style="background:var(--terra);color:#fff" title="Antes: ${fmtMoney(pendienteFudo.precioAnterior)}">📤 Falta pasar a FUDO</span></div>` : ""}
-      ${p.precioVenta ? `<div class="text-muted" style="font-size:11px">Mesa (+10%): ${fmtMoney(p.precioVenta * 1.1)}</div>` : ""}`;
+      ${(() => {
+        const baseDelivery = Number(p.precioVenta) > 0 ? Number(p.precioVenta) : precioSugeridoRedondeado;
+        const delivery = precioDelivery(baseDelivery);
+        const partes = [];
+        if (p.precioVenta) partes.push(`🍽️ Mesa (+10%): ${fmtMoney(p.precioVenta * 1.1)}`);
+        if (delivery) partes.push(`<span class="precio-delivery" title="Precio sugerido para apps de delivery: ${Number(p.precioVenta) > 0 ? "precio de venta" : "precio sugerido"} + ${recargoDeliveryPct()}%, redondeado a la centena">🛵 Delivery (+${recargoDeliveryPct()}%): <b>${fmtMoney(delivery)}</b></span>`);
+        return partes.length ? `<div class="text-muted precio-canales" style="font-size:11px">${partes.join("<br>")}</div>` : "";
+      })()}`;
     return `
-      <tr class="${recetaAbierta ? "fila-abierta" : ""}">
-        <td>${escapeHtml(p.nombre)}<div class="text-muted" style="font-size:11px">${CLASIFICACION_LABEL[clasificacion]}${esVersionMesa ? " · 🍽️ Versión mesa" : ""}${costoActualizado ? " · 🔄 Costo actualizado" : ""}${p.recetario && !state.recetarioConectado ? " · 📖 Recetario sin conectar" : ""}</div></td>
-        <td>${tieneReceta ? `${Object.keys(p.receta).length} insumo(s)` : `<span class="text-muted">Sin receta</span>`}</td>
-        <td>${costoCell}${alertaSubaBadge}</td>
-        <td>${precioVentaCell}</td>
-        <td>${margenCell}</td>
-        <td style="white-space:nowrap">
+      <tr class="${recetaAbierta ? "fila-abierta" : ""} ${state.modoLote && state.loteSeleccion.has(id) ? "fila-lote" : ""}">
+        <td data-label="Producto">${state.modoLote ? `<label class="lote-check" title="Incluir en la edición en lote"><input type="checkbox" ${state.loteSeleccion.has(id) ? "checked" : ""} onchange="toggleLoteProducto('${id}', this.checked, this)"></label>` : ""}${escapeHtml(p.nombre)}<div class="text-muted" style="font-size:11px">${CLASIFICACION_LABEL[clasificacion]} · ${escapeHtml(categoriaProductoTexto(p))}${esVersionMesa ? " · 🍽️ Versión mesa" : ""}${costoActualizado ? " · 🔄 Costo actualizado" : ""}${p.recetario && !state.recetarioConectado ? " · 📖 Recetario sin conectar" : ""}</div></td>
+        <td data-label="Receta">${tieneReceta ? `${Object.keys(p.receta).length} insumo(s)` : `<span class="text-muted">Sin receta</span>`}</td>
+        <td data-label="Costo actual">${costoCell}${alertaSubaBadge}</td>
+        <td data-label="Precio venta">${precioVentaCell}</td>
+        <td data-label="Margen">${margenCell}</td>
+        <td style="white-space:nowrap" class="celda-acciones">
           <div class="row-actions">
             <button class="btn ${recetaAbierta ? "btn-turq" : "btn-ghost"} btn-sm" onclick="toggleRecetaProducto('${id}')" title="Ver, armar o modificar la receta">📋 Receta</button>
             <button class="btn btn-ghost btn-sm btn-icon" onclick="abrirFormProducto('${id}')" title="Editar nombre, categoría y precio">✏️</button>
@@ -5389,23 +5755,50 @@ function renderProductosTable() {
       ${recetaAbierta ? recetaPanelHtml(id, p) : ""}`;
   }).join("");
 
+  // Los cuadros de resumen son filtros: un toque muestra solo esos productos, otro toque los saca.
+  const statCard = (k, label, n, rojo) => `<button type="button" class="stat-card stat-filtro ${estado === k ? "stat-on" : ""}" onclick="setProductosEstado('${k}')" title="${estado === k ? "Quitar este filtro" : "Ver solo estos productos"}">
+      <div class="stat-label">${label}</div><div class="stat-value" style="${rojo && n ? "color:#c0392b" : ""}">${n}</div></button>`;
+  const chipEstado = k => { const n = cuenta(k); return n || estado === k ? `<button class="chip ${estado === k ? "chip-on" : ""}" onclick="setProductosEstado('${k}')">${ESTADOS_PRODUCTO[k].label} (${n})</button>` : ""; };
+  const hayFiltros = !!(state.productosFiltro || state.productosClasificacionFiltro !== "todos" || state.productosCategoriaFiltro || estado);
   const statsHtml = `
     <div class="stat-row">
-      <div class="stat-card"><div class="stat-label">Vendiendo a pérdida</div><div class="stat-value">${numPerdida}</div></div>
-      <div class="stat-card"><div class="stat-label">Margen bajo (&lt;${MARGEN_BAJO_UMBRAL}%)</div><div class="stat-value">${numMargenBajo}</div></div>
-      <div class="stat-card"><div class="stat-label">Costo actualizado (14 días)</div><div class="stat-value">${numCostoActualizado}</div></div>
-      <div class="stat-card"><div class="stat-label">🔺 Subas de costo recientes</div><div class="stat-value" style="${numAlertaSuba ? "color:#c0392b" : ""}">${numAlertaSuba}</div></div>
+      ${statCard("perdida", "Vendiendo a pérdida", numPerdida, true)}
+      ${statCard("margenBajo", `Margen bajo (&lt;${MARGEN_BAJO_UMBRAL}%)`, numMargenBajo, false)}
+      ${statCard("costoActualizado", "Costo actualizado (14 días)", numCostoActualizado, false)}
+      ${statCard("subas", "🔺 Subas de costo recientes", numAlertaSuba, true)}
     </div>
-    ${(numPerdida + numMargenBajo) > 0 ? `<button class="btn ${state.productosSoloAlertas ? "btn-turq" : "btn-ghost"} btn-sm" style="margin-bottom:14px" onclick="toggleProductosSoloAlertas()">${state.productosSoloAlertas ? "✕ Ver todos" : "⚠️ Ver solo alertas"}</button>` : ""}`;
+    <div class="chips-fila">${["actualizar", "sinPrecio", "sinCosto"].map(chipEstado).join("")}</div>
+    <div class="filtros-resumen">
+      <span>Mostrando <b>${filasFinal.length}</b> de ${todosProductos.length} producto${todosProductos.length === 1 ? "" : "s"}${estado ? ` · <b>${ESTADOS_PRODUCTO[estado].label}</b>` : ""}</span>
+      ${hayFiltros ? `<button class="btn btn-ghost btn-sm" onclick="limpiarFiltrosProductos()">✕ Limpiar filtros</button>` : ""}
+    </div>`;
 
+  if (state.modoLote) actualizarLoteUI();
   wrap.innerHTML = statsHtml + (rows
-    ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Producto</th><th>Receta</th><th>Costo actual</th><th>Precio venta</th><th>Margen</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`
-    : `<div class="empty-state">${state.productosSoloAlertas ? "Ningún producto con alertas." : (filtro ? "Ningún producto coincide con la búsqueda." : "Todavía no hay productos cargados.")}</div>`);
+    ? `<div class="data-table-wrap"><table class="data-table tabla-movil"><thead><tr><th>Producto</th><th>Receta</th><th>Costo actual</th><th>Precio venta</th><th>Margen</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`
+    : `<div class="empty-state">${hayFiltros ? `Ningún producto coincide con estos filtros. <button class="btn btn-ghost btn-sm" onclick="limpiarFiltrosProductos()">✕ Limpiar filtros</button>` : "Todavía no hay productos cargados."}</div>`);
 }
 
-window.toggleProductosSoloAlertas = function() {
-  state.productosSoloAlertas = !state.productosSoloAlertas;
-  renderProductosTable();
+// Todos los productos con costo, precios por canal y margen, para abrir en Excel (punto y coma + BOM).
+window.descargarProductosCsv = function() {
+  const productos = objToSortedEntries(state.productos, (a, b) => a[1].nombre.localeCompare(b[1].nombre));
+  const num = n => (n === null || n === undefined || !Number.isFinite(n)) ? "" : String(Math.round(n * 100) / 100).replace(".", ",");
+  const txt = t => `"${String(t ?? "").replace(/"/g, '""')}"`;
+  const lineas = [["Producto", "Categoria", "Tipo", "Costo", "Precio venta", "Sugerido", "Mesa (+10%)", `Delivery (+${recargoDeliveryPct()}%)`, "Margen %"].join(";")];
+  for (const [, p] of productos) {
+    const a = evaluarAlertaProducto(p);
+    const sug = precioSugeridoProducto(p);
+    const pv = Number(p.precioVenta) || 0;
+    lineas.push([txt(p.nombre), txt(categoriaProductoTexto(p)), txt(CLASIFICACION_LABEL[clasificarProducto(p)]), num(a.costo), num(pv || null), num(sug),
+      num(pv ? pv * 1.1 : null), num(precioDelivery(pv || sug)), num(a.margen)].join(";"));
+  }
+  const blob = new Blob(["﻿" + lineas.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const el = document.createElement("a");
+  el.href = url; el.download = `productos-${todayISO()}.csv`;
+  document.body.appendChild(el); el.click(); document.body.removeChild(el);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(`📥 Se descargaron ${productos.length} productos.`, "success");
 };
 
 // Contenido del editor de receta de un producto (ver/modificar/crear/eliminar insumos, cantidades
@@ -5951,6 +6344,298 @@ window.descargarPendientesFudo = function() {
   showToast(`📤 Se descargaron ${filas.length} precios editados.`, "success");
 };
 
+// ── Edición de precios en lote ───────────────────────────
+// Para cambiar muchos precios de una: se filtra el grupo (categoría, tipo, búsqueda), se tildan los
+// productos y se elige cómo: porcentaje, monto fijo, un precio igual para todos, o llevarlos al
+// sugerido. Antes de aplicar se ve la lista de "antes → después"; nada cambia hasta confirmar.
+// Los precios cambiados entran a "📤 Precios editados", igual que si se hubieran editado de a uno.
+const MODOS_LOTE = {
+  pct: { label: "% Porcentaje (sube o baja)", placeholder: "ej. 10 (o -5 para bajar)" },
+  monto: { label: "$ Monto fijo (sumar o restar)", placeholder: "ej. 500 (o -200)" },
+  precio: { label: "$ Precio nuevo (igual para todos)", placeholder: "ej. 3.500" },
+  sugerido: { label: "Llevar al precio sugerido", placeholder: "" },
+};
+function valorLote() {
+  const t = String(state.loteValor || "").trim().replace(/%$/, "");
+  if (!t) return null;
+  const neg = /^-/.test(t);
+  const n = parseMontoAr(t.replace(/^[-+]\s*/, ""));
+  return n === null ? null : (neg ? -n : n);
+}
+function nuevoPrecioLote(p) {
+  const actual = Number(p.precioVenta) || 0;
+  const modo = state.loteModo;
+  if (modo === "sugerido") { const s = precioSugeridoProducto(p); return s > 0 ? s : null; }
+  const v = valorLote();
+  if (v === null) return null;
+  if (modo === "precio") return v > 0 ? Math.round(v * 100) / 100 : null;
+  if (!(actual > 0)) return null;
+  const crudo = modo === "pct" ? actual * (1 + v / 100) : actual + v;
+  const r = Number(state.loteRedondeo) || 1;
+  const n = Math.round(crudo / r) * r;
+  return n > 0 ? n : null;
+}
+function filasLote() {
+  return [...state.loteSeleccion].filter(id => state.productos[id])
+    .map(id => { const p = state.productos[id]; return { id, p, actual: Number(p.precioVenta) || 0, nuevo: nuevoPrecioLote(p) }; })
+    .sort((a, b) => categoriaProductoTexto(a.p).localeCompare(categoriaProductoTexto(b.p), "es") || a.p.nombre.localeCompare(b.p.nombre, "es"));
+}
+function panelLoteHtml() {
+  return `
+    <div class="section-block lote-panel" id="lote-panel">
+      <div class="section-header">
+        <div>
+          <div class="section-title">✏️ Editar precios en lote</div>
+          <div class="text-muted" style="font-size:12px">1) Filtrá el grupo con la categoría, el tipo o el buscador · 2) Tildá los productos (o todos los que se ven) · 3) Elegí cómo cambiar el precio · 4) Revisá la lista y aplicá.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="toggleModoLote()">✕ Salir</button>
+      </div>
+      <div class="lote-sel">
+        <span id="lote-count"></span>
+        <button class="btn btn-turq btn-sm" onclick="loteTildarVisibles()">☑ Tildar los que se ven</button>
+        <button class="btn btn-ghost btn-sm" onclick="loteDestildar()">Ninguno</button>
+      </div>
+      <div class="filtros-bar">
+        <select class="form-select" id="lote-modo" onchange="setLoteModo(this.value)">
+          ${Object.entries(MODOS_LOTE).map(([k, m]) => `<option value="${k}" ${state.loteModo === k ? "selected" : ""}>${m.label}</option>`).join("")}
+        </select>
+        <input class="form-input" id="lote-valor" inputmode="decimal" style="flex:0 1 180px" value="${escapeHtml(state.loteValor)}" oninput="setLoteValor(this.value)" onkeydown="if(event.key==='Enter')aplicarLote()">
+        <select class="form-select" id="lote-redondeo" onchange="setLoteRedondeo(this.value)" title="Redondeo del precio resultante">
+          ${[[100, "Redondear a $100"], [50, "Redondear a $50"], [10, "Redondear a $10"], [1, "Sin redondear"]].map(([v, l]) => `<option value="${v}" ${Number(state.loteRedondeo) === v ? "selected" : ""}>${l}</option>`).join("")}
+        </select>
+      </div>
+      <div id="lote-preview"></div>
+      ${state._ultimoLote ? `<div style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="deshacerLote()">↩️ Deshacer el último cambio en lote (${Object.keys(state._ultimoLote).length})</button></div>` : ""}
+    </div>`;
+}
+function actualizarLoteUI() {
+  const cnt = document.getElementById("lote-count");
+  const prev = document.getElementById("lote-preview");
+  if (!cnt || !prev) return;
+  const filas = filasLote();
+  cnt.innerHTML = `<b>${filas.length}</b> producto${filas.length === 1 ? "" : "s"} tildado${filas.length === 1 ? "" : "s"}`;
+  const modo = state.loteModo;
+  const val = document.getElementById("lote-valor"), red = document.getElementById("lote-redondeo");
+  if (val) { val.style.display = modo === "sugerido" ? "none" : ""; val.placeholder = MODOS_LOTE[modo].placeholder; }
+  if (red) red.style.display = modo === "pct" || modo === "monto" ? "" : "none";
+  if (!filas.length) { prev.innerHTML = `<div class="text-muted" style="font-size:12px">Tildá productos en la tabla de abajo para ver cómo quedarían.</div>`; return; }
+  if (modo !== "sugerido" && valorLote() === null) { prev.innerHTML = `<div class="text-muted" style="font-size:12px">Escribí ${modo === "pct" ? "el porcentaje" : modo === "monto" ? "el monto" : "el precio nuevo"} para ver la vista previa.</div>`; return; }
+  const cambian = filas.filter(f => f.nuevo !== null && Math.abs(f.nuevo - f.actual) >= 0.005);
+  const sinCalculo = filas.filter(f => f.nuevo === null);
+  prev.innerHTML = `
+    <div class="data-table-wrap lote-preview-tabla"><table class="data-table">
+      <thead><tr><th>Producto</th><th>Ahora</th><th>Queda en</th><th>Diferencia</th><th>🛵 Delivery</th></tr></thead>
+      <tbody>${filas.map(f => {
+        const d = f.nuevo !== null ? f.nuevo - f.actual : null;
+        return `<tr>
+          <td>${escapeHtml(f.p.nombre)}<div class="text-muted" style="font-size:11px">${escapeHtml(categoriaProductoTexto(f.p))}</div></td>
+          <td>${f.actual ? fmtMoney(f.actual) : "—"}</td>
+          <td>${f.nuevo !== null ? `<b>${fmtMoney(f.nuevo)}</b>` : `<span class="text-muted">${modo === "sugerido" ? "sin sugerido" : "sin precio actual"}</span>`}</td>
+          <td>${d === null ? "—" : Math.abs(d) < 0.005 ? `<span class="text-muted">sin cambio</span>` : `<span class="badge ${d > 0 ? "badge-suba" : "badge-baja"}">${d > 0 ? "🔺" : "🔻"} ${fmtMoney(Math.abs(d))}${f.actual ? ` (${fmtPct(d / f.actual * 100)})` : ""}</span>`}</td>
+          <td>${f.nuevo !== null ? fmtMoney(precioDelivery(f.nuevo)) : "—"}</td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table></div>
+    ${sinCalculo.length ? `<div class="text-muted" style="font-size:12px;margin-top:6px">⚠️ ${sinCalculo.length} no se tocan: ${modo === "sugerido" ? "no tienen precio sugerido (falta el costo)" : "no tienen precio de venta cargado para aplicarles el cambio"}.</div>` : ""}
+    <div class="row-actions" style="margin-top:10px;justify-content:flex-start">
+      <button class="btn btn-primary" onclick="aplicarLote()" ${cambian.length ? "" : "disabled"}>✅ Aplicar a ${cambian.length} producto${cambian.length === 1 ? "" : "s"}</button>
+    </div>`;
+}
+window.toggleModoLote = function() {
+  state.modoLote = !state.modoLote;
+  if (!state.modoLote) state.loteSeleccion = new Set();
+  render();
+};
+window.toggleLoteProducto = function(id, on, el) {
+  if (on) state.loteSeleccion.add(id); else state.loteSeleccion.delete(id);
+  const tr = el && el.closest ? el.closest("tr") : null;
+  if (tr) tr.classList.toggle("fila-lote", !!on);
+  actualizarLoteUI();
+};
+window.loteTildarVisibles = function() {
+  (state._productosVisibles || []).forEach(id => state.loteSeleccion.add(id));
+  renderProductosTable();
+};
+window.loteDestildar = function() { state.loteSeleccion = new Set(); renderProductosTable(); };
+window.setLoteModo = function(v) { state.loteModo = MODOS_LOTE[v] ? v : "pct"; actualizarLoteUI(); };
+window.setLoteValor = function(v) { state.loteValor = v; actualizarLoteUI(); };
+window.setLoteRedondeo = function(v) { state.loteRedondeo = Number(v) || 1; actualizarLoteUI(); };
+
+// Escribe todos los precios juntos en una sola operación (todo o nada), con la misma lógica que la
+// edición de a uno: anota si quedó distinto del sugerido y lo suma a "Precios editados" para FUDO.
+async function escribirPreciosVenta(cambios) {
+  const upd = {};
+  const pendientes = { ...state.pendientesFudo };
+  const local = {};
+  for (const { id, precioVenta, precioRevisado } of cambios) {
+    const p = state.productos[id];
+    upd[`productos/${id}/precioVenta`] = precioVenta;
+    upd[`productos/${id}/precioRevisado`] = precioRevisado;
+    local[id] = { precioVenta, precioRevisado };
+    const existente = pendientes[id];
+    const anterior = existente ? existente.precioAnterior : (Number(p.precioVenta) || 0);
+    if (Math.abs((Number(precioVenta) || 0) - anterior) < 0.005) {
+      if (existente) { upd[`pendientesFudo/${id}`] = null; delete pendientes[id]; }
+    } else {
+      const entry = { nombre: p.nombre, categoria: p.categoria || "", precioAnterior: anterior, precioNuevo: Number(precioVenta) || 0, ts: Date.now() };
+      upd[`pendientesFudo/${id}`] = entry;
+      pendientes[id] = entry;
+    }
+  }
+  await update(ref(db, "costeo"), upd);
+  for (const [id, v] of Object.entries(local)) state.productos[id] = { ...state.productos[id], ...v };
+  state.pendientesFudo = pendientes;
+}
+window.aplicarLote = async function() {
+  const cambian = filasLote().filter(f => f.nuevo !== null && Math.abs(f.nuevo - f.actual) >= 0.005);
+  if (!cambian.length) { showToast("⚠️ No hay precios para cambiar con estos datos.", "warn"); return; }
+  const suben = cambian.filter(f => f.nuevo > f.actual).length;
+  if (!confirm(`¿Cambiar el precio de venta de ${cambian.length} producto(s)?\n${suben} suben · ${cambian.length - suben} bajan.\n\nQuedan en "📤 Precios editados" para pasarlos a FUDO, y podés deshacerlo.`)) return;
+  const previo = {};
+  const cambios = cambian.map(f => {
+    previo[f.id] = { precioVenta: f.p.precioVenta ?? null, precioRevisado: f.p.precioRevisado ?? null, pendiente: state.pendientesFudo[f.id] || null };
+    const sugerido = precioSugeridoProducto(f.p);
+    const distinto = sugerido !== null && Math.abs(sugerido - f.nuevo) >= AJUSTE_MINIMO_FUDO;
+    return { id: f.id, precioVenta: f.nuevo, precioRevisado: distinto ? { sugerido, fecha: todayISO() } : null };
+  });
+  try {
+    await escribirPreciosVenta(cambios);
+  } catch (e) {
+    console.error(e);
+    showToast("❌ No se pudieron guardar los precios. Revisá la conexión y probá de nuevo.", "error");
+    return;
+  }
+  state._ultimoLote = previo;
+  state.loteSeleccion = new Set();
+  showToast(`✅ ${cambios.length} precio(s) actualizados. Están en "📤 Precios editados".`, "success");
+  render();
+};
+window.deshacerLote = async function() {
+  const previo = state._ultimoLote;
+  if (!previo) return;
+  if (!confirm(`¿Volver ${Object.keys(previo).length} precio(s) a como estaban antes del último cambio en lote?`)) return;
+  const upd = {};
+  for (const [id, v] of Object.entries(previo)) {
+    if (!state.productos[id]) continue;
+    upd[`productos/${id}/precioVenta`] = v.precioVenta;
+    upd[`productos/${id}/precioRevisado`] = v.precioRevisado;
+    upd[`pendientesFudo/${id}`] = v.pendiente;
+  }
+  try { await update(ref(db, "costeo"), upd); }
+  catch (e) { console.error(e); showToast("❌ No se pudo deshacer. Probá de nuevo.", "error"); return; }
+  const pendientes = { ...state.pendientesFudo };
+  for (const [id, v] of Object.entries(previo)) {
+    if (!state.productos[id]) continue;
+    state.productos[id] = { ...state.productos[id], precioVenta: v.precioVenta, precioRevisado: v.precioRevisado };
+    if (v.pendiente) pendientes[id] = v.pendiente; else delete pendientes[id];
+  }
+  state.pendientesFudo = pendientes;
+  state._ultimoLote = null;
+  showToast("↩️ Listo, los precios volvieron a como estaban.", "success");
+  render();
+};
+
+// ── Lista de precios editados: legible e imprimible ─────
+function categoriaPendiente(f) {
+  return state.productos[f.id] ? categoriaProductoTexto(state.productos[f.id]) : (f.categoria || "Sin categoría");
+}
+function agruparPorCategoria(filas, cat) {
+  const grupos = new Map();
+  for (const f of filas) { const c = cat(f); if (!grupos.has(c)) grupos.set(c, []); grupos.get(c).push(f); }
+  return [...grupos.entries()].sort((a, b) => a[0].localeCompare(b[0], "es"))
+    .map(([c, fs]) => [c, fs.slice().sort((x, y) => String(x.nombre).localeCompare(String(y.nombre), "es"))]);
+}
+function fechaHoraCorta(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" }) + " " + d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+}
+function tablaPreciosEditadosHtml(filas) {
+  const suben = filas.filter(f => f.diferencia > 0).length;
+  return `
+    <div class="filtros-resumen"><span><b>${filas.length}</b> precio${filas.length === 1 ? "" : "s"} editado${filas.length === 1 ? "" : "s"} · 🔺 ${suben} suben · 🔻 ${filas.length - suben} bajan</span></div>
+    <div class="data-table-wrap"><table class="data-table tabla-movil tabla-editados">
+      <thead><tr><th>Producto</th><th>Antes</th><th>Ahora</th><th>Diferencia</th><th>🛵 Delivery</th><th>Editado</th><th></th></tr></thead>
+      <tbody>${agruparPorCategoria(filas, categoriaPendiente).map(([cat, fs]) => `
+        <tr class="fila-grupo"><td colspan="7">${escapeHtml(cat)} <span>(${fs.length})</span></td></tr>
+        ${fs.map(f => `<tr>
+          <td data-label="Producto">${escapeHtml(f.nombre)}</td>
+          <td data-label="Antes" class="precio-antes">${fmtMoney(f.precioAnterior)}</td>
+          <td data-label="Ahora" class="precio-ahora">${fmtMoney(f.precioNuevo)}</td>
+          <td data-label="Diferencia"><span class="badge ${f.diferencia > 0 ? "badge-suba" : "badge-baja"}">${f.diferencia > 0 ? "🔺" : "🔻"} ${fmtMoney(Math.abs(f.diferencia))}${f.precioAnterior ? ` (${fmtPct(f.diferencia / f.precioAnterior * 100)})` : ""}</span></td>
+          <td data-label="🛵 Delivery">${fmtMoney(precioDelivery(f.precioNuevo))}</td>
+          <td data-label="Editado" class="text-muted" style="font-size:12px">${fechaHoraCorta(f.ts)}</td>
+          <td class="celda-acciones"><button class="btn btn-ghost btn-sm btn-icon" onclick="quitarPendienteFudo('${f.id}')" title="Ya lo pasé a FUDO">✕</button></td>
+        </tr>`).join("")}`).join("")}</tbody>
+    </table></div>`;
+}
+// Imprime a través de un iframe oculto (no una ventana nueva, que los celulares suelen bloquear).
+function imprimirDocumento(titulo, cuerpo) {
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${escapeHtml(titulo)}</title>
+    <style>
+      *{box-sizing:border-box} body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111;margin:24px;font-size:13px}
+      h1{font-size:20px;margin:0 0 2px} .sub{color:#555;margin-bottom:16px;font-size:12px}
+      table{width:100%;border-collapse:collapse;margin-bottom:6px}
+      th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #111;padding:6px 8px}
+      td{padding:7px 8px;border-bottom:1px solid #ddd;vertical-align:top}
+      td.num,th.num{text-align:right;white-space:nowrap} td.nuevo{font-weight:700;font-size:15px}
+      td.antes{color:#777;text-decoration:line-through} .sube{color:#b42318} .baja{color:#067647}
+      tr.grupo td{background:#f2efe9;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #bbb;padding-top:10px}
+      tr{page-break-inside:avoid} .pie{margin-top:14px;color:#777;font-size:11px}
+      @page{margin:14mm}
+    </style></head><body>${cuerpo}</body></html>`;
+  const fr = document.createElement("iframe");
+  fr.setAttribute("aria-hidden", "true");
+  fr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+  document.body.appendChild(fr);
+  const doc = fr.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+  setTimeout(() => {
+    try { fr.contentWindow.focus(); fr.contentWindow.print(); }
+    catch (e) { console.error(e); showToast("⚠️ No se pudo abrir la impresión. Probá descargar el CSV.", "warn"); }
+    setTimeout(() => fr.remove(), 60000);
+  }, 250);
+}
+function tablaImprimible(filas, cat, cols) {
+  return `<table><thead><tr>${cols.map(c => `<th class="${c.num ? "num" : ""}">${c.t}</th>`).join("")}</tr></thead><tbody>
+    ${agruparPorCategoria(filas, cat).map(([c, fs]) => `<tr class="grupo"><td colspan="${cols.length}">${escapeHtml(c)} (${fs.length})</td></tr>` +
+      fs.map(f => `<tr>${cols.map(col => `<td class="${col.num ? "num" : ""} ${col.cls || ""}">${col.v(f)}</td>`).join("")}</tr>`).join("")).join("")}
+  </tbody></table>`;
+}
+const _difImpresa = (d, base) => `<span class="${d > 0 ? "sube" : "baja"}">${d > 0 ? "▲" : "▼"} ${fmtMoney(Math.abs(d))}${base ? ` (${fmtPct(d / base * 100)})` : ""}</span>`;
+window.imprimirPreciosEditados = function() {
+  const filas = pendientesFudoOrdenados();
+  if (!filas.length) { showToast("✅ No hay precios editados.", "success"); return; }
+  const ahora = new Date().toLocaleString("es-AR", { dateStyle: "long", timeStyle: "short" });
+  imprimirDocumento(`Precios editados ${todayISO()}`, `
+    <h1>Precios de venta editados</h1>
+    <div class="sub">Candela · ${escapeHtml(ahora)} · ${filas.length} producto${filas.length === 1 ? "" : "s"}</div>
+    ${tablaImprimible(filas, categoriaPendiente, [
+      { t: "Producto", v: f => escapeHtml(f.nombre) },
+      { t: "Antes", num: true, cls: "antes", v: f => fmtMoney(f.precioAnterior) },
+      { t: "Precio nuevo", num: true, cls: "nuevo", v: f => fmtMoney(f.precioNuevo) },
+      { t: "Diferencia", num: true, v: f => _difImpresa(f.diferencia, f.precioAnterior) },
+      { t: `Delivery (+${recargoDeliveryPct()}%)`, num: true, v: f => fmtMoney(precioDelivery(f.precioNuevo)) },
+    ])}
+    <div class="pie">Delivery: precio nuevo + ${recargoDeliveryPct()}%, redondeado a la centena.</div>`);
+};
+window.imprimirCambiosPrecio = function() {
+  const filas = productosConCambioDePrecio();
+  if (!filas.length) { showToast("✅ No hay precios pendientes.", "success"); return; }
+  const ahora = new Date().toLocaleString("es-AR", { dateStyle: "long", timeStyle: "short" });
+  imprimirDocumento(`Precios a actualizar ${todayISO()}`, `
+    <h1>Precios a actualizar</h1>
+    <div class="sub">Candela · ${escapeHtml(ahora)} · ${filas.length} producto${filas.length === 1 ? "" : "s"} · precio sugerido según el costo actual</div>
+    ${tablaImprimible(filas, f => state.productos[f.id] ? categoriaProductoTexto(state.productos[f.id]) : "Sin categoría", [
+      { t: "Producto", v: f => escapeHtml(f.nombre) },
+      { t: "Costo", num: true, v: f => fmtMoney(f.costo) },
+      { t: "Precio actual", num: true, cls: "antes", v: f => fmtMoney(f.precioActual) },
+      { t: "Sugerido", num: true, cls: "nuevo", v: f => fmtMoney(f.precioSugerido) },
+      { t: "Diferencia", num: true, v: f => _difImpresa(f.diferencia, f.precioActual) },
+      { t: `Delivery (+${recargoDeliveryPct()}%)`, num: true, v: f => fmtMoney(precioDelivery(f.precioSugerido)) },
+    ])}`);
+};
+
 window.setProductosFiltro = function(val) {
   state.productosFiltro = val;
   renderProductosTable();
@@ -6141,8 +6826,9 @@ function renderAnalisisView(container) {
   container.innerHTML = `
     <div class="page-title">Análisis de precios e inflación</div>
     <div class="page-sub">Comparación de la variación de precio de cada insumo, y del costo de cada producto vs. su precio de venta, contra la inflación acumulada del período.</div>
+    <nav class="indice-secciones">${[["an-alertas", "🚨 Subas"], ["an-bajas", "💡 Bajas"], ["an-insumos", "📈 Insumos"], ["an-productos", "🧾 Costo vs. venta"], ["an-modelo", "📐 Modelo"], ["an-ipc", "🏦 Inflación"]].map(([id, l]) => `<a href="#${id}" onclick="event.preventDefault();document.getElementById('${id}').scrollIntoView({behavior:'smooth',block:'start'})">${l}</a>`).join("")}</nav>
 
-    <div class="section-block">
+    <div class="section-block" id="an-alertas" style="scroll-margin-top:70px">
       <div class="section-header">
         <div class="section-title">🚨 Alertas de subas de precio</div>
       </div>
@@ -6154,7 +6840,7 @@ function renderAnalisisView(container) {
       ${alertasSubaTodas.length ? alertasSubaCards : `<div class="empty-state">Sin subas de precio recientes. 👍</div>`}
     </div>
 
-    <div class="section-block">
+    <div class="section-block" id="an-bajas" style="scroll-margin-top:70px">
       <div class="section-header">
         <div class="section-title">💡 Oportunidades de compra (bajas recientes)</div>
       </div>
@@ -6173,7 +6859,7 @@ function renderAnalisisView(container) {
         </div>`).join("") : `<div class="empty-state">Sin bajas de precio recientes.</div>`}
     </div>
 
-    <div class="section-block">
+    <div class="section-block" id="an-insumos" style="scroll-margin-top:70px">
       <div class="section-header">
         <div class="section-title">📈 Variación de insumos</div>
         <select class="form-select" style="max-width:200px" onchange="setAnalisisPeriodo(this.value)">
@@ -6197,7 +6883,7 @@ function renderAnalisisView(container) {
         </div>`}
     </div>
 
-    <div class="section-block">
+    <div class="section-block" id="an-productos" style="scroll-margin-top:70px">
       <div class="section-header">
         <div class="section-title">🧾 Costo vs. precio de venta</div>
       </div>
@@ -6218,11 +6904,11 @@ function renderAnalisisView(container) {
         </div>`}
     </div>
 
-    <div class="section-block">
+    <div class="section-block" id="an-modelo" style="scroll-margin-top:70px">
       <div class="section-header">
         <div class="section-title">📐 Modelo de costeo sugerido</div>
       </div>
-      <div class="page-sub" style="margin-bottom:16px">Costo variable ${COSTEO_MODELO.variable * 100}% · Costos fijos ${COSTEO_MODELO.fijo * 100}% · Renta esperada ${COSTEO_MODELO.renta * 100}% · Mermas ${COSTEO_MODELO.merma * 100}% del precio de venta. El precio sugerido se calcula despejando el costo real conocido de cada producto (por receta, o precio de compra para retail) como si fuera el ${COSTEO_MODELO.variable * 100}% del total.</div>
+      <div class="page-sub" style="margin-bottom:16px">Costo variable ${Math.round(COSTEO_MODELO.variable * 100)}% · Costos fijos ${Math.round(COSTEO_MODELO.fijo * 100)}% · Renta esperada ${Math.round(COSTEO_MODELO.renta * 100)}% · Mermas ${Math.round(COSTEO_MODELO.merma * 100)}% del precio de venta. El precio sugerido se calcula despejando el costo real conocido de cada producto (por receta, o precio de compra para retail) como si fuera el ${Math.round(COSTEO_MODELO.variable * 100)}% del total.</div>
       <div class="stat-row">
         <div class="stat-card"><div class="stat-label">Por debajo del modelo</div><div class="stat-value">${bajoModelo.length}</div></div>
         <div class="stat-card"><div class="stat-label">Productos evaluados</div><div class="stat-value">${filasModelo.length}</div></div>
@@ -6237,7 +6923,7 @@ function renderAnalisisView(container) {
         </div>`}
     </div>
 
-    <div class="section-block">
+    <div class="section-block" id="an-ipc" style="scroll-margin-top:70px">
       <div class="section-title" style="margin-bottom:14px">🏦 Inflación mensual (IPC)</div>
       <div class="text-muted" style="margin-bottom:12px">Cargá manualmente el % de inflación mensual (por ejemplo, del INDEC) para poder comparar contra la variación de precios.</div>
       <div class="data-table-wrap">
@@ -7280,6 +7966,17 @@ function renderConfigView(container) {
       </div>
     </div>
     <div class="section-block">
+      <div class="section-title" style="margin-bottom:10px">🛵 Precio para apps de delivery</div>
+      <div class="text-muted" style="margin-bottom:10px">En Productos, cada precio de venta muestra también el precio sugerido para las apps de delivery: el precio de venta más este recargo, redondeado a la centena. Cambialo si las apps cambian su comisión.</div>
+      <div class="form-row" style="align-items:flex-end">
+        <div class="form-group" style="max-width:160px">
+          <label class="form-label">Recargo delivery %</label>
+          <input type="number" step="1" min="0" class="form-input" id="cfg-recargo-delivery" value="${recargoDeliveryPct()}">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="guardarRecargoDelivery()">Guardar</button>
+      </div>
+    </div>
+    <div class="section-block">
       <div class="section-title" style="margin-bottom:10px">⚡ Rendimiento</div>
       <div class="text-muted">Las fotos de las facturas cargadas antes de esta versión se guardaban dentro de la propia factura, así que se descargaban todas juntas cada vez que abrías la app — con muchas facturas eso son decenas de MB y hace que todo vaya lento. Este botón las mueve a una rama aparte: se siguen viendo igual, pero solo se descarga la que pedís.</div>
       <div style="margin-top:10px">
@@ -7319,6 +8016,14 @@ window.conectarRecetarioDesdeConfig = function() {
 
 // Mueve las fotos de las facturas ya cargadas a la rama aparte. Hasta que se corra, esas facturas
 // siguen trayendo su foto embebida y el listado completo sigue pesando de más en cada carga.
+window.guardarRecargoDelivery = async function() {
+  const n = Number(document.getElementById("cfg-recargo-delivery").value);
+  if (!Number.isFinite(n) || n < 0) { showToast("⚠️ Poné un porcentaje válido (ej. 30).", "warn"); return; }
+  await set(ref(db, "costeo/config/recargoDelivery"), n);
+  state.config = { ...state.config, recargoDelivery: n };
+  showToast(`✅ Recargo de delivery: ${n}%.`, "success");
+};
+
 window.guardarCuitPropio = async function() {
   const valor = document.getElementById("cfg-cuit-propio").value.trim();
   await set(ref(db, "costeo/config/cuitPropio"), valor);
