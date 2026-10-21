@@ -269,6 +269,25 @@ tr.fila-lote>td{background:#fff7f5;}
 .sync-estado{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px;margin-top:6px;color:var(--black-soft);}
 .sync-auto{display:inline-flex;gap:6px;align-items:center;cursor:pointer;}
 .sync-auto input{accent-color:var(--turq);width:16px;height:16px;}
+.plato-card{border:1px solid rgba(34,32,31,.1);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--white);}
+.plato-sin-producto{border-color:var(--terra);background:#fff9f7;}
+.plato-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;}
+.plato-nombre{font-weight:600;font-size:14px;}
+.plato-costo{text-align:right;white-space:nowrap;font-size:15px;}
+.plato-productos{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.chip-producto{display:inline-flex;align-items:center;gap:6px;background:var(--turq-pale);border-radius:100px;padding:3px 4px 3px 10px;font-size:12px;}
+.chip-producto button{border:none;background:rgba(0,0,0,.06);border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:10px;line-height:1;}
+.vincular-plato{margin-top:10px;padding:12px;border:1.5px dashed var(--turq);border-radius:10px;background:var(--cream);}
+.cand-producto{display:flex;gap:8px;align-items:flex-start;padding:6px 0;cursor:pointer;font-size:13px;}
+.cand-producto input{margin-top:2px;width:16px;height:16px;accent-color:var(--turq);}
+.desglose .tabla-desglose td{vertical-align:top;}
+.tabla-desglose tr.linea-incompleta>td{background:#fff7f5;}
+.costo-linea{font-weight:600;white-space:nowrap;}
+.arreglo-linea{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;}
+.arreglo-linea .form-select{max-width:260px;padding:6px 8px;font-size:12px;}
+.desglose-totales{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:13px;color:var(--black-soft);}
+.desglose-final{font-size:14px;color:var(--black);}
+.btn-link-sm{border:none;background:none;color:var(--turq-dark);text-decoration:underline;cursor:pointer;font-size:12px;padding:0 2px;}
 /* ── Índice de secciones (Análisis) ── */
 .indice-secciones a{padding:6px 12px;border-radius:100px;border:1.5px solid var(--cream-dark);background:var(--white);color:var(--black-soft);font-size:12px;text-decoration:none;white-space:nowrap;}
 .indice-secciones a:hover{border-color:var(--terra);color:var(--terra);}
@@ -287,6 +306,11 @@ tr.fila-lote>td{background:#fff7f5;}
   .tabla-movil td:first-child,.tabla-movil td.celda-acciones,.tabla-movil td[colspan]{grid-column:1/-1;}
   .tabla-movil tbody tr:hover td,.tabla-movil tr.fila-lote>td{background:none;}
   .tabla-movil tr.fila-lote{background:#fff7f5;border-color:var(--terra);}
+  .tabla-movil tr.linea-incompleta>td{background:none;}
+  .tabla-movil tr.linea-incompleta{background:#fff7f5;}
+  .plato-head{flex-direction:column;gap:4px;}
+  .plato-costo{text-align:left;}
+  .chip-producto{font-size:11px;}
   .tabla-movil td[data-label]::before{content:attr(data-label);display:block;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray);font-weight:600;margin-bottom:3px;}
   .tabla-movil td:first-child{font-weight:600;font-size:14px;padding-bottom:8px;border-bottom:1px solid rgba(34,32,31,.06);margin-bottom:4px;}
   .tabla-movil td:first-child::before{display:none;}
@@ -340,7 +364,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-10-21 12:44";
+const APP_VERSION = "2026-10-21 14:08";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -433,6 +457,11 @@ const state = {
   verCostosElaboraciones: false,
   _cargados: new Set(),     // qué ramas ya llegaron al menos una vez (para la sincronización semanal)
   vinculosRecetario: {},    // { [ingredienteId]: insumoId } — vive en costeo/vinculosRecetario
+  pesosRecetario: {},       // { [ingredienteId]: { cantidad, unidad } } — cuánto pesa/mide 1 u (costeo/pesosUnidadRecetario)
+  platoAbierto: null,       // "área::recetaId" del plato con la receta desplegada (pestaña Recetario)
+  platoVinculando: null,    // "área::recetaId" del plato al que se le están eligiendo productos
+  platoBusqueda: "",
+  subrecetasAbiertas: new Set(),
   proveedoresBusqueda: "",
   insumosBusqueda: "",
   insumosProveedorFiltro: "",
@@ -872,6 +901,7 @@ function attachListeners() {
   onValue(ref(db, "costeo/config"), snap => { state.config = snap.val() || {}; marcarCargado("config"); });
   onValue(ref(db, "costeo/recetarioSync"), snap => { state.recetarioSync = snap.val() || {}; marcarCargado("recetarioSync"); if (!state.formOpen) solicitarRender(); });
   onValue(ref(db, "costeo/pendientesFudo"), snap => { state.pendientesFudo = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
+  onValue(ref(db, "costeo/pesosUnidadRecetario"), snap => { state.pesosRecetario = snap.val() || {}; invalidarCacheCosteo(); marcarCargado("pesos"); if (!state.formOpen) solicitarRender(); });
   onValue(ref(db, "costeo/vinculosRecetario"), snap => { state.vinculosRecetario = snap.val() || {}; invalidarCacheCosteo(); marcarCargado("vinculos"); if (!state.formOpen) solicitarRender(); });
 }
 
@@ -4744,6 +4774,27 @@ function convertirCantidadRecetario(cant, desde, hacia) {
   if (!a || !b || a[0] !== b[0]) return null;
   return cant * a[1] / b[1];
 }
+// Unidad contra peso/volumen (la receta dice "1 u" y el insumo se compra por kg, o al revés): se
+// resuelve con cuánto pesa o mide UNA unidad de ese ingrediente, cargado una vez por ingrediente.
+function necesitaPesoUnidad(desde, hacia) {
+  const a = UNID_REC[normUnidadCorta(desde)], b = UNID_REC[normUnidadCorta(hacia)];
+  return !!(a && b && a[0] !== b[0] && (a[0] === "u" || b[0] === "u"));
+}
+function familiaPesoUnidad(desde, hacia) {
+  const a = UNID_REC[normUnidadCorta(desde)], b = UNID_REC[normUnidadCorta(hacia)];
+  if (!a || !b) return null;
+  const f = a[0] === "u" ? b[0] : a[0];
+  return f === "masa" ? "g" : f === "vol" ? "ml" : null;
+}
+function convertirConPesoUnidad(cant, desde, hacia, peso) {
+  if (cant == null || !peso || !(Number(peso.cantidad) > 0)) return null;
+  const a = UNID_REC[normUnidadCorta(desde)], b = UNID_REC[normUnidadCorta(hacia)], pu = UNID_REC[normUnidadCorta(peso.unidad)];
+  if (!a || !b || !pu) return null;
+  const pesoBase = Number(peso.cantidad) * pu[1];               // en g o ml
+  if (a[0] === "u" && b[0] === pu[0]) return cant * a[1] * pesoBase / b[1];   // u → g/ml → unidad del insumo
+  if (b[0] === "u" && a[0] === pu[0]) return (cant * a[1]) / pesoBase / b[1]; // g/ml → u
+  return null;
+}
 // Misma fórmula que recetario/index.html (cantidadBruta): lo que hay que tomar para que, después
 // de la merma, quede la neta. Una línea sin cantidad ("c/n", sal a gusto) se costea como 0.
 function brutaRecetario(neta, merma) {
@@ -4786,9 +4837,14 @@ function costoLineaRecetario(linea, area, seen, esEmpaque) {
   if (!ins.unidad) {
     return { costo: 0, incompleto: true, motivo: `"${ins.nombre}": unidad del insumo sin configurar` };
   }
-  const convertida = convertirCantidadRecetario(bruta, linea.unidad, ins.unidad);
+  let convertida = convertirCantidadRecetario(bruta, linea.unidad, ins.unidad);
+  // "1 palta" en la receta contra palta comprada por kg: se convierte con cuánto pesa una unidad.
+  if (convertida == null) convertida = convertirConPesoUnidad(bruta, linea.unidad, ins.unidad, state.pesosRecetario[linea.ingredienteId]);
   if (convertida == null) {
-    return { costo: 0, incompleto: true, motivo: `"${linea.nombre}": unidad "${linea.unidad}" incompatible con la del insumo "${ins.unidad}"` };
+    const sinPeso = necesitaPesoUnidad(linea.unidad, ins.unidad);
+    return { costo: 0, incompleto: true, sinPeso, motivo: sinPeso
+      ? `"${linea.nombre}": la receta está en "${linea.unidad}" y el insumo se compra por "${ins.unidad}" — falta cargar cuánto pesa 1 unidad`
+      : `"${linea.nombre}": unidad "${linea.unidad}" incompatible con la del insumo "${ins.unidad}"` };
   }
   return { costo: convertida * precioEfectivoInsumo(insumoId), incompleto: false, motivo: null };
 }
@@ -5851,11 +5907,20 @@ function recetaPanelContenido(id, p) {
     <button class="btn btn-primary btn-sm" onclick="guardarRecetaPanel('${id}')">💾 Guardar receta</button>
     <button class="btn btn-danger btn-sm" onclick="vaciarRecetaPanel('${id}')">🗑️ Vaciar receta</button>`;
 }
+// Producto que toma la receta del Recetario: se ve la receta línea por línea con su costo. Se
+// edita en el Recetario; la receta propia de Costos (si tenía) queda guardada como respaldo.
+function recetaRecetarioProductoHtml(id, p) {
+  return `${desgloseHtml(p.recetario.area, p.recetario.recetaId, { productoId: id })}
+    <div class="row-actions" style="justify-content:flex-start;margin:8px 0">
+      <span class="text-muted" style="font-size:12px">La receta se edita en el Recetario${Object.keys(p.receta || {}).length ? "; la receta propia de Costos queda guardada de respaldo" : ""}.</span>
+      <button class="btn btn-ghost btn-sm" onclick="desvincularProductoPlato('${id}')">Desvincular del Recetario</button>
+    </div>`;
+}
 function recetaPanelHtml(id, p) {
   return `
     <tr class="fila-detalle"><td colspan="6" style="background:var(--cream);padding:16px 18px">
-      <div class="text-muted" style="margin-bottom:8px;font-weight:600">🧾 Receta de "${escapeHtml(p.nombre)}"</div>
-      ${recetaPanelContenido(id, p)}
+      <div class="text-muted" style="margin-bottom:8px;font-weight:600">🧾 Receta de "${escapeHtml(p.nombre)}"${p.recetario?.recetaId ? ` — 📖 del Recetario: ${escapeHtml(state.recRecetas[p.recetario.area]?.[p.recetario.recetaId]?.nombre || p.costoRecetario?.nombre || "")}` : ""}</div>
+      ${p.recetario?.recetaId ? recetaRecetarioProductoHtml(id, p) : recetaPanelContenido(id, p)}
       <button class="btn btn-ghost btn-sm" onclick="toggleRecetaProducto('${id}')">Cerrar</button>
       <div class="panel-footer-actions">
         <button class="btn btn-ghost btn-sm" onclick="moverProductoAInsumo('${id}')" title="Convertir en insumo (ej. si en realidad es una materia prima, no un producto)">➡️ Mover a Insumos</button>
@@ -6001,9 +6066,9 @@ function renderRecetasBasesView(container) {
     <div class="section-block ${esta ? "" : "card-colapsada"}">
       <div class="section-header" style="cursor:pointer" onclick="toggleRecetaBase('p:${id}')">
         <div class="section-title" style="margin-bottom:0">🧾 ${escapeHtml(p.nombre)} <span class="text-muted" style="font-size:11px;font-weight:400">${CLASIFICACION_LABEL[clasificarProducto(p)]}</span></div>
-        <div class="text-muted" style="font-size:12px;white-space:nowrap">${resumenReceta(p.receta)} · ${fmtMoney(calcCostoProducto(p))} ${esta ? "▴" : "▾"}</div>
+        <div class="text-muted" style="font-size:12px;white-space:nowrap">${p.recetario?.recetaId ? `📖 ${(() => { const r = state.recRecetas[p.recetario.area]?.[p.recetario.recetaId]; const n = r ? r.ingredientes.length : p.costoRecetario?.nIngredientes; return n ? `${n} ingrediente${n === 1 ? "" : "s"}` : "Recetario"; })()}` : resumenReceta(p.receta)} · ${fmtMoney(calcCostoProducto(p))} ${esta ? "▴" : "▾"}</div>
       </div>
-      ${esta ? recetaPanelContenido(id, p) : ""}
+      ${esta ? (p.recetario?.recetaId ? recetaRecetarioProductoHtml(id, p) : recetaPanelContenido(id, p)) : ""}
     </div>`;
   }).join("");
 
@@ -6023,10 +6088,21 @@ function renderRecetasBasesView(container) {
   const ingredientesRecetarioOrdenados = objToSortedEntries(state.recIngredientes, (a, b) => a[1].nombre.localeCompare(b[1].nombre))
     .filter(([, ing]) => !busquedaRB || ing.nombre.toLowerCase().includes(busquedaRB));
   const ingredientesSinVincular = ingredientesRecetarioOrdenados.filter(([id]) => !state.vinculosRecetario[id]).length;
-  const platosRecetario = AREAS_RECETARIO.flatMap(area => Object.values(state.recRecetas[area] || {}).map(r => ({ ...r, area })))
+  // Conectado: los platos del Recetario en vivo. Sin conexión: los de la última sincronización.
+  const fuentePlatos = area => state.recetarioConectado ? Object.values(state.recRecetas[area] || {})
+    : Object.entries(state.recetarioSync?.costos?.[area] || {}).map(([id, c]) => ({ ...c, id }));
+  const atencionPlato = r => {
+    const reales = productosDePlato(r.area, r.id).filter(([, p]) => !(p.creadoDesde === "recetario" && !(Number(p.precioVenta) > 0)));
+    if (!reales.length) return 0;
+    const c = state.recetarioConectado ? costoTotalRecetaRecetario(r.area, r.id) : state.recetarioSync?.costos?.[r.area]?.[r.id];
+    return c && c.incompleto ? 1 : 2;
+  };
+  const platosRecetario = AREAS_RECETARIO.flatMap(area => fuentePlatos(area).map(r => ({ ...r, area })))
     .filter(r => r.tipo === "plato")
-    .filter(r => !busquedaRB || r.nombre.toLowerCase().includes(busquedaRB))
-    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+    .filter(r => !busquedaRB || claveBusqueda(r.nombre).includes(claveBusqueda(busquedaRB)))
+    .map(r => ({ ...r, _at: atencionPlato(r) }))
+    .sort((a, b) => a._at - b._at || String(a.nombre).localeCompare(String(b.nombre), "es"));
+  const platosSinProducto = platosRecetario.filter(r => r._at === 0).length;
   const productoVinculadoDe = (area, recetaId) => Object.entries(state.productos).find(([, p]) => p.recetario && p.recetario.area === area && p.recetario.recetaId === recetaId);
 
   const filaIngredienteRecetario = ([id, ing]) => {
@@ -6065,18 +6141,18 @@ function renderRecetasBasesView(container) {
   const tabRecetarioHtml = `
     ${panelSyncRecetarioHtml()}
     <div class="section-block">
+      <div class="section-title" style="margin-bottom:6px">🍽️ Platos del Recetario: ingredientes, cantidades y costo ${platosSinProducto ? `<span class="badge badge-alerta">${platosSinProducto} sin producto de la carta</span>` : ""}</div>
+      <div class="text-muted" style="margin-bottom:10px">Cada plato muestra su costo de elaboración (por porción) y qué productos de la carta lo usan. "▾ Ingredientes y costos" abre la receta línea por línea; lo que falte para costear se arregla ahí mismo. "🔗 Elegir productos" propone los productos de nombre parecido para tildar — un plato puede costear varios (por ejemplo, cada variante de pan).</div>
+      ${platosRecetario.length ? platosRecetario.map(platoRecetarioHtml).join("")
+        : `<div class="empty-state">${busquedaRB ? "Ningún plato coincide con la búsqueda." : state.recetarioConectado ? "El Recetario todavía no tiene platos cargados." : "Conectate con el Recetario para ver sus platos."}</div>`}
+    </div>
+    <div class="section-block">
       <div class="section-title" style="margin-bottom:6px">🧂 Ingredientes y envases del Recetario ${ingredientesSinVincular ? `(${ingredientesSinVincular} sin vincular)` : ""}</div>
       <div class="text-muted" style="margin-bottom:10px">Cada ingrediente del Recetario necesita un insumo de Costeo del que sacar el precio. Las sugerencias se proponen pero nunca se guardan solas: hay que confirmarlas.</div>
       ${ingredientesRecetarioOrdenados.length
         ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Ingrediente</th><th>Insumo vinculado</th></tr></thead><tbody>${ingredientesRecetarioOrdenados.map(filaIngredienteRecetario).join("")}</tbody></table></div>`
         : `<div class="empty-state">${state.recetarioConectado ? "El Recetario todavía no tiene ingredientes cargados." : "Conectate con el Recetario para ver sus ingredientes."}</div>`}
     </div>
-    <div class="section-block">
-      <div class="section-title" style="margin-bottom:6px">🍽️ Platos del Recetario</div>
-      <div class="text-muted" style="margin-bottom:10px">Un plato se vincula a un producto de Costeo para que calcule su costo a partir de la ficha técnica. "Crear producto" arma el producto (sin precio de venta) ya vinculado.</div>
-      ${platosRecetario.length
-        ? `<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Plato</th><th>Producto vinculado</th></tr></thead><tbody>${platosRecetario.map(filaPlatoRecetario).join("")}</tbody></table></div>`
-        : `<div class="empty-state">${state.recetarioConectado ? "El Recetario todavía no tiene platos cargados." : "Conectate con el Recetario para ver sus platos."}</div>`}
     </div>`;
 
   container.innerHTML = `
@@ -6091,7 +6167,7 @@ function renderRecetasBasesView(container) {
       <button class="btn ${tab === "bases" ? "btn-turq" : "btn-ghost"}" onclick="setRecetasBasesTab('bases')">🧪 Bases (${basesInsumos.length})</button>
       <button class="btn ${tab === "recetario" ? "btn-turq" : "btn-ghost"}" onclick="setRecetasBasesTab('recetario')">📖 Recetario${ingredientesSinVincular ? ` (${ingredientesSinVincular} sin vincular)` : ""}</button>
     </div>
-    ${tab !== "recetario" ? buscadorHtml(state.recetasBasesBusqueda, "Buscar por nombre...", "setRecetasBasesBusqueda") : ""}
+    ${buscadorHtml(state.recetasBasesBusqueda, tab === "recetario" ? "Buscar plato o ingrediente..." : "Buscar por nombre...", "setRecetasBasesBusqueda")}
     ${tab === "recetas" ? `
       <div class="text-muted" style="margin-bottom:14px">Productos de panadería/pastelería/especialidades/facturería/sandwiches y preparaciones (cafetería, rellenos, etc.) con receta. Para cargar uno nuevo, andá a <a href="#" onclick="navigate('productos');abrirFormProducto();return false;">Productos → Nuevo producto</a>.</div>
       ${productosElaborados.length ? `<div class="receta-card-grid">${recetasCards}</div>` : `<div class="empty-state">${busquedaRB ? "Ninguna receta coincide con la búsqueda." : "Todavía no hay productos elaborados/preparaciones cargados."}</div>`}
@@ -6201,6 +6277,7 @@ window.guardarVinculoRecetarioIngrediente = async function(ingredienteId, insumo
   }
   invalidarCacheCosteo();
   showToast("✅ Vínculo guardado.", "success");
+  programarActualizarCostosRecetario();
   render();
 };
 
@@ -6245,7 +6322,7 @@ window.crearProductoDesdeRecetario = async function(area, recetaId) {
 // Corre sola al abrir Costeo si pasaron 7 días, desde un navegador conectado al Recetario. Es
 // idempotente: los productos nuevos tienen un id fijo por plato, así dos corridas no duplican nada.
 const RECETARIO_SYNC_DIAS = 7;
-const RAMAS_SYNC = () => ["insumos", "productos", "vinculos", "config", "recetarioSync", "recIngredientes", ...AREAS_RECETARIO.map(a => "rec:" + a)];
+const RAMAS_SYNC = () => ["insumos", "productos", "vinculos", "pesos", "config", "recetarioSync", "recIngredientes", ...AREAS_RECETARIO.map(a => "rec:" + a)];
 let _syncTimer = null, _syncAutoRevisada = false;
 
 function marcarCargado(rama) {
@@ -6287,7 +6364,7 @@ function costoUnitarioBaseRecetario(ins) {
 }
 
 function planSincronizacionRecetario() {
-  const plan = { vinculosIng: {}, pendientesIng: [], productosVincular: [], productosNuevos: [], basesVincular: [], ambiguos: [] };
+  const plan = { vinculosIng: {}, pendientesIng: [], productosVincular: [], productosNuevos: [], basesVincular: [], ambiguos: [], platosRevisar: [] };
   // 1. Ingredientes y envases
   const insumoPorNombre = new Map();
   for (const [id, ins] of Object.entries(state.insumos)) {
@@ -6328,11 +6405,21 @@ function planSincronizacionRecetario() {
       const k = claveNombreSync(r.nombre);
       if (!k) continue;
       if (r.tipo === "plato") {
-        if (prodVinculado.has(`${area}::${r.id}`) || ignorados[r.id]) continue;
+        if (ignorados[r.id]) continue;
+        const parecidos = () => candidatosProductoParaPlato({ ...r, area }).filter(c => !c.vinculadoA).slice(0, 5).map(c => ({ id: c.id, nombre: c.nombre }));
+        if (prodVinculado.has(`${area}::${r.id}`)) {
+          // Vinculado solo al producto provisorio sin precio: si hay productos reales parecidos, a revisar.
+          const soloProvisorio = productosDePlato(area, r.id).every(([, p]) => p.creadoDesde === "recetario" && !(Number(p.precioVenta) > 0));
+          if (soloProvisorio) { const pc = parecidos(); if (pc.length) plan.platosRevisar.push({ area, recetaId: r.id, nombre: r.nombre, candidatos: pc }); }
+          continue;
+        }
         const cands = prodPorNombre.get(k) || [];
         if (cands.length === 1) { plan.productosVincular.push({ id: cands[0], area, recetaId: r.id, nombre: r.nombre }); prodPorNombre.delete(k); }
         else if (cands.length > 1) plan.ambiguos.push({ tipo: "plato", nombre: r.nombre, cantidad: cands.length });
         else {
+          // Nombre distinto pero productos parecidos en la carta: no se crea nada, se pide elegir.
+          const pc = parecidos();
+          if (pc.length) { plan.platosRevisar.push({ area, recetaId: r.id, nombre: r.nombre, candidatos: pc }); continue; }
           const id = `rec_${area}_${r.id}`.replace(/[.#$\[\]\/]/g, "_");
           if (!state.productos[id]) plan.productosNuevos.push({ id, area, recetaId: r.id, nombre: r.nombre, categoria: r.grupo || "" });
         }
@@ -6349,16 +6436,18 @@ function planSincronizacionRecetario() {
 
 const _redondo = n => (n === null || n === undefined || !Number.isFinite(n)) ? null : Math.round(n * 100) / 100;
 
-window.sincronizarRecetario = async function({ automatica = false } = {}) {
+window.sincronizarRecetario = async function({ automatica = false, soloCostos = false } = {}) {
   if (state.recetarioSyncEnCurso) return;
-  if (!state.recetarioConectado) { showToast("⚠️ Conectate con el Recetario (Configuración) para sincronizar.", "warn"); return; }
-  const plan = planSincronizacionRecetario();
-  if (!automatica) {
+  if (!state.recetarioConectado) { if (!soloCostos) showToast("⚠️ Conectate con el Recetario (Configuración) para sincronizar.", "warn"); return; }
+  // soloCostos: recalcula y guarda los costos sin vincular ni crear nada (después de un arreglo a mano).
+  const plan = soloCostos ? { vinculosIng: {}, pendientesIng: [], productosVincular: [], productosNuevos: [], basesVincular: [], ambiguos: [], platosRevisar: [] } : planSincronizacionRecetario();
+  if (!automatica && !soloCostos) {
     const partes = [];
     if (Object.keys(plan.vinculosIng).length) partes.push(`• ${Object.keys(plan.vinculosIng).length} ingrediente(s) se vinculan con su insumo (mismo nombre)`);
     if (plan.productosVincular.length) partes.push(`• ${plan.productosVincular.length} plato(s) se vinculan con su producto`);
     if (plan.productosNuevos.length) partes.push(`• ${plan.productosNuevos.length} plato(s) nuevos se crean como producto (sin precio de venta)`);
     if (plan.basesVincular.length) partes.push(`• ${plan.basesVincular.length} subreceta(s) se vinculan con su base`);
+    if (plan.platosRevisar.length) partes.push(`• ${plan.platosRevisar.length} plato(s) tienen productos parecidos en la carta: quedan para que elijas cuáles (no se crea nada)`);
     partes.push("• Se recalcula y guarda el costo de todas las recetas con los precios actuales");
     if (!confirm(`Sincronizar con el Recetario:\n\n${partes.join("\n")}\n\n¿Seguimos?`)) return;
   }
@@ -6399,7 +6488,9 @@ window.sincronizarRecetario = async function({ automatica = false } = {}) {
         const porPorcion = c.costoPorPorcion, porUnidad = r.rendimiento ? c.costoTotal / Number(r.rendimiento) : null;
         const ref_ = porPorcion ?? c.costoTotal;
         const ant = anteriores[area]?.[r.id];
-        const antRef = ant ? (ant.costoPorPorcion ?? ant.costoTotal) : null;
+        // La variación es contra la sincronización semanal anterior: un recálculo "solo costos" a
+        // mitad de semana conserva esa misma referencia.
+        const antRef = soloCostos ? (ant ? ant.anterior ?? null : null) : ant ? (ant.costoPorPorcion ?? ant.costoTotal) : null;
         if (antRef > 0 && ref_ > antRef + 0.005) subieron++;
         if (antRef > 0 && ref_ < antRef - 0.005) bajaron++;
         if (c.incompleto) incompletas++;
@@ -6411,6 +6502,7 @@ window.sincronizarRecetario = async function({ automatica = false } = {}) {
           margenSeguridad: Number(r.margenSeguridad) || 0,
           incompleto: !!c.incompleto, motivos: c.motivos.slice(0, 6),
           anterior: antRef !== null && antRef !== undefined ? _redondo(antRef) : null,
+          ...lineasParaGuardar(desgloseRecetaRecetario(area, r.id)),
         };
       }
     }
@@ -6433,18 +6525,20 @@ window.sincronizarRecetario = async function({ automatica = false } = {}) {
       state.insumos[iid] = { ...state.insumos[iid], costoRecetario: snap };
     }
     for (const [id, obj] of Object.entries(nuevos)) upd[`productos/${id}`] = obj;
-    const ultima = {
+    const ultima = soloCostos ? null : {
       ts: ahora, automatica, recetas: nRecetas, incompletas, subieron, bajaron,
       ingredientesVinculados: Object.keys(plan.vinculosIng).length,
       productosCreados: plan.productosNuevos.length, productosVinculados: plan.productosVincular.length, basesVinculadas: plan.basesVincular.length,
       pendientesIng: plan.pendientesIng.slice(0, 80).map(x => ({ id: x.id, nombre: x.nombre || "" })),
       nPendientesIng: plan.pendientesIng.length,
       ambiguos: plan.ambiguos.slice(0, 40),
+      platosRevisar: plan.platosRevisar.slice(0, 60), nPlatosRevisar: plan.platosRevisar.length,
     };
-    upd["recetarioSync/ultima"] = ultima;
+    if (ultima) upd["recetarioSync/ultima"] = ultima;
+    else { upd["recetarioSync/ultima/incompletas"] = incompletas; upd["recetarioSync/ultima/recetas"] = nRecetas; upd["recetarioSync/ultima/costosTs"] = ahora; }
     upd["recetarioSync/costos"] = costos;
     await update(ref(db, "costeo"), upd);
-    state.recetarioSync = { ...state.recetarioSync, ultima, costos };
+    state.recetarioSync = { ...state.recetarioSync, ultima: ultima || { ...(state.recetarioSync?.ultima || {}), incompletas, recetas: nRecetas, costosTs: ahora }, costos };
     invalidarCacheCosteo();
     // Historial de costos y alertas de suba, igual que cuando cambia una factura.
     await suspenderRender(async () => {
@@ -6454,8 +6548,9 @@ window.sincronizarRecetario = async function({ automatica = false } = {}) {
         }
       }
     });
+    if (soloCostos) return;
     const cambios = [ultima.productosCreados && `${ultima.productosCreados} producto(s) nuevos`, ultima.productosVinculados && `${ultima.productosVinculados} vinculado(s)`, ultima.ingredientesVinculados && `${ultima.ingredientesVinculados} ingrediente(s) vinculados`].filter(Boolean);
-    showToast(`📖 ${automatica ? "Sincronización semanal con el Recetario" : "Sincronizado con el Recetario"}: ${nRecetas} receta(s) costeadas${cambios.length ? " · " + cambios.join(" · ") : ""}${ultima.nPendientesIng ? ` · ${ultima.nPendientesIng} ingrediente(s) para revisar` : ""}.`, ultima.nPendientesIng || incompletas ? "warn" : "success");
+    showToast(`📖 ${automatica ? "Sincronización semanal con el Recetario" : "Sincronizado con el Recetario"}: ${nRecetas} receta(s) costeadas${cambios.length ? " · " + cambios.join(" · ") : ""}${ultima.nPlatosRevisar ? ` · ${ultima.nPlatosRevisar} plato(s) para elegir su producto` : ""}${ultima.nPendientesIng ? ` · ${ultima.nPendientesIng} ingrediente(s) para revisar` : ""}.`, ultima.nPendientesIng || ultima.nPlatosRevisar || incompletas ? "warn" : "success");
   } catch (err) {
     console.error(err);
     state.vinculosRecetario = respaldo.vinculos; state.productos = respaldo.productos; state.insumos = respaldo.insumos;
@@ -6466,6 +6561,282 @@ window.sincronizarRecetario = async function({ automatica = false } = {}) {
     solicitarRender();
   }
 };
+// ── Plato del Recetario ↔ productos de Costos ────────────
+// Los nombres casi nunca coinciden: el plato es "Tostada con palta" y en la carta hay cuatro
+// productos "Café + tostada PAN BLANCO con palta, huevos…". Se buscan los productos que contienen
+// las palabras del plato (sin tildes, sin "con/de/y", singular/plural) y se proponen para tildar.
+// Un plato puede costear VARIOS productos (las variantes de pan llevan la misma receta).
+const PALABRAS_VACIAS_PLATO = new Set(["con", "de", "del", "y", "e", "el", "la", "los", "las", "al", "a", "en", "x", "c", "sin", "para", "por", "un", "una", "combo", "porcion", "porciones", "u", "unidad", "unidades", "o"]);
+function raizPalabraPlato(w) {
+  if (w.length > 4 && /[^aeiou]es$/.test(w)) return w.slice(0, -2);
+  if (w.length > 3 && w.endsWith("s")) return w.slice(0, -1);
+  return w;
+}
+function tokensPlato(s) {
+  return [...new Set(claveNombreSync(s).split(" ").filter(w => w && !PALABRAS_VACIAS_PLATO.has(w) && !/^\d+$/.test(w)).map(raizPalabraPlato))];
+}
+function candidatosProductoParaPlato(plato, max = 8) {
+  const tp = tokensPlato(plato.nombre);
+  if (!tp.length) return [];
+  const out = [];
+  for (const [id, p] of Object.entries(state.productos)) {
+    if (p.recetario && p.recetario.area === plato.area && p.recetario.recetaId === plato.id) continue;
+    if (p.creadoDesde === "recetario" && !(Number(p.precioVenta) > 0)) continue;
+    const tq = tokensPlato(p.nombre);
+    if (!tq.length) continue;
+    const Q = new Set(tq);
+    const comunes = tp.filter(t => Q.has(t)).length;
+    if (!comunes) continue;
+    const cobertura = comunes / tp.length;
+    const score = cobertura * 0.8 + (2 * comunes / (tp.length + tq.length)) * 0.2;
+    if (score < 0.45) continue;
+    out.push({ id, nombre: p.nombre, precioVenta: Number(p.precioVenta) || 0, cobertura, score, vinculadoA: p.recetario?.recetaId ? p.recetario : null,
+      exacto: claveNombreSync(p.nombre) === claveNombreSync(plato.nombre) });
+  }
+  return out.sort((a, b) => b.score - a.score || a.nombre.localeCompare(b.nombre, "es")).slice(0, max);
+}
+// Se tilda solo lo que no tiene duda: el mismo nombre, o todas las palabras de un plato de 2+ palabras.
+function candidatoPreTildado(plato, c) {
+  if (c.vinculadoA) return false;
+  return c.exacto || (c.cobertura === 1 && tokensPlato(plato.nombre).length >= 2);
+}
+function productosDePlato(area, recetaId) {
+  return Object.entries(state.productos).filter(([, p]) => p.recetario && p.recetario.area === area && p.recetario.recetaId === recetaId);
+}
+
+window.abrirVincularPlato = function(clave) {
+  state.platoVinculando = state.platoVinculando === clave ? null : clave;
+  state.platoBusqueda = "";
+  render();
+};
+window.setPlatoBusqueda = function(v) { state.platoBusqueda = v; render(); };
+window.togglePlatoAbierto = function(clave) { state.platoAbierto = state.platoAbierto === clave ? null : clave; render(); };
+window.toggleSubrecetaDesglose = function(k) {
+  state.subrecetasAbiertas.has(k) ? state.subrecetasAbiertas.delete(k) : state.subrecetasAbiertas.add(k);
+  render();
+};
+
+// Vincula los productos tildados al plato. Los productos que la sincronización había creado solos
+// para este plato (sin precio de venta) se borran: eran un reemplazo provisorio del producto real.
+window.vincularPlatoProductos = async function(area, recetaId) {
+  const ids = [...document.querySelectorAll(`input[data-plato-cand="${recetaId}"]:checked`)].map(el => el.value).filter(id => state.productos[id]);
+  if (!ids.length) { showToast("⚠️ Tildá al menos un producto.", "warn"); return; }
+  const plato = state.recRecetas[area]?.[recetaId];
+  const upd = {};
+  for (const id of ids) { upd[`productos/${id}/recetario`] = { area, recetaId }; upd[`productos/${id}/costoRecetario`] = null; }
+  const provisorios = productosDePlato(area, recetaId).filter(([id, p]) => p.creadoDesde === "recetario" && !(Number(p.precioVenta) > 0) && !ids.includes(id)).map(([id]) => id);
+  for (const id of provisorios) upd[`productos/${id}`] = null;
+  await update(ref(db, "costeo"), upd);
+  const productos = { ...state.productos };
+  for (const id of ids) productos[id] = { ...productos[id], recetario: { area, recetaId }, costoRecetario: null };
+  for (const id of provisorios) delete productos[id];
+  state.productos = productos;
+  invalidarCacheCosteo();
+  state.platoVinculando = null;
+  state.platoAbierto = `${area}::${recetaId}`;
+  const c = plato ? costoTotalRecetaRecetario(area, recetaId) : null;
+  showToast(`✅ ${ids.length} producto(s) toman ahora la receta "${plato?.nombre || ""}"${c ? `: ${fmtMoney(c.costoPorPorcion ?? c.costoTotal)} ${c.costoPorPorcion !== null ? "por porción" : ""}` : ""}${provisorios.length ? ` · se borró el producto provisorio sin precio` : ""}.`, "success");
+  programarActualizarCostosRecetario();
+  render();
+};
+window.desvincularProductoPlato = async function(pid) {
+  const p = state.productos[pid];
+  if (!p || !p.recetario) return;
+  if (!confirm(`¿Desvincular "${p.nombre}" del Recetario? Vuelve a costearse con su receta propia o su costo manual.`)) return;
+  await update(ref(db, `costeo/productos/${pid}`), { recetario: null, costoRecetario: null });
+  state.productos = { ...state.productos, [pid]: { ...p, recetario: null, costoRecetario: null } };
+  invalidarCacheCosteo();
+  showToast("Producto desvinculado del Recetario.", "success");
+  render();
+};
+window.guardarPesoUnidad = async function(ingredienteId, inputId, unidad) {
+  const el = document.getElementById(inputId);
+  const n = parseMontoAr(el ? el.value : "");
+  if (!(n > 0)) { showToast("⚠️ Escribí cuánto pesa (o mide) una unidad.", "warn"); return; }
+  const valor = { cantidad: n, unidad };
+  await set(ref(db, `costeo/pesosUnidadRecetario/${ingredienteId}`), valor);
+  state.pesosRecetario = { ...state.pesosRecetario, [ingredienteId]: valor };
+  invalidarCacheCosteo();
+  showToast(`✅ Guardado: 1 unidad = ${n} ${unidad}. Vale para todas las recetas que lo usan.`, "success");
+  programarActualizarCostosRecetario();
+  render();
+};
+// Después de vincular algo a mano, se vuelven a guardar los costos (sin esperar a la semana), así
+// los navegadores que no están conectados al Recetario también ven el costo nuevo.
+let _timerCostosRec = null;
+function programarActualizarCostosRecetario() {
+  clearTimeout(_timerCostosRec);
+  _timerCostosRec = setTimeout(() => {
+    if (state.recetarioConectado && !state.recetarioSyncEnCurso) window.sincronizarRecetario({ soloCostos: true });
+  }, 2500);
+}
+
+// ── Desglose de una receta: ingrediente por ingrediente ──
+function desgloseRecetaRecetario(area, recetaId) {
+  const r = state.recRecetas[area]?.[recetaId];
+  if (!r) return null;
+  const fila = (l, esEmpaque) => {
+    const res = costoLineaRecetario(l, area, new Set([recetaId]), esEmpaque);
+    const bruta = l.cantidad == null ? null : esEmpaque ? Number(l.cantidad) || 0 : brutaRecetario(l.cantidad, l.merma);
+    const out = { tipo: esEmpaque ? "empaque" : (l.tipo || "ingrediente"), nombre: l.nombre || "", ingredienteId: l.ingredienteId || null, recetaId: l.recetaId || null,
+      cantidad: l.cantidad, unidad: l.unidad || "", merma: Number(l.merma) || 0, bruta, costo: res.costo, incompleto: res.incompleto, motivo: res.motivo, sinPeso: !!res.sinPeso,
+      insumoId: null, insumo: "", precioInsumo: null, unidadInsumo: "" };
+    if (out.tipo === "subreceta") {
+      const sub = state.recRecetas[area]?.[l.recetaId];
+      if (sub) {
+        const cs = costoBaseRecetaRecetario(area, l.recetaId);
+        out.insumo = sub.rendimiento ? `${fmtMoney(cs.costoBase / Number(sub.rendimiento))} / ${sub.unidadRendimiento || "u"}` : "";
+      }
+    } else {
+      const iid = state.vinculosRecetario[l.ingredienteId];
+      if (iid && state.insumos[iid]) {
+        out.insumoId = iid; out.insumo = state.insumos[iid].nombre; out.unidadInsumo = state.insumos[iid].unidad || "";
+        out.precioInsumo = precioEfectivoInsumo(iid);
+      }
+    }
+    return out;
+  };
+  const lineas = (r.ingredientes || []).map(l => fila(l, false));
+  const empaque = (r.empaque || []).map(l => fila(l, true));
+  const tot = costoTotalRecetaRecetario(area, recetaId);
+  const sum = a => a.reduce((x, l) => x + (l.costo || 0), 0);
+  return { receta: r, lineas, empaque, costoIngredientes: sum(lineas), costoEmpaque: sum(empaque), margen: Number(r.margenSeguridad) || 0,
+    costoBase: tot.costoBase, costoTotal: tot.costoTotal, porciones: Number(r.porciones) || null, costoPorPorcion: tot.costoPorPorcion,
+    rendimiento: r.rendimiento ?? null, unidadRendimiento: r.unidadRendimiento || "", incompleto: tot.incompleto };
+}
+// Versión compacta para guardar con la sincronización (se muestra sin conexión).
+function lineasParaGuardar(d) {
+  const m = l => ({ tipo: l.tipo, nombre: l.nombre, cantidad: l.cantidad ?? null, unidad: l.unidad, merma: l.merma || 0, bruta: _redondo(l.bruta),
+    costo: _redondo(l.costo), insumo: l.insumo || "", precioInsumo: _redondo(l.precioInsumo), unidadInsumo: l.unidadInsumo || "", motivo: l.motivo || null });
+  return { lineas: d.lineas.map(m), empaque: d.empaque.map(m), costoIngredientes: _redondo(d.costoIngredientes), costoEmpaque: _redondo(d.costoEmpaque) };
+}
+function fmtCantidadRec(c, u) {
+  if (c === null || c === undefined) return "c/n";
+  const n = Math.round(Number(c) * 1000) / 1000;
+  return `${n.toLocaleString("es-AR")} ${u === "porcion" ? "porc." : u}`;
+}
+function opcionesInsumoParaIngrediente(nombre) {
+  const m = buscarInsumoParaTexto(nombre);
+  const tp = tokensPlato(nombre);
+  const sugeridos = new Set((m.candidatos || []).map(c => c.id));
+  if (m.id) sugeridos.add(m.id);
+  if (tp.length) for (const [id, ins] of Object.entries(state.insumos)) { const Q = new Set(tokensPlato(ins.nombre)); if (tp.every(t => Q.has(t))) sugeridos.add(id); }
+  const todos = objToSortedEntries(state.insumos, (a, b) => a[1].nombre.localeCompare(b[1].nombre));
+  const op = ([id, ins]) => `<option value="${id}">${escapeHtml(ins.nombre)}${ins.unidad ? ` (${escapeHtml(ins.unidad)})` : ""} — ${fmtMoney(precioEfectivoInsumo(id))}</option>`;
+  const sug = todos.filter(([id]) => sugeridos.has(id));
+  return `<option value="">— Elegí el insumo —</option>${sug.length ? `<optgroup label="Sugeridos">${sug.map(op).join("")}</optgroup>` : ""}<optgroup label="Todos">${todos.map(op).join("")}</optgroup>`;
+}
+
+// Tabla de la receta: cantidad neta, merma, lo que se usa (bruto), insumo y su precio, costo de la línea.
+// Si una línea no se puede costear, se arregla ahí mismo: elegir el insumo o cargar cuánto pesa 1 u.
+function desgloseHtml(area, recetaId, { productoId = null, nivel = 0 } = {}) {
+  const vivo = state.recetarioConectado ? desgloseRecetaRecetario(area, recetaId) : null;
+  const guardado = state.recetarioSync?.costos?.[area]?.[recetaId];
+  if (!vivo && !guardado) return `<div class="empty-state">${state.recetarioConectado ? "La receta ya no existe en el Recetario." : "Conectá el Recetario (Configuración) o esperá la próxima sincronización para ver la receta."}</div>`;
+  const d = vivo || { lineas: aArrayRecetario(guardado.lineas), empaque: aArrayRecetario(guardado.empaque), costoIngredientes: guardado.costoIngredientes, costoEmpaque: guardado.costoEmpaque,
+    margen: guardado.margenSeguridad || 0, costoTotal: guardado.costoTotal, porciones: guardado.porciones, costoPorPorcion: guardado.costoPorPorcion, rendimiento: guardado.rendimiento, unidadRendimiento: guardado.unidad, incompleto: guardado.incompleto };
+  const filaHtml = (l, i) => {
+    let insumoCell;
+    if (l.tipo === "subreceta") {
+      const k = `${area}::${l.recetaId}::${nivel}`;
+      insumoCell = `🧪 Subreceta${l.insumo ? ` · ${l.insumo}` : ""}${vivo && l.recetaId ? ` <button class="btn-link-sm" onclick="toggleSubrecetaDesglose('${k}')">${state.subrecetasAbiertas.has(k) ? "ocultar" : "ver"}</button>` : ""}`;
+    } else if (l.insumo) {
+      insumoCell = `${escapeHtml(l.insumo)}<div class="text-muted" style="font-size:11px">${l.precioInsumo !== null && l.precioInsumo !== undefined ? `${fmtMoney(l.precioInsumo)} / ${escapeHtml(l.unidadInsumo || "u")}` : ""}</div>`;
+    } else insumoCell = `<span class="text-muted">sin insumo</span>`;
+    let arreglo = "";
+    if (vivo && l.incompleto && l.tipo !== "subreceta" && l.ingredienteId) {
+      if (!l.insumoId) {
+        arreglo = `<div class="arreglo-linea">🔗 <select class="form-select" onchange="if(this.value)guardarVinculoRecetarioIngrediente('${l.ingredienteId}', this.value)">${opcionesInsumoParaIngrediente(l.nombre)}</select></div>`;
+      } else if (l.sinPeso) {
+        const u = familiaPesoUnidad(l.unidad, l.unidadInsumo) || "g";
+        const idIn = `peso-${l.ingredienteId}-${i}-${nivel}`;
+        arreglo = `<div class="arreglo-linea">⚖️ 1 unidad de ${escapeHtml(l.nombre)} = <input class="form-input" id="${idIn}" inputmode="decimal" style="max-width:90px" placeholder="${u === "g" ? "ej. 200" : "ej. 250"}" onkeydown="if(event.key==='Enter')guardarPesoUnidad('${l.ingredienteId}','${idIn}','${u}')"> ${u} <button class="btn btn-turq btn-sm" onclick="guardarPesoUnidad('${l.ingredienteId}','${idIn}','${u}')">Guardar</button></div>`;
+      }
+    }
+    const k = `${area}::${l.recetaId}::${nivel}`;
+    const sub = vivo && l.tipo === "subreceta" && l.recetaId && state.subrecetasAbiertas.has(k) && nivel < 3
+      ? `<tr class="fila-detalle"><td colspan="6" style="padding:8px 0 8px 18px">${desgloseHtml(area, l.recetaId, { nivel: nivel + 1 })}</td></tr>` : "";
+    return `<tr class="${l.incompleto ? "linea-incompleta" : ""}">
+      <td data-label="Ingrediente">${l.tipo === "empaque" ? "📦 " : ""}${escapeHtml(l.nombre)}</td>
+      <td data-label="Cantidad">${fmtCantidadRec(l.cantidad, l.unidad)}</td>
+      <td data-label="Merma">${l.merma ? `${l.merma}%<div class="text-muted" style="font-size:11px">se usa ${fmtCantidadRec(_redondo(l.bruta), l.unidad)}</div>` : `<span class="text-muted">—</span>`}</td>
+      <td data-label="Insumo / precio">${insumoCell}</td>
+      <td data-label="Costo" class="costo-linea">${l.incompleto && !(l.costo > 0) ? `<span class="badge badge-alerta" title="${escapeHtml(l.motivo || "")}">⚠️ falta</span>` : fmtMoney(l.costo)}</td>
+      <td class="celda-acciones" style="min-width:0">${arreglo || (l.incompleto && l.motivo ? `<span class="text-muted" style="font-size:11px">${escapeHtml(l.motivo)}</span>` : "")}</td>
+    </tr>${sub}`;
+  };
+  const p = productoId ? state.productos[productoId] : null;
+  const costoRef = d.costoPorPorcion ?? d.costoTotal;
+  const pv = p ? Number(p.precioVenta) || 0 : 0;
+  return `
+    <div class="desglose">
+      ${!vivo ? `<div class="text-muted" style="font-size:11px;margin-bottom:6px">Receta y precios al ${escapeHtml(fechaHoraLarga(state.recetarioSync?.ultima?.ts))} (última sincronización).</div>` : ""}
+      <div class="data-table-wrap"><table class="data-table tabla-movil tabla-desglose">
+        <thead><tr><th>Ingrediente</th><th>Cantidad</th><th>Merma</th><th>Insumo / precio</th><th>Costo</th><th></th></tr></thead>
+        <tbody>${d.lineas.map(filaHtml).join("")}${d.empaque.length ? d.empaque.map((l, i) => filaHtml(l, 1000 + i)).join("") : ""}</tbody>
+      </table></div>
+      <div class="desglose-totales">
+        <span>Ingredientes <b>${fmtMoney(d.costoIngredientes)}</b></span>
+        ${d.empaque.length ? `<span>Envases <b>${fmtMoney(d.costoEmpaque)}</b></span>` : ""}
+        ${d.margen ? `<span>Margen de seguridad ${d.margen}% <b>+${fmtMoney(d.costoTotal - (d.costoIngredientes + d.costoEmpaque))}</b></span>` : ""}
+        <span>Total de la receta <b>${fmtMoney(d.costoTotal)}</b></span>
+        ${d.porciones ? `<span class="desglose-final">Rinde ${d.porciones} porción${d.porciones === 1 ? "" : "es"} → <b>${fmtMoney(d.costoPorPorcion)}</b> por porción</span>`
+          : d.rendimiento ? `<span class="desglose-final">Rinde ${fmtCantidadRec(d.rendimiento, d.unidadRendimiento)} → <b>${fmtMoney(d.costoTotal / Number(d.rendimiento))}</b> / ${escapeHtml(d.unidadRendimiento)}</span>` : ""}
+        ${p && pv > 0 && costoRef > 0 && !d.incompleto ? `<span>Precio de venta ${fmtMoney(pv)} → el costo es el <b>${Math.round(costoRef / pv * 100)}%</b></span>` : ""}
+      </div>
+      ${d.incompleto ? `<div class="text-muted" style="font-size:12px;margin-top:6px">⚠️ Costo incompleto: las líneas marcadas "falta" no suman. ${vivo ? "Arreglalas acá mismo (elegí el insumo o cargá cuánto pesa 1 unidad)." : ""}</div>` : ""}
+    </div>`;
+}
+
+// Bloque de un plato en la pestaña Recetario: costo, productos que costea, receta y vincular.
+function platoRecetarioHtml(plato) {
+  const clave = `${plato.area}::${plato.id}`;
+  const vinc = productosDePlato(plato.area, plato.id);
+  const reales = vinc.filter(([, p]) => !(p.creadoDesde === "recetario" && !(Number(p.precioVenta) > 0)));
+  const c = state.recetarioConectado ? costoTotalRecetaRecetario(plato.area, plato.id) : null;
+  const guard = state.recetarioSync?.costos?.[plato.area]?.[plato.id];
+  const costo = c ? (c.costoPorPorcion ?? c.costoTotal) : guard ? (guard.costoPorPorcion ?? guard.costoTotal) : null;
+  const incompleto = c ? c.incompleto : guard ? guard.incompleto : false;
+  const abierto = state.platoAbierto === clave, vinculando = state.platoVinculando === clave;
+  let panelVincular = "";
+  if (vinculando) {
+    const q = claveBusqueda(state.platoBusqueda);
+    const cands = candidatosProductoParaPlato(plato);
+    const extra = q ? Object.entries(state.productos).filter(([id, p]) => claveBusqueda(p.nombre).includes(q) && !cands.some(x => x.id === id) && !(p.recetario && p.recetario.recetaId === plato.id))
+      .slice(0, 15).map(([id, p]) => ({ id, nombre: p.nombre, precioVenta: Number(p.precioVenta) || 0, vinculadoA: p.recetario?.recetaId ? p.recetario : null })) : [];
+    const fila = x => `<label class="cand-producto">
+        <input type="checkbox" data-plato-cand="${plato.id}" value="${x.id}" ${candidatoPreTildado(plato, x) ? "checked" : ""}>
+        <span>${escapeHtml(x.nombre)}<span class="text-muted" style="font-size:11px">${x.precioVenta ? ` · ${fmtMoney(x.precioVenta)}` : " · sin precio"}${x.vinculadoA ? ` · hoy usa "${escapeHtml(state.recRecetas[x.vinculadoA.area]?.[x.vinculadoA.recetaId]?.nombre || "otra receta")}"` : ""}</span></span>
+      </label>`;
+    panelVincular = `<div class="vincular-plato">
+      <div class="text-muted" style="font-size:12px;margin-bottom:8px">Tildá los productos de la carta que llevan esta receta (pueden ser varios, por ejemplo cada variante de pan). Sus costos pasan a salir de la ficha técnica.</div>
+      ${[...cands, ...extra].map(fila).join("") || `<div class="text-muted" style="font-size:12px">No hay productos con un nombre parecido. Buscalo:</div>`}
+      <input class="form-input" id="plato-busqueda" style="margin:8px 0;max-width:340px" placeholder="🔎 Buscar otro producto…" value="${escapeHtml(state.platoBusqueda)}" oninput="setPlatoBusqueda(this.value)">
+      <div class="row-actions" style="justify-content:flex-start">
+        <button class="btn btn-primary btn-sm" onclick="vincularPlatoProductos('${plato.area}','${plato.id}')">🔗 Vincular los tildados</button>
+        <button class="btn btn-ghost btn-sm" onclick="abrirVincularPlato('${clave}')">Cancelar</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="plato-card ${!reales.length ? "plato-sin-producto" : ""}">
+    <div class="plato-head">
+      <div>
+        <div class="plato-nombre">${escapeHtml(plato.nombre)} <span class="text-muted" style="font-size:11px;font-weight:400">${[plato.codigo, plato.grupo].filter(Boolean).map(escapeHtml).join(" · ")}</span></div>
+        <div class="plato-productos">${reales.length ? reales.map(([id, p]) => `<span class="chip-producto">${escapeHtml(p.nombre)}${Number(p.precioVenta) > 0 ? ` · ${fmtMoney(p.precioVenta)}` : ""} <button title="Desvincular" onclick="desvincularProductoPlato('${id}')">✕</button></span>`).join("")
+          : `<span class="text-muted" style="font-size:12px">⚠️ Ningún producto de la carta usa esta receta todavía${vinc.length ? " (solo el provisorio sin precio que creó la sincronización)" : ""}.</span>`}</div>
+      </div>
+      <div class="plato-costo">${costo !== null ? `<b>${fmtMoney(costo)}</b><div class="text-muted" style="font-size:11px">${(c ? c.costoPorPorcion : guard?.costoPorPorcion) != null ? "por porción" : "receta completa"}</div>` : "—"}${incompleto ? `<div><span class="badge badge-alerta">⚠️ incompleto</span></div>` : ""}</div>
+    </div>
+    <div class="row-actions" style="justify-content:flex-start;margin-top:8px">
+      <button class="btn ${abierto ? "btn-turq" : "btn-ghost"} btn-sm" onclick="togglePlatoAbierto('${clave}')">${abierto ? "▴ Ocultar receta" : "▾ Ingredientes y costos"}</button>
+      <button class="btn ${vinculando ? "btn-turq" : reales.length ? "btn-ghost" : "btn-primary"} btn-sm" onclick="abrirVincularPlato('${clave}')">🔗 ${reales.length ? "Vincular otro producto" : "Elegir productos"}</button>
+      ${!vinc.length ? `<button class="btn btn-ghost btn-sm" onclick="crearProductoDesdeRecetario('${plato.area}', '${plato.id}')" title="Si este plato no está en la carta todavía">+ Crear producto nuevo</button>` : ""}
+    </div>
+    ${panelVincular}
+    ${abierto ? `<div style="margin-top:10px">${desgloseHtml(plato.area, plato.id, { productoId: reales[0]?.[0] || null })}</div>` : ""}
+  </div>`;
+}
+
 window.setRecetarioSyncAuto = async function(on) {
   await set(ref(db, "costeo/config/recetarioSyncAuto"), !!on);
   state.config = { ...state.config, recetarioSyncAuto: !!on };
@@ -6529,6 +6900,7 @@ function panelSyncRecetarioHtml() {
         <div class="stat-card"><div class="stat-label">⚠️ Costo incompleto</div><div class="stat-value" style="${u.incompletas ? "color:#c0392b" : ""}">${u.incompletas || 0}</div></div>
       </div>
       ${u.nPendientesIng ? `<div class="alert-box alert-warn" style="margin-top:10px"><div>🧂 <b>${u.nPendientesIng} ingrediente(s) sin vincular</b>: ${pendientes.slice(0, 12).map(x => escapeHtml(x.nombre)).join(", ")}${u.nPendientesIng > 12 ? "…" : ""}. Hasta que se vinculen, las recetas que los usan quedan con costo incompleto. Se vinculan más abajo, en "Ingredientes y envases del Recetario".</div></div>` : ""}
+      ${u.nPlatosRevisar ? `<div class="alert-box alert-warn" style="margin-top:10px"><div>🍽️ <b>${u.nPlatosRevisar} plato(s) sin producto de la carta</b>: ${aArrayRecetario(u.platosRevisar).slice(0, 10).map(x => escapeHtml(x.nombre)).join(", ")}${u.nPlatosRevisar > 10 ? "…" : ""}. Tienen productos de nombre parecido: elegí cuáles con "🔗 Elegir productos" en la lista de platos de abajo.</div></div>` : ""}
       ${ambiguos.length ? `<div class="alert-box alert-warn" style="margin-top:10px"><div>❓ Con nombre repetido en Costos (no se eligió ninguno): ${ambiguos.map(a => `${escapeHtml(a.nombre)} (${a.cantidad} ${a.tipo === "plato" ? "productos" : "bases"})`).join(", ")}. Vinculalos a mano.</div></div>` : ""}
       <div class="row-actions" style="margin-top:12px;justify-content:flex-start">
         <button class="btn ${state.verCostosElaboraciones ? "btn-turq" : "btn-ghost"} btn-sm" onclick="toggleCostosElaboraciones()">${state.verCostosElaboraciones ? "▴ Ocultar" : "▾ Ver"} el costo de cada elaboración</button>
