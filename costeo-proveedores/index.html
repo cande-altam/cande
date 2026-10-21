@@ -265,6 +265,10 @@ tr.fila-lote>td{background:#fff7f5;}
 .tabla-editados .precio-ahora{font-weight:700;font-size:15px;color:var(--black);}
 .tabla-editados tr.fila-grupo td{background:var(--cream);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--black-soft);padding-top:10px;}
 .tabla-editados tr.fila-grupo td span{font-weight:400;color:var(--gray);}
+.sync-recetario{border:2px solid var(--turq);}
+.sync-estado{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px;margin-top:6px;color:var(--black-soft);}
+.sync-auto{display:inline-flex;gap:6px;align-items:center;cursor:pointer;}
+.sync-auto input{accent-color:var(--turq);width:16px;height:16px;}
 /* ── Índice de secciones (Análisis) ── */
 .indice-secciones a{padding:6px 12px;border-radius:100px;border:1.5px solid var(--cream-dark);background:var(--white);color:var(--black-soft);font-size:12px;text-decoration:none;white-space:nowrap;}
 .indice-secciones a:hover{border-color:var(--terra);color:var(--terra);}
@@ -336,7 +340,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-10-21 11:14";
+const APP_VERSION = "2026-10-21 12:44";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -424,6 +428,10 @@ const state = {
   recetarioAuthError: "",
   recIngredientes: {},
   recRecetas: {},           // { [área]: { [recetaId]: receta } }
+  recetarioSync: {},        // costeo/recetarioSync: { ultima, costos, platosIgnorados }
+  recetarioSyncEnCurso: false,
+  verCostosElaboraciones: false,
+  _cargados: new Set(),     // qué ramas ya llegaron al menos una vez (para la sincronización semanal)
   vinculosRecetario: {},    // { [ingredienteId]: insumoId } — vive en costeo/vinculosRecetario
   proveedoresBusqueda: "",
   insumosBusqueda: "",
@@ -855,15 +863,16 @@ function renderLogin() {
 // ── Firebase listeners ───────────────────────────────────
 function attachListeners() {
   onValue(ref(db, "costeo/proveedores"), snap => { state.proveedores = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
-  onValue(ref(db, "costeo/insumos"), snap => { state.insumos = snap.val() || {}; invalidarCacheCosteo(); if (!state.formOpen) solicitarRender(); });
-  onValue(ref(db, "costeo/productos"), snap => { state.productos = snap.val() || {}; invalidarCacheCosteo(); if (!state.formOpen) solicitarRender(); });
+  onValue(ref(db, "costeo/insumos"), snap => { state.insumos = snap.val() || {}; invalidarCacheCosteo(); marcarCargado("insumos"); if (!state.formOpen) solicitarRender(); });
+  onValue(ref(db, "costeo/productos"), snap => { state.productos = snap.val() || {}; invalidarCacheCosteo(); marcarCargado("productos"); if (!state.formOpen) solicitarRender(); });
   onValue(ref(db, "costeo/facturas"), snap => { state.facturas = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
   onValue(ref(db, "costeo/inflacion"), snap => { state.inflacion = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
   onValue(ref(db, "costeo/ivaDebito"), snap => { state.ivaDebito = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
   onValue(ref(db, "costeo/listasPrecios"), snap => { state.listasPrecios = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
-  onValue(ref(db, "costeo/config"), snap => { state.config = snap.val() || {}; });
+  onValue(ref(db, "costeo/config"), snap => { state.config = snap.val() || {}; marcarCargado("config"); });
+  onValue(ref(db, "costeo/recetarioSync"), snap => { state.recetarioSync = snap.val() || {}; marcarCargado("recetarioSync"); if (!state.formOpen) solicitarRender(); });
   onValue(ref(db, "costeo/pendientesFudo"), snap => { state.pendientesFudo = snap.val() || {}; if (!state.formOpen) solicitarRender(); });
-  onValue(ref(db, "costeo/vinculosRecetario"), snap => { state.vinculosRecetario = snap.val() || {}; invalidarCacheCosteo(); if (!state.formOpen) solicitarRender(); });
+  onValue(ref(db, "costeo/vinculosRecetario"), snap => { state.vinculosRecetario = snap.val() || {}; invalidarCacheCosteo(); marcarCargado("vinculos"); if (!state.formOpen) solicitarRender(); });
 }
 
 // =============================================================
@@ -899,11 +908,12 @@ function normalizarRecetasRecetario(obj) {
 const AREAS_RECETARIO = ["cocina"];
 
 function escucharRecetario() {
-  onValue(ref(recDb, "recetario/ingredientes"), s => { state.recIngredientes = s.val() || {}; invalidarCacheCosteo(); if (!state.formOpen) solicitarRender(); });
+  onValue(ref(recDb, "recetario/ingredientes"), s => { state.recIngredientes = s.val() || {}; invalidarCacheCosteo(); marcarCargado("recIngredientes"); if (!state.formOpen) solicitarRender(); });
   for (const area of AREAS_RECETARIO) {
     onValue(ref(recDb, `recetario/areas/${area}/recetas`), s => {
       state.recRecetas = { ...state.recRecetas, [area]: normalizarRecetasRecetario(s.val()) };
       invalidarCacheCosteo();
+      marcarCargado("rec:" + area);
       if (!state.formOpen) solicitarRender();
     });
   }
@@ -918,7 +928,7 @@ function iniciarRecetarioAuth() {
     state.recetarioConectado = !!user;
     state.recetarioConectando = false;
     if (user) { state.recetarioAuthError = ""; escucharRecetario(); }
-    else { state.recIngredientes = {}; state.recRecetas = {}; }
+    else { state.recIngredientes = {}; state.recRecetas = {}; state._cargados.delete("recIngredientes"); AREAS_RECETARIO.forEach(a => state._cargados.delete("rec:" + a)); }
     invalidarCacheCosteo();
     solicitarRender();
   });
@@ -4684,6 +4694,7 @@ function precioCosteoInsumo(ins) {
 // lentitud en Productos y Recetas. El cache se limpia solo cuando cambian insumos o productos,
 // así que nunca puede quedar mostrando un costo viejo.
 let _cacheCosteo = new Map();
+const _basesRecVisitando = new Set();  // corta ciclos base ↔ subreceta del Recetario
 let _cacheCostoRecetario = new Map();
 function invalidarCacheCosteo() { _cacheCosteo = new Map(); _cacheCostoRecetario = new Map(); _cacheOpcionesReceta = new Map(); invalidarCacheAlias(); }
 
@@ -4691,6 +4702,16 @@ function precioEfectivoInsumo(insumoId, visiting) {
   const ins = state.insumos[insumoId];
   if (!ins) return 0;
   if (_cacheCosteo.has(insumoId)) return _cacheCosteo.get(insumoId);
+  // Base vinculada a una subreceta del Recetario: su costo sale de la ficha técnica (la cocina es la
+  // dueña de la receta). Sin conexión se usa el último cálculo guardado por la sincronización. Si
+  // ninguna de las dos cosas está, sigue con su receta propia de Costeo, que queda de respaldo.
+  if (ins.recetario && ins.recetario.recetaId && !_basesRecVisitando.has(insumoId)) {
+    _basesRecVisitando.add(insumoId);
+    let v = null;
+    try { v = costoUnitarioBaseRecetario(ins); } finally { _basesRecVisitando.delete(insumoId); }
+    if (v === null && !state.recetarioConectado && ins.costoRecetario && Number(ins.costoRecetario.porUnidad) > 0) v = Number(ins.costoRecetario.porUnidad);
+    if (v !== null) { _cacheCosteo.set(insumoId, v); return v; }
+  }
   const receta = ins.receta || {};
   let valor;
   if (Object.keys(receta).length) {
@@ -4818,7 +4839,14 @@ function costoTotalRecetaRecetario(area, recetaId) {
 // en ese caso el llamador cae al resto de las fuentes de costo, que es "conservar el costo anterior").
 function calcCostoProductoRecetario(producto) {
   const rec = producto && producto.recetario;
-  if (!rec || !rec.recetaId || !state.recetarioConectado) return null;
+  if (!rec || !rec.recetaId) return null;
+  if (!state.recetarioConectado) {
+    // Sin conexión: el último costo que guardó la sincronización con el Recetario (si hay uno).
+    const snap = producto.costoRecetario;
+    if (!snap || !(Number(snap.costo) > 0)) return null;
+    return { costo: Number(snap.costo), costoTotal: Number(snap.costoTotal) || Number(snap.costo), costoPorPorcion: null, costoPorUnidad: null,
+      incompleto: !!snap.incompleto, motivos: aArrayRecetario(snap.motivos), deSincronizacion: true, ts: snap.ts || null };
+  }
   const r = costoTotalRecetaRecetario(rec.area, rec.recetaId);
   const costo = r.costoPorPorcion !== null ? r.costoPorPorcion : r.costoTotal;
   return { ...r, costo };
@@ -4868,7 +4896,7 @@ function costoTotalProductoVinculado(p) {
 }
 
 function costoProductoFuente(producto) {
-  if (producto.recetario && producto.recetario.recetaId && state.recetarioConectado) return "recetario";
+  if (producto.recetario && producto.recetario.recetaId && (state.recetarioConectado || Number(producto.costoRecetario?.costo) > 0)) return "recetario";
   if (producto.receta && Object.keys(producto.receta).length) return "receta";
   if (producto.insumoVinculadoId && state.insumos[producto.insumoVinculadoId]) return "insumo";
   if (producto.costoManual > 0 || Number(producto.costoSinIva) > 0) return "manual";
@@ -5244,7 +5272,10 @@ window.guardarProducto = async function() {
 };
 window.eliminarProducto = async function(id) {
   if (!confirm("¿Eliminar este producto?")) return;
+  const rec = state.productos[id]?.recetario;
   await remove(ref(db, `costeo/productos/${id}`));
+  // Si venía del Recetario, la sincronización semanal no lo vuelve a crear.
+  if (rec && rec.recetaId) await set(ref(db, `costeo/recetarioSync/platosIgnorados/${rec.recetaId}`), true);
   showToast("🗑️ Producto eliminado.", "success");
 };
 
@@ -5692,9 +5723,9 @@ function renderProductosTable() {
     const retail = esRetail ? calcPrecioRetail(p) : null;
     const modelo = esRetail ? null : calcModeloCosteo(p);
     const recetarioInfo = fuente === "recetario" ? calcCostoProductoRecetario(p) : null;
-    const nombrePlatoRecetario = p.recetario ? state.recRecetas[p.recetario.area]?.[p.recetario.recetaId]?.nombre : null;
+    const nombrePlatoRecetario = p.recetario ? (state.recRecetas[p.recetario.area]?.[p.recetario.recetaId]?.nombre || p.costoRecetario?.nombre) : null;
     const costoCell = fuente === "recetario"
-      ? `<span class="${alertaSuba ? "precio-subio" : ""}">${fmtMoney(costo)}</span> <div class="text-muted" style="font-size:11px">📖 ${escapeHtml(nombrePlatoRecetario || "")}</div>${recetarioInfo && recetarioInfo.incompleto ? `<div><span class="badge badge-alerta" title="${escapeHtml(recetarioInfo.motivos.join("; "))}">⚠️ Costo incompleto</span></div>` : ""}`
+      ? `<span class="${alertaSuba ? "precio-subio" : ""}">${fmtMoney(costo)}</span> <div class="text-muted" style="font-size:11px">📖 ${escapeHtml(nombrePlatoRecetario || "")}${recetarioInfo && recetarioInfo.deSincronizacion ? ` · costo al ${fmtDate(new Date(recetarioInfo.ts || Date.now()).toISOString().slice(0, 10))}` : ""}</div>${recetarioInfo && recetarioInfo.incompleto ? `<div><span class="badge badge-alerta" title="${escapeHtml(recetarioInfo.motivos.join("; "))}">⚠️ Costo incompleto</span></div>` : ""}`
       : tieneReceta
       ? `<span class="${alertaSuba ? "precio-subio" : ""}">${fmtMoney(costo)}</span> <span class="text-muted" style="font-size:11px">(receta)</span>`
       : fuente === "insumo"
@@ -5740,8 +5771,8 @@ function renderProductosTable() {
       })()}`;
     return `
       <tr class="${recetaAbierta ? "fila-abierta" : ""} ${state.modoLote && state.loteSeleccion.has(id) ? "fila-lote" : ""}">
-        <td data-label="Producto">${state.modoLote ? `<label class="lote-check" title="Incluir en la edición en lote"><input type="checkbox" ${state.loteSeleccion.has(id) ? "checked" : ""} onchange="toggleLoteProducto('${id}', this.checked, this)"></label>` : ""}${escapeHtml(p.nombre)}<div class="text-muted" style="font-size:11px">${CLASIFICACION_LABEL[clasificacion]} · ${escapeHtml(categoriaProductoTexto(p))}${esVersionMesa ? " · 🍽️ Versión mesa" : ""}${costoActualizado ? " · 🔄 Costo actualizado" : ""}${p.recetario && !state.recetarioConectado ? " · 📖 Recetario sin conectar" : ""}</div></td>
-        <td data-label="Receta">${tieneReceta ? `${Object.keys(p.receta).length} insumo(s)` : `<span class="text-muted">Sin receta</span>`}</td>
+        <td data-label="Producto">${state.modoLote ? `<label class="lote-check" title="Incluir en la edición en lote"><input type="checkbox" ${state.loteSeleccion.has(id) ? "checked" : ""} onchange="toggleLoteProducto('${id}', this.checked, this)"></label>` : ""}${escapeHtml(p.nombre)}<div class="text-muted" style="font-size:11px">${CLASIFICACION_LABEL[clasificacion]} · ${escapeHtml(categoriaProductoTexto(p))}${esVersionMesa ? " · 🍽️ Versión mesa" : ""}${costoActualizado ? " · 🔄 Costo actualizado" : ""}${p.recetario && !state.recetarioConectado && !(Number(p.costoRecetario?.costo) > 0) ? " · 📖 Recetario sin conectar" : ""}</div></td>
+        <td data-label="Receta">${fuente === "recetario" ? `📖 Recetario${(() => { const r = state.recRecetas[p.recetario.area]?.[p.recetario.recetaId]; const n = r ? r.ingredientes.length : p.costoRecetario?.nIngredientes; return n ? `<div class="text-muted" style="font-size:11px">${n} ingrediente(s)</div>` : ""; })()}` : tieneReceta ? `${Object.keys(p.receta).length} insumo(s)` : `<span class="text-muted">Sin receta</span>`}</td>
         <td data-label="Costo actual">${costoCell}${alertaSubaBadge}</td>
         <td data-label="Precio venta">${precioVentaCell}</td>
         <td data-label="Margen">${margenCell}</td>
@@ -6032,12 +6063,7 @@ function renderRecetasBasesView(container) {
   };
 
   const tabRecetarioHtml = `
-    <div class="section-block">
-      <div class="section-title" style="margin-bottom:6px">📖 Conexión</div>
-      ${state.recetarioConectado
-        ? `<div class="alert-box" style="background:var(--turq-pale);border-color:var(--turq)">✅ Conectado con el Recetario.</div>`
-        : `<div class="alert-box alert-warn">⚠️ Recetario sin conectar. Conectate desde <a href="#" onclick="navigate('config');return false;">Configuración</a> para ver y vincular sus ingredientes y platos.</div>`}
-    </div>
+    ${panelSyncRecetarioHtml()}
     <div class="section-block">
       <div class="section-title" style="margin-bottom:6px">🧂 Ingredientes y envases del Recetario ${ingredientesSinVincular ? `(${ingredientesSinVincular} sin vincular)` : ""}</div>
       <div class="text-muted" style="margin-bottom:10px">Cada ingrediente del Recetario necesita un insumo de Costeo del que sacar el precio. Las sugerencias se proponen pero nunca se guardan solas: hay que confirmarlas.</div>
@@ -6201,6 +6227,340 @@ window.crearProductoDesdeRecetario = async function(area, recetaId) {
   state.productos[nuevoRef.key] = { nombre: plato.nombre, precioVenta: null, receta: {}, recetario: { area, recetaId } };
   showToast(`✅ Producto "${plato.nombre}" creado y vinculado al Recetario.`, "success");
   render();
+};
+
+// =============================================================
+// SINCRONIZACIÓN RECETARIO → COSTEO (una vez por semana, sola)
+// =============================================================
+// Trae a Costeo lo nuevo del Recetario y deja guardado el costo real de cada elaboración:
+//  1. Ingredientes: los vincula SOLOS solo cuando no hay duda (mismo nombre que un insumo, o un alias
+//     ya confirmado en facturas). Los demás quedan "para revisar" — nunca se adivina un vínculo.
+//  2. Platos: los vincula con el producto del mismo nombre; si no hay ninguno, crea el producto (sin
+//     precio de venta). Si hay dos con el mismo nombre, no elige: queda para revisar.
+//  3. Subrecetas: las vincula con la base de Costeo del mismo nombre, así esa base (y todo lo que la
+//     usa en Costeo) toma el costo de la ficha técnica.
+//  4. Calcula el costo de cada receta con los precios de mercadería actuales y lo guarda: en cada
+//     producto/base vinculado (para verlo aunque el navegador no esté conectado al Recetario) y en
+//     costeo/recetarioSync/costos, con la variación contra la sincronización anterior.
+// Corre sola al abrir Costeo si pasaron 7 días, desde un navegador conectado al Recetario. Es
+// idempotente: los productos nuevos tienen un id fijo por plato, así dos corridas no duplican nada.
+const RECETARIO_SYNC_DIAS = 7;
+const RAMAS_SYNC = () => ["insumos", "productos", "vinculos", "config", "recetarioSync", "recIngredientes", ...AREAS_RECETARIO.map(a => "rec:" + a)];
+let _syncTimer = null, _syncAutoRevisada = false;
+
+function marcarCargado(rama) {
+  state._cargados.add(rama);
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => { intentarSyncSemanal(); }, 1500);
+}
+function claveNombreSync(s) {
+  return stripAccentsCosteo(String(s || "")).toLowerCase().replace(/[^a-z0-9ñ]+/g, " ").trim();
+}
+function syncRecetarioVencida() {
+  const ts = state.recetarioSync?.ultima?.ts;
+  return !ts || Date.now() - ts >= RECETARIO_SYNC_DIAS * 86400000;
+}
+function proximaSyncRecetario() {
+  const ts = state.recetarioSync?.ultima?.ts;
+  return ts ? ts + RECETARIO_SYNC_DIAS * 86400000 : null;
+}
+async function intentarSyncSemanal() {
+  if (_syncAutoRevisada || state.recetarioSyncEnCurso) return;
+  if (!state.loggedIn || !state.recetarioConectado) return;
+  if (!RAMAS_SYNC().every(r => state._cargados.has(r))) return;
+  _syncAutoRevisada = true;
+  if (state.config && state.config.recetarioSyncAuto === false) return;
+  if (!syncRecetarioVencida()) return;
+  await window.sincronizarRecetario({ automatica: true });
+}
+
+// Costo de UNA unidad de la base (en su propia unidad: kg, l, u) según la subreceta vinculada.
+// Sin margen de seguridad: el margen se aplica una sola vez, en la receta de arriba.
+function costoUnitarioBaseRecetario(ins) {
+  const rec = ins && ins.recetario;
+  if (!rec || !rec.recetaId || !state.recetarioConectado) return null;
+  const sub = state.recRecetas[rec.area]?.[rec.recetaId];
+  if (!sub || sub.rendimiento == null) return null;
+  const rend = convertirCantidadRecetario(Number(sub.rendimiento), sub.unidadRendimiento, ins.unidad);
+  if (!rend) return null;
+  return costoBaseRecetaRecetario(rec.area, rec.recetaId).costoBase / rend;
+}
+
+function planSincronizacionRecetario() {
+  const plan = { vinculosIng: {}, pendientesIng: [], productosVincular: [], productosNuevos: [], basesVincular: [], ambiguos: [] };
+  // 1. Ingredientes y envases
+  const insumoPorNombre = new Map();
+  for (const [id, ins] of Object.entries(state.insumos)) {
+    const k = claveNombreSync(ins.nombre);
+    if (!k) continue;
+    insumoPorNombre.set(k, insumoPorNombre.has(k) ? null : id);  // null = nombre repetido: no se elige
+  }
+  for (const [ingId, ing] of Object.entries(state.recIngredientes || {})) {
+    const actual = state.vinculosRecetario[ingId];
+    if (actual && state.insumos[actual]) continue;
+    let id = insumoPorNombre.get(claveNombreSync(ing.nombre)) || null;
+    let sugerido = null;
+    if (!id) {
+      const m = buscarInsumoParaTexto(ing.nombre);
+      if (m.id && (m.confianza === "alias" || (m.confianza === "alta" && m.score >= 1))) id = m.id;
+      else if (m.id) sugerido = m.id;
+    }
+    if (id) plan.vinculosIng[ingId] = id;
+    else plan.pendientesIng.push({ id: ingId, nombre: ing.nombre, sugerido });
+  }
+  // 2 y 3. Platos → productos, subrecetas → bases
+  const ignorados = state.recetarioSync?.platosIgnorados || {};
+  const prodVinculado = new Set(Object.values(state.productos).filter(p => p.recetario && p.recetario.recetaId).map(p => `${p.recetario.area}::${p.recetario.recetaId}`));
+  const baseVinculada = new Set(Object.values(state.insumos).filter(i => i.recetario && i.recetario.recetaId).map(i => `${i.recetario.area}::${i.recetario.recetaId}`));
+  const prodPorNombre = new Map(), basePorNombre = new Map();
+  for (const [id, p] of Object.entries(state.productos)) {
+    if (p.recetario && p.recetario.recetaId) continue;
+    const k = claveNombreSync(p.nombre);
+    if (k) prodPorNombre.set(k, [...(prodPorNombre.get(k) || []), id]);
+  }
+  for (const [id, ins] of Object.entries(state.insumos)) {
+    if (!esBaseInsumo(ins) || (ins.recetario && ins.recetario.recetaId)) continue;
+    const k = claveNombreSync(ins.nombre);
+    if (k) basePorNombre.set(k, [...(basePorNombre.get(k) || []), id]);
+  }
+  for (const area of AREAS_RECETARIO) {
+    for (const r of Object.values(state.recRecetas[area] || {})) {
+      const k = claveNombreSync(r.nombre);
+      if (!k) continue;
+      if (r.tipo === "plato") {
+        if (prodVinculado.has(`${area}::${r.id}`) || ignorados[r.id]) continue;
+        const cands = prodPorNombre.get(k) || [];
+        if (cands.length === 1) { plan.productosVincular.push({ id: cands[0], area, recetaId: r.id, nombre: r.nombre }); prodPorNombre.delete(k); }
+        else if (cands.length > 1) plan.ambiguos.push({ tipo: "plato", nombre: r.nombre, cantidad: cands.length });
+        else {
+          const id = `rec_${area}_${r.id}`.replace(/[.#$\[\]\/]/g, "_");
+          if (!state.productos[id]) plan.productosNuevos.push({ id, area, recetaId: r.id, nombre: r.nombre, categoria: r.grupo || "" });
+        }
+      } else if (r.tipo === "subreceta") {
+        if (baseVinculada.has(`${area}::${r.id}`)) continue;
+        const cands = basePorNombre.get(k) || [];
+        if (cands.length === 1) { plan.basesVincular.push({ id: cands[0], area, recetaId: r.id, nombre: r.nombre }); basePorNombre.delete(k); }
+        else if (cands.length > 1) plan.ambiguos.push({ tipo: "base", nombre: r.nombre, cantidad: cands.length });
+      }
+    }
+  }
+  return plan;
+}
+
+const _redondo = n => (n === null || n === undefined || !Number.isFinite(n)) ? null : Math.round(n * 100) / 100;
+
+window.sincronizarRecetario = async function({ automatica = false } = {}) {
+  if (state.recetarioSyncEnCurso) return;
+  if (!state.recetarioConectado) { showToast("⚠️ Conectate con el Recetario (Configuración) para sincronizar.", "warn"); return; }
+  const plan = planSincronizacionRecetario();
+  if (!automatica) {
+    const partes = [];
+    if (Object.keys(plan.vinculosIng).length) partes.push(`• ${Object.keys(plan.vinculosIng).length} ingrediente(s) se vinculan con su insumo (mismo nombre)`);
+    if (plan.productosVincular.length) partes.push(`• ${plan.productosVincular.length} plato(s) se vinculan con su producto`);
+    if (plan.productosNuevos.length) partes.push(`• ${plan.productosNuevos.length} plato(s) nuevos se crean como producto (sin precio de venta)`);
+    if (plan.basesVincular.length) partes.push(`• ${plan.basesVincular.length} subreceta(s) se vinculan con su base`);
+    partes.push("• Se recalcula y guarda el costo de todas las recetas con los precios actuales");
+    if (!confirm(`Sincronizar con el Recetario:\n\n${partes.join("\n")}\n\n¿Seguimos?`)) return;
+  }
+  state.recetarioSyncEnCurso = true;
+  solicitarRender();
+  const respaldo = { vinculos: state.vinculosRecetario, productos: state.productos, insumos: state.insumos };
+  try {
+    const ahora = Date.now();
+    const upd = {};
+    // Vínculos nuevos: primero en el estado, para que el cálculo de costos ya los use.
+    state.vinculosRecetario = { ...state.vinculosRecetario, ...plan.vinculosIng };
+    for (const [ing, ins] of Object.entries(plan.vinculosIng)) upd[`vinculosRecetario/${ing}`] = ins;
+    const productos = { ...state.productos }, insumos = { ...state.insumos };
+    const nuevos = {};
+    for (const v of plan.productosVincular) {
+      productos[v.id] = { ...productos[v.id], recetario: { area: v.area, recetaId: v.recetaId } };
+      upd[`productos/${v.id}/recetario`] = { area: v.area, recetaId: v.recetaId };
+    }
+    for (const n of plan.productosNuevos) {
+      nuevos[n.id] = { nombre: n.nombre, categoria: n.categoria, precioVenta: null, recetario: { area: n.area, recetaId: n.recetaId }, creadoTs: ahora, creadoDesde: "recetario" };
+      productos[n.id] = nuevos[n.id];
+    }
+    for (const b of plan.basesVincular) {
+      insumos[b.id] = { ...insumos[b.id], recetario: { area: b.area, recetaId: b.recetaId } };
+      upd[`insumos/${b.id}/recetario`] = { area: b.area, recetaId: b.recetaId };
+    }
+    state.productos = productos; state.insumos = insumos;
+    invalidarCacheCosteo();
+
+    // Costo real de cada receta, con la variación contra la sincronización anterior.
+    const anteriores = state.recetarioSync?.costos || {};
+    const costos = {};
+    let incompletas = 0, subieron = 0, bajaron = 0, nRecetas = 0;
+    for (const area of AREAS_RECETARIO) {
+      costos[area] = {};
+      for (const r of Object.values(state.recRecetas[area] || {})) {
+        const c = costoTotalRecetaRecetario(area, r.id);
+        const porPorcion = c.costoPorPorcion, porUnidad = r.rendimiento ? c.costoTotal / Number(r.rendimiento) : null;
+        const ref_ = porPorcion ?? c.costoTotal;
+        const ant = anteriores[area]?.[r.id];
+        const antRef = ant ? (ant.costoPorPorcion ?? ant.costoTotal) : null;
+        if (antRef > 0 && ref_ > antRef + 0.005) subieron++;
+        if (antRef > 0 && ref_ < antRef - 0.005) bajaron++;
+        if (c.incompleto) incompletas++;
+        nRecetas++;
+        costos[area][r.id] = {
+          nombre: r.nombre || "", tipo: r.tipo || "", grupo: r.grupo || "", codigo: r.codigo || "",
+          costoTotal: _redondo(c.costoTotal), costoPorPorcion: _redondo(porPorcion), costoPorUnidad: _redondo(porUnidad),
+          porciones: r.porciones || null, rendimiento: r.rendimiento ?? null, unidad: r.unidadRendimiento || "",
+          margenSeguridad: Number(r.margenSeguridad) || 0,
+          incompleto: !!c.incompleto, motivos: c.motivos.slice(0, 6),
+          anterior: antRef !== null && antRef !== undefined ? _redondo(antRef) : null,
+        };
+      }
+    }
+    // Último costo conocido en cada producto y base vinculados (para verlo sin conexión).
+    for (const [pid, p] of Object.entries(state.productos)) {
+      if (!p.recetario || !p.recetario.recetaId) continue;
+      const r = state.recRecetas[p.recetario.area]?.[p.recetario.recetaId];
+      if (!r) continue;
+      const c = calcCostoProductoRecetario(p);
+      const snap = { costo: _redondo(c.costo), costoTotal: _redondo(c.costoTotal), incompleto: !!c.incompleto, motivos: c.motivos.slice(0, 6), nombre: r.nombre || "", nIngredientes: r.ingredientes.length, ts: ahora };
+      if (nuevos[pid]) nuevos[pid].costoRecetario = snap; else upd[`productos/${pid}/costoRecetario`] = snap;
+      state.productos[pid] = { ...state.productos[pid], costoRecetario: snap };
+    }
+    for (const [iid, ins] of Object.entries(state.insumos)) {
+      if (!ins.recetario || !ins.recetario.recetaId) continue;
+      const v = costoUnitarioBaseRecetario(ins);
+      if (v === null) continue;
+      const snap = { porUnidad: _redondo(v), nombre: state.recRecetas[ins.recetario.area]?.[ins.recetario.recetaId]?.nombre || "", ts: ahora };
+      upd[`insumos/${iid}/costoRecetario`] = snap;
+      state.insumos[iid] = { ...state.insumos[iid], costoRecetario: snap };
+    }
+    for (const [id, obj] of Object.entries(nuevos)) upd[`productos/${id}`] = obj;
+    const ultima = {
+      ts: ahora, automatica, recetas: nRecetas, incompletas, subieron, bajaron,
+      ingredientesVinculados: Object.keys(plan.vinculosIng).length,
+      productosCreados: plan.productosNuevos.length, productosVinculados: plan.productosVincular.length, basesVinculadas: plan.basesVincular.length,
+      pendientesIng: plan.pendientesIng.slice(0, 80).map(x => ({ id: x.id, nombre: x.nombre || "" })),
+      nPendientesIng: plan.pendientesIng.length,
+      ambiguos: plan.ambiguos.slice(0, 40),
+    };
+    upd["recetarioSync/ultima"] = ultima;
+    upd["recetarioSync/costos"] = costos;
+    await update(ref(db, "costeo"), upd);
+    state.recetarioSync = { ...state.recetarioSync, ultima, costos };
+    invalidarCacheCosteo();
+    // Historial de costos y alertas de suba, igual que cuando cambia una factura.
+    await suspenderRender(async () => {
+      for (const [pid, p] of Object.entries(state.productos)) {
+        if (p.recetario && p.recetario.recetaId && calcCostoProducto(p) > 0) {
+          try { await actualizarCostoHistorialProducto(pid, p); } catch (e) { console.error(e); }
+        }
+      }
+    });
+    const cambios = [ultima.productosCreados && `${ultima.productosCreados} producto(s) nuevos`, ultima.productosVinculados && `${ultima.productosVinculados} vinculado(s)`, ultima.ingredientesVinculados && `${ultima.ingredientesVinculados} ingrediente(s) vinculados`].filter(Boolean);
+    showToast(`📖 ${automatica ? "Sincronización semanal con el Recetario" : "Sincronizado con el Recetario"}: ${nRecetas} receta(s) costeadas${cambios.length ? " · " + cambios.join(" · ") : ""}${ultima.nPendientesIng ? ` · ${ultima.nPendientesIng} ingrediente(s) para revisar` : ""}.`, ultima.nPendientesIng || incompletas ? "warn" : "success");
+  } catch (err) {
+    console.error(err);
+    state.vinculosRecetario = respaldo.vinculos; state.productos = respaldo.productos; state.insumos = respaldo.insumos;
+    invalidarCacheCosteo();
+    showToast("❌ No se pudo sincronizar con el Recetario. Revisá la conexión y probá de nuevo.", "error");
+  } finally {
+    state.recetarioSyncEnCurso = false;
+    solicitarRender();
+  }
+};
+window.setRecetarioSyncAuto = async function(on) {
+  await set(ref(db, "costeo/config/recetarioSyncAuto"), !!on);
+  state.config = { ...state.config, recetarioSyncAuto: !!on };
+  showToast(on ? "✅ La sincronización con el Recetario se va a hacer sola cada 7 días." : "La sincronización automática quedó apagada.", "success");
+  render();
+};
+window.toggleCostosElaboraciones = function() { state.verCostosElaboraciones = !state.verCostosElaboraciones; render(); };
+
+function filasCostosElaboraciones() {
+  const out = [];
+  for (const [area, recs] of Object.entries(state.recetarioSync?.costos || {})) {
+    for (const [id, c] of Object.entries(recs || {})) out.push({ id, area, ...c, motivos: aArrayRecetario(c.motivos) });
+  }
+  return out.sort((a, b) => (a.tipo === b.tipo ? 0 : a.tipo === "plato" ? -1 : 1) || String(a.grupo).localeCompare(String(b.grupo), "es") || String(a.nombre).localeCompare(String(b.nombre), "es"));
+}
+function costoRefElaboracion(c) { return c.costoPorPorcion ?? c.costoTotal; }
+function textoUnidadElaboracion(c) {
+  if (c.costoPorPorcion !== null && c.costoPorPorcion !== undefined) return "por porción";
+  return "receta completa";
+}
+function variacionElaboracionHtml(c) {
+  const ref_ = costoRefElaboracion(c);
+  if (!(c.anterior > 0) || !(ref_ >= 0)) return `<span class="text-muted">—</span>`;
+  const d = ref_ - c.anterior;
+  if (Math.abs(d) < 0.005) return `<span class="text-muted">sin cambio</span>`;
+  return `<span class="badge ${d > 0 ? "badge-suba" : "badge-baja"}">${d > 0 ? "🔺" : "🔻"} ${fmtPct(d / c.anterior * 100)}</span>`;
+}
+function fechaHoraLarga(ts) {
+  return ts ? new Date(ts).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+}
+
+function panelSyncRecetarioHtml() {
+  const u = state.recetarioSync?.ultima;
+  const auto = !(state.config && state.config.recetarioSyncAuto === false);
+  const prox = proximaSyncRecetario();
+  const filas = state.verCostosElaboraciones ? filasCostosElaboraciones() : [];
+  const pendientes = aArrayRecetario(u?.pendientesIng);
+  const ambiguos = aArrayRecetario(u?.ambiguos);
+  return `
+    <div class="section-block sync-recetario" id="sync-recetario">
+      <div class="section-header">
+        <div>
+          <div class="section-title">🔄 Sincronización con el Recetario</div>
+          <div class="text-muted" style="font-size:12px;max-width:720px">Trae los platos y subrecetas nuevos, vincula lo que no tiene duda y guarda el <b>costo real de cada elaboración</b> con los precios de mercadería actuales. ${auto ? `Se hace <b>sola cada ${RECETARIO_SYNC_DIAS} días</b>, la primera vez que se abre Costos desde un navegador conectado al Recetario.` : "La sincronización automática está apagada."}</div>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-primary" onclick="sincronizarRecetario()" ${!state.recetarioConectado || state.recetarioSyncEnCurso ? "disabled" : ""}>${state.recetarioSyncEnCurso ? "Sincronizando…" : "🔄 Sincronizar ahora"}</button>
+        </div>
+      </div>
+      <div class="sync-estado">
+        <span>Última: <b>${u ? `${fechaHoraLarga(u.ts)}${u.automatica ? " (automática)" : ""}` : "nunca"}</b></span>
+        ${auto ? `<span>Próxima: <b>${prox ? (prox <= Date.now() ? "al abrir Costos conectado" : fechaHoraLarga(prox).slice(0, 10)) : "al abrir Costos conectado"}</b></span>` : ""}
+        <label class="sync-auto"><input type="checkbox" ${auto ? "checked" : ""} onchange="setRecetarioSyncAuto(this.checked)"> Cada ${RECETARIO_SYNC_DIAS} días, sola</label>
+      </div>
+      ${!state.recetarioConectado ? `<div class="alert-box alert-warn" style="margin-top:10px"><div>⚠️ Este navegador no está conectado al Recetario: conectalo desde <a href="#" onclick="navigate('config');return false;">Configuración</a> para sincronizar. Los costos de abajo son los de la última sincronización.</div></div>` : ""}
+      ${u ? `
+      <div class="stat-row" style="margin-top:12px">
+        <div class="stat-card"><div class="stat-label">Recetas costeadas</div><div class="stat-value">${u.recetas || 0}</div></div>
+        <div class="stat-card"><div class="stat-label">🔺 Subieron / 🔻 bajaron</div><div class="stat-value">${u.subieron || 0} / ${u.bajaron || 0}</div></div>
+        <div class="stat-card"><div class="stat-label">Productos nuevos / vinculados</div><div class="stat-value">${u.productosCreados || 0} / ${u.productosVinculados || 0}</div></div>
+        <div class="stat-card"><div class="stat-label">⚠️ Costo incompleto</div><div class="stat-value" style="${u.incompletas ? "color:#c0392b" : ""}">${u.incompletas || 0}</div></div>
+      </div>
+      ${u.nPendientesIng ? `<div class="alert-box alert-warn" style="margin-top:10px"><div>🧂 <b>${u.nPendientesIng} ingrediente(s) sin vincular</b>: ${pendientes.slice(0, 12).map(x => escapeHtml(x.nombre)).join(", ")}${u.nPendientesIng > 12 ? "…" : ""}. Hasta que se vinculen, las recetas que los usan quedan con costo incompleto. Se vinculan más abajo, en "Ingredientes y envases del Recetario".</div></div>` : ""}
+      ${ambiguos.length ? `<div class="alert-box alert-warn" style="margin-top:10px"><div>❓ Con nombre repetido en Costos (no se eligió ninguno): ${ambiguos.map(a => `${escapeHtml(a.nombre)} (${a.cantidad} ${a.tipo === "plato" ? "productos" : "bases"})`).join(", ")}. Vinculalos a mano.</div></div>` : ""}
+      <div class="row-actions" style="margin-top:12px;justify-content:flex-start">
+        <button class="btn ${state.verCostosElaboraciones ? "btn-turq" : "btn-ghost"} btn-sm" onclick="toggleCostosElaboraciones()">${state.verCostosElaboraciones ? "▴ Ocultar" : "▾ Ver"} el costo de cada elaboración</button>
+        <button class="btn btn-ghost btn-sm" onclick="imprimirCostosElaboraciones()">🖨️ Imprimir</button>
+      </div>
+      ${state.verCostosElaboraciones ? `<div class="data-table-wrap" style="margin-top:10px"><table class="data-table tabla-movil">
+        <thead><tr><th>Elaboración</th><th>Costo</th><th>Por unidad</th><th>Variación</th><th>Estado</th></tr></thead>
+        <tbody>${filas.map(c => `<tr>
+          <td data-label="Elaboración">${escapeHtml(c.nombre)}<div class="text-muted" style="font-size:11px">${c.tipo === "plato" ? "🍽️ Plato" : "🧪 Subreceta"}${c.grupo ? " · " + escapeHtml(c.grupo) : ""}${c.codigo ? " · " + escapeHtml(c.codigo) : ""}</div></td>
+          <td data-label="Costo"><b>${fmtMoney(costoRefElaboracion(c))}</b><div class="text-muted" style="font-size:11px">${textoUnidadElaboracion(c)}${c.margenSeguridad ? ` · incluye ${c.margenSeguridad}% de margen` : ""}</div></td>
+          <td data-label="Por unidad">${c.costoPorUnidad !== null && c.costoPorUnidad !== undefined && c.unidad && c.unidad !== "porcion" ? `${fmtMoney(c.costoPorUnidad)} / ${escapeHtml(c.unidad)}` : `<span class="text-muted">—</span>`}</td>
+          <td data-label="Variación">${variacionElaboracionHtml(c)}</td>
+          <td data-label="Estado">${c.incompleto ? `<span class="badge badge-alerta" title="${escapeHtml(c.motivos.join("; "))}">⚠️ Incompleto</span><div class="text-muted" style="font-size:11px">${escapeHtml(c.motivos[0] || "")}</div>` : `<span class="badge badge-ok">✓ Completo</span>`}</td>
+        </tr>`).join("")}</tbody>
+      </table></div>` : ""}` : ""}
+    </div>`;
+}
+window.imprimirCostosElaboraciones = function() {
+  const filas = filasCostosElaboraciones();
+  if (!filas.length) { showToast("Todavía no hay costos guardados: sincronizá primero.", "warn"); return; }
+  const u = state.recetarioSync?.ultima;
+  imprimirDocumento(`Costos de elaboraciones ${todayISO()}`, `
+    <h1>Costo real de cada elaboración</h1>
+    <div class="sub">Candela · Recetario sincronizado el ${escapeHtml(fechaHoraLarga(u?.ts))} · ${filas.length} receta${filas.length === 1 ? "" : "s"} · precios de mercadería a esa fecha</div>
+    ${tablaImprimible(filas, c => `${c.tipo === "plato" ? "Platos" : "Subrecetas"}${c.grupo ? " · " + c.grupo : ""}`, [
+      { t: "Elaboración", v: c => escapeHtml(c.nombre) + (c.incompleto ? " ⚠️" : "") },
+      { t: "Costo", num: true, cls: "nuevo", v: c => fmtMoney(costoRefElaboracion(c)) },
+      { t: "", v: c => textoUnidadElaboracion(c) },
+      { t: "Por unidad", num: true, v: c => c.costoPorUnidad != null && c.unidad && c.unidad !== "porcion" ? `${fmtMoney(c.costoPorUnidad)} / ${escapeHtml(c.unidad)}` : "—" },
+      { t: "Variación", num: true, v: c => c.anterior > 0 ? _difImpresa(costoRefElaboracion(c) - c.anterior, c.anterior) : "—" },
+    ])}
+    <div class="pie">⚠️ = costo incompleto (algún ingrediente sin vincular a un insumo o con unidad incompatible).</div>`);
 };
 
 window.guardarCostoSinIvaRapido = async function(id, val) {
@@ -7989,6 +8349,7 @@ function renderConfigView(container) {
       <div class="text-muted" style="margin-bottom:10px">Costeo puede leer las recetas del Recetario (<code>recetario/</code>) y calcular su costo con los precios que ya maneja. Es de solo lectura: nunca escribe nada ahí. Hace falta una cuenta lectora creada una sola vez en la consola de Firebase — el detalle completo está en <code>INTEGRACION_COSTEOS.md</code>.</div>
       ${state.recetarioConectado ? `
         <div class="alert-box" style="background:var(--turq-pale);border-color:var(--turq)">✅ Conectado con el Recetario. Los platos vinculados calculan su costo en tiempo real.</div>
+        <div class="text-muted" style="font-size:12px;margin-top:8px">🔄 Sincronización ${state.config && state.config.recetarioSyncAuto === false ? "automática apagada" : `automática cada ${RECETARIO_SYNC_DIAS} días`} · última: ${state.recetarioSync?.ultima ? fechaHoraLarga(state.recetarioSync.ultima.ts) : "nunca"} · <a href="#" onclick="navigate('recetas-bases');setRecetasBasesTab('recetario');return false;">ver detalle</a></div>
         <button class="btn btn-ghost btn-sm" onclick="desconectarRecetario()" style="margin-top:8px">Desconectar</button>
       ` : `
         <div class="form-row" style="align-items:flex-end">
