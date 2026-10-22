@@ -608,6 +608,8 @@ Los manuales se escriben **en la página**, sin pasar por Drive. En cada manual 
 - **Nada se pierde.** Lo que se escribe se guarda **solo** como borrador, en el dispositivo y en la base (`manuales/borradores`). Si se cierra la pestaña o se corta internet, al volver aparece "Recuperé lo que estabas escribiendo".
 - **El equipo ve los cambios solo al tocar "Publicar".** Al publicar, la versión anterior queda en el **historial** (las últimas 15 de cada manual, en "🕓 Versiones anteriores") y se puede recuperar.
 - **Eliminar** un manual lo manda a la papelera, de donde se restaura con sus roles.
+- **Tablas:** el encabezado se destaca (fondo oscuro y letra clara). En el celular cada fila es una tarjeta, con el encabezado como barra oscura arriba y el nombre de cada columna en color. Si una tabla pegada no tiene encabezado, la primera fila pasa a serlo.
+- **Manuales listos para sumar:** cuando hay un manual escrito fuera del sitio (hoy, **Club Candela**: tarjeta de sellos, cupón de bienvenida, PIN, QR de mesas, base de clientes y vouchers, armado a partir del módulo de la rama `club-candela`), Gerencia ve un aviso en el inicio. **Revisar y publicar** lo abre en el editor, ya ubicado en "Locales de venta" y asignado a Cajero/a, Experto del turno y Vendedor/a y mozo/a. Se publica como cualquier manual; **Descartar** oculta el aviso.
 
 **Primera carga desde Drive (una sola vez):** para no copiar a mano los manuales existentes, en *Gestionar → Contenido → Traer los manuales desde Drive* se elige `manual-unificado.docx` (carpeta "Manuales de Procedimientos — Candela Café & Patisserie" → "Manuales — material de trabajo") o el Google Doc descargado como **.docx**.
 - Se arma un manual por cada **Título 1**, agrupados por "Parte N — …".

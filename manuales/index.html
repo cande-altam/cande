@@ -109,7 +109,11 @@ mark{background:#ffe58a;border-radius:3px;padding:0 1px;}
 .doc .tabla{overflow-x:auto;margin:6px 0 16px;}
 .doc table{border-collapse:collapse;width:100%;font-size:14px;}
 .doc th,.doc td{border:1px solid var(--cream-dark);padding:8px 10px;text-align:left;vertical-align:top;}
-.doc th{background:var(--cream-mid);font-weight:700;}
+.doc th{background:var(--black);color:var(--cream);border-color:var(--black);font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.doc th:not(:last-child){border-right-color:var(--black-soft);}
+.doc th *{color:inherit;}
+.doc tbody tr:nth-child(even) td{background:#faf9f2;}
+.doc tbody td:first-child:not(:last-child){font-weight:600;}
 .doc td p:last-child,.doc th p:last-child{margin-bottom:0;}
 .cuadro{border-radius:10px;padding:13px 15px;margin:10px 0 16px;background:var(--c-nota);}
 .cuadro p:last-child{margin-bottom:0;}
@@ -187,6 +191,13 @@ mark{background:#ffe58a;border-radius:3px;padding:0 1px;}
 .dorso .sec{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(238,235,215,.55);margin:9px 0 2px;}
 .dorso .alerg{font-size:11px;padding:2px 8px;margin:0 3px 3px 0;}
 .dorso .ver{margin-top:9px;justify-content:center;width:100%;}
+.sugerido{display:flex;gap:12px;align-items:center;background:var(--black);color:var(--cream);border-radius:var(--r);padding:14px 16px;margin:0 0 14px;flex-wrap:wrap;}
+.sugerido .sg-ico{font-size:26px;}
+.sugerido .sg-tx{flex:1;min-width:200px;}
+.sugerido .sg-tx b{display:block;color:#fff;font-size:15px;}
+.sugerido .sg-tx span{font-size:13px;color:rgba(238,235,215,.75);}
+.sugerido .sg-bt{display:flex;gap:6px;flex-wrap:wrap;}
+.sugerido .btn-ghost{color:var(--cream);border-color:rgba(238,235,215,.35);background:transparent;}
 .rec-acciones{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:-4px 0 12px;}
 @media (prefers-reduced-motion: reduce){.giro-in{transition:none;}}
 @media (max-width:520px){.giro{height:350px;}}
@@ -211,12 +222,21 @@ mark{background:#ffe58a;border-radius:3px;padding:0 1px;}
   .cuadro{padding:12px 13px;}
   .doc .tabla{overflow:visible;margin:4px 0 14px;}
   .doc table.apilada,.doc table.apilada tbody{display:block;width:100%;}
-  .doc table.apilada thead{display:none;}
   .doc table.apilada tr{display:block;border:1px solid var(--cream-dark);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--white);}
   .doc table.apilada td{display:block;border:none;padding:3px 0;font-size:15px;}
-  .doc table.apilada td:first-child{font-weight:700;padding-bottom:5px;}
-  .doc table.apilada td:not(:first-child)[data-label]::before{content:attr(data-label);display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray);font-weight:600;margin-bottom:1px;}
-  .doc table.apilada.dos-col td:not(:first-child)::before{display:none;}
+  .doc table.apilada tr{border-left:4px solid var(--terra);}
+  .doc table.apilada thead{display:block;margin-bottom:8px;}
+  .doc table.apilada thead tr{display:flex;flex-wrap:wrap;align-items:center;background:var(--black);border:none;border-radius:10px;padding:9px 13px;margin:0;}
+  .doc table.apilada thead th{display:inline;background:none;border:none;padding:0;font-size:11.5px;}
+  .doc table.apilada thead th *{display:inline;margin:0;}
+  .doc table.apilada thead th:not(:last-child)::after{content:"·";margin:0 8px;opacity:.55;}
+  .doc table.apilada td:first-child:last-child{font-weight:400;border-bottom:none;padding-bottom:3px;margin-bottom:0;}
+  .doc table.apilada tbody tr:nth-child(even) td{background:none;}
+  .doc table.apilada td:first-child{font-weight:700;font-size:15.5px;padding-bottom:7px;margin-bottom:5px;border-bottom:1px solid var(--cream-dark);}
+  .doc table.apilada td:first-child[data-label]::before{content:attr(data-label);display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--terra);font-weight:800;margin-bottom:2px;}
+  .doc table.apilada td:not(:first-child)[data-label]::before{content:attr(data-label);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--terra);font-weight:800;margin:4px 0 1px;}
+  .doc table.apilada.dos-col td::before{display:none!important;}
+  .doc table.apilada.en-linea tr{border-left-width:1px;border-left-color:var(--cream-dark);}
   .doc table.apilada.en-linea td:not(:first-child){display:inline-block;margin-right:16px;}
   .doc table.apilada td.vacia{display:none!important;}
   .man-head h1{font-size:23px;}
@@ -243,6 +263,170 @@ mark{background:#ffe58a;border-radius:3px;padding:0 1px;}
 <body>
 <div id="app"></div>
 <div id="toast"></div>
+<!-- Manual listo para sumar: Gerencia lo revisa en el editor y lo publica. -->
+<template id="sugerido-club-candela">
+<h2>1. Objetivo</h2>
+<p>Explicar paso a paso cómo funciona el <b>Club Candela</b>, el programa de beneficios para clientes, y qué hace cada persona del equipo: cómo se suma un cliente, cómo se entregan los premios y el cupón de bienvenida, cómo se ayuda a un cliente que perdió el acceso a su tarjeta y cómo se usan la base de clientes y los vouchers.</p>
+<div class="cuadro cuadro-nota"><p><b>En pocas palabras:</b> el cliente escanea el QR de la mesa o del mostrador y suma <b>1 sello por día</b>. Con <b>10 visitas</b> se lleva <b>una merienda gratis</b>. Al registrarse, además, gana <b>1 medialuna para llevar</b> si nos sigue en Instagram (@candelacafe.salta).</p></div>
+
+<h2>2. Dónde se usa</h2>
+<div class="tabla"><table><thead><tr><th>Pantalla</th><th>Quién la usa</th><th>Para qué</th></tr></thead><tbody>
+<tr><td>Tarjeta del cliente (se abre con el QR de mesa)</td><td>Cliente, desde su celular</td><td>Registrarse, sumar el sello del día, ver su tarjeta, su código y su cupón de bienvenida.</td></tr>
+<tr><td>⭐ Club (sistema de Pedidos de Clientes)</td><td>Caja, experto del turno y Gerencia</td><td>Buscar clientes, entregar premios y cupones, asignar PIN, imprimir los QR y configurar el programa.</td></tr>
+<tr><td>👥 Clientes (mismo sistema)</td><td>Experto del turno y Gerencia</td><td>Ver la base unificada de clientes (pedidos + Club), filtrar y exportar a CSV.</td></tr>
+<tr><td>🎟️ Vouchers (mismo sistema)</td><td>Caja y Gerencia</td><td>Validar, canjear, generar y anular vouchers de regalo o vendidos.</td></tr>
+</tbody></table></div>
+
+<h2>3. Quién hace qué</h2>
+<div class="tabla"><table><thead><tr><th>Rol</th><th>Responsabilidad en el Club</th></tr></thead><tbody>
+<tr><td>Cliente</td><td>Escanea el QR, se registra una sola vez y suma su sello en cada visita. Muestra su código en caja para canjear.</td></tr>
+<tr><td>Vendedores y mozos</td><td>No suman sellos ni canjean nada. Invitan al cliente a sumarse al Club, le explican cómo funciona y lo mandan a caja para canjear.</td></tr>
+<tr><td>Cajero/a</td><td>Entrega premios y cupones de bienvenida, asigna PIN y valida vouchers desde el sistema.</td></tr>
+<tr><td>Experto del turno</td><td>Resuelve casos raros, controla que los QR estén en todas las mesas y revisa la base de clientes.</td></tr>
+<tr><td>Gerencia / administradora</td><td>Configura el premio, los límites y los locales, habilita las cuentas del personal y es la única que puede borrar clientes.</td></tr>
+</tbody></table></div>
+
+<h2>4. Conceptos clave</h2>
+<div class="tabla"><table><thead><tr><th>Concepto</th><th>Qué es</th></tr></thead><tbody>
+<tr><td>Sello</td><td>Una visita. Se suma solo cuando el cliente escanea el QR: <b>1 por día</b>, hasta <b>4 por semana</b> y únicamente en horario de atención (7 a 21 h). Se marca con el isotipo de Candela.</td></tr>
+<tr><td>Tarjeta</td><td>Réplica digital de la tarjeta física: 10 casilleros. Con 10 sellos hay premio.</td></tr>
+<tr><td>Premio</td><td>Una merienda gratis (lo define Gerencia). Al entregarlo se descuentan 10 sellos.</td></tr>
+<tr><td>Código de 3 palabras</td><td>El “alias” de cada cliente, por ejemplo <b>TORTA.LUNA.CANELA</b>. Aparece en el recuadro rojo de su tarjeta. Es lo que se tipea en caja. No importan mayúsculas, puntos ni espacios.</td></tr>
+<tr><td>PIN</td><td>4 números que elige el cliente. Con su WhatsApp y su PIN abre la tarjeta desde cualquier celular.</td></tr>
+<tr><td>Cupón de bienvenida</td><td>1 medialuna para llevar por seguir a @candelacafe.salta. Solo para clientes nuevos y solo el día en que se registran.</td></tr>
+</tbody></table></div>
+<div class="cuadro cuadro-regla"><p><b>Nadie suma sellos a mano.</b> El sello lo suma el cliente escaneando el QR. Si alguien te pide que le sumes un sello, explicale que tiene que escanear el QR de la mesa o del mostrador.</p></div>
+
+<h2>5. Cómo se suma un cliente (para explicarle)</h2>
+<ol>
+<li>Escanea con la cámara del celular el QR de la mesa o del mostrador.</li>
+<li>La primera vez toca <b>“Soy nuevo, quiero registrarme”</b> y completa: nombre, WhatsApp (código de área sin 0 y número sin 15), cumpleaños (opcional, ¡hay regalo!) y un <b>PIN de 4 números</b>. Toca <b>Crear mi tarjeta</b>.</li>
+<li>Se suma el sello del día: la tarjeta gira y el isotipo cae en el casillero.</li>
+<li>Unos segundos después le aparece el cartel del <b>regalo de bienvenida</b> (ver punto 8).</li>
+<li>En las próximas visitas solo escanea el QR y se suma el sello.</li>
+<li>Si cambia de celular o el QR se abre en otro navegador, toca <b>“¿Ya tenés tarjeta?”</b> y entra con su WhatsApp y su PIN: ve todos sus sellos.</li>
+</ol>
+<p>Conviene que guarde el link de la tarjeta en favoritos ⭐ para volver a verla.</p>
+<div class="cuadro cuadro-atencion"><p><b>Ojo:</b> si abre el QR desde la cámara de Instagram, WhatsApp, Google Lens, en modo incógnito o después de borrar los datos del navegador, le va a pedir registrarse aunque ya tenga tarjeta. No tiene que crear otra: que toque <b>“¿Ya tenés tarjeta?”</b>. Cada WhatsApp tiene una sola tarjeta.</p></div>
+
+<h2>6. Entrar a ⭐ Club (personal)</h2>
+<ol>
+<li>Abrí el sistema de <b>Pedidos de Clientes</b> y tocá <b>⭐ Club</b>.</li>
+<li>Ingresá con el email y la contraseña de la cuenta del personal.</li>
+<li>Vas a ver tres pestañas: <b>🔎 Atender</b>, <b>🖨️ QR de mesas</b> y <b>⚙️ Configuración</b>.</li>
+</ol>
+<p>Si aparece <b>“Cuenta no habilitada”</b>, avisá a Gerencia: esa cuenta todavía no tiene permiso de personal.</p>
+<div class="cuadro cuadro-prohibido"><p><b>Prohibido</b> pasar la contraseña del personal o abrir el sistema en el celular de un cliente. Si un cliente abre su tarjeta en un navegador con la sesión del personal, le aparece el aviso “Sesión del personal abierta”: la tarjeta se usa siempre desde el celular del cliente.</p></div>
+
+<h2>7. Entregar el premio (merienda gratis)</h2>
+<ol>
+<li>El cliente avisa que completó la tarjeta (en su celular dice “¡Completaste tu tarjeta!”).</li>
+<li>Entrá a <b>⭐ Club → 🔎 Atender</b>.</li>
+<li>Tipeá el <b>código de 3 palabras</b> de su tarjeta (o su WhatsApp) y tocá <b>Buscar</b>. “torta luna canela” también sirve.</li>
+<li>Confirmá con el cliente que el nombre sea el suyo.</li>
+<li>Mirá la tarjeta y la lista de <b>Últimas visitas</b> (fecha, hora y local). Si ves algo raro, consultá al experto del turno antes de entregar.</li>
+<li>Tocá <b>🎁 Entregar premio</b> y confirmá con <b>Sí, entregado</b>. Se descuentan 10 sellos y queda registrado quién lo entregó.</li>
+<li>Entregá la merienda.</li>
+</ol>
+<div class="cuadro cuadro-regla"><p>Tocá <b>Entregar premio</b> solo cuando realmente lo entregás. Si no aparece el recuadro del premio, el cliente todavía no completó los 10 sellos.</p></div>
+
+<h2>8. Cupón de bienvenida: 1 medialuna por seguirnos en Instagram</h2>
+<p>Solo lo reciben los clientes <b>nuevos</b>, al registrarse. En su celular aparece el cartel “¡Tenés una medialuna de regalo!” con su código de 3 palabras y un botón para seguir a @candelacafe.salta.</p>
+<ol>
+<li>El cliente se acerca a caja con el cartel abierto.</li>
+<li>Entrá a <b>⭐ Club → 🔎 Atender</b> y buscá su código (o su WhatsApp).</li>
+<li>Aparece el recuadro <b>🥐 Cupón de bienvenida: 1 medialuna para llevar</b>.</li>
+<li>Pedile que te muestre que sigue a <b>@candelacafe.salta</b> en Instagram.</li>
+<li>Tocá <b>Entregar medialuna</b> y confirmá con <b>Sí, entregada</b>.</li>
+<li>Entregá la medialuna para llevar. En el celular del cliente el cartel cambia a “¡Listo, medialuna entregada!”.</li>
+</ol>
+<div class="tabla"><table><thead><tr><th>Lo que ves en la ficha</th><th>Qué significa</th><th>Qué hacer</th></tr></thead><tbody>
+<tr><td>Recuadro del cupón con el botón Entregar medialuna</td><td>Cupón vigente</td><td>Entregar como se explica arriba.</td></tr>
+<tr><td>“entregado el …”</td><td>Ya se usó</td><td>No se entrega otra medialuna.</td></tr>
+<tr><td>“el cliente cerró el cartel sin usarlo”</td><td>Lo perdió (se le avisó antes de cerrarlo)</td><td>No se entrega.</td></tr>
+<tr><td>“venció sin usarse”</td><td>Vale solo el día del registro</td><td>No se entrega.</td></tr>
+</tbody></table></div>
+<div class="cuadro cuadro-atencion"><p>El cupón vale <b>solo el día en que el cliente se registró</b>, es <b>para llevar</b> y se usa <b>una sola vez</b>. A los clientes que ya estaban registrados no les aparece.</p></div>
+
+<h2>9. Cliente sin PIN o que se lo olvidó</h2>
+<ol>
+<li>Entrá a <b>⭐ Club → 🔎 Atender</b> y buscá al cliente por su WhatsApp (o su código).</li>
+<li>Tocá <b>🔑 Asignar PIN</b> (o <b>Asignar PIN nuevo</b> si ya tenía uno).</li>
+<li>Pedile que elija 4 números, escribilos y tocá <b>Guardar PIN</b>.</li>
+<li>En su celular, el cliente toca <b>“¿Ya tenés tarjeta?”</b> y entra con su WhatsApp y ese PIN.</li>
+</ol>
+<p>En la ficha se ve “✅ Tiene PIN” o “⚠️ Todavía no tiene PIN”. Los clientes que se registraron antes de que existiera el PIN también pueden crearlo desde su tarjeta, en el recuadro “🔑 Creá tu PIN”. Por seguridad se permite un intento de PIN cada 10 segundos por número.</p>
+
+<h2>10. QR de mesas</h2>
+<ol>
+<li>Entrá a <b>⭐ Club → 🖨️ QR de mesas</b> (con el sistema abierto desde su dirección web, no como archivo).</li>
+<li>Cada local tiene su propio QR. Tocá <b>🖨️ Imprimir</b> en el del local: sale una hoja A4 con 4 tarjetitas.</li>
+<li>Recortalas y ponelas en las mesas y en el mostrador.</li>
+<li>Probá con tu celular que el QR abra la tarjeta antes de dejarlo.</li>
+</ol>
+<p><b>Control del experto del turno:</b></p>
+<p>☐ Hay QR en todas las mesas y en el mostrador.</p>
+<p>☐ Los QR están sanos, limpios y se pueden escanear.</p>
+<p>☐ Cada local usa su propio QR (no se mezclan entre locales).</p>
+
+<h2>11. Configuración (Gerencia)</h2>
+<p>En <b>⭐ Club → ⚙️ Configuración</b>:</p>
+<div class="tabla"><table><thead><tr><th>Campo</th><th>Qué hace</th><th>Valor actual por defecto</th></tr></thead><tbody>
+<tr><td>Visitas para el premio</td><td>Fijo, igual que la tarjeta física.</td><td>10</td></tr>
+<tr><td>Premio</td><td>Texto que se muestra en la tarjeta: “Completá 10 visitas, accedé a [premio]…”.</td><td>una merienda gratis</td></tr>
+<tr><td>Máx. sellos por semana</td><td>Tope semanal por cliente (de 1 a 7).</td><td>4</td></tr>
+<tr><td>Horario desde / hasta</td><td>Fuera de este horario no se suman sellos.</td><td>7 a 21 h</td></tr>
+<tr><td>Locales</td><td>Nombre de cada local. Se puede agregar uno nuevo; cada local tiene su QR.</td><td>—</td></tr>
+</tbody></table></div>
+<p>Las cuentas del personal se crean en Firebase (Authentication) y se habilitan en <b>fidelizacion/staff</b>. Para quitarle el acceso a alguien se borra su nodo.</p>
+
+<h2>12. 👥 Clientes: la base unificada</h2>
+<ul>
+<li>Junta en un solo lugar a los clientes de pedidos y a los socios del Club, cruzados por <b>WhatsApp</b> (“0387 15 400-1122”, “+54 9 387 4001122” y “387 4001122” son la misma persona).</li>
+<li>Cada cliente muestra sus pedidos (productos más pedidos e historial) y, si es socio, sus sellos, visitas, premios canjeados y cumpleaños, con el botón <b>Abrir en ⭐ Club</b>.</li>
+<li><b>Filtros:</b> con pedidos, socios del Club, en ambas, premio pendiente, cumpleaños en 7 días y 30+ días sin venir.</li>
+<li><b>CSV:</b> exporta la lista filtrada con el WhatsApp listo para campañas (549…).</li>
+<li>Los datos del Club solo aparecen con la sesión del personal abierta en ⭐ Club.</li>
+</ul>
+<p><b>Usos recomendados:</b> saludar a los que cumplen años esa semana, avisar a quienes tienen un premio pendiente y escribirles a los clientes que hace más de 30 días que no vienen.</p>
+<h3>Borrar un cliente (solo la administradora)</h3>
+<ol>
+<li>Con la sesión de ⭐ Club abierta con la cuenta de administradora, entrá a <b>👥 Clientes</b> y abrí el cliente.</li>
+<li>Tocá <b>🗑️ Borrar cliente</b> y escribí <b>BORRAR</b> para confirmar.</li>
+<li>Se borra su tarjeta del Club (sellos, visitas, PIN, código y cupón) y sus datos de contacto. Los pedidos ya hechos quedan en el historial.</li>
+</ol>
+<div class="cuadro cuadro-regla"><p>Si un cliente pide la <b>baja</b>, el personal no la hace: avisá a la administradora para que lo borre.</p></div>
+
+<h2>13. 🎟️ Vouchers</h2>
+<p>Se usan con la misma cuenta del personal del Club. Cada voucher tiene su propio código, vence a los 30 días (se puede cambiar al generarlo) y se usa <b>una sola vez</b>.</p>
+<h3>Validar y canjear</h3>
+<ol>
+<li>Entrá a <b>🎟️ Vouchers → 🔎 Validar</b>.</li>
+<li>Tocá <b>📷 Escanear voucher</b> o escribí el código.</li>
+<li>Mirá el estado: <b>VIGENTE</b>, <b>VENCIDO</b>, <b>YA FUE USADO</b>, <b>ANULADO</b> o <b>CÓDIGO INVÁLIDO</b>, y qué incluye.</li>
+<li>Si está vigente, tocá <b>✅ Canjear voucher</b> → <b>Sí, canjear</b> y entregá lo que dice. Desde ese momento queda usado.</li>
+</ol>
+<h3>Generar</h3>
+<ol>
+<li>Entrá a <b>➕ Generar</b>.</li>
+<li>Elegí el tipo: <b>🥐 Productos</b> o <b>💲 Monto</b>, y el origen: <b>🎁 Regalo</b> o <b>💵 Venta</b> (con su medio de pago).</li>
+<li>Completá qué incluye, para quién (opcional) y el vencimiento. Revisá la vista previa.</li>
+<li>Indicá la cantidad y tocá <b>🎟️ Generar voucher</b>.</li>
+<li>Imprimilo (🖨️), mandalo por <b>📲 WhatsApp</b> o descargá la imagen (⬇️).</li>
+</ol>
+<p>En <b>📋 Vouchers</b> está el listado con filtros, búsqueda y el total vendido. Un voucher se puede <b>🚫 Anular</b> indicando el motivo.</p>
+
+<h2>14. Situaciones frecuentes</h2>
+<div class="tabla"><table><thead><tr><th>Situación</th><th>Qué hacer</th></tr></thead><tbody>
+<tr><td>El cliente ya tenía tarjeta pero le pide registrarse</td><td>Que toque “¿Ya tenés tarjeta?” y entre con WhatsApp y PIN.</td></tr>
+<tr><td>No tiene PIN o se lo olvidó</td><td>⭐ Club → Atender → buscarlo → 🔑 Asignar PIN (punto 9).</td></tr>
+<tr><td>Escaneó y no se sumó el sello</td><td>Es normal si ya sumó hoy, si llegó al máximo de la semana o si está fuera de horario. Explicale la regla; no se suman sellos a mano.</td></tr>
+<tr><td>“No existe ningún cliente con el código…”</td><td>Revisá las 3 palabras con el cliente o buscalo por WhatsApp.</td></tr>
+<tr><td>El cliente pide la baja</td><td>Avisar a la administradora (punto 12).</td></tr>
+<tr><td>Algo raro en las visitas (muchas seguidas, otro local, horarios extraños)</td><td>No entregues el premio. Consultá al experto del turno.</td></tr>
+<tr><td>“No se pudo abrir la cámara” (vouchers)</td><td>Dale permiso de cámara al navegador o escribí el código a mano.</td></tr>
+</tbody></table></div>
+</template>
 <script type="module">
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, get, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -259,7 +443,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, creat
 // El contenido se carga importando el documento de Drive (.docx o .html): se parte en un manual
 // por cada Título 1, agrupados por "Parte N — …". Drive sigue siendo el original: cuando cambia,
 // se vuelve a importar.
-const APP_VERSION = "2026-10-22 cards";
+const APP_VERSION = "2026-10-22 club";
 const GERENCIA_EMAIL = "gerencia@candela-app.com";
 const DOMINIO = "candela-app.com";
 const LIBS = {
@@ -1188,7 +1372,9 @@ function marcar(texto, q) {
 function vistaInicio() {
   const lista = manualesVisibles();
   const g = esGerencia();
-  const accionesG = g ? `<div class="acciones" style="margin:-4px 0 14px"><button class="btn btn-primary btn-sm" data-act="nuevo-manual">➕ Nuevo manual</button><button class="btn btn-ghost btn-sm" data-act="gerencia-tab" data-tab="contenido">Ordenar, ocultar e importar</button></div>` : "";
+  const avisosSug = sugeridosPendientes().map(x => `<div class="sugerido"><div class="sg-ico">${x.emoji}</div><div class="sg-tx"><b>Manual listo para sumar: ${esc(x.titulo)}</b><span>${esc(x.descripcion)}</span></div>
+    <div class="sg-bt"><button class="btn btn-primary btn-sm" data-act="sugerido" data-id="${x.clave}">Revisar y publicar</button><button class="btn btn-ghost btn-sm" data-act="sugerido-no" data-id="${x.clave}">Descartar</button></div></div>`).join("");
+  const accionesG = g ? `${avisosSug}<div class="acciones" style="margin:-4px 0 14px"><button class="btn btn-primary btn-sm" data-act="nuevo-manual">➕ Nuevo manual</button><button class="btn btn-ghost btn-sm" data-act="gerencia-tab" data-tab="contenido">Ordenar, ocultar e importar</button></div>` : "";
   if (!lista.length) {
     return `${barra()}<div class="main"><div class="h-pag">Manuales de procedimiento</div>
       <div class="bloque" style="margin-top:14px">${g
@@ -1242,6 +1428,11 @@ function htmlParaMostrar(html, buscar) {
   d.querySelectorAll("table").forEach(t => {
     const filas = [...t.rows];
     if (!filas.length || (filas.length === 1 && filas[0].cells.length === 1)) return;
+    if (filas.length > 1 && !t.querySelector("th")) {
+      const thead = d.createElement("thead"), tr = d.createElement("tr");
+      for (const c of [...filas[0].cells]) { const th = d.createElement("th"); th.innerHTML = c.innerHTML; for (const a of ["colspan", "rowspan"]) if (c.getAttribute(a)) th.setAttribute(a, c.getAttribute(a)); tr.appendChild(th); }
+      thead.appendChild(tr); filas[0].remove(); t.insertBefore(thead, t.firstChild);
+    }
     const cab = t.tHead && t.tHead.rows[0] ? [...t.tHead.rows[0].cells].map(c => c.textContent.trim()) : null;
     const cols = Math.max(...filas.map(f => f.cells.length));
     t.classList.add("apilada"); if (cols <= 2) t.classList.add("dos-col");
@@ -1505,6 +1696,37 @@ function partesExistentes() {
   for (const m of Object.values(S.indice || {}).sort((a, b) => (a.parteOrden ?? 0) - (b.parteOrden ?? 0))) if (!out.includes(m.parte)) out.push(m.parte);
   return out;
 }
+// Manuales escritos fuera del sitio y listos para sumar (el contenido está en un <template>).
+// Gerencia ve un aviso en el inicio hasta que lo publica o lo descarta.
+const SUGERIDOS = [
+  { clave: "club-candela", titulo: "Club Candela", emoji: "⭐", parte: /locales de venta/i,
+    descripcion: "Tarjeta de sellos, cupón de bienvenida, PIN, QR de mesas, base de clientes y vouchers, paso a paso.",
+    aplicaA: "Cajeros, experto del turno, vendedores y mozos", roles: ["cajero", "experto-del-turno", "vendedor-mozo"] },
+];
+function sugeridosPendientes() {
+  if (!esGerencia()) return [];
+  const usados = new Set([...Object.values(S.indice || {}).map(m => m.origen), ...Object.values(S.papelera || {}).map(x => x.indice?.origen),
+    ...Object.values(S.borradores || {}).map(b => b.origen)].filter(Boolean));
+  return SUGERIDOS.filter(x => !usados.has(x.clave) && !S.meta?.sugeridos?.[x.clave] && document.getElementById("sugerido-" + x.clave));
+}
+function abrirSugerido(claveSug) {
+  const x = SUGERIDOS.find(y => y.clave === claveSug); if (!x) return;
+  const p = partesExistentes();
+  const parte = p.find(n => x.parte.test(n)) || p[1] || p[0] || "Documentos comunes";
+  const html = document.getElementById("sugerido-" + x.clave).innerHTML.trim();
+  S.edit = { id: null, nuevoKey: "nuevo-" + Date.now(), origen: x.clave, titulo: x.titulo, parte, nuevaParte: "",
+    version: `Versión 1.0 · ${new Date().toLocaleDateString("es-AR", { month: "long", year: "numeric" }).replace(/^./, c => c.toUpperCase())}`,
+    aplicaA: x.aplicaA, visible: true, roles: Object.fromEntries(x.roles.filter(r => S.roles[r]).map(r => [r, true])), html,
+    pendiente: true, estado: "Revisalo y tocá Publicar: el equipo lo ve en el acto." };
+  S.versiones = null; S.vista = "editar";
+  pintar(); window.scrollTo(0, 0);
+}
+async function descartarSugerido(claveSug) {
+  if (!confirm("¿Descartar este manual? Siempre lo podés escribir a mano con ➕ Nuevo manual.")) return;
+  await update(ref(db, "manuales/contenido/meta"), { [`sugeridos/${claveSug}`]: Date.now() });
+  S.meta = { ...(S.meta || {}), sugeridos: { ...(S.meta?.sugeridos || {}), [claveSug]: Date.now() } };
+  pintar();
+}
 async function abrirEditor(id, borradorKey) {
   let e;
   if (borradorKey && S.borradores[borradorKey]) {
@@ -1552,7 +1774,7 @@ async function guardarBorrador() {
   clearTimeout(_timerBorrador);
   const e = leerEditor(); if (!e || !e.pendiente) return;
   const k = claveBorrador(e);
-  const b = { id: e.id || null, titulo: e.titulo, parte: e.parte, nuevaParte: e.nuevaParte || "", version: e.version, aplicaA: e.aplicaA, visible: e.visible, roles: e.roles, html: limpiarHtml(e.html), guardadoEn: Date.now() };
+  const b = { id: e.id || null, titulo: e.titulo, parte: e.parte, nuevaParte: e.nuevaParte || "", version: e.version, aplicaA: e.aplicaA, visible: e.visible, roles: e.roles, html: limpiarHtml(e.html), guardadoEn: Date.now(), ...(e.origen ? { origen: e.origen } : {}) };
   try { localStorage.setItem("manual-borrador-" + k, JSON.stringify(b)); } catch {}
   try {
     await set(ref(db, `manuales/borradores/${k}`), b);
@@ -1591,6 +1813,7 @@ async function publicarEdicion() {
   const hash = (await sha256(a.html)).slice(0, 16);
   const entrada = { titulo, parte, parteDescripcion: mismaParte[0]?.[1].parteDescripcion || previo?.parteDescripcion || "", parteOrden, orden, visible: !!e.visible,
     version: String(e.version || "").trim(), aplicaA: String(e.aplicaA || "").trim(), secciones: a.secciones, hash, palabras: a.palabras, editado: ahora };
+  const origen = e.origen || previo?.origen; if (origen) entrada.origen = origen;
   const upd = {
     [`contenido/indice/${id}`]: entrada, [`contenido/html/${id}`]: a.html, [`contenido/texto/${id}`]: a.texto.slice(0, 200000),
     "contenido/meta/editadoEn": ahora, [`borradores/${claveBorrador(e)}`]: null,
@@ -2087,6 +2310,8 @@ async function onClick(ev) {
     else if (act === "descartar-imp") { S.importacion = null; pintar(); }
     else if (act === "editar") await abrirEditor(el.getAttribute("data-id"));
     else if (act === "nuevo-manual") await abrirEditor(null);
+    else if (act === "sugerido") abrirSugerido(el.getAttribute("data-id"));
+    else if (act === "sugerido-no") await descartarSugerido(el.getAttribute("data-id"));
     else if (act === "seguir-borrador") await abrirEditor(null, el.getAttribute("data-k"));
     else if (act === "descartar-borrador") await descartarBorrador(el.getAttribute("data-k"));
     else if (act === "salir-editor") await salirEditor();
