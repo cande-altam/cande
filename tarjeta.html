@@ -212,12 +212,22 @@ async function registrar(ev){
     };
     if (dia && mes) nueva.cumple = `${String(mes).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
 
-    await db.ref("fidelizacion").update({
+    const alta = {
       [`tarjetas/${uid}`]: nueva,
       [`telefonos/${tel}`]: uid,
       [`pines/${tel}`]: pin,
-      [`cupones/${uid}`]: { tipo: "instagram", estado: "disponible", creado: firebase.database.ServerValue.TIMESTAMP },
-    });
+    };
+    try {
+      // Con el cupón de bienvenida (Instagram)
+      await db.ref("fidelizacion").update({
+        ...alta,
+        [`cupones/${uid}`]: { tipo: "instagram", estado: "disponible", creado: firebase.database.ServerValue.TIMESTAMP },
+      });
+    } catch (e) {
+      // Si las reglas de Firebase todavía no tienen el cupón, registrar igual sin cupón
+      console.warn("Registro sin cupón:", e && e.message);
+      await db.ref("fidelizacion").update(alta);
+    }
     cardUid = uid;
     tienePin = true;
     card = (await db.ref(`fidelizacion/tarjetas/${uid}`).once("value")).val();
