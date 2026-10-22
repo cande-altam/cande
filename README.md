@@ -466,7 +466,17 @@ Este bloque **reemplaza** al del paso 3 de Informes. Es el mismo contenido que e
       ".read":  "auth != null && auth.token.email === 'gerencia@candela-app.com'",
       ".write": "auth != null && auth.token.email === 'gerencia@candela-app.com'",
       "login": {
-        "$clave": { ".read": true }
+        "$clave": {
+          ".read": true,
+          ".write": "auth != null && !data.exists() && newData.val() === auth.token.email && root.child('manuales/solicitudes').child(auth.uid).exists()"
+        }
+      },
+      "solicitudes": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && (!newData.exists() || (!data.exists() && newData.child('codigo').isString() && root.child('manuales/invitaciones').child(newData.child('codigo').val()).child('activa').val() === true))",
+          ".validate": "newData.hasChildren(['nombre', 'usuario', 'email', 'codigo'])"
+        }
       },
       "personal": {
         "$uid": {
@@ -580,6 +590,7 @@ La raíz del sitio (`/`) muestra una página simple con links a las dos apps.
 | **📖 Recetario** | Solo para los roles que lo tienen. Por defecto, **baristas y cocina** (cocina de locales, jefe y ayudante de cocina). Son las mismas fichas que carga la cocina en `/recetario/`, **en modo lectura**: categorías, buscador (también por ingrediente), foto, ingredientes con cantidad, merma y cantidad bruta, subrecetas enlazadas, empaque, pasos y alérgenos (incluidos los de las subrecetas). |
 | **🔑 Mi cuenta** | Cada persona puede cambiar su contraseña. |
 | **⚙️ Gestionar → Equipo y accesos** | **Alta**: nombre, usuario (se sugiere solo), contraseña generada y **roles** (puede tener más de uno). Muestra los datos para pasárselos (copiar o WhatsApp). Por persona: roles, cuántos de sus manuales leyó, último ingreso, **Contraseña nueva**, **Dar de baja** (pierde el acceso en el acto, aunque tenga la página abierta), **Reactivar** y **Eliminar**. |
+| **⚙️ Gestionar → Sumar gente** | Tres formas, en **Equipo y accesos**:<br>• **Una persona**: nombre y rol; el usuario sale solo (si está tomado, con un número: `anar2`) y la contraseña también. **"Crear y seguir"** deja el formulario listo para la próxima, con el mismo rol.<br>• **Varias a la vez**: se pega la lista de nombres (uno por línea) y se elige el rol.<br>• **🔗 Link de invitación**: un link por rol para mandar al grupo. Cada persona se registra sola, con su usuario y su contraseña, y queda **pendiente**. Arriba aparece "Pidieron entrar", con el rol del link ya marcado: **✓ Aprobar** y la persona entra en el acto (su pantalla se actualiza sola). El botón Gestionar muestra cuántos esperan. Los links se pueden desactivar.<br>Los recién creados quedan en una lista con usuario, contraseña, **💬 Enviar** por WhatsApp (mensaje de bienvenida armado) y **📋 Copiar todos**. |
 | **⚙️ Gestionar → Roles** | Cada rol: **qué manuales ve** y **si usa el Recetario**. "Crear los roles sugeridos" arma uno por puesto (experto del turno, cajero, vendedor y mozo, barista, cocina de locales, jefe y ayudante de cocina, maestro de área, cada área de la cuadra, compras, limpieza), cada uno con su manual y los documentos comunes. Cambiar un rol actualiza en el acto a todos los que lo tienen. |
 | **⚙️ Gestionar → Contenido** | Manual nuevo, ordenar manuales y partes (↑ ↓), renombrar partes, ocultar, borradores sin publicar, **eliminados** (se restauran), **imprimir o guardar todo en PDF**, y la importación desde Drive (solo para la primera carga). |
 
@@ -610,6 +621,11 @@ Los manuales se escriben **en la página**, sin pasar por Drive. En cada manual 
 - **Lo que da acceso** no es la cuenta. Es figurar **activo** en `manuales/personal/{uid}`, y lo que puede ver está en `personal/{uid}/accesos`: qué manuales y si usa el Recetario. Lo calcula Gerencia a partir de los roles cada vez que cambia algo; las reglas no pueden recorrer los roles en cada lectura. Las reglas exigen las dos cosas en cada lectura, por eso:
   - dar de baja, o sacarle a alguien un rol, corta el acceso en el acto;
   - no alcanza con saber la dirección de un manual o del Recetario.
+- **Registro con link:** la persona crea su propia cuenta, pero solo puede escribir **su pedido** (`manuales/solicitudes/{uid}`) y reservar **su usuario** (`manuales/login`, sin pisar uno existente). Las reglas lo permiten solo si el código del link está activo en `manuales/invitaciones`. No puede darse acceso: eso lo escribe Gerencia al aprobar.
+- **Si Gerencia no puede entrar,** la pantalla de ingreso dice por qué:
+  - la contraseña no coincide con `gerencia@candela-app.com`, o esa cuenta no existe;
+  - se entró con otra cuenta (dice con cuál);
+  - faltan las reglas: "¿No podés entrar? Revisar conexión" prueba la conexión y si están publicadas.
 - **Altas:** se crean desde el navegador de Gerencia con una instancia aparte de Firebase, así Gerencia no pierde su sesión. Necesitan que en *Authentication → Settings → User actions* esté activado **"Enable create (sign-up)"** (viene así).
 - **Contraseña nueva:** desde el navegador no se puede cambiar la contraseña de otra cuenta.
   - Se crea una cuenta nueva con el **mismo usuario**, roles y lecturas; la anterior queda sin acceso.

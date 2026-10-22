@@ -176,7 +176,7 @@ mark{background:#ffe58a;border-radius:3px;padding:0 1px;}
 <script type="module">
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, get, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, updatePassword, setPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, updatePassword, setPersistence, inMemoryPersistence, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // =============================================================
 // Manuales de procedimiento — Candela Café & Patisserie
@@ -189,7 +189,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, creat
 // El contenido se carga importando el documento de Drive (.docx o .html): se parte en un manual
 // por cada Título 1, agrupados por "Parte N — …". Drive sigue siendo el original: cuando cambia,
 // se vuelve a importar.
-const APP_VERSION = "2026-10-22 roles+editor";
+const APP_VERSION = "2026-10-22 registro";
 const GERENCIA_EMAIL = "gerencia@candela-app.com";
 const DOMINIO = "candela-app.com";
 const LIBS = {
@@ -221,7 +221,12 @@ const S = {
   roles: {}, borradores: {}, papelera: {}, editandoRoles: null, editandoRol: null,
   edit: null, versiones: null,
   rec: { recetas: {}, fotos: {}, cargando: false, error: "", escuchando: false }, recCat: "", recId: null, recQ: "",
+  invitaciones: {}, solicitudes: {}, altaModo: "una", creadosSesion: [], masivo: { texto: "", roles: {} }, masivoCorriendo: false,
+  invNueva: { roles: {} }, modoRegistro: false, registrando: false, solicitud: null, diag: "", errorGerencia: "",
 };
+// Link de invitación: /manuales/?inv=CODIGO abre el formulario para registrarse.
+const INVITACION = (() => { try { return (new URLSearchParams(location.search).get("inv") || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 20); } catch { return ""; } })();
+S.modoRegistro = !!INVITACION;
 const desuscribir = [];
 let rootEl = null;
 
@@ -307,8 +312,8 @@ async function iniciarSesion(user) {
   const email = (user.email || "").toLowerCase();
   if (email === GERENCIA_EMAIL) {
     S.rol = "gerencia";
-    let avisado = false;
-    const sinReglas = () => { if (!avisado) { avisado = true; toast(mensajeError("permission-denied"), "error"); } };
+    S.errorGerencia = "";
+    const sinReglas = () => { S.errorGerencia = "Entraste como Gerencia, pero Firebase no te deja leer los manuales: las reglas nuevas no están publicadas (o se publicaron otras). Pegá el archivo firebase-reglas.json completo en Realtime Database → Rules → Publicar, y recargá esta página."; pintar(); };
     escuchar("manuales/contenido/indice", v => { S.indice = v || {}; pintar(); }, sinReglas);
     escuchar("manuales/contenido/meta", v => { S.meta = v; pintar(); }, sinReglas);
     escuchar("manuales/personal", v => { S.personal = v || {}; pintar(); }, sinReglas);
@@ -316,13 +321,30 @@ async function iniciarSesion(user) {
     escuchar("manuales/roles", v => { S.roles = v || {}; pintar(); }, sinReglas);
     escuchar("manuales/borradores", v => { S.borradores = v || {}; if (S.vista !== "editar") pintar(); }, sinReglas);
     escuchar("manuales/papelera", v => { S.papelera = v || {}; pintar(); }, sinReglas);
+    escuchar("manuales/invitaciones", v => { S.invitaciones = v || {}; pintar(); }, sinReglas);
+    escuchar("manuales/solicitudes", v => { S.solicitudes = v || {}; pintar(); }, sinReglas);
     pintar();
     return;
   }
-  let perfil = null;
-  try { perfil = (await get(ref(db, `manuales/personal/${user.uid}`))).val(); } catch { perfil = null; }
-  if (!perfil || perfil.activo !== true) {
-    await salirConMensaje(perfil ? "Tu acceso a los manuales fue dado de baja. Si es un error, hablá con Gerencia." : "Esta cuenta no tiene acceso a los manuales.");
+  let perfil = null, errLectura = null;
+  try { perfil = (await get(ref(db, `manuales/personal/${user.uid}`))).val(); } catch (e) { perfil = null; errLectura = e; }
+  if (!perfil) {
+    // ¿Se registró con un link y espera la aprobación de Gerencia?
+    let sol = null;
+    try { sol = (await get(ref(db, `manuales/solicitudes/${user.uid}`))).val(); } catch {}
+    if (sol) {
+      S.rol = "pendiente"; S.solicitud = sol;
+      escuchar(`manuales/personal/${user.uid}`, v => { if (v && v.activo === true) iniciarSesion(user); });
+      pintar();
+      return;
+    }
+    await salirConMensaje(errLectura
+      ? "No se pudo verificar tu acceso: falta publicar las reglas de Manuales en Firebase (avisale a Gerencia)."
+      : `Entraste como ${email}, pero esa cuenta no es la de Gerencia (${GERENCIA_EMAIL}) ni una cuenta del equipo de Manuales.`);
+    return;
+  }
+  if (perfil.activo !== true) {
+    await salirConMensaje("Tu acceso a los manuales fue dado de baja. Si es un error, hablá con Gerencia.");
     return;
   }
   S.rol = "empleado"; S.perfil = perfil;
@@ -336,6 +358,7 @@ async function iniciarSesion(user) {
 }
 
 async function ingresar(usuario, pass) {
+  S.loginUsuario = String(usuario || "");
   S.errorLogin = ""; S.ingresando = true; pintar();
   try {
     const crudo = String(usuario || "").trim();
@@ -347,14 +370,74 @@ async function ingresar(usuario, pass) {
       email = (await get(ref(db, `manuales/login/${k}`))).val();
       if (!email) { const e = new Error("x"); e.code = "auth/invalid-credential"; throw e; }
     }
-    await signInWithEmailAndPassword(auth, email, pass);
+    try { await signInWithEmailAndPassword(auth, email, pass); }
+    catch (e) {
+      if (email === GERENCIA_EMAIL && /invalid-credential|wrong-password|user-not-found|invalid-login/.test(e.code || "")) {
+        const e2 = new Error(`La contraseña no coincide con la cuenta ${GERENCIA_EMAIL}, o esa cuenta no existe. En Firebase → Authentication → Users tiene que figurar exactamente ese email (todo en minúsculas, con guion: candela-app.com).`);
+        throw e2;
+      }
+      throw e;
+    }
   } catch (e) {
-    S.errorLogin = mensajeError(e.code || e.message);
+    S.errorLogin = e.code ? mensajeError(e.code) : (e.message || String(e));
   } finally {
     S.ingresando = false; pintar();
   }
 }
 
+// ── Registro con link de invitación ─────────────────────
+// Gerencia comparte un link por rol; cada persona elige su usuario y su contraseña y queda
+// "pendiente" hasta que Gerencia la aprueba con un toque. La cuenta se crea con una instancia
+// aparte de Firebase para poder escribir la solicitud antes de entrar con la sesión normal.
+async function registrarme({ nombre, usuario, pass, pass2 }) {
+  nombre = String(nombre || "").trim(); usuario = normalizarUsuario(usuario);
+  if (!INVITACION) throw new Error("Falta el link de invitación: pedíselo a Gerencia.");
+  if (nombre.length < 3) throw new Error("Escribí tu nombre y apellido.");
+  if (usuario.length < 3) throw new Error("El usuario tiene que tener al menos 3 letras o números.");
+  if (usuario === "gerencia") throw new Error("Ese usuario está reservado.");
+  if (String(pass || "").length < 6) throw new Error("La contraseña tiene que tener al menos 6 caracteres.");
+  if (pass !== pass2) throw new Error("Las dos contraseñas no coinciden.");
+  const k = await claveUsuario(usuario);
+  if ((await get(ref(db, `manuales/login/${k}`))).val()) throw new Error(`El usuario «${usuario}» ya existe. Probá con otro (por ejemplo, agregale la inicial del apellido).`);
+  const email = emailNuevo();
+  const app2 = initializeApp(firebaseConfig, "registro-" + Date.now());
+  try {
+    const a2 = getAuth(app2);
+    try { await setPersistence(a2, inMemoryPersistence); } catch {}
+    const cred = await createUserWithEmailAndPassword(a2, email, pass);
+    const db2 = getDatabase(app2);
+    try {
+      await set(ref(db2, `manuales/solicitudes/${cred.user.uid}`), { nombre, usuario, email, codigo: INVITACION, ts: Date.now() });
+    } catch (e) {
+      try { await deleteUser(cred.user); } catch {}
+      throw new Error("El link de invitación no es válido o Gerencia lo desactivó. Pedile uno nuevo.");
+    }
+    try { await set(ref(db2, `manuales/login/${k}`), email); }
+    catch (e) {
+      try { await remove(ref(db2, `manuales/solicitudes/${cred.user.uid}`)); } catch {}
+      try { await deleteUser(cred.user); } catch {}
+      throw new Error(`El usuario «${usuario}» ya existe. Probá con otro.`);
+    }
+    try { await signOut(a2); } catch {}
+  } finally {
+    try { await deleteApp(app2); } catch {}
+  }
+  await signInWithEmailAndPassword(auth, email, pass);
+}
+// "¿No podés entrar?": prueba lo que se puede probar sin cuenta.
+async function diagnosticar() {
+  S.diag = "Revisando…"; pintar();
+  try {
+    await get(ref(db, "manuales/login/prueba-de-conexion"));
+    S.diag = "✓ La conexión con Firebase anda y las reglas de Manuales están publicadas. Si no podés entrar, es el usuario o la contraseña. Gerencia entra con el usuario «gerencia» y la contraseña de la cuenta gerencia@candela-app.com.";
+  } catch (e) {
+    const c = String(e.code || e.message || "");
+    S.diag = /permission|PERMISSION/i.test(c)
+      ? "✗ Las reglas de Manuales no están publicadas en Firebase. Pegá el archivo firebase-reglas.json completo en Realtime Database → Rules → Publicar."
+      : "✗ No hay conexión con Firebase (" + c + "). Revisá internet.";
+  }
+  pintar();
+}
 // ── Contenido ────────────────────────────────────────────
 // Qué ve cada persona sale de sus roles: Gerencia arma los roles (qué manuales y si usa el
 // Recetario) y al asignarlos se guarda el resultado en personal/{uid}/accesos, que es lo que
@@ -864,6 +947,80 @@ async function eliminarRol(rid) {
   S.roles = rolesDef; S.editandoRol = null;
   pintar();
 }
+// ── Altas rápidas (Gerencia) ────────────────────────────
+function codigoInvitacion() {
+  const abc = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from(crypto.getRandomValues(new Uint8Array(10))).map(b => abc[b % abc.length]).join("");
+}
+const linkInvitacion = c => `${location.origin}/manuales/?inv=${c}`;
+async function crearInvitacion(roles) {
+  if (!Object.keys(roles || {}).length) throw new Error("Elegí al menos un rol para el link.");
+  const c = codigoInvitacion();
+  const inv = { roles, activa: true, creada: Date.now() };
+  await set(ref(db, `manuales/invitaciones/${c}`), inv);
+  S.invitaciones = { ...S.invitaciones, [c]: inv };
+  S.invNueva = { roles: {}, ultima: c };
+  pintar();
+}
+async function desactivarInvitacion(c) {
+  if (!confirm("¿Desactivar este link? Ya no se va a poder usar para registrarse.")) return;
+  await update(ref(db, `manuales/invitaciones/${c}`), { activa: false });
+}
+function nombresRoles(roles) { return Object.keys(roles || {}).map(r => S.roles[r]?.nombre).filter(Boolean).join(", ") || "sin rol"; }
+async function aprobarSolicitud(uid, roles) {
+  const sol = S.solicitudes[uid]; if (!sol) return;
+  roles = roles || S.invitaciones[sol.codigo]?.roles || {};
+  const perfil = { nombre: sol.nombre, usuario: sol.usuario, email: sol.email, activo: true, roles, accesos: accesosDe(roles), creado: Date.now(), viaInvitacion: sol.codigo || "" };
+  const upd = { [`personal/${uid}`]: perfil, [`solicitudes/${uid}`]: null };
+  if (sol.codigo && S.invitaciones[sol.codigo]) upd[`invitaciones/${sol.codigo}/usos`] = (S.invitaciones[sol.codigo].usos || 0) + 1;
+  await update(ref(db, "manuales"), upd);
+  S.personal = { ...S.personal, [uid]: perfil };
+  toast(`✓ ${sol.nombre} ya puede entrar.`);
+}
+async function rechazarSolicitud(uid) {
+  const sol = S.solicitudes[uid]; if (!sol) return;
+  if (!confirm(`¿Rechazar a ${sol.nombre}? No va a poder entrar.`)) return;
+  const k = await claveUsuario(sol.usuario);
+  const upd = { [`solicitudes/${uid}`]: null };
+  if ((await get(ref(db, `manuales/login/${k}`))).val() === sol.email) upd[`login/${k}`] = null;
+  await update(ref(db, "manuales"), upd);
+}
+// Usuario libre: el sugerido y, si está tomado, con un número.
+async function usuarioLibre(base) {
+  base = normalizarUsuario(base) || "usuario";
+  for (let n = 1; n < 50; n++) {
+    const u = n === 1 ? base : `${base}${n}`;
+    if (!(await get(ref(db, `manuales/login/${await claveUsuario(u)}`))).val()) return u;
+  }
+  return base + Date.now().toString(36).slice(-3);
+}
+async function altaMasiva(texto, roles) {
+  const nombres = String(texto || "").split(/\n|;/).map(t => t.replace(/^[-•*\d.)\s]+/, "").trim()).filter(t => t.length >= 3);
+  if (!nombres.length) throw new Error("Escribí un nombre por línea.");
+  if (!Object.keys(roles || {}).length && !confirm("No elegiste rol: van a entrar sin manuales hasta que les asignes uno. ¿Seguimos?")) return;
+  S.masivoCorriendo = true; pintar();
+  let ok = 0;
+  try {
+    for (const nombre of nombres) {
+      try {
+        const usuario = await usuarioLibre(usuarioSugerido(nombre));
+        const pass = contrasenaNueva();
+        await darDeAlta({ nombre, usuario, pass, roles });
+        S.creadosSesion.unshift({ nombre, usuario, pass, roles: nombresRoles(roles) });
+        ok++;
+      } catch (e) {
+        S.creadosSesion.unshift({ nombre, error: e.message || String(e) });
+      }
+      pintar();
+    }
+  } finally { S.masivoCorriendo = false; }
+  S.masivo = { texto: "", roles };
+  toast(`✓ ${ok} de ${nombres.length} usuarios creados.`);
+  pintar();
+}
+const textoCredencial = c => `${c.nombre} — Usuario: ${c.usuario} · Contraseña: ${c.pass}`;
+const mensajeBienvenida = c => `Hola ${String(c.nombre).split(" ")[0]}! Estos son tus datos para los Manuales${/Barista|Cocina|cocina/.test(c.roles || "") ? " y el Recetario" : ""} de Candela:\n${location.origin}/manuales/\nUsuario: ${c.usuario}\nContraseña: ${c.pass}\n(La podés cambiar en «Mi cuenta».)`;
+
 async function cambiarMiContrasena(nueva, repetida) {
   if (String(nueva).length < 6) throw new Error("La contraseña tiene que tener al menos 6 caracteres.");
   if (nueva !== repetida) throw new Error("Las dos contraseñas no coinciden.");
@@ -872,16 +1029,38 @@ async function cambiarMiContrasena(nueva, repetida) {
 
 // ── Vistas ───────────────────────────────────────────────
 function vistaLogin() {
+  if (S.modoRegistro) return `<div class="gate"><form class="gate-card" data-form="registro" autocomplete="on">
+    <div style="font-size:30px">👋</div>
+    <h1>Creá tu usuario</h1>
+    <div class="muted">Manuales${INVITACION ? " y Recetario" : ""} de Candela Café &amp; Patisserie. Gerencia te va a aprobar y vas a poder entrar.</div>
+    <div class="campo"><label class="label" for="rg-n">Nombre y apellido</label><input class="input" id="rg-n" name="nombre" data-input="rg-nombre" autocomplete="name" required></div>
+    <div class="campo"><label class="label" for="rg-u">Usuario (con este vas a entrar)</label><input class="input" id="rg-u" name="usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></div>
+    <div class="campo"><label class="label" for="rg-p">Contraseña (6 o más)</label><input class="input" id="rg-p" name="pass" type="password" autocomplete="new-password" required></div>
+    <div class="campo"><label class="label" for="rg-p2">Repetila</label><input class="input" id="rg-p2" name="pass2" type="password" autocomplete="new-password" required></div>
+    ${S.errorLogin ? `<div class="error">${esc(S.errorLogin)}</div>` : ""}
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:16px" ${S.registrando ? "disabled" : ""}>${S.registrando ? "Creando…" : "Crear mi usuario"}</button>
+    <div class="muted" style="margin-top:14px;font-size:12px">¿Ya tenés usuario? <a href="#" data-act="modo-login">Entrá acá</a>.</div>
+  </form></div>`;
   return `<div class="gate"><form class="gate-card" data-form="login" autocomplete="on">
     <div style="font-size:30px">📚</div>
     <h1>Manuales y Recetario</h1>
     <div class="muted">Candela Café &amp; Patisserie · entrá con tu usuario</div>
-    <div class="campo"><label class="label" for="lg-u">Usuario</label><input class="input" id="lg-u" name="usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></div>
+    <div class="campo"><label class="label" for="lg-u">Usuario</label><input class="input" id="lg-u" name="usuario" value="${esc(S.loginUsuario || "")}" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></div>
     <div class="campo"><label class="label" for="lg-p">Contraseña</label><input class="input" id="lg-p" name="pass" type="password" autocomplete="current-password" required></div>
     ${S.errorLogin ? `<div class="error">${esc(S.errorLogin)}</div>` : ""}
     <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:16px" ${S.ingresando ? "disabled" : ""}>${S.ingresando ? "Entrando…" : "Entrar"}</button>
-    <div class="muted" style="margin-top:14px;font-size:12px">¿No tenés usuario o te olvidaste la contraseña? Pedíselo a Gerencia.</div>
+    <div class="muted" style="margin-top:14px;font-size:12px">¿No tenés usuario o te olvidaste la contraseña? Pedíselo a Gerencia.${INVITACION ? ` <a href="#" data-act="modo-registro">Crear mi usuario</a>.` : ""}</div>
+    <div class="muted" style="margin-top:8px;font-size:12px"><a href="#" data-act="diagnosticar">¿No podés entrar? Revisar conexión</a></div>
+    ${S.diag ? `<div class="aviso" style="text-align:left">${esc(S.diag)}</div>` : ""}
   </form></div>`;
+}
+function vistaPendiente() {
+  return `<div class="gate"><div class="gate-card">
+    <div style="font-size:30px">⏳</div>
+    <h1>¡Listo, ${esc((S.solicitud?.nombre || "").split(" ")[0])}!</h1>
+    <div class="muted" style="margin-top:6px">Tu usuario <b>${esc(S.solicitud?.usuario || "")}</b> está creado. Falta que Gerencia lo apruebe: cuando lo haga, esta pantalla se actualiza sola y vas a ver tus manuales.</div>
+    <button class="btn btn-ghost" style="margin-top:16px" data-act="salir">Salir</button>
+  </div></div>`;
 }
 function barra() {
   const g = esGerencia();
@@ -891,9 +1070,9 @@ function barra() {
     <div class="marca" data-act="inicio">📚 Candela<small>${esc(nombre)}</small></div>
     <button class="tb ${enManuales ? "on" : ""}" data-act="inicio">📚<span class="tx"> Manuales</span></button>
     ${tieneRecetario() ? `<button class="tb ${S.vista === "recetario" ? "on" : ""}" data-act="recetario">📖<span class="tx"> Recetario</span></button>` : ""}
-    ${g ? `<button class="tb ${S.vista === "gerencia" ? "on" : ""}" data-act="gerencia">⚙️<span class="tx"> Gestionar</span></button>` : `<button class="tb ${S.vista === "cuenta" ? "on" : ""}" data-act="cuenta">🔑<span class="tx"> Mi cuenta</span></button>`}
+    ${g ? `<button class="tb ${S.vista === "gerencia" ? "on" : ""}" data-act="gerencia">⚙️<span class="tx"> Gestionar</span>${Object.keys(S.solicitudes || {}).length ? ` <span class="chip" style="background:var(--terra);color:#fff">${Object.keys(S.solicitudes).length}</span>` : ""}</button>` : `<button class="tb ${S.vista === "cuenta" ? "on" : ""}" data-act="cuenta">🔑<span class="tx"> Mi cuenta</span></button>`}
     <button class="tb" data-act="salir">Salir</button>
-  </div>`;
+  </div>${g && S.errorGerencia ? `<div class="aviso" style="margin:0;border-radius:0;font-weight:600">⚠️ ${esc(S.errorGerencia)}</div>` : ""}`;
 }
 function tarjetaManual(m) {
   const est = estadoLectura(m);
@@ -1047,27 +1226,58 @@ function vistaGerencia() {
     };
     const a = S.alta || { nombre: "", usuario: "", pass: contrasenaNueva(), roles: {} };
     S.alta = a;
-    cuerpo = `
-      ${S.credenciales ? `<div class="cred"><b>Listo. Pasale estos datos a ${esc(S.credenciales.nombre)}:</b>
-        <div style="margin-top:8px">Entrá a <b>${esc(location.origin)}/manuales/</b></div>
-        <div style="margin-top:6px">Usuario: <code>${esc(S.credenciales.usuario)}</code> · Contraseña: <code>${esc(S.credenciales.pass)}</code></div>
-        <div class="acciones" style="margin-top:10px">
-          <button class="btn btn-ghost btn-sm" data-act="copiar-cred">📋 Copiar</button>
-          <a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`Manuales y Recetario de Candela: ${location.origin}/manuales/\nUsuario: ${S.credenciales.usuario}\nContraseña: ${S.credenciales.pass}`)}">💬 WhatsApp</a>
-          <button class="btn btn-ghost btn-sm" data-act="cerrar-cred">Listo</button>
-        </div>
-        <div class="muted" style="margin-top:8px;font-size:12px">La contraseña no se vuelve a mostrar. Puede cambiarla desde «Mi cuenta».</div></div>` : ""}
-      <form class="bloque" data-form="alta" style="margin-top:12px">
-        <h3>➕ Dar de alta a alguien</h3>
+    const sols = Object.entries(S.solicitudes || {}).sort((x, y) => (x[1].ts || 0) - (y[1].ts || 0));
+    const invs = Object.entries(S.invitaciones || {}).filter(([, v]) => v.activa).sort((x, y) => (y[1].creada || 0) - (x[1].creada || 0));
+    const modo = S.altaModo;
+    const wa = txt => `https://wa.me/?text=${encodeURIComponent(txt)}`;
+    let panel;
+    if (modo === "una") panel = `<form data-form="alta">
         <div class="form-g">
-          <div><label class="label" for="a-n">Nombre y apellido</label><input class="input" id="a-n" name="nombre" data-input="alta-nombre" value="${esc(a.nombre)}" required></div>
-          <div><label class="label" for="a-u">Usuario</label><input class="input" id="a-u" name="usuario" data-input="alta-usuario" value="${esc(a.usuario)}" autocapitalize="none" required></div>
-          <div><label class="label" for="a-p">Contraseña inicial</label><input class="input" id="a-p" name="pass" data-input="alta-pass" value="${esc(a.pass)}" required></div>
-          <div style="align-self:end"><button type="button" class="btn btn-ghost btn-sm" data-act="otra-pass">🎲 Otra contraseña</button></div>
+          <div><label class="label" for="a-n">Nombre y apellido</label><input class="input" id="a-n" name="nombre" data-input="alta-nombre" value="${esc(a.nombre)}" placeholder="Ej.: Juana Pérez" required></div>
+          <div><label class="label" for="a-u">Usuario <span class="muted" style="font-weight:400">(se arma solo)</span></label><input class="input" id="a-u" name="usuario" data-input="alta-usuario" value="${esc(a.usuario)}" autocapitalize="none" required></div>
         </div>
-        <div style="margin-top:12px"><span class="label">Rol (puede tener más de uno) — define qué manuales ve y si usa el Recetario 📖</span>${checksRoles("alta-rol", a.roles || {})}</div>
-        <button class="btn btn-primary" style="margin-top:14px" ${S.creando ? "disabled" : ""}>${S.creando ? "Creando…" : "Crear usuario"}</button>
-      </form>
+        <div style="margin-top:10px"><span class="label">Rol</span>${checksRoles("alta-rol", a.roles || {})}</div>
+        <div class="acciones" style="margin-top:12px;align-items:center">
+          <button class="btn btn-primary" ${S.creando ? "disabled" : ""}>${S.creando ? "Creando…" : "Crear y seguir con otra persona"}</button>
+          <span class="muted" style="font-size:12px">Contraseña: <b>${esc(a.pass)}</b> <a href="#" data-act="otra-pass">otra</a></span>
+          <input type="hidden" name="pass" value="${esc(a.pass)}">
+        </div>
+      </form>`;
+    else if (modo === "varias") panel = `<form data-form="masivo">
+        <label class="label" for="m-t">Un nombre por línea (copiá y pegá la lista del grupo o de la planilla)</label>
+        <textarea class="input" id="m-t" name="texto" data-input="masivo-texto" rows="6" placeholder="Juana Pérez&#10;Tomás Gómez&#10;Lucía Díaz">${esc(S.masivo.texto)}</textarea>
+        <div style="margin-top:10px"><span class="label">Rol para todos</span>${checksRoles("masivo-rol", S.masivo.roles || {})}</div>
+        <button class="btn btn-primary" style="margin-top:12px" ${S.masivoCorriendo ? "disabled" : ""}>${S.masivoCorriendo ? "Creando…" : "Crear todos"}</button>
+        <div class="muted" style="font-size:12px;margin-top:6px">Usuario y contraseña se arman solos. Abajo quedan los datos de cada uno para mandárselos.</div>
+      </form>`;
+    else panel = `<div class="muted" style="font-size:13px;margin-bottom:10px">Mandá un link al grupo de WhatsApp (uno por rol): cada persona se registra sola con su usuario y su contraseña, y vos la aprobás con un toque acá arriba.</div>
+      <form data-form="invitacion"><span class="label">Rol de quienes entren con este link</span>${checksRoles("inv-rol", S.invNueva.roles || {})}
+        <button class="btn btn-primary" style="margin-top:12px">🔗 Crear link</button></form>
+      ${invs.length ? `<div style="margin-top:14px"><b>Links activos</b>${invs.map(([c, v]) => `<div class="prev-m" style="align-items:center;flex-wrap:wrap">
+          <span>${esc(nombresRoles(v.roles))} <span class="muted">· ${v.usos || 0} aprobado(s) · ${fechaCorta(v.creada)}</span>${S.invNueva.ultima === c ? ` <span class="chip chip-ok">nuevo</span>` : ""}<br><code style="font-size:11px">${esc(linkInvitacion(c))}</code></span>
+          <span class="acciones"><button class="btn btn-ghost btn-sm" data-act="copiar-link" data-c="${esc(c)}">📋 Copiar</button><a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="${wa(`Registrate en los Manuales de Candela (${nombresRoles(v.roles)}): ${linkInvitacion(c)}`)}">💬 WhatsApp</a><button class="btn btn-ghost btn-sm" data-act="desactivar-link" data-c="${esc(c)}">Desactivar</button></span></div>`).join("")}</div>` : ""}`;
+    cuerpo = `
+      ${sols.length ? `<div class="bloque" style="border:2px solid var(--terra)"><h3>🙋 Pidieron entrar (${sols.length})</h3>${sols.map(([uid, so]) => {
+        const inv = S.invitaciones[so.codigo];
+        return `<form class="fila-p" data-form="aprobar" data-uid="${esc(uid)}"><div style="flex:1;min-width:200px"><div class="n">${esc(so.nombre)}</div><div class="u">usuario: <b>${esc(so.usuario)}</b> · ${fechaCorta(so.ts)}${inv ? "" : " · link desactivado"}</div>
+          <div style="margin-top:6px">${checksRoles("sol-rol", inv?.roles || {})}</div></div>
+          <div class="acciones"><button class="btn btn-turq btn-sm">✓ Aprobar</button><button type="button" class="btn btn-ghost btn-sm" data-act="rechazar" data-uid="${esc(uid)}">Rechazar</button></div></form>`;
+      }).join("")}</div>` : ""}
+      ${S.credenciales ? `<div class="cred"><b>Contraseña nueva para ${esc(S.credenciales.nombre)}:</b>
+        <div style="margin-top:6px">Usuario: <code>${esc(S.credenciales.usuario)}</code> · Contraseña: <code>${esc(S.credenciales.pass)}</code></div>
+        <div class="acciones" style="margin-top:10px"><a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="${wa(mensajeBienvenida(S.credenciales))}">💬 WhatsApp</a><button class="btn btn-ghost btn-sm" data-act="cerrar-cred">Listo</button></div></div>` : ""}
+      <div class="bloque" style="margin-top:12px">
+        <h3>➕ Sumar gente</h3>
+        <div class="tabs">
+          <button class="btn ${modo === "una" ? "btn-primary" : "btn-ghost"} btn-sm" data-act="alta-modo" data-m="una">Una persona</button>
+          <button class="btn ${modo === "varias" ? "btn-primary" : "btn-ghost"} btn-sm" data-act="alta-modo" data-m="varias">Varias a la vez</button>
+          <button class="btn ${modo === "link" ? "btn-primary" : "btn-ghost"} btn-sm" data-act="alta-modo" data-m="link">🔗 Link de invitación</button>
+        </div>
+        ${panel}
+      </div>
+      ${S.creadosSesion.length ? `<div class="bloque"><h3>🆕 Recién creados <span class="muted" style="font-weight:400">· las contraseñas se ven solo ahora</span></h3>
+        ${S.creadosSesion.map(c => c.error ? `<div class="prev-m"><span>${esc(c.nombre)}</span><span class="error" style="margin:0">${esc(c.error)}</span></div>` : `<div class="prev-m" style="align-items:center;flex-wrap:wrap"><span><b>${esc(c.nombre)}</b> · ${esc(c.roles || "")}<br>Usuario: <code>${esc(c.usuario)}</code> · Contraseña: <code>${esc(c.pass)}</code></span><a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="${wa(mensajeBienvenida(c))}">💬 Enviar</a></div>`).join("")}
+        <div class="acciones" style="margin-top:10px"><button class="btn btn-ghost btn-sm" data-act="copiar-creados">📋 Copiar todos</button><button class="btn btn-ghost btn-sm" data-act="limpiar-creados">Ocultar</button></div></div>` : ""}
       <div class="bloque">
         <h3>👥 Equipo (${gente.filter(p => p.activo).length} con acceso)</h3>
         ${gente.length ? gente.map(p => `<div class="fila-p">
@@ -1604,6 +1814,7 @@ function pintar() {
   const sel = focoId && typeof activo.selectionStart === "number" ? [activo.selectionStart, activo.selectionEnd] : null;
   let html;
   if (!S.authListo) html = `<div class="gate"><div class="muted">Cargando…</div></div>`;
+  else if (S.user && S.rol === "pendiente") html = vistaPendiente();
   else if (!S.user || !S.rol) html = S.user && !S.rol ? `<div class="gate"><div class="muted">Verificando tu acceso…</div></div>` : vistaLogin();
   else if (S.vista === "editar" && esGerencia() && S.edit) html = vistaEditor();
   else if (S.vista === "manual") html = vistaManual();
@@ -1669,7 +1880,16 @@ async function onClick(ev) {
     else if (act === "receta") { ev.preventDefault(); S.vista = "receta"; S.recId = el.getAttribute("data-id"); pintar(); window.scrollTo(0, 0); }
     else if (act === "rec-cat") { S.recCat = el.getAttribute("data-cat"); pintar(); }
     else if (act === "salir") { cortarDatos(); S.errorLogin = ""; S.rec = { recetas: {}, fotos: {}, cargando: false, error: "", escuchando: false }; await signOut(auth); }
-    else if (act === "otra-pass") { S.alta = { ...S.alta, pass: contrasenaNueva() }; pintar(); }
+    else if (act === "otra-pass") { ev.preventDefault(); S.alta = { ...S.alta, pass: contrasenaNueva() }; pintar(); }
+    else if (act === "modo-login") { ev.preventDefault(); S.modoRegistro = false; S.errorLogin = ""; pintar(); }
+    else if (act === "modo-registro") { ev.preventDefault(); S.modoRegistro = true; S.errorLogin = ""; pintar(); }
+    else if (act === "diagnosticar") { ev.preventDefault(); await diagnosticar(); }
+    else if (act === "alta-modo") { S.altaModo = el.getAttribute("data-m"); pintar(); }
+    else if (act === "copiar-link") { try { await navigator.clipboard.writeText(linkInvitacion(el.getAttribute("data-c"))); toast("📋 Link copiado."); } catch { toast("No se pudo copiar: mantené apretado el link y copialo.", "warn"); } }
+    else if (act === "desactivar-link") await desactivarInvitacion(el.getAttribute("data-c"));
+    else if (act === "rechazar") await rechazarSolicitud(uid);
+    else if (act === "copiar-creados") { try { await navigator.clipboard.writeText(S.creadosSesion.filter(c => !c.error).map(textoCredencial).join("\n") + `\n${location.origin}/manuales/`); toast("📋 Copiados."); } catch { toast("No se pudo copiar.", "warn"); } }
+    else if (act === "limpiar-creados") { S.creadosSesion = []; pintar(); }
     else if (act === "baja") await darDeBaja(uid);
     else if (act === "reactivar") await reactivar(uid);
     else if (act === "eliminar") await eliminarPersona(uid);
@@ -1713,6 +1933,15 @@ async function onSubmit(ev) {
   const fd = new FormData(form);
   try {
     if (tipo === "login") await ingresar(fd.get("usuario"), fd.get("pass"));
+    else if (tipo === "registro") {
+      S.registrando = true; S.errorLogin = ""; pintar();
+      try { await registrarme({ nombre: fd.get("nombre"), usuario: fd.get("usuario"), pass: fd.get("pass"), pass2: fd.get("pass2") }); S.modoRegistro = false; }
+      catch (e) { S.errorLogin = e.code ? mensajeError(e.code) : (e.message || String(e)); }
+      finally { S.registrando = false; pintar(); }
+    }
+    else if (tipo === "masivo") await altaMasiva(fd.get("texto"), marcadosDe(form, "masivo-rol"));
+    else if (tipo === "invitacion") await crearInvitacion(marcadosDe(form, "inv-rol"));
+    else if (tipo === "aprobar") await aprobarSolicitud(form.getAttribute("data-uid"), marcadosDe(form, "sol-rol"));
     else if (tipo === "clave") {
       await cambiarMiContrasena(fd.get("c1"), fd.get("c2"));
       form.reset();
@@ -1720,11 +1949,17 @@ async function onSubmit(ev) {
     } else if (tipo === "alta") {
       S.creando = true; pintar();
       try {
-        const r = await darDeAlta({ nombre: fd.get("nombre"), usuario: fd.get("usuario"), pass: fd.get("pass"), roles: marcadosDe(form, "alta-rol") });
-        S.credenciales = { nombre: String(fd.get("nombre")).trim(), usuario: r.usuario, pass: r.pass };
-        S.alta = null;
+        const roles = marcadosDe(form, "alta-rol");
+        // Si el usuario es el que se sugirió solo y ya existe, se busca uno libre (anar → anar2).
+        let usuario = String(fd.get("usuario") || "");
+        if (normalizarUsuario(usuario) === usuarioSugerido(fd.get("nombre"))) usuario = await usuarioLibre(usuario);
+        const r = await darDeAlta({ nombre: fd.get("nombre"), usuario, pass: fd.get("pass"), roles });
+        S.creadosSesion.unshift({ nombre: String(fd.get("nombre")).trim(), usuario: r.usuario, pass: r.pass, roles: nombresRoles(roles) });
+        // Listo para la próxima persona: mismo rol, campos vacíos, cursor en el nombre.
+        S.alta = { nombre: "", usuario: "", pass: contrasenaNueva(), roles };
+        toast(`✓ ${r.usuario} creado. Seguí con la próxima persona.`);
       } finally { S.creando = false; pintar(); }
-      if (S.credenciales) window.scrollTo(0, 0);
+      const n = document.getElementById("a-n"); if (n) try { n.focus(); } catch {}
     } else if (tipo === "roles-persona") await guardarRolesPersona(form.getAttribute("data-uid"), marcadosDe(form, "rol"));
     else if (tipo === "rol") await guardarRol(form.getAttribute("data-rid") || null, { nombre: fd.get("nombre"), recetario: !!fd.get("recetario"), manuales: marcadosDe(form, "rol-manual") });
   } catch (e) {
@@ -1734,6 +1969,7 @@ async function onSubmit(ev) {
 }
 function onInput(ev) {
   const el = ev.target;
+  if (el.id === "rg-u") { el.dataset.auto = "0"; return; }
   if (el.id === "ed-cuerpo" || el.closest?.("#ed-cuerpo") || el.hasAttribute?.("data-ed-campo")) { marcarCambio(); return; }
   const k = el.getAttribute && el.getAttribute("data-input");
   if (!k) return;
@@ -1745,6 +1981,8 @@ function onInput(ev) {
     if (!antes || antes === sugeridoAntes) { S.alta.usuario = usuarioSugerido(el.value); const u = document.getElementById("a-u"); if (u) u.value = S.alta.usuario; }
   }
   else if (k === "alta-usuario") S.alta.usuario = el.value;
+  else if (k === "masivo-texto") S.masivo.texto = el.value;
+  else if (k === "rg-nombre") { const u = document.getElementById("rg-u"); if (u && (!u.value || u.dataset.auto === "1")) { u.value = usuarioSugerido(el.value); u.dataset.auto = "1"; } }
   else if (k === "alta-pass") S.alta.pass = el.value;
 }
 function onChange(ev) {
@@ -1755,6 +1993,8 @@ function onChange(ev) {
   const k = el.getAttribute && el.getAttribute("data-input");
   if (k === "archivo") elegirArchivo(el.files && el.files[0]);
   else if (k === "visible") cambiarVisible(el.getAttribute("data-id"), el.checked).catch(e => toast(mensajeError(e.code || e.message), "error"));
+  else if (el.name === "masivo-rol") S.masivo.roles = marcadosDe(el.form, "masivo-rol");
+  else if (el.name === "inv-rol") S.invNueva = { ...S.invNueva, roles: marcadosDe(el.form, "inv-rol") };
   else if (S.alta && el.name === "alta-rol") { const p = { ...(S.alta.roles || {}) }; if (el.checked) p[el.value] = true; else delete p[el.value]; S.alta.roles = p; }
 }
 // Pegar desde Word o Docs: se limpia (sin colores, tipografías ni estilos raros) antes de entrar.

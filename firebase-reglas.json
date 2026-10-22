@@ -73,7 +73,17 @@
       ".read":  "auth != null && auth.token.email === 'gerencia@candela-app.com'",
       ".write": "auth != null && auth.token.email === 'gerencia@candela-app.com'",
       "login": {
-        "$clave": { ".read": true }
+        "$clave": {
+          ".read": true,
+          ".write": "auth != null && !data.exists() && newData.val() === auth.token.email && root.child('manuales/solicitudes').child(auth.uid).exists()"
+        }
+      },
+      "solicitudes": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && (!newData.exists() || (!data.exists() && newData.child('codigo').isString() && root.child('manuales/invitaciones').child(newData.child('codigo').val()).child('activa').val() === true))",
+          ".validate": "newData.hasChildren(['nombre', 'usuario', 'email', 'codigo'])"
+        }
       },
       "personal": {
         "$uid": {
