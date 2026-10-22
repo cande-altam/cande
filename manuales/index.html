@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Manuales de procedimiento · Candela</title>
+<title>Manuales y Recetario · Candela</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -123,8 +123,42 @@ mark{background:#ffe58a;border-radius:3px;padding:0 1px;}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--black);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:all .25s;z-index:300;max-width:calc(100% - 32px);}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 #toast.warn{background:#8a5a00;} #toast.error{background:#b42318;}
+/* Editor */
+.ed-meta{display:grid;grid-template-columns:2fr 1.3fr;gap:10px;margin-bottom:10px;}
+.ed-meta2{display:grid;grid-template-columns:1fr 1.3fr;gap:10px;margin-bottom:12px;}
+.ed-barra{position:sticky;top:56px;z-index:45;display:flex;flex-wrap:wrap;gap:4px;background:var(--black-soft);padding:7px;border-radius:12px 12px 0 0;}
+.ed-barra button{background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.ed-barra button:hover{background:rgba(255,255,255,.22);}
+.ed-barra .sep{width:1px;background:rgba(255,255,255,.2);margin:2px 3px;}
+.ed-barra .b-regla{background:var(--c-regla);color:var(--black);} .ed-barra .b-prohibido{background:var(--c-prohibido);color:var(--black);}
+.ed-barra .b-atencion{background:var(--c-atencion);color:var(--black);} .ed-barra .b-pendiente{background:var(--c-pendiente);color:var(--black);} .ed-barra .b-nota{background:var(--c-nota);color:var(--black);}
+.doc.editable{border-radius:0 0 var(--r) var(--r);min-height:60vh;outline:none;border:2px solid var(--black-soft);border-top:none;}
+.doc.editable:focus{border-color:var(--terra);}
+.doc.editable .cuadro{outline:1px dashed rgba(34,32,31,.18);}
+.ed-estado{font-size:12px;color:var(--gray);}
+.ed-pie{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:12px;}
+.versiones{margin-top:8px;font-size:13px;}
+.versiones div{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed var(--cream-dark);}
+.orden-btn{background:none;border:1px solid var(--cream-dark);border-radius:6px;cursor:pointer;padding:1px 6px;font-size:11px;}
+/* Recetario (lectura) */
+.cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.cat{padding:7px 13px;border-radius:100px;border:1.5px solid var(--cream-dark);background:var(--white);font-size:13px;cursor:pointer;font-weight:500;}
+.cat.on{background:var(--black);color:var(--cream);border-color:var(--black);}
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;}
+.rec-card{background:var(--white);border-radius:12px;overflow:hidden;cursor:pointer;border:1.5px solid transparent;}
+.rec-card:hover{border-color:var(--terra);}
+.rec-foto{aspect-ratio:4/3;background:var(--cream-mid);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden;}
+.rec-foto img{width:100%;height:100%;object-fit:cover;}
+.rec-card .t{padding:9px 11px 11px;font-weight:600;font-size:14px;line-height:1.3;}
+.rec-card .t small{display:block;font-weight:400;color:var(--gray);font-size:11px;margin-top:2px;}
+.rec-hero{display:flex;gap:16px;flex-wrap:wrap;}
+.rec-hero .rec-foto{width:260px;max-width:100%;border-radius:12px;}
+.alerg{display:inline-block;background:#fdecea;color:#b42318;border-radius:100px;padding:3px 10px;font-size:12px;font-weight:600;margin:0 4px 4px 0;}
+.rec-pasos{margin-left:20px;} .rec-pasos li{margin-bottom:8px;}
 @media(max-width:640px){
-  .form-g{grid-template-columns:1fr;}
+  .form-g,.ed-meta,.ed-meta2{grid-template-columns:1fr;}
+  .ed-barra{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+  .ed-barra::-webkit-scrollbar{display:none;}
   .doc{padding:16px 14px 20px;font-size:15px;}
   .man-head h1{font-size:22px;}
   .top .tb .tx{display:none;}
@@ -155,7 +189,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, creat
 // El contenido se carga importando el documento de Drive (.docx o .html): se parte en un manual
 // por cada Título 1, agrupados por "Parte N — …". Drive sigue siendo el original: cuando cambia,
 // se vuelve a importar.
-const APP_VERSION = "2026-10-22";
+const APP_VERSION = "2026-10-22 roles+editor";
 const GERENCIA_EMAIL = "gerencia@candela-app.com";
 const DOMINIO = "candela-app.com";
 const LIBS = {
@@ -182,8 +216,11 @@ const S = {
   indice: {}, meta: null, html: {}, textos: null, lecturas: {},
   vista: "inicio", manualId: null, q: "", checks: {},
   personal: {}, lecturasTodas: {}, tabGer: "personal",
-  alta: null, credenciales: null, editandoPuestos: null,
+  alta: null, credenciales: null,
   importacion: null, importando: false, publicando: false,
+  roles: {}, borradores: {}, papelera: {}, editandoRoles: null, editandoRol: null,
+  edit: null, versiones: null,
+  rec: { recetas: {}, fotos: {}, cargando: false, error: "", escuchando: false }, recCat: "", recId: null, recQ: "",
 };
 const desuscribir = [];
 let rootEl = null;
@@ -263,7 +300,8 @@ async function iniciarSesion(user) {
   cortarDatos();
   S.user = user; S.rol = null; S.perfil = null; S.html = {}; S.textos = null;
   if (!user) {
-    Object.assign(S, { indice: {}, meta: null, personal: {}, lecturasTodas: {}, lecturas: {}, vista: "inicio", manualId: null, q: "", checks: {}, importacion: null, credenciales: null });
+    Object.assign(S, { indice: {}, meta: null, personal: {}, lecturasTodas: {}, lecturas: {}, vista: "inicio", manualId: null, q: "", checks: {}, importacion: null, credenciales: null,
+      roles: {}, borradores: {}, papelera: {}, edit: null, versiones: null, rec: { recetas: {}, fotos: {}, cargando: false, error: "", escuchando: false }, recCat: "", recId: null, recQ: "" });
     pintar(); return;
   }
   const email = (user.email || "").toLowerCase();
@@ -275,6 +313,9 @@ async function iniciarSesion(user) {
     escuchar("manuales/contenido/meta", v => { S.meta = v; pintar(); }, sinReglas);
     escuchar("manuales/personal", v => { S.personal = v || {}; pintar(); }, sinReglas);
     escuchar("manuales/lecturas", v => { S.lecturasTodas = v || {}; S.lecturas = (v || {})[user.uid] || {}; pintar(); }, sinReglas);
+    escuchar("manuales/roles", v => { S.roles = v || {}; pintar(); }, sinReglas);
+    escuchar("manuales/borradores", v => { S.borradores = v || {}; if (S.vista !== "editar") pintar(); }, sinReglas);
+    escuchar("manuales/papelera", v => { S.papelera = v || {}; pintar(); }, sinReglas);
     pintar();
     return;
   }
@@ -315,9 +356,15 @@ async function ingresar(usuario, pass) {
 }
 
 // ── Contenido ────────────────────────────────────────────
+// Qué ve cada persona sale de sus roles: Gerencia arma los roles (qué manuales y si usa el
+// Recetario) y al asignarlos se guarda el resultado en personal/{uid}/accesos, que es lo que
+// exigen las reglas del servidor en cada lectura.
+const esGerencia = () => S.rol === "gerencia";
+const puedeVerManual = id => esGerencia() || S.perfil?.accesos?.manuales?.[id] === true;
+const tieneRecetario = () => esGerencia() || S.perfil?.accesos?.recetario === true;
 function manualesVisibles() {
   return Object.entries(S.indice || {})
-    .filter(([, m]) => S.rol === "gerencia" || m.visible !== false)
+    .filter(([id, m]) => esGerencia() || (m.visible !== false && puedeVerManual(id)))
     .map(([id, m]) => ({ id, ...m }))
     .sort((a, b) => (a.parteOrden ?? 0) - (b.parteOrden ?? 0) || (a.orden ?? 0) - (b.orden ?? 0));
 }
@@ -388,8 +435,13 @@ function limpiarHtml(html) {
       }
       for (const a of [...n.attributes]) {
         const nom = a.name.toLowerCase();
-        const permitido = (ATTRS_OK[n.tagName] || []).includes(nom) || nom === "id" || (nom === "class" && /^[a-z0-9 _-]+$/i.test(a.value));
+        const permitido = (ATTRS_OK[n.tagName] || []).includes(nom) || nom === "id" || nom === "class";
         if (!permitido) { n.removeAttribute(a.name); continue; }
+        if (nom === "class") {
+          const ok = a.value.split(/\s+/).filter(c => /^(cuadro|cuadro-(regla|prohibido|atencion|pendiente|nota)|tabla)$/.test(c));
+          if (ok.length) n.setAttribute("class", ok.join(" ")); else n.removeAttribute("class");
+          continue;
+        }
         if (nom === "href" && !/^(https?:|mailto:|#)/i.test(a.value.trim())) n.removeAttribute(a.name);
         if (nom === "src" && !/^(data:image\/(png|jpe?g|gif|webp);base64,|https:)/i.test(a.value.trim())) n.removeAttribute(a.name);
       }
@@ -598,7 +650,7 @@ async function publicarImportacion() {
     const indice = {}, html = {}, texto = {};
     for (const m of imp.manuales) {
       indice[m.id] = { titulo: m.titulo, parte: m.parte, parteDescripcion: m.parteDescripcion || "", parteOrden: m.parteOrden, orden: m.orden,
-        visible: m.visible, version: m.version || "", aplicaA: m.aplicaA || "", secciones: m.secciones, hash: m.hash, palabras: m.palabras };
+        visible: m.visible, version: m.version || "", aplicaA: m.aplicaA || "", secciones: m.secciones, hash: m.hash, palabras: m.palabras, editado: ahora };
       html[m.id] = m.html;
       texto[m.id] = m.texto.slice(0, 200000);
     }
@@ -640,7 +692,7 @@ function usuarioSugerido(nombre) {
   if (!partes_.length) return "";
   return normalizarUsuario(partes_[0] + (partes_[1] ? partes_[1][0] : ""));
 }
-async function darDeAlta({ nombre, usuario, pass, puestos }) {
+async function darDeAlta({ nombre, usuario, pass, roles }) {
   nombre = String(nombre || "").trim();
   usuario = normalizarUsuario(usuario);
   if (!nombre) throw new Error("Falta el nombre.");
@@ -652,7 +704,8 @@ async function darDeAlta({ nombre, usuario, pass, puestos }) {
   if (ocupado) throw new Error(`El usuario «${usuario}» ya existe. Elegí otro.`);
   const email = emailNuevo();
   const uid = await crearCuentaAuth(email, pass);
-  const perfil = { nombre, usuario, email, activo: true, puestos: puestos || {}, creado: Date.now() };
+  roles = roles || {};
+  const perfil = { nombre, usuario, email, activo: true, roles, accesos: accesosDe(roles), creado: Date.now() };
   await update(ref(db, "manuales"), { [`personal/${uid}`]: perfil, [`login/${k}`]: email });
   S.personal = { ...S.personal, [uid]: perfil };
   return { uid, usuario, pass };
@@ -679,7 +732,7 @@ async function reactivar(uid) {
   pintar();
 }
 // "Contraseña nueva": desde el navegador no se puede cambiar la contraseña de OTRA cuenta, así que
-// se crea una cuenta nueva con el mismo usuario y se pasan sus datos (puestos y lecturas). La
+// se crea una cuenta nueva con el mismo usuario y se pasan sus datos (roles y lecturas). La
 // anterior queda sin acceso.
 async function nuevaContrasena(uid) {
   const p = S.personal[uid];
@@ -709,11 +762,106 @@ async function eliminarPersona(uid) {
   const pers = { ...S.personal }; delete pers[uid]; S.personal = pers;
   pintar();
 }
-async function guardarPuestos(uid, puestos) {
-  await set(ref(db, `manuales/personal/${uid}/puestos`), puestos);
-  S.personal = { ...S.personal, [uid]: { ...S.personal[uid], puestos } };
-  S.editandoPuestos = null;
-  toast("✓ Manuales asignados guardados.");
+async function guardarRolesPersona(uid, roles) {
+  const accesos = accesosDe(roles);
+  await update(ref(db, `manuales/personal/${uid}`), { roles, accesos });
+  S.personal = { ...S.personal, [uid]: { ...S.personal[uid], roles, accesos } };
+  S.editandoRoles = null;
+  toast("✓ Roles guardados.");
+  pintar();
+}
+
+// ── Roles ────────────────────────────────────────────────
+// Un rol dice qué manuales ve y si entra al Recetario. Los "comunes" (y la portada) van a todos
+// los roles sugeridos. Por pedido de Gerencia, el Recetario es solo para baristas y cocina.
+const ROLES_SUGERIDOS = [
+  { id: "experto-del-turno", nombre: "Experto del turno", claves: ["experto del turno"] },
+  { id: "cajero", nombre: "Cajero/a", claves: ["cajeros"] },
+  { id: "vendedor-mozo", nombre: "Vendedor/a y mozo/a", claves: ["vendedores y mozos"] },
+  { id: "barista", nombre: "Barista", claves: ["baristas"], recetario: true },
+  { id: "cocina", nombre: "Cocina de locales", claves: ["cocina de locales"], recetario: true },
+  { id: "jefe-de-cocina", nombre: "Jefe/a de cocina", claves: ["jefe de cocina", "cocina de locales", "ayudante de cocina"], recetario: true },
+  { id: "ayudante-de-cocina", nombre: "Ayudante de cocina", claves: ["ayudante de cocina"], recetario: true },
+  { id: "maestro-de-area", nombre: "Maestro/a de área", claves: ["maestro de area", "panaderia", "pasteleria", "factureria", "especialidades", "sandwiches", "bases"] },
+  { id: "panaderia", nombre: "Panadería", claves: ["panaderia", "bases"] },
+  { id: "pasteleria", nombre: "Pastelería", claves: ["pasteleria", "bases"] },
+  { id: "factureria", nombre: "Facturería", claves: ["factureria", "bases"] },
+  { id: "especialidades", nombre: "Especialidades", claves: ["especialidades", "bases"] },
+  { id: "sandwiches", nombre: "Sándwiches", claves: ["sandwiches", "bases"] },
+  { id: "compras", nombre: "Compras", claves: ["compras", "pedidos y pagos a proveedores", "vehiculo"] },
+  { id: "limpieza", nombre: "Limpieza", claves: ["limpieza"] },
+];
+function esComun(m) { return /^(inicio|documentos comunes)$/i.test(clave(m.parte)); }
+function rolesSugeridos() {
+  const lista = Object.entries(S.indice || {}).map(([id, m]) => ({ id, ...m }));
+  const out = {};
+  ROLES_SUGERIDOS.forEach((r, i) => {
+    const manuales = {};
+    for (const m of lista) {
+      if (m.visible === false) continue;
+      if (esComun(m) || r.claves.some(k => clave(m.titulo).startsWith(k))) manuales[m.id] = true;
+    }
+    out[r.id] = { nombre: r.nombre, manuales, recetario: !!r.recetario, orden: i };
+  });
+  return out;
+}
+// Lo que puede ver alguien con estos roles. Se guarda en personal/{uid}/accesos: es lo que
+// revisan las reglas (no pueden recorrer los roles en cada lectura).
+function accesosDe(roles, rolesDef = S.roles) {
+  const manuales = {}; let recetario = false; const nombres = [];
+  for (const rid of Object.keys(roles || {})) {
+    const r = rolesDef[rid]; if (!r) continue;
+    nombres.push(r.nombre);
+    Object.keys(r.manuales || {}).forEach(id => { manuales[id] = true; });
+    if (r.recetario) recetario = true;
+  }
+  return { manuales, recetario, roles: nombres };
+}
+// Rutas para actualizar los accesos de todos los que tienen alguno de estos roles.
+function updAccesos(rolesDef, rolIds) {
+  const upd = {};
+  for (const [uid, p] of Object.entries(S.personal || {})) {
+    if (!Object.keys(p.roles || {}).some(r => rolIds.includes(r))) continue;
+    upd[`personal/${uid}/accesos`] = accesosDe(p.roles, rolesDef);
+  }
+  return upd;
+}
+async function crearRolesSugeridos() {
+  const sug = rolesSugeridos();
+  const nuevos = Object.fromEntries(Object.entries(sug).filter(([id]) => !S.roles[id]));
+  if (!Object.keys(nuevos).length) { toast("Ya están todos los roles sugeridos."); return; }
+  await update(ref(db, "manuales"), Object.fromEntries(Object.entries(nuevos).map(([id, r]) => [`roles/${id}`, r])));
+  S.roles = { ...S.roles, ...nuevos };
+  toast(`✓ ${Object.keys(nuevos).length} roles creados. Revisalos y ajustá lo que haga falta.`);
+  pintar();
+}
+async function guardarRol(rid, { nombre, manuales, recetario }) {
+  nombre = String(nombre || "").trim();
+  if (!nombre) throw new Error("El rol necesita un nombre.");
+  const id = rid || (() => { let b = slug(nombre), id = b, n = 2; while (S.roles[id]) id = `${b}-${n++}`; return id; })();
+  const orden = S.roles[id]?.orden ?? Object.keys(S.roles).length;
+  const rol = { nombre, manuales: manuales || {}, recetario: !!recetario, orden };
+  const rolesDef = { ...S.roles, [id]: rol };
+  await update(ref(db, "manuales"), { [`roles/${id}`]: rol, ...updAccesos(rolesDef, [id]) });
+  S.roles = rolesDef;
+  for (const [uid, p] of Object.entries(S.personal)) if (p.roles?.[id]) S.personal[uid] = { ...p, accesos: accesosDe(p.roles, rolesDef) };
+  S.editandoRol = null;
+  toast(`✓ Rol «${nombre}» guardado.`);
+  pintar();
+}
+async function eliminarRol(rid) {
+  const r = S.roles[rid]; if (!r) return;
+  const usan = Object.values(S.personal).filter(p => p.roles?.[rid]).length;
+  if (!confirm(`¿Eliminar el rol «${r.nombre}»?${usan ? ` ${usan} persona(s) lo tienen: pierden lo que ese rol les daba.` : ""}`)) return;
+  const rolesDef = { ...S.roles }; delete rolesDef[rid];
+  const upd = { [`roles/${rid}`]: null };
+  for (const [uid, p] of Object.entries(S.personal)) {
+    if (!p.roles?.[rid]) continue;
+    const roles = { ...p.roles }; delete roles[rid];
+    upd[`personal/${uid}/roles`] = roles; upd[`personal/${uid}/accesos`] = accesosDe(roles, rolesDef);
+  }
+  await update(ref(db, "manuales"), upd);
+  S.roles = rolesDef; S.editandoRol = null;
   pintar();
 }
 async function cambiarMiContrasena(nueva, repetida) {
@@ -726,7 +874,7 @@ async function cambiarMiContrasena(nueva, repetida) {
 function vistaLogin() {
   return `<div class="gate"><form class="gate-card" data-form="login" autocomplete="on">
     <div style="font-size:30px">📚</div>
-    <h1>Manuales de procedimiento</h1>
+    <h1>Manuales y Recetario</h1>
     <div class="muted">Candela Café &amp; Patisserie · entrá con tu usuario</div>
     <div class="campo"><label class="label" for="lg-u">Usuario</label><input class="input" id="lg-u" name="usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></div>
     <div class="campo"><label class="label" for="lg-p">Contraseña</label><input class="input" id="lg-p" name="pass" type="password" autocomplete="current-password" required></div>
@@ -736,11 +884,13 @@ function vistaLogin() {
   </form></div>`;
 }
 function barra() {
-  const g = S.rol === "gerencia";
-  const nombre = g ? "Gerencia" : (S.perfil?.nombre || "");
+  const g = esGerencia();
+  const nombre = g ? "Gerencia" : [S.perfil?.nombre, (S.perfil?.accesos?.roles || []).join(", ")].filter(Boolean).join(" · ");
+  const enManuales = ["inicio", "manual", "editar"].includes(S.vista);
   return `<div class="top">
-    <div class="marca" data-act="inicio">📚 Manuales<small>${esc(nombre)}</small></div>
-    <button class="tb ${S.vista === "inicio" || S.vista === "manual" ? "on" : ""}" data-act="inicio">📖<span class="tx"> Leer</span></button>
+    <div class="marca" data-act="inicio">📚 Candela<small>${esc(nombre)}</small></div>
+    <button class="tb ${enManuales ? "on" : ""}" data-act="inicio">📚<span class="tx"> Manuales</span></button>
+    ${tieneRecetario() ? `<button class="tb ${S.vista === "recetario" ? "on" : ""}" data-act="recetario">📖<span class="tx"> Recetario</span></button>` : ""}
     ${g ? `<button class="tb ${S.vista === "gerencia" ? "on" : ""}" data-act="gerencia">⚙️<span class="tx"> Gestionar</span></button>` : `<button class="tb ${S.vista === "cuenta" ? "on" : ""}" data-act="cuenta">🔑<span class="tx"> Mi cuenta</span></button>`}
     <button class="tb" data-act="salir">Salir</button>
   </div>`;
@@ -751,25 +901,25 @@ function tarjetaManual(m) {
   return `<button class="tarjeta" data-act="abrir" data-id="${esc(m.id)}">
     <div class="t">${esc(m.titulo)}${m.visible === false ? ` <span class="chip chip-baja">oculto</span>` : ""}</div>
     ${m.aplicaA ? `<div class="a">Aplica a ${esc(m.aplicaA)}</div>` : ""}
-    ${S.rol === "empleado" || S.lecturas ? e : ""}
+    ${esGerencia() ? "" : e}
   </button>`;
 }
 function marcar(texto, q) {
   const t = esc(texto);
   if (!q) return t;
-  const k = clave(q);
-  const plano = clave(texto);
-  const i = plano.indexOf(k);
+  const i = clave(texto).indexOf(clave(q));
   if (i < 0) return t;
   return esc(texto.slice(0, i)) + "<mark>" + esc(texto.slice(i, i + q.length)) + "</mark>" + esc(texto.slice(i + q.length));
 }
 function vistaInicio() {
   const lista = manualesVisibles();
+  const g = esGerencia();
+  const accionesG = g ? `<div class="acciones" style="margin:-4px 0 14px"><button class="btn btn-primary btn-sm" data-act="nuevo-manual">➕ Nuevo manual</button><button class="btn btn-ghost btn-sm" data-act="gerencia-tab" data-tab="contenido">Ordenar, ocultar e importar</button></div>` : "";
   if (!lista.length) {
     return `${barra()}<div class="main"><div class="h-pag">Manuales de procedimiento</div>
-      <div class="bloque" style="margin-top:14px">${S.rol === "gerencia"
-        ? `Todavía no hay manuales cargados. Andá a <b>⚙️ Gestionar → Contenido</b> e importá el documento de Drive.`
-        : "Todavía no hay manuales cargados. Volvé a mirar más tarde."}</div></div>`;
+      <div class="bloque" style="margin-top:14px">${g
+        ? `Todavía no hay manuales. Podés escribirlos acá (<b>➕ Nuevo manual</b>) o traer los de Drive una sola vez desde <b>⚙️ Gestionar → Contenido</b>.`
+        : "Todavía no tenés manuales asignados. Si te parece un error, hablá con Gerencia."}</div>${accionesG}</div>`;
   }
   const q = S.q.trim();
   let cuerpo;
@@ -779,7 +929,7 @@ function vistaInicio() {
     const enTexto = S.textos ? lista.filter(m => !porTitulo.includes(m) && clave(S.textos[m.id] || "").includes(k)) : [];
     const snippet = m => {
       const t = S.textos?.[m.id] || ""; const i = clave(t).indexOf(k);
-      if (i < 0) { const s = (m.secciones || []).find(s => clave(s.t).includes(k)); return s ? "Sección: " + marcar(s.t, q) : esc(m.aplicaA ? "Aplica a " + m.aplicaA : m.parte); }
+      if (i < 0) { const sec = (m.secciones || []).find(x => clave(x.t).includes(k)); return sec ? "Sección: " + marcar(sec.t, q) : esc(m.aplicaA ? "Aplica a " + m.aplicaA : m.parte); }
       const ini = Math.max(0, i - 70);
       return (ini ? "…" : "") + marcar(t.slice(ini, i + q.length + 110), q) + "…";
     };
@@ -789,15 +939,18 @@ function vistaInicio() {
         : `<div class="bloque">Nada coincide con «${esc(q)}».</div>`}`;
     if (!S.textos) cargarTextos().then(() => pintar()).catch(() => {});
   } else {
-    const tuyos = lista.filter(m => S.perfil?.puestos?.[m.id]);
     const sinLeer = lista.filter(m => estadoLectura(m) !== "leido").length;
-    cuerpo = `${tuyos.length ? `<div class="parte-t">Tus manuales</div><div class="grilla tuyos">${tuyos.map(tarjetaManual).join("")}</div>` : ""}
-      ${partes(lista).map(p => `<div class="parte-t">${esc(p.nombre)}</div>${p.descripcion ? `<div class="parte-d">${esc(p.descripcion)}</div>` : ""}<div class="grilla">${p.manuales.map(tarjetaManual).join("")}</div>`).join("")}
-      ${S.rol === "empleado" ? `<div class="muted" style="margin-top:18px">${sinLeer ? `Te quedan ${sinLeer} manual${sinLeer === 1 ? "" : "es"} sin leer.` : "✓ Leíste todos los manuales."}</div>` : ""}`;
+    // Para cada persona, primero los manuales de su puesto; después los comunes.
+    const suyos = g ? [] : lista.filter(m => !esComun(m));
+    const resto = g ? lista : lista.filter(m => esComun(m));
+    cuerpo = `${suyos.length ? `<div class="parte-t">Tu puesto</div><div class="grilla tuyos">${suyos.map(tarjetaManual).join("")}</div>` : ""}
+      ${partes(resto).map(p => `<div class="parte-t">${esc(p.nombre)}</div>${p.descripcion ? `<div class="parte-d">${esc(p.descripcion)}</div>` : ""}<div class="grilla">${p.manuales.map(tarjetaManual).join("")}</div>`).join("")}
+      ${!g ? `<div class="muted" style="margin-top:18px">${sinLeer ? `Te quedan ${sinLeer} manual${sinLeer === 1 ? "" : "es"} sin leer.` : "✓ Leíste todos tus manuales."}</div>` : ""}`;
   }
   return `${barra()}<div class="main">
-    <div class="h-pag">${S.rol === "empleado" ? `Hola, ${esc((S.perfil?.nombre || "").split(" ")[0])}` : "Manuales de procedimiento"}</div>
-    <div class="sub-pag">Candela Café &amp; Patisserie${S.meta?.importadoEn ? ` · actualizados el ${fechaCorta(S.meta.importadoEn)}` : ""}</div>
+    <div class="h-pag">${g ? "Manuales de procedimiento" : `Hola, ${esc((S.perfil?.nombre || "").split(" ")[0])}`}</div>
+    <div class="sub-pag">${g ? "Ves todos los manuales. Cada persona ve solo los de sus roles." : "Estos son los manuales de tu puesto."}${S.meta?.editadoEn || S.meta?.importadoEn ? ` · actualizados el ${fechaCorta(Math.max(S.meta.editadoEn || 0, S.meta.importadoEn || 0))}` : ""}</div>
+    ${accionesG}
     <div class="buscar"><span>🔎</span><input class="input" id="buscar" data-input="buscar" placeholder="Buscar: caja, heladera, cierre, FUDO…" value="${esc(S.q)}" autocomplete="off"></div>
     ${cuerpo}
   </div>`;
@@ -839,11 +992,12 @@ function vistaManual() {
       <span class="vol" data-act="inicio">← ${esc(m.parte)}</span>
       <h1>${esc(m.titulo)}</h1>
       ${m.version || m.aplicaA ? `<div class="ver">${esc([m.version, m.aplicaA ? "Aplica a " + m.aplicaA : ""].filter(Boolean).join(" · "))}</div>` : ""}
+      ${esGerencia() ? `<div class="acciones" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-act="editar" data-id="${esc(S.manualId)}">✏️ Editar este manual</button>${m.visible === false ? `<span class="chip chip-baja">oculto para el equipo</span>` : ""}<span class="muted" style="font-size:12px">Lo ven: ${esc(rolesQueVen(S.manualId).join(", ") || "nadie todavía (asignalo a un rol)")}</span></div>` : ""}
     </div>
-    ${(m.secciones || []).length > 1 ? `<nav class="indice">${m.secciones.map(s => `<a href="#${esc(s.id)}" data-act="ir" data-sec="${esc(s.id)}">${esc(s.t.replace(/^\d+\.\s*/, ""))}</a>`).join("")}</nav>` : ""}
+    ${(m.secciones || []).length > 1 ? `<nav class="indice">${m.secciones.map(x => `<a href="#${esc(x.id)}" data-act="ir" data-sec="${esc(x.id)}">${esc(x.t.replace(/^\d+\.\s*/, ""))}</a>`).join("")}</nav>` : ""}
     ${cuerpo}
     <div class="man-pie">
-      <div>${est === "leido" ? `<span class="leido-ok">✓ Ya lo leíste</span>` : `<button class="btn btn-turq" data-act="leido" data-id="${esc(S.manualId)}">✓ ${est === "actualizado" ? "Leí la versión nueva" : "Marcar como leído"}</button>`}</div>
+      <div>${esGerencia() ? "" : est === "leido" ? `<span class="leido-ok">✓ Ya lo leíste</span>` : `<button class="btn btn-turq" data-act="leido" data-id="${esc(S.manualId)}">✓ ${est === "actualizado" ? "Leí la versión nueva" : "Marcar como leído"}</button>`}</div>
       <div class="acciones">
         ${ant ? `<button class="btn btn-ghost btn-sm" data-act="abrir" data-id="${esc(ant.id)}">← ${esc(ant.titulo)}</button>` : ""}
         ${sig ? `<button class="btn btn-ghost btn-sm" data-act="abrir" data-id="${esc(sig.id)}">${esc(sig.titulo)} →</button>` : ""}
@@ -852,10 +1006,13 @@ function vistaManual() {
     </div>
   </div>`;
 }
+function rolesQueVen(id) {
+  return Object.values(S.roles || {}).filter(r => r.manuales?.[id]).sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0)).map(r => r.nombre);
+}
 function vistaCuenta() {
   return `${barra()}<div class="main">
     <div class="h-pag">Mi cuenta</div>
-    <div class="sub-pag">Usuario: <b>${esc(S.perfil?.usuario || "")}</b></div>
+    <div class="sub-pag">Usuario: <b>${esc(S.perfil?.usuario || "")}</b>${(S.perfil?.accesos?.roles || []).length ? ` · ${esc(S.perfil.accesos.roles.join(", "))}` : ""}</div>
     <form class="bloque" data-form="clave">
       <h3>Cambiar mi contraseña</h3>
       <div class="form-g">
@@ -866,9 +1023,16 @@ function vistaCuenta() {
     </form>
   </div>`;
 }
-function checksPuestos(nombre, marcados) {
+function checksManuales(nombre, marcados) {
   return partes(manualesVisibles().filter(m => m.visible !== false)).map(p => `<div style="margin-top:8px"><div class="muted" style="font-weight:600;font-size:12px">${esc(p.nombre)}</div><div class="puestos">${p.manuales.map(m => `<label><input type="checkbox" name="${nombre}" value="${esc(m.id)}" ${marcados[m.id] ? "checked" : ""}><span>${esc(m.titulo)}</span></label>`).join("")}</div></div>`).join("");
 }
+function rolesOrdenados() { return Object.entries(S.roles || {}).sort((a, b) => (a[1].orden ?? 0) - (b[1].orden ?? 0)); }
+function checksRoles(nombre, marcados) {
+  const rs = rolesOrdenados();
+  if (!rs.length) return `<div class="muted">Todavía no hay roles: crealos en la pestaña <b>Roles</b>.</div>`;
+  return `<div class="puestos">${rs.map(([id, r]) => `<label><input type="checkbox" name="${nombre}" value="${esc(id)}" ${marcados[id] ? "checked" : ""}><span>${esc(r.nombre)}${r.recetario ? " · 📖" : ""}</span></label>`).join("")}</div>`;
+}
+
 function vistaGerencia() {
   const tab = S.tabGer;
   const lista = manualesVisibles();
@@ -877,12 +1041,11 @@ function vistaGerencia() {
     const gente = Object.entries(S.personal || {}).map(([uid, p]) => ({ uid, ...p })).sort((a, b) => (b.activo === true) - (a.activo === true) || String(a.nombre).localeCompare(String(b.nombre), "es"));
     const lecturaDe = p => {
       const l = S.lecturasTodas[p.uid] || {};
-      const asignados = Object.keys(p.puestos || {}).filter(id => S.indice[id]);
-      const base = asignados.length ? asignados : lista.filter(m => m.visible !== false).map(m => m.id);
-      const leidos = base.filter(id => l[id] && l[id].hash === S.indice[id]?.hash).length;
-      return `${leidos} de ${base.length} ${asignados.length ? "asignados" : "manuales"} leídos`;
+      const suyos = Object.keys(p.accesos?.manuales || {}).filter(id => S.indice[id] && S.indice[id].visible !== false);
+      const leidos = suyos.filter(id => l[id] && l[id].hash === S.indice[id]?.hash).length;
+      return `${leidos} de ${suyos.length} manuales leídos`;
     };
-    const a = S.alta || { nombre: "", usuario: "", pass: contrasenaNueva(), puestos: {} };
+    const a = S.alta || { nombre: "", usuario: "", pass: contrasenaNueva(), roles: {} };
     S.alta = a;
     cuerpo = `
       ${S.credenciales ? `<div class="cred"><b>Listo. Pasale estos datos a ${esc(S.credenciales.nombre)}:</b>
@@ -890,7 +1053,7 @@ function vistaGerencia() {
         <div style="margin-top:6px">Usuario: <code>${esc(S.credenciales.usuario)}</code> · Contraseña: <code>${esc(S.credenciales.pass)}</code></div>
         <div class="acciones" style="margin-top:10px">
           <button class="btn btn-ghost btn-sm" data-act="copiar-cred">📋 Copiar</button>
-          <a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`Manuales de Candela: ${location.origin}/manuales/\nUsuario: ${S.credenciales.usuario}\nContraseña: ${S.credenciales.pass}`)}">💬 WhatsApp</a>
+          <a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`Manuales y Recetario de Candela: ${location.origin}/manuales/\nUsuario: ${S.credenciales.usuario}\nContraseña: ${S.credenciales.pass}`)}">💬 WhatsApp</a>
           <button class="btn btn-ghost btn-sm" data-act="cerrar-cred">Listo</button>
         </div>
         <div class="muted" style="margin-top:8px;font-size:12px">La contraseña no se vuelve a mostrar. Puede cambiarla desde «Mi cuenta».</div></div>` : ""}
@@ -902,19 +1065,19 @@ function vistaGerencia() {
           <div><label class="label" for="a-p">Contraseña inicial</label><input class="input" id="a-p" name="pass" data-input="alta-pass" value="${esc(a.pass)}" required></div>
           <div style="align-self:end"><button type="button" class="btn btn-ghost btn-sm" data-act="otra-pass">🎲 Otra contraseña</button></div>
         </div>
-        ${lista.length ? `<div style="margin-top:12px"><span class="label">Sus manuales (aparecen primero; puede leer todos)</span>${checksPuestos("alta-puesto", a.puestos)}</div>` : ""}
+        <div style="margin-top:12px"><span class="label">Rol (puede tener más de uno) — define qué manuales ve y si usa el Recetario 📖</span>${checksRoles("alta-rol", a.roles || {})}</div>
         <button class="btn btn-primary" style="margin-top:14px" ${S.creando ? "disabled" : ""}>${S.creando ? "Creando…" : "Crear usuario"}</button>
       </form>
       <div class="bloque">
         <h3>👥 Equipo (${gente.filter(p => p.activo).length} con acceso)</h3>
         ${gente.length ? gente.map(p => `<div class="fila-p">
           <div style="min-width:180px;flex:1">
-            <div class="n">${esc(p.nombre)} <span class="chip ${p.activo ? "chip-ok" : "chip-baja"}">${p.activo ? "con acceso" : "dado de baja"}</span></div>
-            <div class="u">usuario: <b>${esc(p.usuario)}</b> · ${lecturaDe(p)}${p.ultimoIngreso ? ` · último ingreso ${fechaCorta(p.ultimoIngreso)}` : " · todavía no entró"}</div>
-            ${S.editandoPuestos === p.uid ? `<form data-form="puestos" data-uid="${esc(p.uid)}" style="margin-top:8px">${checksPuestos("puesto", p.puestos || {})}<div class="acciones" style="margin-top:8px"><button class="btn btn-primary btn-sm">Guardar</button><button type="button" class="btn btn-ghost btn-sm" data-act="puestos" data-uid="">Cancelar</button></div></form>` : ""}
+            <div class="n">${esc(p.nombre)} <span class="chip ${p.activo ? "chip-ok" : "chip-baja"}">${p.activo ? "con acceso" : "dado de baja"}</span>${p.accesos?.recetario ? ` <span class="chip chip-ok">📖 Recetario</span>` : ""}</div>
+            <div class="u">usuario: <b>${esc(p.usuario)}</b> · ${esc((p.accesos?.roles || []).join(", ") || "sin rol")} · ${lecturaDe(p)}${p.ultimoIngreso ? ` · último ingreso ${fechaCorta(p.ultimoIngreso)}` : " · todavía no entró"}</div>
+            ${S.editandoRoles === p.uid ? `<form data-form="roles-persona" data-uid="${esc(p.uid)}" style="margin-top:8px">${checksRoles("rol", p.roles || {})}<div class="acciones" style="margin-top:8px"><button class="btn btn-primary btn-sm">Guardar</button><button type="button" class="btn btn-ghost btn-sm" data-act="roles-persona" data-uid="">Cancelar</button></div></form>` : ""}
           </div>
           <div class="acciones">
-            ${p.activo ? `<button class="btn btn-ghost btn-sm" data-act="puestos" data-uid="${esc(p.uid)}">📋 Sus manuales</button>
+            ${p.activo ? `<button class="btn btn-ghost btn-sm" data-act="roles-persona" data-uid="${esc(p.uid)}">👤 Roles</button>
               <button class="btn btn-ghost btn-sm" data-act="nueva-pass" data-uid="${esc(p.uid)}">🔑 Contraseña nueva</button>
               <button class="btn btn-danger btn-sm" data-act="baja" data-uid="${esc(p.uid)}">Dar de baja</button>`
               : `<button class="btn btn-turq btn-sm" data-act="reactivar" data-uid="${esc(p.uid)}">Reactivar</button>
@@ -922,15 +1085,52 @@ function vistaGerencia() {
           </div>
         </div>`).join("") : `<div class="muted">Todavía no diste de alta a nadie.</div>`}
       </div>`;
+  } else if (tab === "roles") {
+    const rs = rolesOrdenados();
+    const editando = S.editandoRol;
+    const formRol = (rid, r) => `<form class="bloque" data-form="rol" data-rid="${esc(rid || "")}" style="border:2px solid var(--terra)">
+        <h3>${rid ? "✏️ Editar rol" : "➕ Rol nuevo"}</h3>
+        <div class="form-g"><div><label class="label" for="rol-n">Nombre</label><input class="input" id="rol-n" name="nombre" value="${esc(r.nombre || "")}" required></div>
+        <label style="display:flex;gap:8px;align-items:center;align-self:end;cursor:pointer;font-weight:600;font-size:14px"><input type="checkbox" name="recetario" ${r.recetario ? "checked" : ""} style="width:18px;height:18px;accent-color:var(--terra)"> 📖 Puede usar el Recetario</label></div>
+        <div style="margin-top:12px"><span class="label">Manuales que ve</span>${checksManuales("rol-manual", r.manuales || {})}</div>
+        <div class="acciones" style="margin-top:14px"><button class="btn btn-primary">Guardar</button><button type="button" class="btn btn-ghost" data-act="editar-rol" data-rid="">Cancelar</button>${rid ? `<button type="button" class="btn btn-danger" data-act="eliminar-rol" data-rid="${esc(rid)}">Eliminar rol</button>` : ""}</div>
+      </form>`;
+    cuerpo = `
+      <div class="bloque"><div class="muted" style="font-size:13px">Cada rol define <b>qué manuales ve</b> y si <b>usa el Recetario</b>. A cada persona le asignás uno o más roles en <b>Equipo y accesos</b>, y ve la suma. Las reglas del servidor lo hacen cumplir: no alcanza con saber la dirección de un manual.</div>
+        <div class="acciones" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-act="editar-rol" data-rid="__nuevo">➕ Rol nuevo</button>${lista.length ? `<button class="btn btn-ghost btn-sm" data-act="roles-sugeridos">✨ ${rs.length ? "Agregar los roles sugeridos que falten" : "Crear los roles sugeridos"}</button>` : ""}</div></div>
+      ${editando === "__nuevo" ? formRol(null, { manuales: Object.fromEntries(lista.filter(esComun).map(m => [m.id, true])) }) : ""}
+      ${rs.map(([rid, r]) => editando === rid ? formRol(rid, r) : `<div class="bloque fila-p" style="border-top:none;padding:14px 18px">
+          <div style="flex:1;min-width:200px"><div class="n">${esc(r.nombre)} ${r.recetario ? `<span class="chip chip-ok">📖 Recetario</span>` : ""}</div>
+          <div class="u">${Object.keys(r.manuales || {}).filter(id => S.indice[id]).length} manuales · ${Object.values(S.personal).filter(p => p.activo && p.roles?.[rid]).length} persona(s)</div></div>
+          <button class="btn btn-ghost btn-sm" data-act="editar-rol" data-rid="${esc(rid)}">✏️ Editar</button></div>`).join("")}
+      ${!rs.length && editando !== "__nuevo" ? `<div class="bloque muted">Todavía no hay roles.${lista.length ? " Tocá «Crear los roles sugeridos»: arma uno por puesto (cajero, barista, cocina…) con sus manuales y los comunes, y el Recetario solo para baristas y cocina." : " Primero cargá los manuales."}</div>` : ""}`;
   } else {
     const imp = S.importacion;
+    const todos = manualesVisibles();
+    const bors = Object.entries(S.borradores || {}).filter(([k]) => k.startsWith("nuevo-"));
+    const papel = Object.entries(S.papelera || {}).sort((a, b) => (b[1].eliminadoEn || 0) - (a[1].eliminadoEn || 0));
+    const ps = partes(todos);
     cuerpo = `
       <div class="bloque">
-        <h3>📥 Cargar o actualizar los manuales desde Drive</h3>
-        <div class="muted" style="font-size:13px;line-height:1.6">
-          1. En Drive, abrí el documento vigente del manual: <b>manual-unificado.docx</b> (carpeta «Manuales — material de trabajo») y tocá <b>Descargar</b>. Si el vigente es el Google Doc, <b>Archivo → Descargar → Microsoft Word (.docx)</b>.<br>
-          2. Elegilo acá abajo. Se arma un manual por cada <b>Título 1</b>, agrupados por «Parte N — …».<br>
-          3. Revisá la lista y tocá <b>Publicar</b>. Cuando el documento cambie en Drive, repetí estos pasos: Drive es el original.
+        <div class="acciones"><button class="btn btn-primary btn-sm" data-act="nuevo-manual">➕ Nuevo manual</button><button class="btn btn-ghost btn-sm" data-act="imprimir-todo">🖨️ Imprimir o guardar todo en PDF</button></div>
+        ${bors.length ? `<div style="margin-top:12px"><b>📝 Borradores sin publicar</b>${bors.map(([k, b]) => `<div class="prev-m"><span>${esc(b.titulo || "(sin título)")} <span class="muted">· ${fechaCorta(b.guardadoEn)}</span></span><span class="acciones"><button class="btn btn-ghost btn-sm" data-act="seguir-borrador" data-k="${esc(k)}">Seguir</button><button class="btn btn-ghost btn-sm" data-act="descartar-borrador" data-k="${esc(k)}">Descartar</button></span></div>`).join("")}</div>` : ""}
+      </div>
+      <div class="bloque">
+        <h3>📚 Manuales publicados ${S.meta ? `<span class="muted" style="font-weight:400">· última edición ${fechaCorta(Math.max(S.meta.editadoEn || 0, S.meta.importadoEn || 0))}</span>` : ""}</h3>
+        ${todos.length ? ps.map((p, ip) => `<div class="prev-parte" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${esc(p.nombre)}
+            <button class="orden-btn" data-act="parte-subir" data-parte="${esc(p.nombre)}" ${ip === 0 ? "disabled" : ""}>↑</button><button class="orden-btn" data-act="parte-bajar" data-parte="${esc(p.nombre)}" ${ip === ps.length - 1 ? "disabled" : ""}>↓</button>
+            <button class="orden-btn" data-act="parte-renombrar" data-parte="${esc(p.nombre)}">renombrar</button></div>
+          ${p.manuales.map((m, im) => `<div class="prev-m"><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <button class="orden-btn" data-act="manual-subir" data-id="${esc(m.id)}" ${im === 0 ? "disabled" : ""}>↑</button><button class="orden-btn" data-act="manual-bajar" data-id="${esc(m.id)}" ${im === p.manuales.length - 1 ? "disabled" : ""}>↓</button>
+              <a href="#" data-act="abrir" data-id="${esc(m.id)}">${esc(m.titulo)}</a></span>
+            <span class="acciones" style="align-items:center"><label class="muted" style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" data-input="visible" data-id="${esc(m.id)}" ${m.visible !== false ? "checked" : ""}> visible</label>
+            <button class="btn btn-ghost btn-sm" data-act="editar" data-id="${esc(m.id)}">✏️</button></span></div>`).join("")}`).join("") : `<div class="muted">Nada publicado todavía.</div>`}
+      </div>
+      ${papel.length ? `<div class="bloque"><h3>🗑️ Eliminados</h3>${papel.map(([id, x]) => `<div class="prev-m"><span>${esc(x.indice?.titulo || id)} <span class="muted">· ${fechaCorta(x.eliminadoEn)}</span></span><button class="btn btn-ghost btn-sm" data-act="restaurar-manual" data-id="${esc(id)}">Restaurar</button></div>`).join("")}</div>` : ""}
+      <details class="bloque" ${imp || !todos.length ? "open" : ""}>
+        <summary style="cursor:pointer;font-weight:700">📥 Traer los manuales desde Drive (para la primera carga)</summary>
+        <div class="muted" style="font-size:13px;line-height:1.6;margin-top:8px">
+          Una sola vez, para no tener que copiar todo a mano: en Drive descargá <b>manual-unificado.docx</b> (carpeta «Manuales — material de trabajo») o, si el vigente es el Google Doc, <b>Archivo → Descargar → Microsoft Word (.docx)</b>, y elegilo acá. Se arma un manual por cada <b>Título 1</b>, agrupados por «Parte N — …». <b>Publicar reemplaza todos los manuales actuales</b>: después de la primera carga, editá acá.
         </div>
         <input type="file" id="archivo" data-input="archivo" accept=".docx,.html,.htm" style="margin-top:12px">
         ${S.importando ? `<div class="muted" style="margin-top:10px">Leyendo el documento…</div>` : ""}
@@ -941,36 +1141,483 @@ function vistaGerencia() {
           ${partes(imp.manuales).map(p => `<div class="prev-parte">${esc(p.nombre)}</div>${p.manuales.map(m => `<div class="prev-m"><span>${esc(m.titulo)}${m.visible ? "" : ` <span class="chip chip-baja">no se muestra al equipo</span>`}</span><span class="muted">${m.secciones.length} secciones · ${m.palabras.toLocaleString("es-AR")} palabras</span></div>`).join("")}`).join("")}
           <div class="acciones" style="margin-top:14px"><button class="btn btn-primary" data-act="publicar" ${S.publicando ? "disabled" : ""}>${S.publicando ? "Publicando…" : `Publicar ${imp.manuales.length} manuales`}</button><button class="btn btn-ghost" data-act="descartar-imp">Descartar</button></div>
         </div>` : ""}
-      </div>
-      <div class="bloque">
-        <h3>📚 Publicados ${S.meta ? `<span class="muted" style="font-weight:400">· ${esc(S.meta.archivo || "")} · ${fechaCorta(S.meta.importadoEn)}</span>` : ""}</h3>
-        ${lista.length ? partes(lista).map(p => `<div class="prev-parte">${esc(p.nombre)}</div>${p.manuales.map(m => `<div class="prev-m"><span>${esc(m.titulo)}</span><label class="muted" style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" data-input="visible" data-id="${esc(m.id)}" ${m.visible !== false ? "checked" : ""}> lo ve el equipo</label></div>`).join("")}`).join("") : `<div class="muted">Nada publicado todavía.</div>`}
-      </div>`;
+      </details>`;
   }
   return `${barra()}<div class="main">
     <div class="h-pag">Gestionar</div>
     <div class="sub-pag">Solo Gerencia ve esta pantalla.</div>
     <div class="tabs">
       <button class="btn ${tab === "personal" ? "btn-primary" : "btn-ghost"} btn-sm" data-act="tab" data-tab="personal">👥 Equipo y accesos</button>
+      <button class="btn ${tab === "roles" ? "btn-primary" : "btn-ghost"} btn-sm" data-act="tab" data-tab="roles">🏷️ Roles</button>
       <button class="btn ${tab === "contenido" ? "btn-primary" : "btn-ghost"} btn-sm" data-act="tab" data-tab="contenido">📚 Contenido</button>
+      <a class="btn btn-ghost btn-sm" href="/recetario/" target="_blank" rel="noopener">📖 Editar el Recetario ↗</a>
     </div>
     ${cuerpo}
   </div>`;
 }
 
+// ── Editor de manuales (Gerencia) ───────────────────────
+// Se escribe sobre el manual tal como se ve (mismos estilos). Cada cambio se guarda solo como
+// borrador (en el dispositivo y en la base) — la lección del Recetario: nunca perder lo que se
+// escribió. "Publicar" lo pasa al equipo y deja la versión anterior en el historial.
+const BORRADOR_MS = 1500;
+let _timerBorrador = null;
+function claveBorrador(e) { return e.id || e.nuevoKey; }
+function partesExistentes() {
+  const out = [];
+  for (const m of Object.values(S.indice || {}).sort((a, b) => (a.parteOrden ?? 0) - (b.parteOrden ?? 0))) if (!out.includes(m.parte)) out.push(m.parte);
+  return out;
+}
+async function abrirEditor(id, borradorKey) {
+  let e;
+  if (borradorKey && S.borradores[borradorKey]) {
+    const b = S.borradores[borradorKey];
+    e = { ...b, id: b.id || null, nuevoKey: b.id ? null : borradorKey, recuperado: b.guardadoEn };
+  } else if (id) {
+    const m = S.indice[id];
+    if (!m) return;
+    const html = await cargarHtml(id);
+    e = { id, titulo: m.titulo, parte: m.parte, nuevaParte: "", version: m.version || "", aplicaA: m.aplicaA || "", visible: m.visible !== false,
+      roles: Object.fromEntries(Object.entries(S.roles).filter(([, r]) => r.manuales?.[id]).map(([rid]) => [rid, true])), html };
+    let b = S.borradores[id];
+    try { const local = JSON.parse(localStorage.getItem("manual-borrador-" + id) || "null"); if (local && (!b || local.guardadoEn > b.guardadoEn)) b = local; } catch {}
+    if (b && (b.guardadoEn || 0) > (m.editado || S.meta?.editadoEn || S.meta?.importadoEn || 0) && b.html !== html) e = { ...e, ...b, id, recuperado: b.guardadoEn };
+  } else {
+    const p = partesExistentes();
+    e = { id: null, nuevoKey: "nuevo-" + Date.now(), titulo: "", parte: p[1] || p[0] || "Documentos comunes", nuevaParte: "", version: `Versión 1.0 · ${new Date().toLocaleDateString("es-AR", { month: "long", year: "numeric" }).replace(/^./, c => c.toUpperCase())}`, aplicaA: "",
+      visible: true, roles: {}, html: "<h2>1. Objetivo</h2><p>Escribí acá.</p>" };
+  }
+  S.edit = { ...e, pendiente: false, estado: e.recuperado ? `Recuperé lo que estabas escribiendo (${new Date(e.recuperado).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}).` : "" };
+  S.versiones = null;
+  S.vista = "editar";
+  pintar(); window.scrollTo(0, 0);
+}
+function leerEditor() {
+  const e = S.edit; if (!e) return null;
+  const v = id => document.getElementById(id);
+  if (v("ed-titulo")) {
+    e.titulo = v("ed-titulo").value; e.parte = v("ed-parte").value; e.nuevaParte = v("ed-nueva-parte") ? v("ed-nueva-parte").value : "";
+    e.version = v("ed-version").value; e.aplicaA = v("ed-aplica").value; e.visible = v("ed-visible").checked;
+    e.roles = Object.fromEntries([...document.querySelectorAll('input[name="ed-rol"]:checked')].map(i => [i.value, true]));
+  }
+  if (v("ed-cuerpo")) e.html = v("ed-cuerpo").innerHTML;
+  return e;
+}
+function marcarCambio() {
+  if (!S.edit) return;
+  S.edit.pendiente = true;
+  estadoEditor("Cambios sin guardar…");
+  clearTimeout(_timerBorrador);
+  _timerBorrador = setTimeout(guardarBorrador, BORRADOR_MS);
+}
+function estadoEditor(txt) { if (S.edit) S.edit.estado = txt; const el = document.getElementById("ed-estado"); if (el) el.textContent = txt; }
+async function guardarBorrador() {
+  clearTimeout(_timerBorrador);
+  const e = leerEditor(); if (!e || !e.pendiente) return;
+  const k = claveBorrador(e);
+  const b = { id: e.id || null, titulo: e.titulo, parte: e.parte, nuevaParte: e.nuevaParte || "", version: e.version, aplicaA: e.aplicaA, visible: e.visible, roles: e.roles, html: limpiarHtml(e.html), guardadoEn: Date.now() };
+  try { localStorage.setItem("manual-borrador-" + k, JSON.stringify(b)); } catch {}
+  try {
+    await set(ref(db, `manuales/borradores/${k}`), b);
+    e.pendiente = false;
+    estadoEditor(`Borrador guardado ${new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })} · todavía no lo ve el equipo`);
+  } catch (err) {
+    estadoEditor("⚠️ Sin conexión: quedó guardado en este dispositivo.");
+  }
+}
+// HTML de un manual listo para guardar: limpio, tablas envueltas, títulos con id e índice.
+function analizarHtml(html) {
+  const d = new DOMParser().parseFromString(`<div>${limpiarHtml(html)}</div>`, "text/html");
+  const cont = d.body.firstChild;
+  cont.querySelectorAll("table").forEach(t => { if (!t.parentElement.classList.contains("tabla")) { const w = d.createElement("div"); w.className = "tabla"; t.replaceWith(w); w.appendChild(t); } });
+  cont.querySelectorAll("p").forEach(p => { if (!p.textContent.trim() && !p.querySelector("img")) p.remove(); });
+  let k = 0; const secciones = [];
+  cont.querySelectorAll("h2,h3").forEach(h => { h.id = `s${++k}`; if (h.tagName === "H2") secciones.push({ id: h.id, t: h.textContent.trim().slice(0, 80) }); });
+  const texto = cont.textContent.replace(/\s+/g, " ").trim();
+  return { html: cont.innerHTML, texto, secciones, palabras: texto ? texto.split(" ").length : 0 };
+}
+async function publicarEdicion() {
+  const e = leerEditor(); if (!e) return;
+  const titulo = String(e.titulo || "").trim();
+  if (!titulo) throw new Error("El manual necesita un título.");
+  const parte = e.parte === "__nueva" ? String(e.nuevaParte || "").trim() : e.parte;
+  if (!parte) throw new Error("Elegí o escribí la parte del manual.");
+  const a = analizarHtml(e.html);
+  if (!a.texto) throw new Error("El manual está vacío.");
+  const ahora = Date.now();
+  const existentes = Object.entries(S.indice || {});
+  const id = e.id || (() => { let b = slug(titulo), id = b, n = 2; while (S.indice[id] || S.papelera[id]) id = `${b}-${n++}`; return id; })();
+  const previo = S.indice[id];
+  const mismaParte = existentes.filter(([x, m]) => m.parte === parte && x !== id);
+  const parteOrden = mismaParte.length ? mismaParte[0][1].parteOrden : (previo && previo.parte === parte ? previo.parteOrden : Math.max(0, ...existentes.map(([, m]) => m.parteOrden ?? 0)) + 1);
+  const orden = previo && previo.parte === parte ? previo.orden : Math.max(-1, ...existentes.map(([, m]) => m.orden ?? 0)) + 1;
+  const hash = (await sha256(a.html)).slice(0, 16);
+  const entrada = { titulo, parte, parteDescripcion: mismaParte[0]?.[1].parteDescripcion || previo?.parteDescripcion || "", parteOrden, orden, visible: !!e.visible,
+    version: String(e.version || "").trim(), aplicaA: String(e.aplicaA || "").trim(), secciones: a.secciones, hash, palabras: a.palabras, editado: ahora };
+  const upd = {
+    [`contenido/indice/${id}`]: entrada, [`contenido/html/${id}`]: a.html, [`contenido/texto/${id}`]: a.texto.slice(0, 200000),
+    "contenido/meta/editadoEn": ahora, [`borradores/${claveBorrador(e)}`]: null,
+  };
+  if (previo && previo.hash !== hash) {
+    upd[`historial/${id}/${ahora}`] = { titulo: previo.titulo, version: previo.version || "", html: S.html[id] ?? (await cargarHtml(id)), guardadoEn: previo.editado || S.meta?.importadoEn || ahora };
+    // Se guardan las últimas 15 versiones de cada manual.
+    const hist = S.versiones && S.versiones.id === id ? S.versiones.lista : await leerVersiones(id);
+    hist.slice(14).forEach(v => { upd[`historial/${id}/${v.ts}`] = null; });
+  }
+  // Roles que lo ven
+  const rolesDef = { ...S.roles }; const cambiados = [];
+  for (const [rid, r] of Object.entries(S.roles)) {
+    const quiere = !!e.roles?.[rid], tiene = !!r.manuales?.[id];
+    if (quiere === tiene) continue;
+    const manuales = { ...(r.manuales || {}) }; if (quiere) manuales[id] = true; else delete manuales[id];
+    rolesDef[rid] = { ...r, manuales }; cambiados.push(rid);
+    upd[`roles/${rid}/manuales/${id}`] = quiere ? true : null;
+  }
+  Object.assign(upd, updAccesos(rolesDef, cambiados));
+  await update(ref(db, "manuales"), upd);
+  try { localStorage.removeItem("manual-borrador-" + claveBorrador(e)); } catch {}
+  S.indice = { ...S.indice, [id]: entrada }; S.html[id] = a.html; S.textos = null; S.roles = rolesDef;
+  S.edit = null; S.versiones = null;
+  toast(`✓ «${titulo}» publicado.${previo ? " La versión anterior quedó en el historial." : ""}`);
+  abrirManual(id);
+}
+async function leerVersiones(id) {
+  const v = (await get(ref(db, `manuales/historial/${id}`))).val() || {};
+  return Object.entries(v).map(([ts, x]) => ({ ts: Number(ts), ...x })).sort((a, b) => b.ts - a.ts);
+}
+async function verVersiones() {
+  const e = leerEditor(); if (!e?.id) return;
+  S.versiones = { id: e.id, lista: await leerVersiones(e.id) };
+  pintarEditorVersiones();
+}
+function pintarEditorVersiones() {
+  const el = document.getElementById("ed-versiones"); if (!el || !S.versiones) return;
+  el.innerHTML = S.versiones.lista.length
+    ? `<b>Versiones anteriores</b> <span class="muted">(se guardan las últimas 15)</span>${S.versiones.lista.map(v => `<div><span>${new Date(v.ts).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })} · ${esc(v.version || v.titulo || "")}</span><button type="button" class="btn btn-ghost btn-sm" data-act="restaurar-version" data-ts="${v.ts}">Usar esta</button></div>`).join("")}`
+    : `<span class="muted">Este manual todavía no tiene versiones anteriores.</span>`;
+}
+function restaurarVersion(ts) {
+  const v = S.versiones?.lista.find(x => x.ts === Number(ts)); if (!v) return;
+  if (!confirm("¿Reemplazar lo que hay en el editor por esa versión? No se publica hasta que toques «Publicar».")) return;
+  const c = document.getElementById("ed-cuerpo"); if (c) c.innerHTML = limpiarHtml(v.html);
+  marcarCambio();
+}
+async function eliminarManual() {
+  const e = leerEditor(); if (!e?.id) return;
+  const m = S.indice[e.id];
+  if (!confirm(`¿Eliminar «${m.titulo}»? Deja de verse para todos. Se puede restaurar desde Gestionar → Contenido → Eliminados.`)) return;
+  const id = e.id;
+  const html = S.html[id] ?? (await cargarHtml(id));
+  const upd = { [`papelera/${id}`]: { indice: m, html, roles: Object.keys(S.roles).filter(r => S.roles[r].manuales?.[id]), eliminadoEn: Date.now() },
+    [`contenido/indice/${id}`]: null, [`contenido/html/${id}`]: null, [`contenido/texto/${id}`]: null, [`borradores/${id}`]: null };
+  const rolesDef = { ...S.roles }; const cambiados = [];
+  for (const [rid, r] of Object.entries(S.roles)) if (r.manuales?.[id]) { const man = { ...r.manuales }; delete man[id]; rolesDef[rid] = { ...r, manuales: man }; cambiados.push(rid); upd[`roles/${rid}/manuales/${id}`] = null; }
+  Object.assign(upd, updAccesos(rolesDef, cambiados));
+  await update(ref(db, "manuales"), upd);
+  const ind = { ...S.indice }; delete ind[id]; S.indice = ind; S.roles = rolesDef;
+  S.edit = null; S.vista = "inicio";
+  toast(`«${m.titulo}» eliminado.`);
+  pintar();
+}
+async function restaurarManual(id) {
+  const x = S.papelera[id]; if (!x) return;
+  const a = analizarHtml(x.html || "");
+  const upd = { [`contenido/indice/${id}`]: { ...x.indice, editado: Date.now() }, [`contenido/html/${id}`]: a.html, [`contenido/texto/${id}`]: a.texto.slice(0, 200000), [`papelera/${id}`]: null };
+  const rolesDef = { ...S.roles }; const cambiados = [];
+  for (const rid of x.roles || []) if (rolesDef[rid]) { rolesDef[rid] = { ...rolesDef[rid], manuales: { ...(rolesDef[rid].manuales || {}), [id]: true } }; cambiados.push(rid); upd[`roles/${rid}/manuales/${id}`] = true; }
+  Object.assign(upd, updAccesos(rolesDef, cambiados));
+  await update(ref(db, "manuales"), upd);
+  S.roles = rolesDef;
+  toast(`«${x.indice?.titulo || id}» restaurado.`);
+}
+async function moverManual(id, dir) {
+  const m = S.indice[id]; if (!m) return;
+  const her = Object.entries(S.indice).filter(([, x]) => x.parte === m.parte).sort((a, b) => (a[1].orden ?? 0) - (b[1].orden ?? 0));
+  const i = her.findIndex(([x]) => x === id), j = i + dir;
+  if (j < 0 || j >= her.length) return;
+  const [otro, mo] = her[j];
+  let oA = m.orden ?? i, oB = mo.orden ?? j; if (oA === oB) { oA = i; oB = j; }
+  await update(ref(db, "manuales/contenido/indice"), { [`${id}/orden`]: oB, [`${otro}/orden`]: oA });
+}
+async function moverParte(nombre, dir) {
+  const ps = partesExistentes(); const i = ps.indexOf(nombre), j = i + dir;
+  if (i < 0 || j < 0 || j >= ps.length) return;
+  const orden = ps.slice(); [orden[i], orden[j]] = [orden[j], orden[i]];
+  const upd = {};
+  for (const [id, m] of Object.entries(S.indice)) upd[`${id}/parteOrden`] = orden.indexOf(m.parte);
+  await update(ref(db, "manuales/contenido/indice"), upd);
+}
+async function renombrarParte(nombre) {
+  const nuevo = (prompt(`Nuevo nombre para «${nombre}»:`, nombre) || "").trim();
+  if (!nuevo || nuevo === nombre) return;
+  const upd = {};
+  for (const [id, m] of Object.entries(S.indice)) if (m.parte === nombre) upd[`${id}/parte`] = nuevo;
+  await update(ref(db, "manuales/contenido/indice"), upd);
+}
+async function descartarBorrador(k) {
+  if (!confirm("¿Descartar este borrador?")) return;
+  await remove(ref(db, `manuales/borradores/${k}`));
+  try { localStorage.removeItem("manual-borrador-" + k); } catch {}
+}
+async function imprimirTodo() {
+  const lista = manualesVisibles().filter(m => m.visible !== false);
+  toast("Armando el documento…");
+  const htmls = await Promise.all(lista.map(m => cargarHtml(m.id)));
+  const w = window.open("", "_blank");
+  if (!w) { toast("El navegador bloqueó la ventana: permití ventanas emergentes.", "warn"); return; }
+  const css = [...document.querySelectorAll("style")].map(s => s.textContent).join("\n");
+  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Manuales de Procedimientos — Candela Café & Patisserie</title><style>${css} body{background:#fff} .doc{padding:0;font-size:12pt} .doc h1{display:block;font-size:22pt;margin:0 0 4pt;break-before:page} .ver{color:#666;margin-bottom:12pt}</style></head><body><div class="main"><h1 style="font-size:28pt">Manuales de Procedimientos</h1><p>Candela Café &amp; Patisserie · ${new Date().toLocaleDateString("es-AR")}</p>
+    ${lista.map((m, i) => `<div class="doc"><h1>${esc(m.titulo)}</h1><div class="ver">${esc([m.parte, m.version, m.aplicaA ? "Aplica a " + m.aplicaA : ""].filter(Boolean).join(" · "))}</div>${limpiarHtml(htmls[i])}</div>`).join("")}</div></body></html>`);
+  w.document.close();
+  setTimeout(() => { try { w.focus(); w.print(); } catch {} }, 400);
+}
+
+// Barra de herramientas: actúa sobre lo seleccionado en el editor.
+function bloquesSeleccionados(editor) {
+  const sel = window.getSelection(); if (!sel || !sel.rangeCount) return [];
+  const r = sel.getRangeAt(0);
+  if (!editor.contains(r.commonAncestorContainer)) return [];
+  const tope = n => { while (n && n.parentNode !== editor) n = n.parentNode; return n; };
+  const a = tope(r.startContainer), b = tope(r.endContainer);
+  if (!a || !b) return [];
+  const hijos = [...editor.childNodes]; const i = hijos.indexOf(a), j = hijos.indexOf(b);
+  return hijos.slice(Math.min(i, j), Math.max(i, j) + 1);
+}
+function aplicarCuadro(editor, tipo) {
+  const bloques = bloquesSeleccionados(editor);
+  if (!bloques.length) return;
+  if (bloques.length === 1 && bloques[0].nodeType === 1 && bloques[0].classList.contains("cuadro")) {
+    const c = bloques[0];
+    if (!tipo || c.classList.contains("cuadro-" + tipo)) { c.replaceWith(...c.childNodes); }
+    else c.className = `cuadro cuadro-${tipo}`;
+    return;
+  }
+  if (!tipo) return;
+  const div = document.createElement("div");
+  div.className = `cuadro cuadro-${tipo}`;
+  bloques[0].before(div);
+  for (const b of bloques) {
+    if (b.nodeType === 3) { if (!b.textContent.trim()) { b.remove(); continue; } const p = document.createElement("p"); p.textContent = b.textContent; b.replaceWith(p); div.appendChild(p); continue; }
+    if (b.classList?.contains("cuadro")) div.append(...b.childNodes), b.remove(); else div.appendChild(b);
+  }
+}
+function alternarCheck(editor) {
+  const sel = window.getSelection(); if (!sel || !sel.rangeCount) return;
+  const r = sel.getRangeAt(0);
+  const bloques = [...editor.querySelectorAll("p,li")].filter(b => r.intersectsNode(b));
+  if (!bloques.length) return;
+  const poner = !bloques.every(b => b.textContent.trim().startsWith("☐"));
+  for (const b of bloques) {
+    const t = b.firstChild;
+    if (poner) { if (!b.textContent.trim().startsWith("☐")) b.insertBefore(document.createTextNode("☐ "), t); }
+    else if (t && t.nodeType === 3) t.nodeValue = t.nodeValue.replace(/^\s*☐\s*/, "");
+  }
+}
+function celdaActual(editor) {
+  const sel = window.getSelection(); if (!sel || !sel.rangeCount) return null;
+  let n = sel.getRangeAt(0).startContainer;
+  while (n && n !== editor && !(n.nodeType === 1 && (n.tagName === "TD" || n.tagName === "TH"))) n = n.parentNode;
+  return n && n !== editor ? n : null;
+}
+function comandoTabla(editor, cmd) {
+  if (cmd === "tabla") {
+    const html = `<div class="tabla"><table><thead><tr><th>Título</th><th>Título</th></tr></thead><tbody><tr><td>…</td><td>…</td></tr><tr><td>…</td><td>…</td></tr></tbody></table></div><p><br></p>`;
+    document.execCommand("insertHTML", false, html);
+    return;
+  }
+  const c = celdaActual(editor);
+  if (!c) { toast("Poné el cursor dentro de una tabla.", "warn"); return; }
+  const tr = c.parentNode, tabla = tr.closest("table"), col = [...tr.children].indexOf(c);
+  if (cmd === "fila+") { const n = document.createElement("tr"); for (let i = 0; i < tr.children.length; i++) { const td = document.createElement("td"); td.innerHTML = "<br>"; n.appendChild(td); } (tr.parentNode.tagName === "THEAD" ? tabla.tBodies[0] || tabla.appendChild(document.createElement("tbody")) : tr.parentNode).insertBefore(n, tr.parentNode.tagName === "THEAD" ? (tabla.tBodies[0]?.firstChild || null) : tr.nextSibling); }
+  else if (cmd === "fila-") { if (tr.parentNode.tagName !== "THEAD" && tabla.querySelectorAll("tbody tr").length > 1) tr.remove(); }
+  else if (cmd === "col+") { for (const fila of tabla.rows) { const tipo = fila.parentNode.tagName === "THEAD" ? "th" : "td"; const nc = document.createElement(tipo); nc.innerHTML = "<br>"; fila.insertBefore(nc, fila.children[col + 1] || null); } }
+  else if (cmd === "col-") { if (tr.children.length > 1) for (const fila of tabla.rows) fila.children[col]?.remove(); }
+}
+async function insertarImagen(file) {
+  if (!file) return;
+  const url = await new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = mal; r.readAsDataURL(file); });
+  const img = await new Promise((ok, mal) => { const i = new Image(); i.onload = () => ok(i); i.onerror = mal; i.src = url; });
+  const max = 1200, k = Math.min(1, max / Math.max(img.width, img.height));
+  const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  const ed = document.getElementById("ed-cuerpo"); if (!ed) return;
+  ed.focus();
+  document.execCommand("insertHTML", false, `<p><img src="${c.toDataURL("image/jpeg", 0.82)}" alt=""></p>`);
+  marcarCambio();
+}
+function comandoEditor(cmd) {
+  const ed = document.getElementById("ed-cuerpo"); if (!ed) return;
+  if (cmd !== "img") ed.focus();
+  try { document.execCommand("styleWithCSS", false, false); } catch {}
+  const bloques = { p: "<p>", h2: "<h2>", h3: "<h3>" };
+  if (bloques[cmd]) document.execCommand("formatBlock", false, bloques[cmd]);
+  else if (cmd === "b") document.execCommand("bold");
+  else if (cmd === "i") document.execCommand("italic");
+  else if (cmd === "ul") document.execCommand("insertUnorderedList");
+  else if (cmd === "ol") document.execCommand("insertOrderedList");
+  else if (cmd === "check") alternarCheck(ed);
+  else if (cmd.startsWith("cuadro-")) aplicarCuadro(ed, cmd.slice(7));
+  else if (cmd === "sin-cuadro") aplicarCuadro(ed, null);
+  else if (["tabla", "fila+", "fila-", "col+", "col-"].includes(cmd)) comandoTabla(ed, cmd);
+  else if (cmd === "link") { const u = prompt("Dirección del enlace (https://…):"); if (u && /^https?:\/\//i.test(u.trim())) document.execCommand("createLink", false, u.trim()); }
+  else if (cmd === "img") { document.getElementById("ed-img")?.click(); return; }
+  else if (cmd === "limpiar") document.execCommand("removeFormat");
+  else if (cmd === "deshacer") document.execCommand("undo");
+  else if (cmd === "rehacer") document.execCommand("redo");
+  marcarCambio();
+}
+function vistaEditor() {
+  const e = S.edit;
+  const ps = partesExistentes();
+  const nueva = e.parte === "__nueva" || (e.parte && !ps.includes(e.parte));
+  const B = (cmd, txt, title, cls = "") => `<button type="button" data-ed="${cmd}" title="${esc(title)}" class="${cls}">${txt}</button>`;
+  return `${barra()}<div class="main" data-editor="${esc(claveBorrador(e))}">
+    <div class="man-head">
+      <span class="vol" data-act="salir-editor">← Volver sin publicar</span>
+      <div class="h-pag">${e.id ? "✏️ Editar manual" : "➕ Manual nuevo"}</div>
+      <div class="ed-estado" id="ed-estado">${esc(e.estado || "Lo que escribas se guarda solo como borrador. El equipo lo ve cuando tocás «Publicar».")}</div>
+    </div>
+    <div class="bloque">
+      <div class="ed-meta">
+        <div><label class="label" for="ed-titulo">Título</label><input class="input" id="ed-titulo" data-ed-campo value="${esc(e.titulo)}" placeholder="Ej.: Cajeros"></div>
+        <div><label class="label" for="ed-parte">Parte</label><select class="input" id="ed-parte" data-ed-campo>${ps.map(p => `<option ${p === e.parte ? "selected" : ""}>${esc(p)}</option>`).join("")}<option value="__nueva" ${nueva ? "selected" : ""}>➕ Parte nueva…</option></select>
+          ${nueva ? `<input class="input" id="ed-nueva-parte" data-ed-campo style="margin-top:6px" placeholder="Nombre de la parte nueva" value="${esc(e.parte === "__nueva" ? e.nuevaParte : e.parte)}">` : ""}</div>
+      </div>
+      <div class="ed-meta2">
+        <div><label class="label" for="ed-version">Versión</label><input class="input" id="ed-version" data-ed-campo value="${esc(e.version)}" placeholder="Versión 1.0 · Octubre 2026"></div>
+        <div><label class="label" for="ed-aplica">Aplica a</label><input class="input" id="ed-aplica" data-ed-campo value="${esc(e.aplicaA)}" placeholder="San Luis y SLA 5.0"></div>
+      </div>
+      <span class="label">Quién lo ve (roles)</span>${checksRoles("ed-rol", e.roles || {})}
+      <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="ed-visible" data-ed-campo ${e.visible !== false ? "checked" : ""}> Visible para el equipo (desmarcado: solo lo ve Gerencia)</label>
+    </div>
+    <div class="ed-barra">
+      ${B("p", "Texto", "Párrafo normal")}${B("h2", "Sección", "Título de sección (aparece en el índice)")}${B("h3", "Subtítulo", "Subtítulo dentro de una sección")}<span class="sep"></span>
+      ${B("b", "<b>N</b>", "Negrita")}${B("i", "<i>C</i>", "Cursiva")}${B("ul", "• Lista", "Lista con viñetas")}${B("ol", "1. Lista", "Lista numerada")}${B("check", "☐ Checklist", "Ítem de checklist (se puede tildar en el turno)")}<span class="sep"></span>
+      ${B("cuadro-regla", "Regla", "Cuadro rosado: la regla que resume la sección", "b-regla")}${B("cuadro-prohibido", "Prohibido", "Cuadro rojo claro: lo que no se hace nunca", "b-prohibido")}${B("cuadro-atencion", "Atención", "Cuadro amarillo: advertencia", "b-atencion")}${B("cuadro-pendiente", "Pendiente", "Cuadro gris: falta definir", "b-pendiente")}${B("cuadro-nota", "Nota", "Cuadro crema: aclaración", "b-nota")}${B("sin-cuadro", "Sin cuadro", "Sacar el cuadro")}<span class="sep"></span>
+      ${B("tabla", "▦ Tabla", "Insertar tabla")}${B("fila+", "+ Fila", "Agregar fila debajo")}${B("fila-", "− Fila", "Borrar la fila")}${B("col+", "+ Col", "Agregar columna")}${B("col-", "− Col", "Borrar la columna")}<span class="sep"></span>
+      ${B("link", "🔗", "Enlace")}${B("img", "🖼️", "Imagen")}${B("limpiar", "Tx", "Quitar formato")}${B("deshacer", "↶", "Deshacer")}${B("rehacer", "↷", "Rehacer")}
+    </div>
+    <div class="doc editable" id="ed-cuerpo" contenteditable="true" spellcheck="true"></div>
+    <input type="file" id="ed-img" accept="image/*" style="display:none">
+    <div class="ed-pie">
+      <div class="acciones">${e.id ? `<button class="btn btn-ghost btn-sm" data-act="ver-versiones">🕓 Versiones anteriores</button><button class="btn btn-danger btn-sm" data-act="eliminar-manual">🗑️ Eliminar manual</button>` : ""}</div>
+      <div class="acciones"><button class="btn btn-ghost" data-act="salir-editor">Volver</button><button class="btn btn-primary" data-act="publicar-edicion">✓ Publicar</button></div>
+    </div>
+    <div class="versiones bloque" id="ed-versiones" style="${e.id ? "" : "display:none"}"><span class="muted">Tocá «Versiones anteriores» para ver y recuperar una versión publicada antes.</span></div>
+  </div>`;
+}
+
+// ── Recetario (solo lectura) ─────────────────────────────
+// Las mismas recetas que carga la cocina en /recetario/, para los roles que lo tienen. Las reglas
+// solo dejan leer recetas y fotos (no borradores) a quien tiene accesos.recetario.
+const AREAS_RECETARIO = { cocina: { label: "Cocina" } };
+const ALERGENOS = { gluten: "Gluten (TACC)", crustaceos: "Crustáceos", huevo: "Huevo", pescado: "Pescado", mani: "Maní", soja: "Soja", leche: "Leche", frutos_secos: "Frutos secos", sulfitos: "Sulfitos" };
+const aArr = v => !v ? [] : Array.isArray(v) ? v.filter(Boolean) : Object.values(v);
+function escucharRecetario() {
+  if (S.rec.escuchando) return;
+  S.rec.escuchando = true; S.rec.cargando = true;
+  for (const area of Object.keys(AREAS_RECETARIO)) {
+    escuchar(`recetario/areas/${area}/recetas`, v => {
+      const out = { ...S.rec.recetas };
+      for (const k of Object.keys(out)) if (out[k].area === area) delete out[k];
+      for (const [id, r] of Object.entries(v || {})) out[id] = { ...r, id, area, ingredientes: aArr(r.ingredientes), empaque: aArr(r.empaque), pasos: aArr(r.pasos) };
+      S.rec.recetas = out; S.rec.cargando = false; S.rec.error = "";
+      if (["recetario", "receta"].includes(S.vista)) pintar();
+    }, () => { S.rec.cargando = false; S.rec.error = "No tenés acceso al Recetario, o falta publicar las reglas (README → Manuales)."; S.rec.escuchando = false; if (S.vista === "recetario") pintar(); });
+  }
+}
+function categoriaReceta(r) { return r.grupo || (r.tipo === "subreceta" ? "Bases y subrecetas" : "Platos"); }
+function fmtCant(c, u) { if (c == null || c === "") return "c/n"; const n = Math.round(Number(c) * 1000) / 1000; return `${n.toLocaleString("es-AR")} ${u === "porcion" ? "porción" : u || ""}`.trim(); }
+function bruta(c, merma) { const m = Number(merma) || 0; return c == null ? null : m > 0 && m < 100 ? c / (1 - m / 100) : c; }
+function alergenosDe(r, vis = new Set()) {
+  const out = {}; if (!r || vis.has(r.id)) return out; vis.add(r.id);
+  Object.entries(r.alergenos || {}).forEach(([k, v]) => { if (v) out[k] = true; });
+  r.ingredientes.forEach(l => { if (l.tipo === "subreceta" && S.rec.recetas[l.recetaId]) Object.assign(out, alergenosDe(S.rec.recetas[l.recetaId], vis)); });
+  return out;
+}
+async function cargarFotoReceta(r) {
+  if (!r.tieneFoto || S.rec.fotos[r.id] !== undefined) return;
+  S.rec.fotos[r.id] = null;
+  try {
+    const v = (await get(ref(db, `recetario/areas/${r.area}/fotos/${r.id}`))).val();
+    S.rec.fotos[r.id] = typeof v === "string" && v.startsWith("data:image/") ? v : null;
+  } catch { S.rec.fotos[r.id] = null; }
+  document.querySelectorAll(`[data-foto="${r.id}"]`).forEach(el => { if (S.rec.fotos[r.id]) el.innerHTML = `<img src="${S.rec.fotos[r.id]}" alt="">`; });
+}
+function vistaRecetario() {
+  escucharRecetario();
+  const todas = Object.values(S.rec.recetas);
+  let cuerpo;
+  if (S.rec.error) cuerpo = `<div class="bloque">${esc(S.rec.error)}</div>`;
+  else if (S.rec.cargando && !todas.length) cuerpo = `<div class="muted">Cargando recetas…</div>`;
+  else if (!todas.length) cuerpo = `<div class="bloque">Todavía no hay recetas cargadas.</div>`;
+  else {
+    const cats = [...new Set(todas.map(categoriaReceta))].sort((a, b) => a.localeCompare(b, "es"));
+    const q = clave(S.recQ);
+    const lista = todas.filter(r => (!S.recCat || categoriaReceta(r) === S.recCat) && (!q || clave(r.nombre + " " + (r.codigo || "") + " " + r.ingredientes.map(l => l.nombre).join(" ")).includes(q)))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+    cuerpo = `<div class="buscar"><span>🔎</span><input class="input" id="rec-buscar" data-input="rec-buscar" placeholder="Buscar receta o ingrediente…" value="${esc(S.recQ)}" autocomplete="off"></div>
+      <div class="cats"><button class="cat ${!S.recCat ? "on" : ""}" data-act="rec-cat" data-cat="">Todas</button>${cats.map(c => `<button class="cat ${S.recCat === c ? "on" : ""}" data-act="rec-cat" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+      ${lista.length ? `<div class="rec-grid">${lista.map(r => `<div class="rec-card" data-act="receta" data-id="${esc(r.id)}"><div class="rec-foto" data-foto="${esc(r.id)}">${S.rec.fotos[r.id] ? `<img src="${S.rec.fotos[r.id]}" alt="">` : r.tipo === "subreceta" ? "🧪" : "🍽️"}</div><div class="t">${esc(r.nombre)}<small>${esc(categoriaReceta(r))}${r.codigo ? " · " + esc(r.codigo) : ""}</small></div></div>`).join("")}</div>` : `<div class="bloque">Nada coincide.</div>`}`;
+    setTimeout(() => lista.slice(0, 40).forEach(cargarFotoReceta), 0);
+  }
+  return `${barra()}<div class="main">
+    <div class="h-pag">📖 Recetario</div>
+    <div class="sub-pag">Fichas técnicas de cocina: ingredientes, cantidades, pasos y alérgenos.${esGerencia() ? ` Se editan en <a href="/recetario/" target="_blank" rel="noopener">el Recetario</a>.` : ""}</div>
+    ${cuerpo}
+  </div>`;
+}
+function vistaReceta() {
+  const r = S.rec.recetas[S.recId];
+  if (!r) { S.vista = "recetario"; return vistaRecetario(); }
+  const al = alergenosDe(r);
+  const tabla = (lineas, conMerma) => `<div class="doc" style="padding:0;background:none"><div class="tabla"><table><thead><tr><th>${conMerma ? "Ingrediente" : "Envase"}</th><th>Cant.</th>${conMerma ? "<th>Merma</th><th>Se usa</th>" : ""}</tr></thead><tbody>${lineas.map(l => {
+    const sub = l.tipo === "subreceta" && S.rec.recetas[l.recetaId];
+    return `<tr><td>${sub ? `<a href="#" data-act="receta" data-id="${esc(l.recetaId)}">${esc(sub.nombre)}</a> <span class="muted">· subreceta</span>` : esc(l.nombre || "")}</td><td>${esc(fmtCant(l.cantidad, l.unidad))}</td>${conMerma ? `<td>${l.merma ? esc(l.merma) + " %" : "—"}</td><td>${l.merma ? esc(fmtCant(Math.round(bruta(Number(l.cantidad), l.merma) * 10) / 10, l.unidad)) : "—"}</td>` : ""}</tr>`;
+  }).join("")}</tbody></table></div></div>`;
+  setTimeout(() => cargarFotoReceta(r), 0);
+  const rinde = [r.rendimiento ? `Rinde ${fmtCant(r.rendimiento, r.unidadRendimiento)}` : "", r.porciones ? `${r.porciones} porción${r.porciones == 1 ? "" : "es"}` : ""].filter(Boolean).join(" · ");
+  return `${barra()}<div class="main">
+    <div class="man-head"><span class="vol" data-act="recetario">← Recetario</span><h1>${esc(r.nombre)}</h1>
+      <div class="ver">${esc([categoriaReceta(r), r.codigo, rinde].filter(Boolean).join(" · "))}</div></div>
+    <div class="bloque rec-hero">
+      ${r.tieneFoto ? `<div class="rec-foto" data-foto="${esc(r.id)}">${S.rec.fotos[r.id] ? `<img src="${S.rec.fotos[r.id]}" alt="">` : "🍽️"}</div>` : ""}
+      <div style="flex:1;min-width:240px"><h3>Alérgenos</h3>${Object.keys(al).length ? Object.keys(al).map(k => `<span class="alerg">${esc(ALERGENOS[k] || k)}</span>`).join("") : `<div class="muted">No contiene alérgenos de declaración obligatoria.</div>`}</div>
+    </div>
+    <div class="bloque"><h3>Ingredientes</h3>${r.ingredientes.length ? tabla(r.ingredientes, true) : `<div class="muted">Sin ingredientes cargados.</div>`}
+      ${r.empaque.length ? `<h3 style="margin-top:14px">Empaque</h3>${tabla(r.empaque, false)}` : ""}</div>
+    <div class="bloque"><h3>Preparación</h3>${r.pasos.length ? `<ol class="rec-pasos">${r.pasos.map(p => `<li>${esc(p)}</li>`).join("")}</ol>` : `<div class="muted">Sin pasos cargados.</div>`}</div>
+    ${r.observaciones ? `<div class="bloque"><h3>Observaciones</h3><div style="white-space:pre-wrap">${esc(r.observaciones)}</div></div>` : ""}
+    <div class="man-pie"><span></span><button class="btn btn-ghost btn-sm" data-act="imprimir">🖨️ Imprimir</button></div>
+  </div>`;
+}
+
 function pintar() {
   if (!rootEl) return;
+  // El editor no se redibuja mientras se escribe: se perdería el cursor y lo escrito.
+  if (S.vista === "editar" && S.edit && S.rol === "gerencia") {
+    const m = rootEl.querySelector("[data-editor]");
+    if (m && m.getAttribute("data-editor") === claveBorrador(S.edit)) return;
+  }
   const activo = document.activeElement;
   const focoId = activo && activo.id ? activo.id : null;
   const sel = focoId && typeof activo.selectionStart === "number" ? [activo.selectionStart, activo.selectionEnd] : null;
   let html;
   if (!S.authListo) html = `<div class="gate"><div class="muted">Cargando…</div></div>`;
   else if (!S.user || !S.rol) html = S.user && !S.rol ? `<div class="gate"><div class="muted">Verificando tu acceso…</div></div>` : vistaLogin();
+  else if (S.vista === "editar" && esGerencia() && S.edit) html = vistaEditor();
   else if (S.vista === "manual") html = vistaManual();
+  else if (S.vista === "recetario" && tieneRecetario()) html = vistaRecetario();
+  else if (S.vista === "receta" && tieneRecetario()) html = vistaReceta();
   else if (S.vista === "cuenta" && S.rol === "empleado") html = vistaCuenta();
-  else if (S.vista === "gerencia" && S.rol === "gerencia") html = vistaGerencia();
+  else if (S.vista === "gerencia" && esGerencia()) html = vistaGerencia();
   else html = vistaInicio();
   rootEl.innerHTML = html;
+  if (S.vista === "editar" && S.edit) {
+    const c = document.getElementById("ed-cuerpo");
+    if (c) c.innerHTML = limpiarHtml(S.edit.html || "");
+    pintarEditorVersiones();
+  }
   if (focoId) {
     const el = document.getElementById(focoId);
     if (el && el.type !== "file") { try { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) el.setSelectionRange(sel[0], sel[1]); } catch {} }
@@ -978,12 +1625,18 @@ function pintar() {
 }
 
 // ── Eventos ──────────────────────────────────────────────
-function puestosDe(form, nombre) {
+function marcadosDe(form, nombre) {
   return Object.fromEntries([...form.querySelectorAll(`input[name="${nombre}"]:checked`)].map(i => [i.value, true]));
+}
+async function salirEditor() {
+  if (S.edit?.pendiente) await guardarBorrador();
+  const id = S.edit?.id;
+  S.edit = null; S.versiones = null;
+  if (id) abrirManual(id); else { S.vista = "inicio"; pintar(); }
 }
 async function onClick(ev) {
   const chk = ev.target.closest("p.check");
-  if (chk) {
+  if (chk && !ev.target.closest("[contenteditable]")) {
     const k = chk.getAttribute("data-check");
     const c = S.checks[S.manualId] = S.checks[S.manualId] || {};
     c[k] = !c[k];
@@ -992,34 +1645,61 @@ async function onClick(ev) {
     ev.preventDefault();
     return;
   }
+  const ed = ev.target.closest("[data-ed]");
+  if (ed) { ev.preventDefault(); comandoEditor(ed.getAttribute("data-ed")); return; }
   const el = ev.target.closest("[data-act]");
   if (!el) return;
   const act = el.getAttribute("data-act");
   const uid = el.getAttribute("data-uid");
   try {
+    if (S.vista === "editar" && S.edit && ["inicio", "recetario", "gerencia", "salir"].includes(act)) {
+      if (S.edit.pendiente) await guardarBorrador();
+      S.edit = null;
+    }
     if (act === "inicio") { S.vista = "inicio"; S.manualId = null; pintar(); window.scrollTo(0, 0); }
-    else if (act === "abrir") abrirManual(el.getAttribute("data-id"), el.getAttribute("data-buscar") || "");
+    else if (act === "abrir") { ev.preventDefault(); abrirManual(el.getAttribute("data-id"), el.getAttribute("data-buscar") || ""); }
     else if (act === "ir") { ev.preventDefault(); const t = document.getElementById(el.getAttribute("data-sec")); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }
     else if (act === "leido") await marcarLeido(el.getAttribute("data-id"));
     else if (act === "imprimir") window.print();
     else if (act === "cuenta") { S.vista = "cuenta"; pintar(); }
     else if (act === "gerencia") { S.vista = "gerencia"; pintar(); }
+    else if (act === "gerencia-tab") { S.vista = "gerencia"; S.tabGer = el.getAttribute("data-tab"); pintar(); }
     else if (act === "tab") { S.tabGer = el.getAttribute("data-tab"); pintar(); }
-    else if (act === "salir") { cortarDatos(); S.errorLogin = ""; await signOut(auth); }
+    else if (act === "recetario") { S.vista = "recetario"; S.recId = null; pintar(); window.scrollTo(0, 0); }
+    else if (act === "receta") { ev.preventDefault(); S.vista = "receta"; S.recId = el.getAttribute("data-id"); pintar(); window.scrollTo(0, 0); }
+    else if (act === "rec-cat") { S.recCat = el.getAttribute("data-cat"); pintar(); }
+    else if (act === "salir") { cortarDatos(); S.errorLogin = ""; S.rec = { recetas: {}, fotos: {}, cargando: false, error: "", escuchando: false }; await signOut(auth); }
     else if (act === "otra-pass") { S.alta = { ...S.alta, pass: contrasenaNueva() }; pintar(); }
     else if (act === "baja") await darDeBaja(uid);
     else if (act === "reactivar") await reactivar(uid);
     else if (act === "eliminar") await eliminarPersona(uid);
     else if (act === "nueva-pass") await nuevaContrasena(uid);
-    else if (act === "puestos") { S.editandoPuestos = uid || null; pintar(); }
+    else if (act === "roles-persona") { S.editandoRoles = uid || null; pintar(); }
+    else if (act === "editar-rol") { S.editandoRol = el.getAttribute("data-rid") || null; pintar(); }
+    else if (act === "eliminar-rol") await eliminarRol(el.getAttribute("data-rid"));
+    else if (act === "roles-sugeridos") await crearRolesSugeridos();
     else if (act === "cerrar-cred") { S.credenciales = null; pintar(); }
     else if (act === "copiar-cred") {
       const c = S.credenciales;
-      const txt = `Manuales de Candela: ${location.origin}/manuales/\nUsuario: ${c.usuario}\nContraseña: ${c.pass}`;
+      const txt = `Manuales y Recetario de Candela: ${location.origin}/manuales/\nUsuario: ${c.usuario}\nContraseña: ${c.pass}`;
       try { await navigator.clipboard.writeText(txt); toast("📋 Copiado."); } catch { toast("No se pudo copiar: anotalo a mano.", "warn"); }
     }
     else if (act === "publicar") await publicarImportacion();
     else if (act === "descartar-imp") { S.importacion = null; pintar(); }
+    else if (act === "editar") await abrirEditor(el.getAttribute("data-id"));
+    else if (act === "nuevo-manual") await abrirEditor(null);
+    else if (act === "seguir-borrador") await abrirEditor(null, el.getAttribute("data-k"));
+    else if (act === "descartar-borrador") await descartarBorrador(el.getAttribute("data-k"));
+    else if (act === "salir-editor") await salirEditor();
+    else if (act === "publicar-edicion") { el.disabled = true; try { await publicarEdicion(); } finally { el.disabled = false; } }
+    else if (act === "ver-versiones") await verVersiones();
+    else if (act === "restaurar-version") restaurarVersion(el.getAttribute("data-ts"));
+    else if (act === "eliminar-manual") await eliminarManual();
+    else if (act === "restaurar-manual") await restaurarManual(el.getAttribute("data-id"));
+    else if (act === "manual-subir" || act === "manual-bajar") await moverManual(el.getAttribute("data-id"), act === "manual-subir" ? -1 : 1);
+    else if (act === "parte-subir" || act === "parte-bajar") await moverParte(el.getAttribute("data-parte"), act === "parte-subir" ? -1 : 1);
+    else if (act === "parte-renombrar") await renombrarParte(el.getAttribute("data-parte"));
+    else if (act === "imprimir-todo") await imprimirTodo();
   } catch (e) {
     console.error(e);
     toast(e.code ? mensajeError(e.code) : (e.message || String(e)), "error");
@@ -1040,12 +1720,13 @@ async function onSubmit(ev) {
     } else if (tipo === "alta") {
       S.creando = true; pintar();
       try {
-        const r = await darDeAlta({ nombre: fd.get("nombre"), usuario: fd.get("usuario"), pass: fd.get("pass"), puestos: puestosDe(form, "alta-puesto") });
+        const r = await darDeAlta({ nombre: fd.get("nombre"), usuario: fd.get("usuario"), pass: fd.get("pass"), roles: marcadosDe(form, "alta-rol") });
         S.credenciales = { nombre: String(fd.get("nombre")).trim(), usuario: r.usuario, pass: r.pass };
         S.alta = null;
       } finally { S.creando = false; pintar(); }
       if (S.credenciales) window.scrollTo(0, 0);
-    } else if (tipo === "puestos") await guardarPuestos(form.getAttribute("data-uid"), puestosDe(form, "puesto"));
+    } else if (tipo === "roles-persona") await guardarRolesPersona(form.getAttribute("data-uid"), marcadosDe(form, "rol"));
+    else if (tipo === "rol") await guardarRol(form.getAttribute("data-rid") || null, { nombre: fd.get("nombre"), recetario: !!fd.get("recetario"), manuales: marcadosDe(form, "rol-manual") });
   } catch (e) {
     console.error(e);
     toast(e.code ? mensajeError(e.code) : (e.message || String(e)), "error");
@@ -1053,9 +1734,11 @@ async function onSubmit(ev) {
 }
 function onInput(ev) {
   const el = ev.target;
+  if (el.id === "ed-cuerpo" || el.closest?.("#ed-cuerpo") || el.hasAttribute?.("data-ed-campo")) { marcarCambio(); return; }
   const k = el.getAttribute && el.getAttribute("data-input");
   if (!k) return;
   if (k === "buscar") { S.q = el.value; pintar(); }
+  else if (k === "rec-buscar") { S.recQ = el.value; pintar(); }
   else if (k === "alta-nombre") {
     const antes = S.alta.usuario, sugeridoAntes = usuarioSugerido(S.alta.nombre);
     S.alta.nombre = el.value;
@@ -1066,10 +1749,23 @@ function onInput(ev) {
 }
 function onChange(ev) {
   const el = ev.target;
+  if (el.id === "ed-img") { insertarImagen(el.files && el.files[0]).catch(e => toast("No se pudo agregar la imagen.", "error")); el.value = ""; return; }
+  if (el.id === "ed-parte") { leerEditor(); S.edit._redibujar = true; const m = rootEl.querySelector("[data-editor]"); if (m) m.removeAttribute("data-editor"); pintar(); marcarCambio(); return; }
+  if (el.hasAttribute?.("data-ed-campo") || el.name === "ed-rol") { marcarCambio(); return; }
   const k = el.getAttribute && el.getAttribute("data-input");
   if (k === "archivo") elegirArchivo(el.files && el.files[0]);
   else if (k === "visible") cambiarVisible(el.getAttribute("data-id"), el.checked).catch(e => toast(mensajeError(e.code || e.message), "error"));
-  else if (S.alta && el.name === "alta-puesto") { const p = { ...(S.alta.puestos || {}) }; if (el.checked) p[el.value] = true; else delete p[el.value]; S.alta.puestos = p; }
+  else if (S.alta && el.name === "alta-rol") { const p = { ...(S.alta.roles || {}) }; if (el.checked) p[el.value] = true; else delete p[el.value]; S.alta.roles = p; }
+}
+// Pegar desde Word o Docs: se limpia (sin colores, tipografías ni estilos raros) antes de entrar.
+function onPaste(ev) {
+  if (!ev.target.closest?.("#ed-cuerpo")) return;
+  const dt = ev.clipboardData; if (!dt) return;
+  const html = dt.getData("text/html"), texto = dt.getData("text/plain");
+  ev.preventDefault();
+  if (html) document.execCommand("insertHTML", false, limpiarHtml(html.replace(/<!--[\s\S]*?-->/g, "")));
+  else document.execCommand("insertText", false, texto);
+  marcarCambio();
 }
 
 function montar(el) {
@@ -1078,6 +1774,10 @@ function montar(el) {
   el.addEventListener("submit", onSubmit);
   el.addEventListener("input", onInput);
   el.addEventListener("change", onChange);
+  el.addEventListener("paste", onPaste);
+  // Mientras se edita un manual: si queda algo sin guardar, se guarda antes de cerrar la pestaña.
+  window.addEventListener("pagehide", () => { if (S.edit?.pendiente) guardarBorrador(); });
+  window.addEventListener("beforeunload", ev => { if (S.edit?.pendiente) { guardarBorrador(); ev.preventDefault(); ev.returnValue = ""; } });
   pintar();
 }
 // Se engancha después de montar: en los tests el stub de Auth puede responder en el acto.
