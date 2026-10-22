@@ -6,6 +6,7 @@ Este repositorio (rama `claude/business-app-features-9mfa1a`) contiene las herra
 |---|---|---|
 | **Costeo & Proveedores** | `costeo-proveedores/` | Facturas de proveedores, órdenes de pago, precio e historial de insumos, costeo automático de productos, comparación con inflación |
 | **Recetario** | `recetario/` | Fichas técnicas de Cocina (ingredientes, merma, pasos, alérgenos ANMAT, foto) con PDF para imprimir. Acceso con contraseña; Costeo lee las recetas para costearlas |
+| **Manuales de procedimiento** | `manuales/` | Los manuales de cada puesto para todo el equipo, en el celular. Cada persona entra con su usuario y contraseña; Gerencia da de alta y de baja. El contenido se importa del documento de Drive |
 | **Presupuestos** | `presupuestos/` | Cotizaciones a clientes con ítems libres; al aceptarse, registra el pedido en el sistema de Pedidos de Clientes (otro proyecto/rama) |
 
 ---
@@ -457,6 +458,37 @@ Este bloque **reemplaza** al del paso 3 de Informes. Hacé antes los pasos de ar
           }
         }
       }
+    },
+
+    "manuales": {
+      "login": {
+        ".write": "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+        "$clave": { ".read": true }
+      },
+      "personal": {
+        ".read":  "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+        ".write": "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          "ultimoIngreso": { ".write": "auth != null && auth.uid === $uid && data.parent().child('activo').val() === true" }
+        }
+      },
+      "contenido": {
+        ".read":  "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+        ".write": "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+        "indice": { ".read": "auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true" },
+        "meta":   { ".read": "auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true" },
+        "html":  { "$id": { ".read": "auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true && root.child('manuales/contenido/indice').child($id).child('visible').val() !== false" } },
+        "texto": { "$id": { ".read": "auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true && root.child('manuales/contenido/indice').child($id).child('visible').val() !== false" } }
+      },
+      "lecturas": {
+        ".read":  "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+        ".write": "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+        "$uid": {
+          ".read":  "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && root.child('manuales/personal').child(auth.uid).child('activo').val() === true"
+        }
+      }
     }
   }
 }
@@ -466,6 +498,7 @@ Tres cosas a tener en cuenta:
 - **Los nodos de Pedidos de Producción** (`catalogo`, `pedidos`, `stock`, `anuncios`…) están porque ese sistema usa **esta misma base**. Quedan igual de abiertos que hoy. Si en **Data** aparece otra carpeta principal que no está en la lista, hay que agregarla antes de publicar: cualquier nodo que no figure queda bloqueado.
 - **`informes/envios` ahora exige la cuenta de Gerencia**, no cualquier sesión. Con la regla anterior (`auth != null`), la cuenta del recetario —o cualquier cuenta nueva— podía leer los informes. Si Gerencia usa otro mail, cambialo también acá.
 - **`costeo@candela-app.com`** solo puede **leer** el recetario (lo usa Costeo para calcular costos); solo `recetario-cocina@…` puede escribir.
+- **`manuales`**: el contenido solo lo lee quien figura **activo** en `manuales/personal/{uid}` (o Gerencia). Tener una cuenta no alcanza: dar de baja a alguien le corta la lectura en el acto. Ver [Manuales de procedimiento](#módulo-manuales-de-procedimiento).
 
 **Verificar:** en una ventana privada, `https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com/recetario.json` tiene que devolver **`Permission denied`**.
 
@@ -535,3 +568,49 @@ La raíz del sitio (`/`) muestra una página simple con links a las dos apps.
 - **Zona horaria**: America/Argentina/Buenos_Aires (UTC-3)
 - **Compatibilidad**: Chrome, Safari, Firefox, Edge modernos; optimizado para móvil
 - **Impresión**: estilos `@media print` en Presupuestos para la vista de cotización
+
+---
+
+## Módulo: Manuales de procedimiento
+
+`manuales/` — los manuales de procedimiento de Candela Café & Patisserie para todo el equipo, en el celular. **Cada persona entra con su usuario y contraseña**, y Gerencia los da de alta y de baja desde la misma página.
+
+| | |
+|---|---|
+| **Entrar** | Usuario y contraseña. Gerencia entra con el usuario `gerencia` (la cuenta `gerencia@candela-app.com` de Informes). |
+| **Leer** | Inicio con **"Tus manuales"** primero y el resto agrupado por parte (Documentos comunes, Locales de venta, Cocina, Cuadra, Apoyo). Buscador por título, secciones y **texto completo**. Cada manual tiene un índice de secciones fijo arriba, los cuadros de colores de la Guía de estilo (regla, prohibido, atención, pendiente, nota), **checklists tildables** (☐) para usar en el turno, imprimir y **"Marcar como leído"**. Si el manual cambia, vuelve a figurar como "se actualizó desde que lo leíste". |
+| **Mi cuenta** | Cada persona puede cambiar su contraseña. |
+| **⚙️ Gestionar → Equipo y accesos** | **Alta**: nombre, usuario (se sugiere solo), contraseña inicial generada y qué manuales son "suyos". Muestra los datos para pasárselos (copiar o WhatsApp). Por persona: cuántos de sus manuales leyó, último ingreso, **Contraseña nueva**, **Dar de baja** (pierde el acceso en el acto, aunque tenga la página abierta), **Reactivar** y **Eliminar**. |
+| **⚙️ Gestionar → Contenido** | **Importar** el documento de Drive y publicarlo. Elegir qué manuales ve el equipo (las Guías internas vienen ocultas). |
+
+### De dónde sale el contenido: el documento de Drive
+
+**Drive es el original.** El contenido no se escribe en la app: se importa del documento vigente, carpeta **"Manuales de Procedimientos — Candela Café & Patisserie"**:
+
+1. Descargar el documento vigente como **.docx**: `manual-unificado.docx` (subcarpeta "Manuales — material de trabajo") o, si el vigente es el Google Doc, **Archivo → Descargar → Microsoft Word (.docx)**. También sirve el `.html`.
+2. **Gestionar → Contenido** → elegir el archivo → revisar la vista previa → **Publicar**.
+3. Cada vez que el documento cambie en Drive, repetir. Lo que cada persona ya leyó se conserva si el manual no cambió.
+
+Cómo se arma: un manual por cada **Título 1**. Los **"Parte N — …"** son las carátulas de cada grupo. Lo que está antes de la primera parte queda como **"Cómo usar este manual"**, sin el índice. Se toman también:
+- La **línea de versión** en cursiva ("Versión 2.1 · Septiembre 2026 · Aplica a …").
+- Las **tablas de una sola celda** como cuadros: el tipo sale del color de fondo, que se lee directo del .docx.
+- La primera fila de cada tabla como encabezado.
+
+Se descartan los separadores y todo lo que no sea texto (scripts, estilos, eventos). La parte **Guías internas** ("no se reparten al equipo") se publica oculta.
+
+### Cómo funciona el acceso
+
+- **Cuenta:** cada persona tiene una cuenta propia de Firebase Authentication con un email interno al azar (`manuales-xxxx@candela-app.com`), que no revela su nombre. El usuario se traduce a ese email con `manuales/login/{hash del usuario}`. Esa tabla es pública solo de a una clave: no se puede listar ni dice nombres.
+- **Lo que da acceso** no es la cuenta sino figurar **activo** en `manuales/personal/{uid}`. Las reglas lo exigen en cada lectura. Por eso dar de baja corta el acceso en el acto: la lectura abierta se cancela y la app se cierra sola. La cuenta de esa persona tampoco puede leer nada más de la base (Informes, Recetario): esas reglas piden emails puntuales.
+- **Altas:** se crean desde el navegador de Gerencia con una instancia aparte de Firebase, así Gerencia no pierde su sesión. Requiere el acceso por email y contraseña habilitado (ya lo está para Informes) y, en *Authentication → Settings → User actions*, **"Enable create (sign-up)"** activado (viene así).
+- **Contraseña nueva:** desde el navegador no se puede cambiar la contraseña de otra cuenta. Entonces se crea una cuenta nueva con el **mismo usuario**, se le pasan sus manuales y lo que ya leyó, y la anterior queda sin acceso. Las cuentas viejas o dadas de baja se pueden borrar a mano en *Authentication → Users* si se quiere, pero no hace falta: no tienen acceso a nada.
+- **Datos:** `manuales/login`, `manuales/personal/{uid}` (nombre, usuario, activo, sus manuales, último ingreso), `manuales/contenido/{indice,html,texto,meta}` y `manuales/lecturas/{uid}/{manual}` (versión leída y cuándo).
+
+### Puesta en marcha (una sola vez)
+
+1. Publicar las **reglas completas** de [Recetario → Reglas de seguridad](#reglas-de-seguridad-completas), que ya incluyen el bloque `manuales`.
+2. Entrar a `/manuales/` con el usuario **`gerencia`** y su contraseña.
+3. **Gestionar → Contenido**: importar el `.docx` de Drive y **Publicar**.
+4. **Gestionar → Equipo y accesos**: dar de alta a cada persona y pasarle su usuario y contraseña.
+
+**Verificar:** en una ventana privada, `https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com/manuales/contenido.json` tiene que devolver **`Permission denied`**.
