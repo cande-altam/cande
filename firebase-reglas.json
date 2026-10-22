@@ -1,0 +1,98 @@
+{
+  "rules": {
+    "costeo":       { ".read": true, ".write": true },
+    "presupuestos": { ".read": true, ".write": true },
+    "cronogramas":  { ".read": true, ".write": true },
+    "vacaciones":   { ".read": true, ".write": true },
+
+    "catalogo":            { ".read": true, ".write": true },
+    "pedidos":             { ".read": true, ".write": true },
+    "pedidosTs":           { ".read": true, ".write": true },
+    "insumosPedidos":      { ".read": true, ".write": true },
+    "comprados":           { ".read": true, ".write": true },
+    "confirmados":         { ".read": true, ".write": true },
+    "alertas":             { ".read": true, ".write": true },
+    "ventasCustomInsumos": { ".read": true, ".write": true },
+    "prodCustomInsumos":   { ".read": true, ".write": true },
+    "proveedores":         { ".read": true, ".write": true },
+    "proveedorProducto":   { ".read": true, ".write": true },
+    "stock":               { ".read": true, ".write": true },
+    "stockHistory":        { ".read": true, ".write": true },
+    "anuncios":            { ".read": true, ".write": true },
+
+    "informes": {
+      "envios": {
+        ".read": "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+        "$turno": {
+          "$ts": {
+            ".write": "!data.exists() && newData.exists()",
+            ".validate": "newData.hasChildren(['fecha','loc','turno','experto','enviadoEn'])"
+          }
+        }
+      },
+      "indice": {
+        ".read": true,
+        "$turno": {
+          ".write": "newData.exists()",
+          ".validate": "newData.hasChildren(['fecha','loc','turno','experto','enviadoEn'])"
+        }
+      }
+    },
+
+    "recetario": {
+      "ingredientes": {
+        ".read":  "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'costeo@candela-app.com')",
+        ".write": "auth != null && auth.token.email === 'recetario-cocina@candela-app.com'",
+        "$id": {
+          ".validate": "newData.hasChildren(['nombre', 'tipo'])",
+          "nombre": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" }
+        }
+      },
+      "areas": {
+        ".read": "auth != null && auth.token.email === 'costeo@candela-app.com'",
+        "$area": {
+          ".read":  "auth != null && $area === 'cocina' && auth.token.email === 'recetario-' + $area + '@candela-app.com'",
+          ".write": "auth != null && $area === 'cocina' && auth.token.email === 'recetario-' + $area + '@candela-app.com'",
+          "recetas": {
+            ".read": "(auth != null && auth.token.email === 'gerencia@candela-app.com') || (auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true && root.child('manuales/personal').child(auth.uid).child('accesos/recetario').val() === true)",
+            "$id": {
+              ".validate": "newData.hasChildren(['nombre', 'tipo', 'actualizada'])",
+              "nombre": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 150" },
+              "tipo":   { ".validate": "newData.val() === 'plato' || newData.val() === 'subreceta'" }
+            }
+          },
+          "fotos": {
+            ".read": "(auth != null && auth.token.email === 'gerencia@candela-app.com') || (auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true && root.child('manuales/personal').child(auth.uid).child('accesos/recetario').val() === true)",
+            "$id": { ".validate": "newData.isString() && newData.val().length < 400000" }
+          }
+        }
+      }
+    },
+
+    "manuales": {
+      ".read":  "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+      ".write": "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+      "login": {
+        "$clave": { ".read": true }
+      },
+      "personal": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          "ultimoIngreso": { ".write": "auth != null && auth.uid === $uid && data.parent().child('activo').val() === true" }
+        }
+      },
+      "contenido": {
+        "indice": { ".read": "auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true" },
+        "meta":   { ".read": "auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true" },
+        "html":  { "$id": { ".read": "auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true && root.child('manuales/personal').child(auth.uid).child('accesos/manuales').child($id).val() === true && root.child('manuales/contenido/indice').child($id).child('visible').val() !== false" } },
+        "texto": { "$id": { ".read": "auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true && root.child('manuales/personal').child(auth.uid).child('accesos/manuales').child($id).val() === true && root.child('manuales/contenido/indice').child($id).child('visible').val() !== false" } }
+      },
+      "lecturas": {
+        "$uid": {
+          ".read":  "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && root.child('manuales/personal').child(auth.uid).child('activo').val() === true"
+        }
+      }
+    }
+  }
+}

@@ -388,7 +388,7 @@ Esos mails no reciben correo. **No hace falta cargar nada en Data**: las reglas 
 
 #### Reglas de seguridad completas
 
-Este bloque **reemplaza** al del paso 3 de Informes. Hacé antes los pasos de arriba y **guardá una copia de las reglas actuales**.
+Este bloque **reemplaza** al del paso 3 de Informes. Es el mismo contenido que el archivo [`firebase-reglas.json`](firebase-reglas.json) de la raíz del repo, que se puede copiar y pegar entero. Hacé antes los pasos de arriba y **guardá una copia de las reglas actuales**.
 
 ```json
 {
