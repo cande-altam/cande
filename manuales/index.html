@@ -78,7 +78,10 @@ mark{background:#ffe58a;border-radius:3px;padding:0 1px;}
 .indice{position:sticky;top:56px;z-index:40;background:var(--cream);display:flex;gap:6px;overflow-x:auto;padding:8px 0 10px;margin-bottom:8px;scrollbar-width:thin;}
 .indice a{flex-shrink:0;padding:6px 12px;border-radius:100px;border:1.5px solid var(--cream-dark);background:var(--white);font-size:12px;text-decoration:none;color:var(--black-soft);white-space:nowrap;}
 .indice a:hover{border-color:var(--terra);color:var(--terra);}
-.doc{background:var(--white);border-radius:var(--r);padding:22px 22px 26px;font-size:15.5px;line-height:1.65;overflow-wrap:anywhere;}
+.indice a.on{background:var(--black);border-color:var(--black);color:var(--cream);}
+#arriba{position:fixed;right:16px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:120;width:46px;height:46px;border-radius:50%;border:none;background:var(--black);color:var(--cream);font-size:20px;box-shadow:var(--shadow);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .2s;}
+#arriba.ver{opacity:.92;pointer-events:auto;}
+.doc{background:var(--white);border-radius:var(--r);padding:22px 22px 26px;font-size:15.5px;line-height:1.65;overflow-wrap:break-word;word-break:normal;}
 .doc h1{display:none;}
 .doc h2{font-size:19px;margin:28px 0 10px;padding-top:14px;border-top:1px solid var(--cream-dark);scroll-margin-top:110px;}
 .doc h2:first-child{margin-top:0;padding-top:0;border-top:none;}
@@ -156,6 +159,31 @@ mark{background:#ffe58a;border-radius:3px;padding:0 1px;}
 .alerg{display:inline-block;background:#fdecea;color:#b42318;border-radius:100px;padding:3px 10px;font-size:12px;font-weight:600;margin:0 4px 4px 0;}
 .rec-pasos{margin-left:20px;} .rec-pasos li{margin-bottom:8px;}
 @media(max-width:640px){
+  /* Lectura en el celular: más ancho para el texto, letra un poco más grande, y las tablas
+     como tarjetas (una fila = una tarjeta) para que no se partan las palabras en columnas finitas. */
+  .main{padding:14px 10px calc(96px + env(safe-area-inset-bottom));}
+  .doc{padding:18px 15px 22px;font-size:16px;line-height:1.62;border-radius:12px;hyphens:auto;-webkit-hyphens:auto;}
+  .doc h2{font-size:20px;line-height:1.3;}
+  .doc h3{font-size:17px;}
+  .doc ul,.doc ol{margin-left:18px;}
+  .cuadro{padding:12px 13px;}
+  .doc .tabla{overflow:visible;margin:4px 0 14px;}
+  .doc table.apilada,.doc table.apilada tbody{display:block;width:100%;}
+  .doc table.apilada thead{display:none;}
+  .doc table.apilada tr{display:block;border:1px solid var(--cream-dark);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--white);}
+  .doc table.apilada td{display:block;border:none;padding:3px 0;font-size:15px;}
+  .doc table.apilada td:first-child{font-weight:700;padding-bottom:5px;}
+  .doc table.apilada td:not(:first-child)[data-label]::before{content:attr(data-label);display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray);font-weight:600;margin-bottom:1px;}
+  .doc table.apilada.dos-col td:not(:first-child)::before{display:none;}
+  .doc table.apilada.en-linea td:not(:first-child){display:inline-block;margin-right:16px;}
+  .doc table.apilada td.vacia{display:none!important;}
+  .man-head h1{font-size:23px;}
+  .indice{top:56px;margin:0 -10px 8px;padding:8px 10px 10px;}
+  .man-pie{flex-direction:column;align-items:stretch;}
+  .man-pie .acciones{flex-direction:column;}
+  .man-pie .btn{justify-content:center;}
+  .tarjeta{padding:12px 14px;}
+  .grilla{gap:8px;}
   .form-g,.ed-meta,.ed-meta2{grid-template-columns:1fr;}
   .ed-barra{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
   .ed-barra::-webkit-scrollbar{display:none;}
@@ -189,7 +217,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, creat
 // El contenido se carga importando el documento de Drive (.docx o .html): se parte en un manual
 // por cada Título 1, agrupados por "Parte N — …". Drive sigue siendo el original: cuando cambia,
 // se vuelve a importar.
-const APP_VERSION = "2026-10-22 registro";
+const APP_VERSION = "2026-10-22 movil";
 const GERENCIA_EMAIL = "gerencia@candela-app.com";
 const DOMINIO = "candela-app.com";
 const LIBS = {
@@ -1137,10 +1165,17 @@ function vistaInicio() {
 // Checklists (☐) tildables mientras se usan en el turno; marcas de búsqueda dentro del texto.
 function htmlParaMostrar(html, buscar) {
   let h = limpiarHtml(html || "");
-  let n = 0;
-  h = h.replace(/<p>\s*☐\s*([\s\S]*?)<\/p>/g, (_, r) => `<p class="check" data-check="${n++}"><input type="checkbox" tabindex="-1"><span>${r}</span></p>`);
+  const d = new DOMParser().parseFromString(`<div>${h}</div>`, "text/html");
+  // En el celular cada fila de tabla se muestra como tarjeta: cada celda lleva el nombre de su columna.
+  d.querySelectorAll("table").forEach(t => {
+    const filas = [...t.rows];
+    if (!filas.length || (filas.length === 1 && filas[0].cells.length === 1)) return;
+    const cab = t.tHead && t.tHead.rows[0] ? [...t.tHead.rows[0].cells].map(c => c.textContent.trim()) : null;
+    const cols = Math.max(...filas.map(f => f.cells.length));
+    t.classList.add("apilada"); if (cols <= 2) t.classList.add("dos-col");
+    if (cab) [...t.tBodies].forEach(tb => [...tb.rows].forEach(f => [...f.cells].forEach((c, i) => { if (cab[i]) c.setAttribute("data-label", cab[i]); })));
+  });
   if (buscar) {
-    const d = new DOMParser().parseFromString(`<div>${h}</div>`, "text/html");
     const k = clave(buscar);
     const w = d.createTreeWalker(d.body, NodeFilter.SHOW_TEXT);
     const nodos = []; while (w.nextNode()) nodos.push(w.currentNode);
@@ -1151,9 +1186,29 @@ function htmlParaMostrar(html, buscar) {
       const resto = t.splitText(i); resto.splitText(buscar.length);
       m.textContent = resto.nodeValue; resto.replaceWith(m);
     }
-    h = d.body.firstChild.innerHTML;
   }
+  h = d.body.firstChild.innerHTML;
+  let n = 0;
+  h = h.replace(/<p>\s*☐\s*([\s\S]*?)<\/p>/g, (_, r) => `<p class="check" data-check="${n++}"><input type="checkbox" tabindex="-1"><span>${r}</span></p>`);
   return h;
+}
+// Índice que acompaña la lectura: se marca la sección que se está leyendo (la última cuyo
+// título ya pasó por arriba de la pantalla) y el chip se acomoda a la vista.
+let _secciones = [];
+function activarIndice() {
+  _secciones = document.querySelector(".indice") ? [...document.querySelectorAll(".doc h2[id]")] : [];
+  marcarSeccion();
+}
+function marcarSeccion() {
+  const nav = document.querySelector(".indice");
+  if (!nav || !_secciones.length) return;
+  let actual = _secciones[0];
+  for (const h of _secciones) { if (h.getBoundingClientRect().top < 160) actual = h; else break; }
+  const a = nav.querySelector(`a[data-sec="${actual.id}"]`);
+  if (!a || a.classList.contains("on")) return;
+  nav.querySelectorAll("a.on").forEach(x => x.classList.remove("on"));
+  a.classList.add("on");
+  try { nav.scrollTo({ left: a.offsetLeft - nav.clientWidth / 2 + a.clientWidth / 2, behavior: "smooth" }); } catch { nav.scrollLeft = a.offsetLeft; }
 }
 function vistaManual() {
   const m = S.indice[S.manualId];
@@ -1781,9 +1836,9 @@ function vistaReceta() {
   const r = S.rec.recetas[S.recId];
   if (!r) { S.vista = "recetario"; return vistaRecetario(); }
   const al = alergenosDe(r);
-  const tabla = (lineas, conMerma) => `<div class="doc" style="padding:0;background:none"><div class="tabla"><table><thead><tr><th>${conMerma ? "Ingrediente" : "Envase"}</th><th>Cant.</th>${conMerma ? "<th>Merma</th><th>Se usa</th>" : ""}</tr></thead><tbody>${lineas.map(l => {
+  const tabla = (lineas, conMerma) => `<div class="doc" style="padding:0;background:none"><div class="tabla"><table class="apilada en-linea"><thead><tr><th>${conMerma ? "Ingrediente" : "Envase"}</th><th>Cant.</th>${conMerma ? "<th>Merma</th><th>Se usa</th>" : ""}</tr></thead><tbody>${lineas.map(l => {
     const sub = l.tipo === "subreceta" && S.rec.recetas[l.recetaId];
-    return `<tr><td>${sub ? `<a href="#" data-act="receta" data-id="${esc(l.recetaId)}">${esc(sub.nombre)}</a> <span class="muted">· subreceta</span>` : esc(l.nombre || "")}</td><td>${esc(fmtCant(l.cantidad, l.unidad))}</td>${conMerma ? `<td>${l.merma ? esc(l.merma) + " %" : "—"}</td><td>${l.merma ? esc(fmtCant(Math.round(bruta(Number(l.cantidad), l.merma) * 10) / 10, l.unidad)) : "—"}</td>` : ""}</tr>`;
+    return `<tr><td>${sub ? `<a href="#" data-act="receta" data-id="${esc(l.recetaId)}">${esc(sub.nombre)}</a> <span class="muted">· subreceta</span>` : esc(l.nombre || "")}</td><td data-label="Cantidad">${esc(fmtCant(l.cantidad, l.unidad))}</td>${conMerma && l.merma ? `<td data-label="Merma">${esc(l.merma)} %</td><td data-label="Se usa">${esc(fmtCant(Math.round(bruta(Number(l.cantidad), l.merma) * 10) / 10, l.unidad))}</td>` : conMerma ? `<td class="vacia">—</td><td class="vacia">—</td>` : ""}</tr>`;
   }).join("")}</tbody></table></div></div>`;
   setTimeout(() => cargarFotoReceta(r), 0);
   const rinde = [r.rendimiento ? `Rinde ${fmtCant(r.rendimiento, r.unidadRendimiento)}` : "", r.porciones ? `${r.porciones} porción${r.porciones == 1 ? "" : "es"}` : ""].filter(Boolean).join(" · ");
@@ -1824,6 +1879,7 @@ function pintar() {
   else if (S.vista === "gerencia" && esGerencia()) html = vistaGerencia();
   else html = vistaInicio();
   rootEl.innerHTML = html;
+  if (S.vista === "manual") activarIndice();
   if (S.vista === "editar" && S.edit) {
     const c = document.getElementById("ed-cuerpo");
     if (c) c.innerHTML = limpiarHtml(S.edit.html || "");
@@ -2015,6 +2071,21 @@ function montar(el) {
   el.addEventListener("input", onInput);
   el.addEventListener("change", onChange);
   el.addEventListener("paste", onPaste);
+  // Botón para volver arriba en los manuales largos.
+  const arriba = document.createElement("button");
+  arriba.id = "arriba"; arriba.type = "button"; arriba.setAttribute("aria-label", "Volver arriba"); arriba.textContent = "↑";
+  arriba.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+  document.body.appendChild(arriba);
+  let pendienteScroll = false;
+  window.addEventListener("scroll", () => {
+    if (pendienteScroll) return;
+    pendienteScroll = true;
+    requestAnimationFrame(() => {
+      pendienteScroll = false;
+      arriba.classList.toggle("ver", window.scrollY > 900 && ["manual", "receta"].includes(S.vista));
+      if (S.vista === "manual") marcarSeccion();
+    });
+  }, { passive: true });
   // Mientras se edita un manual: si queda algo sin guardar, se guarda antes de cerrar la pestaña.
   window.addEventListener("pagehide", () => { if (S.edit?.pendiente) guardarBorrador(); });
   window.addEventListener("beforeunload", ev => { if (S.edit?.pendiente) { guardarBorrador(); ev.preventDefault(); ev.returnValue = ""; } });
