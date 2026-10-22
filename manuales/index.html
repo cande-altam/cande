@@ -233,7 +233,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, creat
 // El contenido se carga importando el documento de Drive (.docx o .html): se parte en un manual
 // por cada Título 1, agrupados por "Parte N — …". Drive sigue siendo el original: cuando cambia,
 // se vuelve a importar.
-const APP_VERSION = "2026-10-22 estetica";
+const APP_VERSION = "2026-10-22 categorias";
 const GERENCIA_EMAIL = "gerencia@candela-app.com";
 const DOMINIO = "candela-app.com";
 const LIBS = {
@@ -1836,7 +1836,19 @@ function escucharRecetario() {
     }, () => { S.rec.cargando = false; S.rec.error = "No tenés acceso al Recetario, o falta publicar las reglas (README → Manuales)."; S.rec.escuchando = false; if (S.vista === "recetario") pintar(); });
   }
 }
-function categoriaReceta(r) { return r.grupo || (r.tipo === "subreceta" ? "Bases y subrecetas" : "Platos"); }
+// Mismo orden y nombres que el Recetario (recetario/index.html): "Jugos" ahora es "Bebidas".
+const ORDEN_CATEGORIAS = ["Combos", "Sándwiches", "Croissants", "Bebidas", "Horneados", "Bases", "Porciones envasadas"];
+const RENOMBRES_CATEGORIA = { jugos: "Bebidas" };
+function categoriaReceta(r) {
+  const g = (r.grupo || "").trim();
+  return RENOMBRES_CATEGORIA[clave(g)] || g || (r.tipo === "subreceta" ? "Bases" : "Sin categoría");
+}
+function posCategoria(c) {
+  const k = clave(c).replace(/s$/, "");
+  const i = ORDEN_CATEGORIAS.findIndex(o => clave(o).replace(/s$/, "") === k);
+  return i < 0 ? ORDEN_CATEGORIAS.length : i;
+}
+const compararCategorias = (a, b) => (a === "Sin categoría") - (b === "Sin categoría") || posCategoria(a) - posCategoria(b) || a.localeCompare(b, "es");
 function fmtCant(c, u) { if (c == null || c === "") return "c/n"; const n = Math.round(Number(c) * 1000) / 1000; return `${n.toLocaleString("es-AR")} ${u === "porcion" ? "porción" : u || ""}`.trim(); }
 function bruta(c, merma) { const m = Number(merma) || 0; return c == null ? null : m > 0 && m < 100 ? c / (1 - m / 100) : c; }
 function alergenosDe(r, vis = new Set()) {
@@ -1862,10 +1874,10 @@ function vistaRecetario() {
   else if (S.rec.cargando && !todas.length) cuerpo = `<div class="muted">Cargando recetas…</div>`;
   else if (!todas.length) cuerpo = `<div class="bloque">Todavía no hay recetas cargadas.</div>`;
   else {
-    const cats = [...new Set(todas.map(categoriaReceta))].sort((a, b) => a.localeCompare(b, "es"));
+    const cats = [...new Set(todas.map(categoriaReceta))].sort(compararCategorias);
     const q = clave(S.recQ);
     const lista = todas.filter(r => (!S.recCat || categoriaReceta(r) === S.recCat) && (!q || clave(r.nombre + " " + (r.codigo || "") + " " + r.ingredientes.map(l => l.nombre).join(" ")).includes(q)))
-      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+      .sort((a, b) => compararCategorias(categoriaReceta(a), categoriaReceta(b)) || a.nombre.localeCompare(b.nombre, "es"));
     cuerpo = `<div class="buscar"><span>🔎</span><input class="input" id="rec-buscar" data-input="rec-buscar" placeholder="Buscar receta o ingrediente…" value="${esc(S.recQ)}" autocomplete="off"></div>
       <div class="cats"><button class="cat ${!S.recCat ? "on" : ""}" data-act="rec-cat" data-cat="">Todas</button>${cats.map(c => `<button class="cat ${S.recCat === c ? "on" : ""}" data-act="rec-cat" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div>
       ${lista.length ? `<div class="rec-grid">${lista.map(r => `<div class="rec-card" data-act="receta" data-id="${esc(r.id)}"><div class="rec-foto" data-foto="${esc(r.id)}">${S.rec.fotos[r.id] ? `<img src="${S.rec.fotos[r.id]}" alt="">` : r.tipo === "subreceta" ? "🧪" : "🍽️"}</div><div class="t">${esc(r.nombre)}<small>${esc(categoriaReceta(r))}${r.codigo ? " · " + esc(r.codigo) : ""}</small></div></div>`).join("")}</div>` : `<div class="bloque">Nada coincide.</div>`}`;

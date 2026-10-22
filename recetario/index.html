@@ -248,6 +248,7 @@ function escucharDatos() {
       if (antes[id] && antes[id].actualizada !== r.actualizada) delete fotos[id];
     });
     if (r1) { r1 = false; listo(); }
+    aplicarRenombresCategoria();
     refrescar();
   }, err => { console.error(err); errorAcceso = "reglas"; pintar(); }));
   unsubs.push(onValue(ref(fb.db, "recetario/ingredientes"), s => {
@@ -426,19 +427,54 @@ function grupos() {
 // ── Categorías ───────────────────────────────────────────────
 // La categoría es el campo "grupo" de la receta. Sin categoría cargada, una subreceta va a "Bases"
 // (es lo que son: masas, salsas, rellenos) y un plato a "Sin categoría".
-const CATEGORIAS_SUGERIDAS = ["Bases", "Combos", "Platos", "Postres", "Salsas", "Sándwiches"];
+// Orden del inicio, elegido por Gerencia. Las categorías que no estén en la lista van después,
+// por orden alfabético, y "Sin categoría" al final. "Jugos" se llama ahora "Bebidas".
+const ORDEN_CATEGORIAS = ["Combos", "Sándwiches", "Croissants", "Bebidas", "Horneados", "Bases", "Porciones envasadas"];
+const RENOMBRES_CATEGORIA = { jugos: "Bebidas" };
+const CATEGORIAS_SUGERIDAS = ORDEN_CATEGORIAS;
 const SIN_CATEGORIA = "Sin categoría";
+function nombreCategoria(g) {
+  g = (g || "").trim();
+  return RENOMBRES_CATEGORIA[clave(g)] || g;
+}
 function categoriaDe(r) {
-  const g = (r.grupo || "").trim();
+  const g = nombreCategoria(r.grupo);
   return g || (r.tipo === "subreceta" ? "Bases" : SIN_CATEGORIA);
+}
+function posCategoria(c) {
+  const k = clave(c).replace(/s$/, "");
+  const i = ORDEN_CATEGORIAS.findIndex(o => clave(o).replace(/s$/, "") === k);
+  return i < 0 ? ORDEN_CATEGORIAS.length : i;
+}
+function compararCategorias(a, b) {
+  return (a === SIN_CATEGORIA) - (b === SIN_CATEGORIA) || posCategoria(a) - posCategoria(b) || a.localeCompare(b, "es");
 }
 function categorias() {
   const m = new Map();
   Object.values(recetas).forEach(r => { const c = categoriaDe(r); m.set(c, (m.get(c) || 0) + 1); });
-  return [...m.entries()].sort((a, b) => (a[0] === SIN_CATEGORIA) - (b[0] === SIN_CATEGORIA) || a[0].localeCompare(b[0], "es"));
+  return [...m.entries()].sort((a, b) => compararCategorias(a[0], b[0]));
+}
+// Renombra en la base las recetas que todavía tienen una categoría vieja ("Jugos" → "Bebidas").
+// Una sola vez por sesión; si falla, la pantalla igual ya muestra el nombre nuevo.
+let _renombreHecho = false;
+async function aplicarRenombresCategoria() {
+  if (_renombreHecho || !fb || !area) return;
+  const upd = {};
+  Object.entries(recetas).forEach(([id, r]) => {
+    const nuevo = RENOMBRES_CATEGORIA[clave((r.grupo || "").trim())];
+    if (nuevo) upd[`recetario/areas/${area}/recetas/${id}/grupo`] = nuevo;
+  });
+  _renombreHecho = true;
+  if (!Object.keys(upd).length) return;
+  try { await update(ref(fb.db), upd); toast(`Categoría «Jugos» renombrada a «Bebidas» (${Object.keys(upd).length} receta${Object.keys(upd).length === 1 ? "" : "s"}).`); }
+  catch (err) { console.error("renombrar categoría:", err); _renombreHecho = false; }
 }
 function iconoCategoria(c) {
   const k = clave(c);
+  if (k.includes("croissant") || k.includes("medialuna")) return "🥐";
+  if (k.includes("envasad")) return "📦";
+  if (k.includes("horneado")) return "🧁";
+  if (k.includes("jugo") || k.includes("bebida") || k.includes("licuado")) return "🧃";
   if (k.includes("base")) return "🥣";
   if (k.includes("combo")) return "🍱";
   if (k.includes("postre") || k.includes("dulce") || k.includes("torta")) return "🍰";
@@ -724,7 +760,7 @@ function pintarDetalle(c) {
         <div class="rec-chips">
           <span class="rec-badge rec-${esc(r.tipo)}">${esc(TIPOS[r.tipo] || r.tipo)}</span>
           ${r.codigo ? `<span class="rec-chip">${esc(r.codigo)}</span>` : ""}
-          ${r.grupo ? `<span class="rec-chip">${esc(r.grupo)}</span>` : ""}
+          ${r.grupo ? `<span class="rec-chip">${esc(nombreCategoria(r.grupo))}</span>` : ""}
           <span class="rec-sub">${esc(descRendimiento(r))}${pp ? ` · ${esc(pp)} por porción` : ""}</span>
         </div>
       </div>
@@ -906,7 +942,7 @@ function pintarEditor(c) {
     </div>
     <datalist id="rec-dl-ing">${nomsIng.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
     <datalist id="rec-dl-emp">${nomsEmp.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
-    <datalist id="rec-dl-grupo">${[...new Set([...gs, ...CATEGORIAS_SUGERIDAS])].sort((a, b) => a.localeCompare(b, "es")).map(g => `<option value="${esc(g)}">`).join("")}</datalist>
+    <datalist id="rec-dl-grupo">${[...new Set([...CATEGORIAS_SUGERIDAS, ...gs.map(nombreCategoria)])].sort(compararCategorias).map(g => `<option value="${esc(g)}">`).join("")}</datalist>
 
     <div class="section-block">
       <div class="section-title" style="margin-bottom:14px">Datos generales</div>
@@ -922,7 +958,7 @@ function pintarEditor(c) {
           <input class="form-input" data-f="codigo" value="${esc(d.codigo)}" placeholder="${esc(siguienteCodigo(d.tipo))}">
           ${d.codigo ? "" : `<small class="rec-help">Si lo dejás vacío se asigna ${esc(siguienteCodigo(d.tipo))}.</small>`}</div>
         <div class="form-group"><label class="form-label">Categoría</label>
-          <input class="form-input" data-f="grupo" list="rec-dl-grupo" value="${esc(d.grupo)}" placeholder="Ej: Combos, Bases, Salsas">
+          <input class="form-input" data-f="grupo" list="rec-dl-grupo" value="${esc(nombreCategoria(d.grupo))}" placeholder="Ej: Combos, Sándwiches, Bebidas">
           <small class="rec-help">Ordena el inicio del recetario.${d.grupo ? "" : ` Vacía: va a “${d.tipo === "subreceta" ? "Bases" : "Sin categoría"}”.`}</small></div>
         <div class="form-group"><label class="form-label">Rendimiento</label>
           <div class="rec-inline">
@@ -1130,7 +1166,7 @@ async function guardar() {
     const id = d.id || d.borradorId || push(ref(fb.db, `recetario/areas/${area}/recetas`)).key;
     const receta = {
       nombre, codigo, tipo: d.tipo,
-      grupo: (d.grupo || "").trim(),
+      grupo: nombreCategoria(d.grupo),
       rendimiento: d.rendimiento ?? null,
       unidadRendimiento: d.unidadRendimiento || "porcion",
       porciones: d.porciones ?? null,
@@ -1670,7 +1706,7 @@ function fichaHtml(r, logo, hoy) {
       <div class="emi"><b>Recetario · ${esc(areaLabel(area))}</b><span>Impreso ${hoy}</span></div>
     </header>
     <h1>${esc(r.nombre)}</h1>
-    <div class="meta">${esc([TIPOS[r.tipo], descRendimiento(r), r.grupo, r.codigo ? `Ref. ${r.codigo}` : ""].filter(Boolean).join(" · "))}</div>
+    <div class="meta">${esc([TIPOS[r.tipo], descRendimiento(r), nombreCategoria(r.grupo), r.codigo ? `Ref. ${r.codigo}` : ""].filter(Boolean).join(" · "))}</div>
     <div class="top">
       <div class="cards">
         <div class="card dest"><span>Rendimiento</span><b>${r.rendimiento != null ? esc(fmtCant(r.rendimiento, r.unidadRendimiento)) : "—"}</b></div>
