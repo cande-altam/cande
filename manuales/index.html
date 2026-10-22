@@ -18,7 +18,8 @@
 }
 html{-webkit-text-size-adjust:100%;}
 body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--cream);color:var(--black);font-size:15px;line-height:1.6;min-height:100vh;}
-button,input,select{font-family:inherit;font-size:inherit;}
+button,input,select,textarea{font-family:inherit;font-size:inherit;}
+button{color:inherit;-webkit-appearance:none;appearance:none;}
 a{color:inherit;}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;border:none;cursor:pointer;font-weight:600;font-size:14px;transition:all .15s;text-decoration:none;}
 .btn-primary{background:var(--terra);color:#fff;} .btn-primary:hover{filter:brightness(1.05);}
@@ -55,16 +56,31 @@ a{color:inherit;}
 .buscar{position:relative;margin-bottom:16px;}
 .buscar .input{padding-left:38px;font-size:15px;}
 .buscar span{position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.6;}
-.parte-t{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin:22px 2px 8px;}
-.parte-d{font-size:12px;color:var(--gray);margin:-4px 2px 8px;}
-.grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;}
-.tarjeta{background:var(--white);border-radius:12px;padding:14px 15px;cursor:pointer;border:1.5px solid transparent;transition:all .15s;text-align:left;width:100%;display:block;}
-.tarjeta:hover{border-color:var(--terra);transform:translateY(-1px);box-shadow:var(--shadow);}
-.tarjeta .t{font-weight:600;font-size:15px;line-height:1.3;}
-.tarjeta .a{font-size:12px;color:var(--gray);margin-top:4px;}
-.tarjeta .e{margin-top:8px;font-size:11px;font-weight:600;}
+.parte-cab{display:flex;align-items:center;gap:10px;margin:26px 2px 10px;}
+.parte-cab .ic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.parte-cab .n{font-size:13px;font-weight:700;letter-spacing:.2px;color:var(--black);}
+.parte-cab .c{font-size:11px;font-weight:600;color:var(--gray);background:rgba(34,32,31,.06);border-radius:100px;padding:1px 8px;}
+.parte-cab .d{font-size:12px;color:var(--gray);font-weight:400;margin-top:1px;}
+.grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;}
+.tarjeta{background:var(--white);color:var(--black);border-radius:16px;padding:14px;cursor:pointer;border:1.5px solid transparent;transition:transform .15s,box-shadow .15s,border-color .15s;text-align:left;width:100%;display:flex;gap:12px;align-items:flex-start;box-shadow:0 1px 2px rgba(34,32,31,.05),0 2px 8px rgba(34,32,31,.04);font-family:inherit;}
+.tarjeta:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:rgba(225,93,70,.35);}
+.tarjeta:active{transform:scale(.99);}
+.tarjeta .ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.tarjeta .tx{flex:1;min-width:0;}
+.tarjeta .t{font-weight:650;font-size:15px;line-height:1.3;color:var(--black);letter-spacing:-.1px;}
+.tarjeta .a{font-size:12.5px;color:var(--gray);margin-top:3px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.tarjeta .e{margin-top:7px;font-size:11px;font-weight:600;}
+.tarjeta .flecha{color:#ccc9b5;font-size:20px;align-self:center;flex-shrink:0;}
 .e-leido{color:var(--turq-dark);} .e-nuevo{color:var(--terra);} .e-act{color:#b7791f;}
 .tuyos .tarjeta{border-color:var(--turq);}
+.bienvenida{display:flex;gap:14px;align-items:center;background:linear-gradient(120deg,var(--black) 0%,#3a3836 100%);color:var(--cream);border-radius:18px;padding:18px;cursor:pointer;border:none;width:100%;text-align:left;margin:6px 0 4px;font-family:inherit;}
+.bienvenida .ic{width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.bienvenida .t{font-weight:700;font-size:16px;color:#fff;} .bienvenida .a{font-size:13px;color:rgba(238,235,215,.7);margin-top:2px;}
+.bienvenida .flecha{margin-left:auto;font-size:22px;color:rgba(238,235,215,.6);}
+.progreso{background:var(--white);border-radius:16px;padding:14px 16px;margin:0 0 14px;display:flex;align-items:center;gap:14px;}
+.progreso .barra{flex:1;height:8px;background:var(--cream-mid);border-radius:100px;overflow:hidden;}
+.progreso .barra div{height:100%;background:linear-gradient(90deg,var(--turq-dark),var(--turq));border-radius:100px;transition:width .4s;}
+.progreso .n{font-size:13px;font-weight:600;white-space:nowrap;}
 .res{background:var(--white);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;}
 .res:hover{box-shadow:var(--shadow);}
 .res .t{font-weight:600;} .res .s{font-size:13px;color:var(--black-soft);margin-top:4px;}
@@ -217,7 +233,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, creat
 // El contenido se carga importando el documento de Drive (.docx o .html): se parte en un manual
 // por cada Título 1, agrupados por "Parte N — …". Drive sigue siendo el original: cuando cambia,
 // se vuelve a importar.
-const APP_VERSION = "2026-10-22 movil";
+const APP_VERSION = "2026-10-22 estetica";
 const GERENCIA_EMAIL = "gerencia@candela-app.com";
 const DOMINIO = "candela-app.com";
 const LIBS = {
@@ -1102,14 +1118,38 @@ function barra() {
     <button class="tb" data-act="salir">Salir</button>
   </div>${g && S.errorGerencia ? `<div class="aviso" style="margin:0;border-radius:0;font-weight:600">⚠️ ${esc(S.errorGerencia)}</div>` : ""}`;
 }
+// Un ícono por manual (según el título) y un color por parte, para encontrar las cosas de un vistazo.
+const ICONOS_MANUAL = [
+  ["como usar", "📖"], ["organigrama", "🧭"], ["etica", "🤝"], ["induccion", "👋"], ["jornada", "⏰"], ["higiene", "🧼"],
+  ["emergencia", "🚨"], ["atencion", "💬"], ["herramientas", "📱"], ["vajilla", "🍽️"], ["mercaderia para cambio", "🔄"],
+  ["pedidos y pagos", "🧾"], ["inventario", "📋"], ["vehiculo", "🚚"], ["experto", "⭐"], ["cajero", "💵"], ["vendedor", "🛎️"],
+  ["barista", "☕"], ["jefe de cocina", "👨‍🍳"], ["ayudante", "🧽"], ["cocina", "🍳"], ["maestro", "🎓"], ["panaderia", "🥖"],
+  ["pasteleria", "🍰"], ["factureria", "🥐"], ["especialidades", "✨"], ["sandwich", "🥪"], ["bases", "🥣"], ["compras", "🛒"],
+  ["limpieza", "🧹"], ["guia de estilo", "✍️"], ["plantilla", "🗂️"], ["cuestionario", "❓"], ["residuo", "♻️"], ["seguridad", "🦺"],
+];
+function iconoManual(m) { const t = clave(m.titulo); return (ICONOS_MANUAL.find(([k]) => t.includes(k)) || [, "📄"])[1]; }
+const COLORES_PARTE = ["#d8f0ed", "#f9ddd8", "#fff1c9", "#e5e1cc", "#e3ecf9", "#efe3f7", "#e2f3e1", "#f6e7da"];
+const ICONOS_PARTE = [["tu puesto", "⭐"], ["inicio", "📖"], ["comun", "🏠"], ["venta", "🛍️"], ["cocina", "🍳"], ["cuadra", "🥖"], ["produccion", "🥖"], ["apoyo", "🧰"], ["guia", "✍️"], ["interna", "✍️"]];
+function colorParte(nombre) {
+  if (clave(nombre) === "tu puesto") return "#d8f0ed";
+  const i = Math.max(0, partesExistentes().indexOf(nombre));
+  return COLORES_PARTE[i % COLORES_PARTE.length];
+}
+function iconoParte(nombre) { const t = clave(nombre); return (ICONOS_PARTE.find(([k]) => t.includes(k)) || [, "📚"])[1]; }
 function tarjetaManual(m) {
   const est = estadoLectura(m);
-  const e = est === "leido" ? `<div class="e e-leido">✓ Leído</div>` : est === "actualizado" ? `<div class="e e-act">● Se actualizó desde que lo leíste</div>` : `<div class="e e-nuevo">● Sin leer</div>`;
+  const e = est === "leido" ? `<div class="e e-leido">✓ Leído</div>` : est === "actualizado" ? `<div class="e e-act">● Se actualizó</div>` : `<div class="e e-nuevo">● Sin leer</div>`;
   return `<button class="tarjeta" data-act="abrir" data-id="${esc(m.id)}">
-    <div class="t">${esc(m.titulo)}${m.visible === false ? ` <span class="chip chip-baja">oculto</span>` : ""}</div>
-    ${m.aplicaA ? `<div class="a">Aplica a ${esc(m.aplicaA)}</div>` : ""}
-    ${esGerencia() ? "" : e}
+    <span class="ic" style="background:${colorParte(m.parte)}">${iconoManual(m)}</span>
+    <span class="tx"><div class="t">${esc(m.titulo)}${m.visible === false ? ` <span class="chip chip-baja">oculto</span>` : ""}</div>
+      ${m.aplicaA ? `<div class="a">Para ${esc(m.aplicaA)}</div>` : ""}
+      ${esGerencia() ? "" : e}</span>
+    <span class="flecha">›</span>
   </button>`;
+}
+function cabeceraParte(p) {
+  return `<div class="parte-cab"><span class="ic" style="background:${colorParte(p.nombre)}">${iconoParte(p.nombre)}</span>
+    <div><div><span class="n">${esc(p.nombre)}</span> <span class="c">${p.manuales.length}</span></div>${p.descripcion ? `<div class="d">${esc(p.descripcion)}</div>` : ""}</div></div>`;
 }
 function marcar(texto, q) {
   const t = esc(texto);
@@ -1150,9 +1190,14 @@ function vistaInicio() {
     // Para cada persona, primero los manuales de su puesto; después los comunes.
     const suyos = g ? [] : lista.filter(m => !esComun(m));
     const resto = g ? lista : lista.filter(m => esComun(m));
-    cuerpo = `${suyos.length ? `<div class="parte-t">Tu puesto</div><div class="grilla tuyos">${suyos.map(tarjetaManual).join("")}</div>` : ""}
-      ${partes(resto).map(p => `<div class="parte-t">${esc(p.nombre)}</div>${p.descripcion ? `<div class="parte-d">${esc(p.descripcion)}</div>` : ""}<div class="grilla">${p.manuales.map(tarjetaManual).join("")}</div>`).join("")}
-      ${!g ? `<div class="muted" style="margin-top:18px">${sinLeer ? `Te quedan ${sinLeer} manual${sinLeer === 1 ? "" : "es"} sin leer.` : "✓ Leíste todos tus manuales."}</div>` : ""}`;
+    // "Cómo usar este manual" (la portada) va como bienvenida, arriba de todo.
+    const portada = lista.find(m => clave(m.parte) === "inicio");
+    const sinPortada = x => x.filter(m => m !== portada);
+    const leidos = lista.length - sinLeer;
+    cuerpo = `${!g ? `<div class="progreso"><span class="n">${sinLeer ? `Leíste ${leidos} de ${lista.length}` : "✓ Leíste todo"}</span><div class="barra"><div style="width:${lista.length ? Math.round(leidos / lista.length * 100) : 0}%"></div></div></div>` : ""}
+      ${portada ? `<button class="bienvenida" data-act="abrir" data-id="${esc(portada.id)}"><span class="ic">${iconoManual(portada)}</span><span><div class="t">${esc(portada.titulo)}</div><div class="a">Empezá por acá: cómo están organizados y cómo se leen.</div></span><span class="flecha">›</span></button>` : ""}
+      ${sinPortada(suyos).length ? `${cabeceraParte({ nombre: "Tu puesto", manuales: sinPortada(suyos), descripcion: "Lo que necesitás para tu trabajo de todos los días." })}<div class="grilla tuyos">${sinPortada(suyos).map(tarjetaManual).join("")}</div>` : ""}
+      ${partes(sinPortada(resto)).map(p => `${cabeceraParte(p)}<div class="grilla">${p.manuales.map(tarjetaManual).join("")}</div>`).join("")}`;
   }
   return `${barra()}<div class="main">
     <div class="h-pag">${g ? "Manuales de procedimiento" : `Hola, ${esc((S.perfil?.nombre || "").split(" ")[0])}`}</div>
