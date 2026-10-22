@@ -2,8 +2,8 @@
 // club-personal.js — Vista "⭐ Club" del sistema interno.
 // El personal ingresa con una cuenta de Firebase (email y
 // contraseña) habilitada en fidelizacion/staff/{uid}. Desde acá:
-// buscar/escanear clientes, entregar premios, pasar tarjetas a
-// otro celular, imprimir los QR de mesa
+// buscar clientes por su alias de palabras o WhatsApp, entregar
+// premios y cupones, asignar PIN, imprimir los QR de mesa
 // y configurar el programa.
 // Usa globals de index.html: db, e(), toast(), closeModal().
 // =============================================================
@@ -11,6 +11,7 @@
 const Club = (() => {
   let user = null;
   let esStaff = false;
+  let esAdmin = false;          // administradora: puede borrar clientes (fidelizacion/admins/{uid})
   let config = null;
   let locales = {};
   let tarjetas = {};           // uid -> tarjeta
@@ -18,9 +19,9 @@ const Club = (() => {
   let clienteUid = null;       // cliente abierto en "Atender"
   let visitasCliente = [];
   let pinCliente = null;
-  let cuponCliente = null;     // cupón de bienvenida (Instagram) del cliente abierto       // true/false: si el cliente ya tiene PIN para entrar desde otro celular
+  let cuponCliente = null;     // cupón de bienvenida (Instagram) del cliente abierto
+  let codigoCliente = null;    // alias de palabras del cliente abierto       // true/false: si el cliente ya tiene PIN para entrar desde otro celular
   let escuchando = false;
-  let scanner = null;
   let authListo = false;
 
   const el = () => document.getElementById("club-content");
@@ -74,9 +75,11 @@ const Club = (() => {
       authListo = true;
       user = u && !u.isAnonymous ? u : null;
       esStaff = false;
+      esAdmin = false;
       if (user) {
         try {
           esStaff = !!(await db.ref(`fidelizacion/staff/${user.uid}`).once("value")).val();
+          esAdmin = esStaff && (await db.ref(`fidelizacion/admins/${user.uid}`).once("value").then(x => x.exists(), () => false));
         } catch (err) { console.error(err); }
       }
       if (esStaff) await cargarDatos();
@@ -192,17 +195,15 @@ const Club = (() => {
       </div>`;
   }
 
-  // ── Atender: buscar / escanear / canjear ──────────────────
+  // ── Atender: buscar / canjear ─────────────────────────────
   function renderAtender(t) {
     t.innerHTML = `
       <div class="card club-pad">
         <div class="club-search">
-          <button class="btn btn-primary" onclick="Club.escanear('buscar')">📷 Escanear código del cliente</button>
-          <div class="fg"><label class="fl" for="club-tel">o buscar por WhatsApp o código de cupón</label>
-            <input class="fc" id="club-tel" autocapitalize="characters" autocomplete="off" placeholder="387 512 3456 · ML-K7M-3QP" onkeydown="if(event.key==='Enter')Club.buscarTel()"></div>
-          <button class="btn btn-outline" onclick="Club.buscarTel()">Buscar</button>
+          <div class="fg"><label class="fl" for="club-tel">Código del cliente (3 palabras) o WhatsApp</label>
+            <input class="fc" id="club-tel" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="TORTA.LUNA.CANELA · 387 512 3456" onkeydown="if(event.key==='Enter')Club.buscarTel()" style="font-size:15px"></div>
+          <button class="btn btn-primary" onclick="Club.buscarTel()">Buscar</button>
         </div>
-        <div id="club-reader-wrap"></div>
       </div>
       <div id="club-cliente"></div>`;
     if (clienteUid) renderCliente();
@@ -210,16 +211,17 @@ const Club = (() => {
 
   async function buscarTel() {
     const valor = document.getElementById("club-tel").value;
-    // ¿Es un código de cupón? (letras y números, ej. ML-K7M-3QP)
+    // ¿Tiene letras? Es el código de palabras del cliente (o un código de cupón viejo ML-XXX-XXX)
     if (/[a-z]/i.test(valor)) {
-      const cod = Fidel.normalizarCodigoCupon(valor);
-      if (!cod) return toast("⚠️ El código de cupón tiene 6 letras/números, ej. ML-K7M-3QP");
-      const uid = (await db.ref(`fidelizacion/cuponCodigos/${cod}`).once("value")).val();
-      if (!uid || !tarjetas[uid]) return toast(`No existe ningún cupón ${cod}`);
+      const alias = Fidel.normalizarAlias(valor);
+      const ml = !alias && Fidel.normalizarCodigoCupon(valor);
+      if (!alias && !ml) return toast("⚠️ El código son 3 palabras, ej. TORTA.LUNA.CANELA");
+      const uid = (await db.ref(alias ? `fidelizacion/codigos/${alias}` : `fidelizacion/cuponCodigos/${ml}`).once("value")).val();
+      if (!uid || !tarjetas[uid]) return toast(`No existe ningún cliente con el código ${alias ? Fidel.mostrarAlias(alias) : ml}`);
       return abrirCliente(uid);
     }
     const tel = Fidel.normalizarTelefono(valor);
-    if (!tel) return toast("⚠️ Escribí el WhatsApp (10 números) o el código del cupón");
+    if (!tel) return toast("⚠️ Escribí el código de 3 palabras o el WhatsApp (10 números)");
     const hit = Object.entries(tarjetas).find(([, c]) => c.telefono === tel);
     if (!hit) return toast("No hay ninguna tarjeta con ese WhatsApp");
     abrirCliente(hit[0]);
@@ -230,12 +232,14 @@ const Club = (() => {
     visitasCliente = [];
     pinCliente = null;
     cuponCliente = null;
+    codigoCliente = null;
     if (tab !== "atender") { tab = "atender"; render(); } else renderCliente();
     const s = await db.ref(`fidelizacion/visitas/${uid}`).limitToLast(15).once("value");
     visitasCliente = Object.values(s.val() || {}).sort((a, b) => b.ts - a.ts);
     const c = tarjetas[uid];
     if (c) pinCliente = (await db.ref(`fidelizacion/pines/${c.telefono}`).once("value")).exists();
     cuponCliente = (await db.ref(`fidelizacion/cupones/${uid}`).once("value")).val();
+    codigoCliente = await db.ref(`fidelizacion/tarjetaCodigo/${uid}`).once("value").then(x => x.val(), () => null);
     renderCliente();
   }
 
@@ -243,7 +247,7 @@ const Club = (() => {
     const box = document.getElementById("club-cliente");
     if (!box || !clienteUid) return;
     const c = tarjetas[clienteUid];
-    if (!c) { box.innerHTML = `<div class="card club-pad" style="color:var(--gray)">Ese código no tiene tarjeta. Si es un celular nuevo del cliente, buscá su tarjeta por WhatsApp y usá “Pasar a otro celular”.</div>`; return; }
+    if (!c) { box.innerHTML = `<div class="card club-pad" style="color:var(--gray)">Ese cliente ya no tiene tarjeta.</div>`; return; }
     const meta = config.sellosPremio;
     const premios = Math.floor(c.sellos / meta);
     const llenos = premios > 0 ? meta : c.sellos;
@@ -253,11 +257,11 @@ const Club = (() => {
         <div class="club-cli-head">
           <div>
             <div class="club-cli-name">${e(c.nombre)}</div>
-            <div class="club-meta"><a href="${wa}" target="_blank" rel="noopener">📱 ${e(c.telefono)}</a> · 🎂 ${Fidel.fmtCumple(c.cumple)} · Socio desde ${Fidel.fmtFecha(c.creada)}</div>
+            <div class="club-meta"><a href="${wa}" target="_blank" rel="noopener">📱 ${e(c.telefono)}</a> · 🎂 ${Fidel.fmtCumple(c.cumple)} · Socio desde ${Fidel.fmtFecha(c.creada)}${codigoCliente ? ` · 🔤 <b style="letter-spacing:.5px">${e(Fidel.mostrarAlias(codigoCliente))}</b>` : ""}</div>
           </div>
           <button class="btn btn-ghost btn-sm" onclick="Club.cerrarCliente()">✕</button>
         </div>
-        <div class="club-tarjeta">${Fidel.tarjetaHtml({ nombre: c.nombre, sellos: llenos, meta, premio: config.premio, id: "ftj-staff" })}</div>
+        <div class="club-tarjeta">${Fidel.tarjetaHtml({ nombre: c.nombre, sellos: llenos, meta, premio: config.premio, codigo: codigoCliente || "", id: "ftj-staff" })}</div>
         <div class="club-meta">${c.sellos} sello${c.sellos === 1 ? "" : "s"} · premio cada ${meta} visitas</div>
         ${premios > 0 ? `
           <div class="club-premio">
@@ -273,7 +277,6 @@ const Club = (() => {
         </div>
         <div class="club-actions">
           <button class="btn btn-ghost btn-sm" onclick="Club.asignarPin()">🔑 ${pinCliente ? "Asignar PIN nuevo" : "Asignar PIN"}</button>
-          <button class="btn btn-ghost btn-sm" onclick="Club.escanear('transferir')">📱 Pasar a otro celular</button>
           <span class="club-meta">${pinCliente === null ? "" : pinCliente ? "✅ Tiene PIN" : "⚠️ Todavía no tiene PIN"}</span>
         </div>
         ${visitasCliente.length ? `
@@ -303,28 +306,6 @@ const Club = (() => {
     });
   }
 
-  async function transferir(nuevoUid) {
-    const viejoUid = clienteUid;
-    const c = tarjetas[viejoUid];
-    if (!c || !nuevoUid || nuevoUid === viejoUid) return toast("⚠️ Ese es el mismo celular");
-    if (tarjetas[nuevoUid]) return toast("⚠️ Ese celular ya tiene otra tarjeta");
-    confirmar("📱 Pasar tarjeta", `¿Pasar la tarjeta de <b>${e(c.nombre)}</b> (${c.sellos} sellos) al celular que escaneaste? El celular anterior deja de tenerla.`, "Sí, pasar", async () => {
-      try {
-        const vs = (await db.ref(`fidelizacion/visitas/${viejoUid}`).once("value")).val() || null;
-        await db.ref("fidelizacion").update({
-          [`tarjetas/${nuevoUid}`]: c,
-          [`tarjetas/${viejoUid}`]: null,
-          [`telefonos/${c.telefono}`]: nuevoUid,
-          [`visitas/${nuevoUid}`]: vs,
-          [`visitas/${viejoUid}`]: null,
-        });
-        clienteUid = nuevoUid;
-        toast(`✅ Tarjeta de ${c.nombre} pasada al nuevo celular. Que actualice la página.`);
-        abrirCliente(nuevoUid);
-      } catch (err) { console.error(err); toast("⚠️ No se pudo pasar la tarjeta"); }
-    });
-  }
-
   // ── Cupón de bienvenida: 1 medialuna por seguir en Instagram ──
   function htmlCupon() {
     const cu = cuponCliente;
@@ -332,7 +313,7 @@ const Club = (() => {
     if (Fidel.cuponVigente(cu, Fidel.serverNow())) return `
       <div class="club-premio" style="background:linear-gradient(45deg,#f09433,#dc2743 55%,#bc1888)">
         <div>🥐 <b>Cupón de bienvenida: 1 medialuna para llevar</b>
-          <div style="font-size:13px;opacity:.9">${cu.codigo ? `Código <b style="letter-spacing:1px">${e(cu.codigo)}</b> · ` : ""}Pedile que te muestre que sigue a <b>@${Fidel.INSTAGRAM}</b> en Instagram. Vale solo hoy.</div></div>
+          <div style="font-size:13px;opacity:.9">${codigoCliente ? `Código <b style="letter-spacing:1px">${e(Fidel.mostrarAlias(codigoCliente))}</b> · ` : ""}Pedile que te muestre que sigue a <b>@${Fidel.INSTAGRAM}</b> en Instagram. Vale solo hoy.</div></div>
         <button class="btn" style="background:#fff;color:#bc1888" onclick="Club.canjearCupon()">Entregar medialuna</button>
       </div>`;
     const txt = cu.estado === "canjeado" ? `entregado el ${Fidel.fmtFechaHora(cu.canjeado)}`
@@ -387,54 +368,8 @@ const Club = (() => {
     } catch (err) { console.error(err); toast("⚠️ No se pudo guardar el PIN"); }
   }
 
-  // ── Escáner de QR (cámara) ────────────────────────────────
-  function cargarLibEscaner() {
-    if (window.Html5Qrcode) return Promise.resolve();
-    return new Promise((ok, fail) => {
-      const s = document.createElement("script");
-      s.src = "js/vendor/html5-qrcode.min.js";
-      s.onload = ok; s.onerror = fail;
-      document.head.appendChild(s);
-    });
-  }
-
-  async function escanear(modo) {
-    detenerEscaner();
-    let wrap = document.getElementById("club-reader-wrap");
-    if (modo === "transferir") {
-      document.getElementById("modal-root").innerHTML = `
-        <div class="mbackdrop"><div class="modal" style="text-align:center">
-          <div class="mtitle">📱 Escaneá el celular nuevo</div>
-          <div class="msub">En el celular nuevo, el cliente abre la tarjeta, pone su WhatsApp y le aparece un código para mostrar.</div>
-          <div id="club-reader-wrap"></div>
-          <button class="btn btn-ghost btn-block mt12" onclick="Club.detenerEscaner();closeModal()">Cancelar</button>
-        </div></div>`;
-      wrap = document.querySelector("#modal-root #club-reader-wrap");
-    }
-    wrap.innerHTML = `<div id="club-reader" class="mt12"></div>${modo === "buscar" ? `<button class="btn btn-ghost btn-block mt12" onclick="Club.detenerEscaner()">Cancelar</button>` : ""}`;
-    try {
-      await cargarLibEscaner();
-      scanner = new Html5Qrcode("club-reader");
-      await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 220 }, texto => {
-        const uid = Fidel.uidDeQr(texto);
-        if (!uid) return;
-        detenerEscaner();
-        if (modo === "transferir") { closeModal(); transferir(uid); }
-        else abrirCliente(uid);
-      }, () => {});
-    } catch (err) {
-      console.error(err);
-      wrap.innerHTML = `<div class="club-warn mt12">No se pudo abrir la cámara. Revisá que el navegador tenga permiso de cámara (y que el sistema esté abierto con https).</div>`;
-    }
-  }
-
-  function detenerEscaner() {
-    const s = scanner;
-    scanner = null;
-    if (s) s.stop().catch(() => {}).finally(() => { try { s.clear(); } catch (_) {} });
-    const w = document.getElementById("club-reader-wrap");
-    if (w) w.innerHTML = "";
-  }
+  // Ya no se usa la cámara (los clientes muestran un código de palabras); queda por compatibilidad
+  function detenerEscaner() {}
 
   // ── QR de mesas ───────────────────────────────────────────
   function urlTarjeta(local) {
@@ -561,7 +496,25 @@ const Club = (() => {
   }
   // Datos del Club para la base unificada de 👥 Clientes (solo con sesión del personal)
   function datos() {
-    return { activo: esStaff && !!config, tarjetas, config, locales };
+    return { activo: esStaff && !!config, esAdmin, tarjetas, config, locales };
+  }
+
+  // Borra todos los datos del Club de un cliente. Solo la administradora (lo controlan las reglas).
+  async function borrarSocio(uid) {
+    if (!esAdmin) throw new Error("Solo la administradora puede borrar clientes");
+    const c = tarjetas[uid];
+    if (!c) return;
+    const leer = r => db.ref(`fidelizacion/${r}`).once("value").then(x => x.val(), () => null);
+    const [codigo, cupon, alias] = await Promise.all([leer(`tarjetaCodigo/${uid}`), leer(`cupones/${uid}`), leer("alias")]);
+    const upd = {
+      [`tarjetas/${uid}`]: null, [`telefonos/${c.telefono}`]: null, [`pines/${c.telefono}`]: null,
+      [`intentos/${c.telefono}`]: null, [`visitas/${uid}`]: null, [`cupones/${uid}`]: null, [`tarjetaCodigo/${uid}`]: null,
+    };
+    if (codigo) upd[`codigos/${codigo}`] = null;
+    if (cupon && cupon.codigo) upd[`cuponCodigos/${cupon.codigo}`] = null;
+    Object.entries(alias || {}).forEach(([a, v]) => { if (v && v.uid === uid) upd[`alias/${a}`] = null; });
+    await db.ref("fidelizacion").update(upd);
+    if (clienteUid === uid) cerrarCliente();
   }
 
   // Abrir un socio en ⭐ Club → Atender (desde 👥 Clientes)
@@ -575,7 +528,7 @@ const Club = (() => {
 
   return {
     init, render, setTab, logout, buscarTel, abrirCliente, cerrarCliente, canjear,
-    escanear, detenerEscaner, asignarPin, guardarPin, canjearCupon, imprimirQr, datos, irACliente,
+    detenerEscaner, asignarPin, borrarSocio, guardarPin, canjearCupon, imprimirQr, datos, irACliente,
     guardarConfig, guardarLocales, confirmarOk,
   };
 })();

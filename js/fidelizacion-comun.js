@@ -115,6 +115,22 @@ const Fidel = (() => {
     return !!c && c.estado === "disponible" && c.creado >= inicioDia(now);
   }
 
+  // Alias de cada cliente, como un alias bancario: 3 palabras (ej. TORTA.LUNA.CANELA).
+  // En Firebase se guarda con guiones (TORTA-LUNA-CANELA) porque las claves no admiten puntos.
+  const PALABRAS = "CAFE TORTA LATTE MOCCA CHAI MIEL CANELA VAINILLA CACAO AZUCAR CREMA LECHE MANTECA HARINA MEDIALUNA CROISSANT SCON BUDIN ALFAJOR BROWNIE COOKIE DONA TARTA PIONONO MERENGUE DULCE CARAMELO NUEZ ALMENDRA AVELLANA PISTACHO FRUTILLA CEREZA LIMON NARANJA MANZANA PERA MANGO COCO BANANA DURAZNO FRAMBUESA ARANDANO MORA UVA KIWI MENTA ROMERO ANIS JENGIBRE MATE BIZCOCHO GALLETA CHURRO PRALINE TOFFEE HOJALDRE NATA FLAN MOUSSE TIRAMISU ROGEL CHIPA FACTURA SOL LUNA NUBE CIELO ESTRELLA MAR RIO LAGO MONTE BOSQUE FLOR ROSA JAZMIN LIRIO HOJA ARBOL BRISA LLUVIA NIEVE AURORA ALBA TARDE ABRIL MAYO VERANO PRIMAVERA CERRO VALLE COLIBRI ZORZAL HORNERO CARDENAL GATO CONEJO ZORRO BUHO PANDA LLAMA ROJO AZUL VERDE DORADO PLATA ORO CORAL OCRE LILA TURQUESA MARFIL AMBAR CELESTE SALTA CAFAYATE CACHI LERMA TAZA PLATO MESA VELA LLAVE FAROL LIBRO CARTA PIANO GUITARRA RELOJ BARCO GLOBO COMETA RISA ABRAZO AMIGO FIESTA DOMINGO SABADO MAGIA CHOCOLATE AROMA HORNO TOSTADA GRANO ESPUMA TIBIO CALMA PAUSA DUENDE PLUMA PERLA TREBOL GIRASOL MARGARITA OLIVO ACACIA CEIBO TUCAN PICAFLOR".split(" ");
+  function generarAlias() {
+    const n = new Uint32Array(3);
+    crypto.getRandomValues(n);
+    return Array.from(n, x => PALABRAS[x % PALABRAS.length]).join("-");
+  }
+  function mostrarAlias(clave) { return String(clave || "").replace(/-/g, "."); }
+  // Acepta "torta luna canela", "Torta.Luna.Canela", "TORTA-LUNA-CANELA"… → "TORTA-LUNA-CANELA" (o null)
+  function normalizarAlias(raw) {
+    const p = String(raw || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+      .split(/[^A-Z]+/).filter(Boolean);
+    return p.length === 3 && p.every(w => w.length >= 3 && w.length <= 10) ? p.join("-") : null;
+  }
+
   // Código del cupón para tipear en caja (ej. ML-K7M-3QP): sin 0/O, 1/I/L para no confundirse
   const ALFABETO_CUPON = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
   function generarCodigoCupon() {
@@ -180,8 +196,10 @@ const Fidel = (() => {
   .ftj-ov{position:absolute}
   .ftj-nombre{left:${px(68.2)};top:${py(51.67)};width:${pw(126 - 68.2)};height:${ph(58.6 - 51.67)};display:flex;align-items:flex-end;color:#E8E7CA;font:500 2.7cqw/1 'Montserrat',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:.35cqw}
   .ftj-texto{left:${px(88.7)};top:${py(118.2)};width:${pw(180 - 88.7)};color:#E34E44;font:400 2.62cqw/1.24 'Montserrat',sans-serif;letter-spacing:-.015em}
-  .ftj-qr{left:${px(45.13)};top:${py(112.58)};width:${pw(85.05 - 45.13)};aspect-ratio:1;background:#E34E44;padding:.55cqw;border:none;cursor:zoom-in}
-  .ftj-qr svg{display:block;width:100%;height:100%}
+  .ftj-cod{left:${px(45.13)};top:${py(112.58)};width:${pw(85.05 - 45.13)};aspect-ratio:1;background:#E34E44;border:none;border-radius:.6cqw;cursor:zoom-in;color:#E8E7CA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35cqw;padding:.6cqw;font-family:'Montserrat',sans-serif}
+  .ftj-cod small{font-size:1.45cqw;font-weight:600;letter-spacing:.25cqw;opacity:.85;margin-bottom:.3cqw}
+  .ftj-cod span{font-size:2.05cqw;font-weight:800;letter-spacing:.08cqw;line-height:1}
+  .ftj-cod img{width:45%;opacity:.95}
   .ftj-sello{width:${pw(2 * R)};aspect-ratio:1;border-radius:50%;background:#E8E7CA;display:flex;align-items:center;justify-content:center}
   .ftj-sello img{width:70%;height:70%;object-fit:contain;opacity:.94}
   .ftj-sello.nuevo img{animation:ftj-golpe .7s cubic-bezier(.2,1.5,.5,1) both;animation-delay:var(--d,0s)}
@@ -195,7 +213,7 @@ const Fidel = (() => {
     document.head.appendChild(s);
   }
 
-  // o = { nombre, sellos (0..10 a mostrar), premio, meta, qrText, nuevo (índice o -1), frente, id, qrClick }
+  // o = { nombre, sellos (0..10 a mostrar), premio, meta, codigo (alias), codigoClick, nuevo (índice o -1), frente, id }
   function tarjetaHtml(o) {
     cssTarjeta();
     const sellos = Array.from({ length: CASILLEROS }, (_, i) => {
@@ -212,7 +230,9 @@ const Fidel = (() => {
             <img src="img/tarjeta-dorso.svg" alt="">
             <div class="ftj-ov ftj-nombre">${esc(o.nombre)}</div>
             <div class="ftj-ov ftj-texto">Completá ${o.meta} visitas, accedé a ${esc(o.premio)} y a más promociones exclusivas.</div>
-            ${o.qrText ? `<button class="ftj-ov ftj-qr" type="button" aria-label="Agrandar código" ${o.qrClick ? `onclick="event.stopPropagation();${o.qrClick}"` : ""}>${qrSvgMarca(o.qrText)}</button>` : ""}
+            ${o.codigo !== undefined ? `<button class="ftj-ov ftj-cod" type="button" aria-label="Tu código: ${esc(mostrarAlias(o.codigo))}" ${o.codigoClick ? `onclick="event.stopPropagation();${o.codigoClick}"` : ""}>${o.codigo
+              ? `<small>TU CÓDIGO</small>${String(o.codigo).split("-").map(w => `<span>${esc(w)}</span>`).join("")}`
+              : `<img src="img/isotipo-crema.svg" alt="">`}</button>` : ""}
             ${sellos}
           </div>
           <div class="ftj-cara ftj-frente"><img src="img/tarjeta-frente.svg" alt="Tarjeta de Fidelidad Candela"></div>
@@ -244,6 +264,7 @@ const Fidel = (() => {
     inicioDia, inicioSemana, msDelDia,
     normalizarTelefono, normalizarTelefonoFlexible, diasHastaCumple, motivoSinSello, tarjetaConSello,
     INSTAGRAM, INSTAGRAM_URL, cuponVigente, generarCodigoCupon, normalizarCodigoCupon,
+    generarAlias, mostrarAlias, normalizarAlias,
     qrDeTarjeta, uidDeQr, qrSvg, qrSvgMarca, tarjetaHtml,
     fmtFecha, fmtFechaHora, fmtCumple,
   };

@@ -1128,6 +1128,7 @@ function renderClientes(){
           <span style="color:var(--light);font-size:13px;margin-left:10px" id="cl-arrow-${cl.key}">›</span>
         </div>
         <div class="cl-body" id="cl-body-${cl.key}">
+          ${club.esAdmin?`<div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="btn btn-danger btn-sm" onclick="borrarClienteUnificado('${cl.key}')">🗑️ Borrar cliente</button></div>`:''}
           ${cl.otrosNombres.length?`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">También cargado como: ${cl.otrosNombres.map(e).join(', ')}</div>`:''}
           ${c?`
             <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">⭐ Club Candela</div>
@@ -1168,6 +1169,50 @@ function renderClientes(){
         </div>
       </div>`;
   }).join('')+(filtered.length>300?`<div style="text-align:center;color:var(--muted);font-size:12px;padding:10px">Mostrando 300 de ${filtered.length}. Usá la búsqueda o los filtros para ver el resto.</div>`:'');
+}
+
+// Borrar un cliente (solo la administradora): su tarjeta del Club y sus datos de contacto de pedidos.
+// Los pedidos ya hechos quedan en el historial.
+function borrarClienteUnificado(key){
+  const club=(typeof Club!=='undefined')?Club.datos():{};
+  if(!club.esAdmin) return toast('⚠️ Solo la administradora puede borrar clientes');
+  const cl=clientesUnificados().find(c=>c.key===key);
+  if(!cl) return;
+  document.getElementById('modal-root').innerHTML=`
+    <div class="mbackdrop"><div class="modal">
+      <div class="mtitle">🗑️ Borrar a ${e(cl.nombre)}</div>
+      <div class="msub" style="font-size:13.5px;color:var(--black);line-height:1.55">
+        Se borra para siempre:<br>
+        ${cl.club?`• Su tarjeta del Club: ${cl.club.sellos} sellos, visitas, PIN, código y cupón.<br>`:''}
+        ${cl.registros.length?`• Sus datos de contacto de pedidos (nombre y teléfono).<br>`:''}
+        Los pedidos que ya hizo quedan en el historial.<br><br>
+        Para confirmar, escribí <b>BORRAR</b>:
+      </div>
+      <input class="fc" id="cl-borrar-ok" autocomplete="off" style="width:100%;text-transform:uppercase" oninput="document.getElementById('cl-borrar-btn').disabled=this.value.trim().toUpperCase()!=='BORRAR'">
+      <div class="fxc" style="justify-content:flex-end;margin-top:14px">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-danger" id="cl-borrar-btn" disabled onclick="confirmarBorrarCliente('${cl.key}')">Borrar</button>
+      </div>
+    </div></div>`;
+  document.getElementById('cl-borrar-ok').focus();
+}
+
+async function confirmarBorrarCliente(key){
+  const cl=clientesUnificados().find(c=>c.key===key);
+  if(!cl) return closeModal();
+  const btn=document.getElementById('cl-borrar-btn');
+  if(btn){ btn.disabled=true; btn.textContent='Borrando…'; }
+  try{
+    if(cl.clubUid) await Club.borrarSocio(cl.clubUid);
+    await Promise.all(cl.registros.map(c=>db.ref(`clients/${c.key}`).remove()));
+    closeModal();
+    toast(`🗑️ ${cl.nombre} fue borrado`);
+    renderClientes();
+  }catch(err){
+    console.error(err);
+    closeModal();
+    toast('⚠️ No se pudo borrar. ¿Estás con la cuenta de administradora?');
+  }
 }
 
 function exportarClientesCsv(){

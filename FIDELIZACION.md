@@ -1,8 +1,8 @@
-# ⭐ Club Candela — Tarjeta de sellos con QR
+# ⭐ Club Candela — Tarjeta de sellos
 
 Programa de fidelización: el cliente escanea un QR en la mesa o el mostrador, se registra una sola vez (nombre, WhatsApp, cumpleaños) y suma **1 sello por día**. Con **10 visitas** canjea **una merienda gratis** en caja.
 
-La tarjeta digital es una **réplica de la tarjeta física** (mismo arte, armado a partir del PDF original): el frente "Tarjeta de FIDELIDAD", y en el dorso el nombre del cliente en "Cliente:", su QR personal y los 10 casilleros, donde cada visita se marca con el **isotipo de Candela**. El cliente puede dar vuelta la tarjeta tocándola, y cuando suma un sello la tarjeta gira sola y el isotipo cae en el casillero como un sello de goma.
+La tarjeta digital es una **réplica de la tarjeta física** (mismo arte, armado a partir del PDF original): el frente "Tarjeta de FIDELIDAD", y en el dorso el nombre del cliente en "Cliente:", su **código personal de 3 palabras** (como un alias bancario, por ejemplo `TORTA.LUNA.CANELA`) y los 10 casilleros, donde cada visita se marca con el **isotipo de Candela**. El cliente puede dar vuelta la tarjeta tocándola, y cuando suma un sello la tarjeta gira sola y el isotipo cae en el casillero como un sello de goma.
 
 ## Cómo funciona
 
@@ -10,7 +10,7 @@ La tarjeta digital es una **réplica de la tarjeta física** (mismo arte, armado
 |---|---|
 | **Cliente** | Escanea el QR de la mesa → la primera vez completa sus datos y elige un **PIN de 4 números** → se suma el sello del día. Desde otro celular o navegador entra con **“¿Ya tenés tarjeta?”** (WhatsApp + PIN). |
 | **Mozos** | Nada. |
-| **Caja** | Cuando el cliente tiene premio, escanea el código de su tarjeta (o lo busca por WhatsApp) en **⭐ Club → Atender** y toca **Entregar premio**. |
+| **Caja** | Cuando el cliente tiene premio, tipea el **código de 3 palabras** de su tarjeta (o su WhatsApp) en **⭐ Club → Atender** y toca **Entregar premio**. |
 | **Encargado** | En **👥 Clientes** ve la base unificada (pedidos + Club, cruzados por WhatsApp): socios, premios pendientes, cumpleaños próximos y clientes inactivos, y exporta a CSV. En ⭐ Club imprime los QR y ajusta el premio y los límites. |
 
 ### Controles de seguridad
@@ -75,12 +75,16 @@ Subí los archivos nuevos junto con `index.html` (Netlify o donde esté publicad
 ## Cupón de bienvenida: 1 medialuna por seguir en Instagram
 
 - **Quién lo recibe:** solo los clientes **nuevos**, al registrarse. A los que ya estaban registrados y a los que entran con "¿Ya tenés tarjeta?" no les aparece.
-- **Qué ve el cliente:** unos segundos después de su primer sello aparece un cartel: *"Si todavía no nos seguís en Instagram, seguinos en @candelacafe.salta y cambiá este cupón por 1 medialuna para llevar ahora"*. Tiene un botón para seguir la cuenta y un **código alfanumérico** para validar en caja (por ejemplo `ML-K7M-3QP`, sin letras ni números que se confundan: 0/O, 1/I/L).
+- **Qué ve el cliente:** unos segundos después de su primer sello aparece un cartel: *"Si todavía no nos seguís en Instagram, seguinos en @candelacafe.salta y cambiá este cupón por 1 medialuna para llevar ahora"*. Tiene un botón para seguir la cuenta y el **código de 3 palabras del cliente** para validar en caja.
 - **Si lo cierra, se pierde.** Antes de cerrarlo se le pregunta "¿Seguro?". Tocar afuera del cartel no lo cierra. Si recarga la página o vuelve desde Instagram, el cartel sigue ahí.
 - **Vale solo el día del registro** ("para llevar ahora").
-- **En caja:** ⭐ Club → Atender → tipear el **código del cupón** en el buscador (también sirve el WhatsApp; no importan mayúsculas ni guiones) → aparece **🥐 Cupón de bienvenida** → verificar que siga a @candelacafe.salta → **Entregar medialuna**. En el celular del cliente el cartel cambia a "¡Listo, medialuna entregada!".
+- **En caja:** ⭐ Club → Atender → tipear el **código de 3 palabras** en el buscador (también sirve el WhatsApp; no importan mayúsculas, puntos ni espacios) → aparece **🥐 Cupón de bienvenida** → verificar que siga a @candelacafe.salta → **Entregar medialuna**. En el celular del cliente el cartel cambia a "¡Listo, medialuna entregada!".
 - **Control:** el cupón se guarda en Firebase. El cliente no puede marcarlo como entregado ni recuperarlo después de cerrarlo, y no se puede usar dos veces. En la ficha del cliente se ve si se entregó, si lo cerró o si venció.
 - Además, la tarjeta del cliente muestra siempre un botón para seguir a **@candelacafe.salta**.
+
+## Código de cada cliente (3 palabras)
+
+Cada tarjeta tiene un código propio de 3 palabras, como un alias bancario (por ejemplo **TORTA.LUNA.CANELA**). Aparece en la tarjeta, en el recuadro rojo donde la tarjeta física tiene el QR; tocándolo se agranda. Es el código que se tipea en caja para canjear la merienda y el cupón de bienvenida. No importan mayúsculas, puntos o espacios: "torta luna canela" también sirve. Las palabras no tienen tildes ni ñ y no se repiten entre clientes. Los clientes que se registraron antes reciben su código la próxima vez que abren la tarjeta.
 
 ## Base de clientes unificada (👥 Clientes)
 
@@ -100,7 +104,7 @@ Pasa cuando abre el QR en otro celular, desde otra app (cámara de Instagram, Wh
 **No tiene PIN o se lo olvidó.** (Los que se registraron antes del PIN lo crean desde su tarjeta, en el recuadro “🔑 Creá tu PIN”.)
 En la caja: **⭐ Club → Atender → buscar su WhatsApp → 🔑 Asignar PIN**, el cliente elige 4 números y entra con “¿Ya tenés tarjeta?”. No hace falta la cámara.
 
-**Pasar la tarjeta escaneando (alternativa).** En el celular nuevo, “¿Ya tenés tarjeta?” → “Mostrar código para el personal”. En la caja: **Atender → buscar su WhatsApp → 📱 Pasar a otro celular → escanear ese código**.
+**Borrar un cliente (solo la administradora).** En **👥 Clientes**, con la sesión de ⭐ Club abierta con la cuenta de administradora, se abre el cliente → **🗑️ Borrar cliente** → escribir BORRAR. Se borra su tarjeta del Club (sellos, visitas, PIN, código, cupón) y sus datos de contacto de pedidos; los pedidos ya hechos quedan en el historial. Para habilitar a la administradora: en Firebase → Realtime Database → Data, agregar `fidelizacion/admins/<UID de su cuenta>: true` (el mismo UID que figura en `fidelizacion/staff`). Las reglas no dejan borrar datos del Club a nadie más.
 
 **"No se pudo abrir la cámara".**
 El navegador necesita permiso de cámara y el sistema tiene que estar abierto con `https://`. Mientras tanto se puede buscar al cliente por WhatsApp.
@@ -114,9 +118,9 @@ Borrá su nodo en `fidelizacion/tarjetas/<id>` y su teléfono en `fidelizacion/t
 tarjeta.html              — Página del cliente (se abre con el QR de mesa)
 js/fidelizacion-comun.js  — Reglas de día/semana/horario compartidas
 js/club-personal.js       — Vista ⭐ Club del sistema interno
-js/vendor/                — Librerías de QR (generar y escanear)
+js/vendor/                — Librería para generar los QR de mesa
 img/tarjeta-frente.svg    — Frente de la tarjeta (vector, del PDF original)
-img/tarjeta-dorso.svg     — Dorso sin los datos variables (nombre, QR, texto del premio)
+img/tarjeta-dorso.svg     — Dorso sin los datos variables (nombre, código, texto del premio)
 img/isotipo.svg           — Isotipo: el sello de cada visita
 img/isotipo-crema.svg     — Isotipo en crema para el encabezado
 img/logo.png              — Logo (ícono al guardar en el celular)

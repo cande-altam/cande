@@ -14,7 +14,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-<script src="js/vendor/qrcode.js"></script>
 <script src="js/fidelizacion-comun.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -60,6 +59,7 @@ input:focus,select:focus{outline:none;border-color:var(--rojo)}
 .premio .ico{width:52px;height:52px;flex:none;border-radius:50%;background:var(--crema);display:flex;align-items:center;justify-content:center;font-size:26px}
 .premio b{display:block;font-size:17px;font-weight:800}
 .premio span{font-size:13px;opacity:.9}
+.alias-grande{background:var(--rojo);color:var(--crema);border-radius:16px;padding:18px 10px;margin:12px 0;display:flex;flex-direction:column;gap:4px;font-weight:800;font-size:26px;letter-spacing:2px;user-select:all}
 .qrgrande{width:220px;height:220px;margin:12px auto 8px;background:#fff;padding:8px;border-radius:14px;border:1.5px solid var(--crema-borde)}
 .qrgrande svg{width:100%;height:100%;display:block}
 .visitas{list-style:none;font-size:13px}
@@ -78,7 +78,7 @@ input:focus,select:focus{outline:none;border-color:var(--rojo)}
 .ig-panel{display:flex;gap:14px;align-items:center}
 .ig-panel .ig-ico{width:52px;height:52px;flex:none;border-radius:16px;color:#fff;display:flex;align-items:center;justify-content:center}
 .ig-panel .ig-ico svg{width:28px;height:28px}
-.ig-panel b{display:block;font-size:15px}
+.ig-panel .ig-tit{display:block;font-size:15px}
 .ig-panel .btn-ig{margin-top:12px;padding:12px;font-size:15px}
 .cupon{position:fixed;inset:0;background:rgba(34,32,31,.62);display:flex;align-items:center;justify-content:center;padding:18px;z-index:60;backdrop-filter:blur(3px);animation:cfade .25s ease}
 @keyframes cfade{from{opacity:0}to{opacity:1}}
@@ -93,7 +93,7 @@ input:focus,select:focus{outline:none;border-color:var(--rojo)}
 .cupon .cuerpo .txt{font-size:14.5px;line-height:1.5}
 .cupon .ticket{border:2px dashed var(--rojo);border-radius:14px;padding:12px;margin:14px 0 4px;background:#fff}
 .cupon .ticket .k{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--rojo)}
-.cupon .ticket .codigo{font:800 30px/1.1 'Montserrat',monospace;letter-spacing:3px;color:var(--negro);margin:10px 0 6px;user-select:all}
+.cupon .ticket .codigo{font:800 26px/1.15 'Montserrat',sans-serif;letter-spacing:2px;color:var(--negro);margin:10px 0 6px;user-select:all}
 .cupon .aviso{font-size:12px;color:var(--gris);margin-top:12px}
 .cupon .pasos{text-align:left;font-size:13px;margin:12px 0 0;padding-left:20px}
 .cupon .pasos li{margin:4px 0}
@@ -121,6 +121,7 @@ const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto"
 
 let db, uid, config, locales;
 let cardUid = null;      // id de la tarjeta (puede ser de otro celular vinculado con PIN)
+let aliasCodigo = null;  // código de palabras del cliente para la caja (ej. TORTA-LUNA-CANELA)
 let tienePin = true;
 let card = null;
 let visitas = [];
@@ -216,20 +217,18 @@ async function registrar(ev){
       [`telefonos/${tel}`]: uid,
       [`pines/${tel}`]: pin,
     };
-    try {
-      // Con el cupón de bienvenida (Instagram) y su código para validar en caja
-      const codigo = Fidel.generarCodigoCupon();
-      await db.ref("fidelizacion").update({
-        ...alta,
-        [`cupones/${uid}`]: { tipo: "instagram", estado: "disponible", creado: firebase.database.ServerValue.TIMESTAMP, codigo },
-        [`cuponCodigos/${codigo}`]: uid,
-      });
-    } catch (e) {
-      // Si las reglas de Firebase todavía no tienen el cupón, registrar igual sin cupón
-      console.warn("Registro sin cupón:", e && e.message);
-      await db.ref("fidelizacion").update(alta);
+    const codigo = Fidel.generarAlias();
+    const cuponNuevo = { [`cupones/${uid}`]: { tipo: "instagram", estado: "disponible", creado: firebase.database.ServerValue.TIMESTAMP } };
+    const conCodigo = { [`tarjetaCodigo/${uid}`]: codigo, [`codigos/${codigo}`]: uid };
+    // Se intenta con todo (alias + cupón de bienvenida). Si las reglas de Firebase todavía
+    // no tienen alguna de esas partes, se registra igual con lo que se pueda.
+    const intentos = [{ ...alta, ...conCodigo, ...cuponNuevo }, { ...alta, ...cuponNuevo }, alta];
+    for (let i = 0; i < intentos.length; i++) {
+      try { await db.ref("fidelizacion").update(intentos[i]); break; }
+      catch (e) { if (i === intentos.length - 1) throw e; console.warn("Registro, reintento:", e && e.message); }
     }
     cardUid = uid;
+    await asegurarCodigo();
     tienePin = true;
     card = (await db.ref(`fidelizacion/tarjetas/${uid}`).once("value")).val();
     banner = { tipo: "ok", texto: `¡Listo, ${nombre.split(" ")[0]}! Ya tenés tu tarjeta de fidelidad.` };
@@ -258,9 +257,6 @@ function renderRecuperar(tel, errorMsg){
         <button class="btn" type="submit" id="r-btn">Entrar a mi tarjeta</button>
       </form>
       <p class="muted" style="margin-top:16px">¿No tenés PIN o te lo olvidaste? Pedile al personal en caja que te asigne uno nuevo.</p>
-      <details style="margin-top:10px"><summary class="muted" style="cursor:pointer">Mostrar código para el personal</summary>
-        <div class="qrgrande">${Fidel.qrSvg(Fidel.qrDeTarjeta(uid))}</div>
-      </details>
       <button class="btn btn-ghost" type="button" onclick="renderRegistro()">Soy nuevo, quiero registrarme</button>
     </div>`;
   document.getElementById("rec").addEventListener("submit", async ev => {
@@ -297,6 +293,7 @@ async function recuperar(tel, pin){
     card = (await db.ref(`fidelizacion/tarjetas/${cardUid}`).once("value")).val();
     if (!card) return { error: "No pudimos abrir la tarjeta. Pedí ayuda al personal." };
     banner = { tipo: "ok", texto: `¡Hola de nuevo, ${card.nombre.split(" ")[0]}! Ya estás en tu tarjeta.` };
+    await asegurarCodigo();
     await intentarSello();
     window.scrollTo(0, 0);
     escucharTarjeta();
@@ -421,7 +418,9 @@ function renderCupon(){
         </ol>
         <div class="ticket">
           <div class="k">Cupón · 1 medialuna para llevar</div>
-          ${cupon.codigo ? `<div class="codigo">${esc(cupon.codigo)}</div>` : `<div class="txt" style="margin:8px 0">En caja, decí tu WhatsApp para validarlo.</div>`}
+          ${aliasCodigo ? `<div class="codigo">${aliasCodigo.split("-").map(esc).join("<br>")}</div>`
+            : cupon.codigo ? `<div class="codigo">${esc(cupon.codigo)}</div>`
+            : `<div class="txt" style="margin:8px 0">En caja, decí tu WhatsApp para validarlo.</div>`}
           <div class="muted">${esc(card ? card.nombre : "")} · válido solo hoy</div>
         </div>
         <p class="aviso">⚠️ No cierres este cartel hasta canjearlo: <b>si lo cerrás, se pierde el cupón.</b></p>
@@ -454,13 +453,29 @@ function darVuelta(){
   if (t) t.classList.toggle("frente", mostrarFrente);
 }
 
-function agrandarQr(){
+// Cada tarjeta tiene un alias de 3 palabras para que la caja la encuentre (como un alias bancario).
+// Las tarjetas creadas antes del alias lo reciben acá, la primera vez que se abren.
+async function asegurarCodigo(){
+  try {
+    aliasCodigo = (await db.ref(`fidelizacion/tarjetaCodigo/${cardUid}`).once("value")).val();
+    for (let i = 0; !aliasCodigo && i < 4; i++) {
+      const k = Fidel.generarAlias();
+      try {
+        await db.ref("fidelizacion").update({ [`tarjetaCodigo/${cardUid}`]: k, [`codigos/${k}`]: cardUid });
+        aliasCodigo = k;
+      } catch (_) { /* alias repetido o reglas viejas: probar otro */ }
+    }
+  } catch (e) { console.warn("Sin alias:", e && e.message); }
+}
+
+function agrandarCodigo(){
+  if (!aliasCodigo) return;
   document.getElementById("modal").innerHTML = `
     <div class="modal" onclick="cerrarModal()">
       <div class="panel" onclick="event.stopPropagation()">
         <h2>Tu código Club Candela</h2>
-        <div class="qrgrande">${Fidel.qrSvg(Fidel.qrDeTarjeta(cardUid))}</div>
-        <p class="muted">${esc(card.nombre)}<br>Mostralo en caja para canjear tus premios.</p>
+        <div class="alias-grande">${aliasCodigo.split("-").map(w => `<span>${esc(w)}</span>`).join("")}</div>
+        <p class="muted">${esc(card.nombre)}<br>Decíselo o mostráselo al personal en caja para canjear tus premios.</p>
         <button class="btn btn-ghost" onclick="cerrarModal()">Cerrar</button>
       </div>
     </div>`;
@@ -482,7 +497,7 @@ function renderTarjeta(){
     <div class="tarjeta-wrap" onclick="darVuelta()">
       ${Fidel.tarjetaHtml({
         nombre: card.nombre, sellos: llenos, meta, premio: config.premio,
-        qrText: Fidel.qrDeTarjeta(cardUid), qrClick: "agrandarQr()",
+        codigo: aliasCodigo || "", codigoClick: "agrandarCodigo()",
         nuevo: animar ? llenos - 1 : -1,
         frente: animar || mostrarFrente,
       })}
@@ -494,13 +509,13 @@ function renderTarjeta(){
     ${premios > 0 ? `
       <div class="premio">
         <div class="ico">🎁</div>
-        <div><b>¡Completaste tu tarjeta!</b><span>Tenés ${premios > 1 ? premios + " premios" : "tu premio"}: ${esc(config.premio)}. Tocá el QR de tu tarjeta y mostralo en caja.${extra > 0 ? ` Ya tenés ${extra} sello${extra === 1 ? "" : "s"} para la próxima.` : ""}</span></div>
+        <div><b>¡Completaste tu tarjeta!</b><span>Tenés ${premios > 1 ? premios + " premios" : "tu premio"}: ${esc(config.premio)}. Tocá el código de tu tarjeta y mostralo en caja.${extra > 0 ? ` Ya tenés ${extra} sello${extra === 1 ? "" : "s"} para la próxima.` : ""}</span></div>
       </div>` : `
       <p class="muted" style="margin:-6px 2px 16px">Te ${faltan === 1 ? "falta <b>1 visita</b>" : `faltan <b>${faltan} visitas</b>`} para ${esc(config.premio)}.</p>`}
     <div class="panel ig-panel">
       <div class="ig-ico ig-grad">${IGSVG}</div>
       <div style="flex:1">
-        <b>¿Ya nos seguís en Instagram?</b>
+        <b class="ig-tit">¿Ya nos seguís en Instagram?</b>
         <span class="muted">En <b>@${Fidel.INSTAGRAM}</b> anunciamos primero las promos, sorteos y regalos exclusivos para el Club.</span>
         <a class="btn btn-ig ig-grad" href="${Fidel.INSTAGRAM_URL}" target="_blank" rel="noopener">Seguir a @${Fidel.INSTAGRAM}</a>
       </div>
@@ -520,7 +535,7 @@ function renderTarjeta(){
       <ol class="steps">
         <li>Cada vez que venís, escaneá el QR de tu mesa o del mostrador.</li>
         <li>Se suma 1 sello por día (hasta ${config.topeSemanal} por semana).</li>
-        <li>Con ${meta} visitas, tocá el QR de tu tarjeta y mostralo en caja para canjear.</li>
+        <li>Con ${meta} visitas, mostrá en caja <b>el código de tu tarjeta</b>${aliasCodigo ? ` (<b>${esc(Fidel.mostrarAlias(aliasCodigo))}</b>)` : ""} para canjear.</li>
       </ol>
       <p class="muted" style="margin-top:10px">💡 Para volver a tu tarjeta, escaneá el QR de cualquier mesa o <b>guardá este link en favoritos ⭐</b>. Si cambiás de celular o se abre en otro navegador, tocá <b>“¿Ya tenés tarjeta?”</b> y entrá con tu WhatsApp y tu PIN.</p>
     </div>
@@ -579,6 +594,7 @@ async function iniciar(user){
       }
     }
     tienePin = await db.ref(`fidelizacion/pines/${card.telefono}`).once("value").then(x => x.exists(), () => true);
+    await asegurarCodigo();
     await intentarSello();
     escucharTarjeta();
   } catch (err) {
