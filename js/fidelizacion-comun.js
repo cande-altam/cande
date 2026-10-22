@@ -106,6 +106,15 @@ const Fidel = (() => {
     };
   }
 
+  // Instagram de Candela (cupón de bienvenida y botón de la tarjeta)
+  const INSTAGRAM = "candelacafe.salta";
+  const INSTAGRAM_URL = "https://www.instagram.com/" + INSTAGRAM + "/";
+
+  // El cupón de bienvenida vale solo el día del registro ("para llevar ahora")
+  function cuponVigente(c, now) {
+    return !!c && c.estado === "disponible" && c.creado >= inicioDia(now);
+  }
+
   // Contenido del QR personal de cada tarjeta (lo lee el personal)
   const QR_PREFIX = "CANDELA:";
   function qrDeTarjeta(uid) { return QR_PREFIX + uid; }
@@ -218,6 +227,7 @@ const Fidel = (() => {
     watchServerOffset, serverNow,
     inicioDia, inicioSemana, msDelDia,
     normalizarTelefono, normalizarTelefonoFlexible, diasHastaCumple, motivoSinSello, tarjetaConSello,
+    INSTAGRAM, INSTAGRAM_URL, cuponVigente,
     qrDeTarjeta, uidDeQr, qrSvg, qrSvgMarca, tarjetaHtml,
     fmtFecha, fmtFechaHora, fmtCumple,
   };

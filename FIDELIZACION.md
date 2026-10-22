@@ -72,6 +72,16 @@ Subí los archivos nuevos junto con `index.html` (Netlify o donde esté publicad
 
 ---
 
+## Cupón de bienvenida: 1 medialuna por seguir en Instagram
+
+- **Quién lo recibe:** solo los clientes **nuevos**, al registrarse. A los que ya estaban registrados y a los que entran con "¿Ya tenés tarjeta?" no les aparece.
+- **Qué ve el cliente:** unos segundos después de su primer sello aparece un cartel: *"Si todavía no nos seguís en Instagram, seguinos en @candelacafe.salta y cambiá este cupón por 1 medialuna para llevar ahora"*. Tiene un botón para seguir la cuenta y un QR para mostrar en caja.
+- **Si lo cierra, se pierde.** Antes de cerrarlo se le pregunta "¿Seguro?". Tocar afuera del cartel no lo cierra. Si recarga la página o vuelve desde Instagram, el cartel sigue ahí.
+- **Vale solo el día del registro** ("para llevar ahora").
+- **En caja:** ⭐ Club → Atender → escanear el QR del cartel o buscar su WhatsApp → aparece **🥐 Cupón de bienvenida** → verificar que siga a @candelacafe.salta → **Entregar medialuna**. En el celular del cliente el cartel cambia a "¡Listo, medialuna entregada!".
+- **Control:** el cupón se guarda en Firebase. El cliente no puede marcarlo como entregado ni recuperarlo después de cerrarlo, y no se puede usar dos veces. En la ficha del cliente se ve si se entregó, si lo cerró o si venció.
+- Además, la tarjeta del cliente muestra siempre un botón para seguir a **@candelacafe.salta**.
+
 ## Base de clientes unificada (👥 Clientes)
 
 La pestaña **👥 Clientes** junta en un solo lugar a los clientes de pedidos y a los socios del Club:

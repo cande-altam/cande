@@ -17,7 +17,8 @@ const Club = (() => {
   let tab = "atender";
   let clienteUid = null;       // cliente abierto en "Atender"
   let visitasCliente = [];
-  let pinCliente = null;       // true/false: si el cliente ya tiene PIN para entrar desde otro celular
+  let pinCliente = null;
+  let cuponCliente = null;     // cupón de bienvenida (Instagram) del cliente abierto       // true/false: si el cliente ya tiene PIN para entrar desde otro celular
   let escuchando = false;
   let scanner = null;
   let authListo = false;
@@ -219,11 +220,13 @@ const Club = (() => {
     clienteUid = uid;
     visitasCliente = [];
     pinCliente = null;
+    cuponCliente = null;
     if (tab !== "atender") { tab = "atender"; render(); } else renderCliente();
     const s = await db.ref(`fidelizacion/visitas/${uid}`).limitToLast(15).once("value");
     visitasCliente = Object.values(s.val() || {}).sort((a, b) => b.ts - a.ts);
     const c = tarjetas[uid];
     if (c) pinCliente = (await db.ref(`fidelizacion/pines/${c.telefono}`).once("value")).exists();
+    cuponCliente = (await db.ref(`fidelizacion/cupones/${uid}`).once("value")).val();
     renderCliente();
   }
 
@@ -252,6 +255,7 @@ const Club = (() => {
             <div>🎁 <b>${premios > 1 ? premios + " premios" : "1 premio"} para canjear</b><div style="font-size:13px;opacity:.8">${e(config.premio)}</div></div>
             <button class="btn btn-primary" onclick="Club.canjear()">Entregar premio</button>
           </div>` : ""}
+        ${htmlCupon()}
         <div class="club-kv">
           <div><b>${c.totalSellos}</b><span>Visitas totales</span></div>
           <div><b>${c.canjes}</b><span>Premios canjeados</span></div>
@@ -309,6 +313,36 @@ const Club = (() => {
         toast(`✅ Tarjeta de ${c.nombre} pasada al nuevo celular. Que actualice la página.`);
         abrirCliente(nuevoUid);
       } catch (err) { console.error(err); toast("⚠️ No se pudo pasar la tarjeta"); }
+    });
+  }
+
+  // ── Cupón de bienvenida: 1 medialuna por seguir en Instagram ──
+  function htmlCupon() {
+    const cu = cuponCliente;
+    if (!cu) return "";
+    if (Fidel.cuponVigente(cu, Fidel.serverNow())) return `
+      <div class="club-premio" style="background:linear-gradient(45deg,#f09433,#dc2743 55%,#bc1888)">
+        <div>🥐 <b>Cupón de bienvenida: 1 medialuna para llevar</b>
+          <div style="font-size:13px;opacity:.9">Pedile que te muestre que sigue a <b>@${Fidel.INSTAGRAM}</b> en Instagram. Vale solo hoy.</div></div>
+        <button class="btn" style="background:#fff;color:#bc1888" onclick="Club.canjearCupon()">Entregar medialuna</button>
+      </div>`;
+    const txt = cu.estado === "canjeado" ? `entregado el ${Fidel.fmtFechaHora(cu.canjeado)}`
+      : cu.estado === "descartado" ? "el cliente cerró el cartel sin usarlo"
+      : "venció sin usarse";
+    return `<div class="club-meta" style="margin:8px 0">🥐 Cupón de bienvenida (Instagram): ${txt}</div>`;
+  }
+
+  function canjearCupon() {
+    const c = tarjetas[clienteUid];
+    if (!c || !Fidel.cuponVigente(cuponCliente, Fidel.serverNow())) return;
+    confirmar("🥐 Entregar medialuna", `¿${e(c.nombre)} ya sigue a <b>@${Fidel.INSTAGRAM}</b> en Instagram y le entregaste la medialuna para llevar?`, "Sí, entregada", async () => {
+      const uid = clienteUid;
+      try {
+        await db.ref(`fidelizacion/cupones/${uid}`).update({ estado: "canjeado", canjeado: firebase.database.ServerValue.TIMESTAMP, staff: user.email || user.uid });
+        cuponCliente = (await db.ref(`fidelizacion/cupones/${uid}`).once("value")).val();
+        toast(`✅ Medialuna entregada a ${c.nombre}`);
+        renderCliente();
+      } catch (err) { console.error(err); toast("⚠️ No se pudo registrar la medialuna"); }
     });
   }
 
@@ -532,7 +566,7 @@ const Club = (() => {
 
   return {
     init, render, setTab, logout, buscarTel, abrirCliente, cerrarCliente, canjear,
-    escanear, detenerEscaner, asignarPin, guardarPin, imprimirQr, datos, irACliente,
+    escanear, detenerEscaner, asignarPin, guardarPin, canjearCupon, imprimirQr, datos, irACliente,
     guardarConfig, guardarLocales, confirmarOk,
   };
 })();

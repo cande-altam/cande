@@ -194,6 +194,32 @@
             ".validate": false
           }
         }
+      },
+      "cupones": {
+        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        "$uid": {
+          ".read": "auth != null && ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) || root.child('fidelizacion/staff/' + auth.uid).exists())",
+          ".write": "auth != null && newData.exists() && (root.child('fidelizacion/staff/' + auth.uid).exists() || (auth.uid === $uid && !data.exists() && newData.child('estado').val() === 'disponible' && newData.child('creado').val() === now && !root.child('fidelizacion/tarjetas/' + $uid).exists() && newData.parent().parent().child('tarjetas/' + $uid + '/creada').val() === now) || ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) && data.child('estado').val() === 'disponible' && newData.child('estado').val() === 'descartado' && newData.child('tipo').val() === data.child('tipo').val() && newData.child('creado').val() === data.child('creado').val() && !newData.hasChild('canjeado')))",
+          ".validate": "newData.hasChildren(['tipo', 'estado', 'creado'])",
+          "tipo": {
+            ".validate": "newData.val() === 'instagram'"
+          },
+          "estado": {
+            ".validate": "newData.val() === 'disponible' || newData.val() === 'descartado' || newData.val() === 'canjeado'"
+          },
+          "creado": {
+            ".validate": "newData.isNumber()"
+          },
+          "canjeado": {
+            ".validate": "newData.isNumber()"
+          },
+          "staff": {
+            ".validate": "newData.isString()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
       }
     },
     "vouchers": {
