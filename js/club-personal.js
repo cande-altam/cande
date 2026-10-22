@@ -78,8 +78,8 @@ const Club = (() => {
       esAdmin = false;
       if (user) {
         try {
-          esStaff = !!(await db.ref(`fidelizacion/staff/${user.uid}`).once("value")).val();
-          esAdmin = esStaff && (await db.ref(`fidelizacion/admins/${user.uid}`).once("value").then(x => x.exists(), () => false));
+          esStaff = await Fidel.esPersonal(db);
+          esAdmin = esStaff && await Fidel.esAdministradora(db);
         } catch (err) { console.error(err); }
       }
       if (esStaff) await cargarDatos();

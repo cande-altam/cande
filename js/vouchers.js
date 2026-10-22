@@ -113,7 +113,7 @@ const Vouchers = (() => {
       user = u && !u.isAnonymous ? u : null;
       esStaff = false;
       if (user) {
-        try { esStaff = !!(await db.ref(`fidelizacion/staff/${user.uid}`).once("value")).val(); }
+        try { esStaff = await Fidel.esPersonal(db); }
         catch (err) { console.error(err); }
       }
       if (esStaff) escuchar(); else dejarDeEscuchar();

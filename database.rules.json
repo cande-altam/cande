@@ -41,7 +41,7 @@
       },
       "config": {
         ".read": "auth != null",
-        ".write": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        ".write": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
         ".validate": "newData.hasChildren(['sellosPremio', 'premio', 'topeSemanal', 'horaApertura', 'horaCierre'])",
         "sellosPremio": {
           ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 50"
@@ -64,7 +64,7 @@
       },
       "locales": {
         ".read": true,
-        ".write": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        ".write": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
         "$local": {
           ".validate": "$local.matches(/^[a-z0-9]{2,20}$/) && newData.hasChild('nombre')",
           "nombre": {
@@ -76,18 +76,18 @@
         }
       },
       "telefonos": {
-        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        ".read": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
         "$tel": {
           ".read": "auth != null",
-          ".write": "auth != null && ((root.child('fidelizacion/staff/' + auth.uid).exists() && newData.exists()) || root.child('fidelizacion/admins/' + auth.uid).exists() || (!data.exists() && newData.val() === auth.uid && !root.child('fidelizacion/tarjetas/' + auth.uid).exists() && newData.parent().parent().child('tarjetas/' + auth.uid + '/telefono').val() === $tel))",
+          ".write": "auth != null && (((root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') && newData.exists()) || (root.child('fidelizacion/admins/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') || (!data.exists() && newData.val() === auth.uid && !root.child('fidelizacion/tarjetas/' + auth.uid).exists() && newData.parent().parent().child('tarjetas/' + auth.uid + '/telefono').val() === $tel))",
           ".validate": "$tel.matches(/^[0-9]{10}$/) && newData.isString()"
         }
       },
       "tarjetas": {
-        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        ".read": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
         "$uid": {
-          ".read": "auth != null && ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) || root.child('fidelizacion/staff/' + auth.uid).exists())",
-          ".write": "auth != null && ((root.child('fidelizacion/staff/' + auth.uid).exists() && newData.exists()) || root.child('fidelizacion/admins/' + auth.uid).exists() || (newData.exists() && ((auth.uid === $uid && !data.exists() && newData.child('sellos').val() === 0 && newData.child('totalSellos').val() === 0 && newData.child('canjes').val() === 0 && newData.child('ultimoSello').val() === 0 && newData.child('semana').val() === 0 && newData.child('sellosSemana').val() === 0 && newData.child('creada').val() === now && !newData.hasChild('ultimoLocal') && newData.parent().parent().child('telefonos/' + newData.child('telefono').val()).val() === $uid) || ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) && data.exists() && newData.child('nombre').val() === data.child('nombre').val() && newData.child('telefono').val() === data.child('telefono').val() && newData.child('cumple').val() === data.child('cumple').val() && newData.child('creada').val() === data.child('creada').val() && newData.child('canjes').val() === data.child('canjes').val() && newData.child('sellos').val() === data.child('sellos').val() + 1 && newData.child('totalSellos').val() === data.child('totalSellos').val() + 1 && newData.child('ultimoSello').val() === now && data.child('ultimoSello').val() < now - ((now - 10800000) % 86400000) && (now - 10800000) % 86400000 >= root.child('fidelizacion/config/horaApertura').val() * 3600000 && (now - 10800000) % 86400000 < root.child('fidelizacion/config/horaCierre').val() * 3600000 && root.child('fidelizacion/locales/' + newData.child('ultimoLocal').val()).exists() && newData.child('semana').val() === now - ((now + 248400000) % 604800000) && ((data.child('semana').val() === newData.child('semana').val() && newData.child('sellosSemana').val() === data.child('sellosSemana').val() + 1 && newData.child('sellosSemana').val() <= root.child('fidelizacion/config/topeSemanal').val()) || (data.child('semana').val() !== newData.child('semana').val() && newData.child('sellosSemana').val() === 1))))))",
+          ".read": "auth != null && ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) || (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com'))",
+          ".write": "auth != null && (((root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') && newData.exists()) || (root.child('fidelizacion/admins/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') || (newData.exists() && ((auth.uid === $uid && !data.exists() && newData.child('sellos').val() === 0 && newData.child('totalSellos').val() === 0 && newData.child('canjes').val() === 0 && newData.child('ultimoSello').val() === 0 && newData.child('semana').val() === 0 && newData.child('sellosSemana').val() === 0 && newData.child('creada').val() === now && !newData.hasChild('ultimoLocal') && newData.parent().parent().child('telefonos/' + newData.child('telefono').val()).val() === $uid) || ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) && data.exists() && newData.child('nombre').val() === data.child('nombre').val() && newData.child('telefono').val() === data.child('telefono').val() && newData.child('cumple').val() === data.child('cumple').val() && newData.child('creada').val() === data.child('creada').val() && newData.child('canjes').val() === data.child('canjes').val() && newData.child('sellos').val() === data.child('sellos').val() + 1 && newData.child('totalSellos').val() === data.child('totalSellos').val() + 1 && newData.child('ultimoSello').val() === now && data.child('ultimoSello').val() < now - ((now - 10800000) % 86400000) && (now - 10800000) % 86400000 >= root.child('fidelizacion/config/horaApertura').val() * 3600000 && (now - 10800000) % 86400000 < root.child('fidelizacion/config/horaCierre').val() * 3600000 && root.child('fidelizacion/locales/' + newData.child('ultimoLocal').val()).exists() && newData.child('semana').val() === now - ((now + 248400000) % 604800000) && ((data.child('semana').val() === newData.child('semana').val() && newData.child('sellosSemana').val() === data.child('sellosSemana').val() + 1 && newData.child('sellosSemana').val() <= root.child('fidelizacion/config/topeSemanal').val()) || (data.child('semana').val() !== newData.child('semana').val() && newData.child('sellosSemana').val() === 1))))))",
           ".validate": "newData.hasChildren(['nombre', 'telefono', 'creada', 'sellos', 'totalSellos', 'canjes', 'ultimoSello', 'semana', 'sellosSemana'])",
           "nombre": {
             ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 60"
@@ -128,10 +128,10 @@
         }
       },
       "visitas": {
-        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        ".read": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
         "$uid": {
-          ".read": "auth != null && ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) || root.child('fidelizacion/staff/' + auth.uid).exists())",
-          ".write": "auth != null && ((root.child('fidelizacion/staff/' + auth.uid).exists() && newData.exists()) || root.child('fidelizacion/admins/' + auth.uid).exists())",
+          ".read": "auth != null && ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) || (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com'))",
+          ".write": "auth != null && (((root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') && newData.exists()) || (root.child('fidelizacion/admins/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com'))",
           "$vid": {
             ".write": "auth != null && (auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) && !data.exists() && newData.child('ts').val() === now && newData.parent().parent().parent().child('tarjetas/' + $uid + '/ultimoSello').val() === now",
             ".validate": "newData.hasChildren(['ts', 'local'])",
@@ -148,22 +148,22 @@
         }
       },
       "canjes": {
-        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        ".read": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
         "$cid": {
-          ".write": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists() && !data.exists()",
+          ".write": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') && !data.exists()",
           ".validate": "newData.hasChildren(['uid', 'ts', 'staff', 'sellosUsados'])"
         }
       },
       "pines": {
         "$tel": {
-          ".read": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || root.child('fidelizacion/telefonos/' + $tel).val() === auth.uid || (root.child('fidelizacion/alias/' + auth.uid).exists() && root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === root.child('fidelizacion/telefonos/' + $tel).val()))",
-          ".write": "auth != null && ((root.child('fidelizacion/staff/' + auth.uid).exists() && newData.exists()) || root.child('fidelizacion/admins/' + auth.uid).exists() || newData.parent().parent().child('telefonos/' + $tel).val() === auth.uid || (root.child('fidelizacion/alias/' + auth.uid).exists() && root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === root.child('fidelizacion/telefonos/' + $tel).val()))",
+          ".read": "auth != null && ((root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') || root.child('fidelizacion/telefonos/' + $tel).val() === auth.uid || (root.child('fidelizacion/alias/' + auth.uid).exists() && root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === root.child('fidelizacion/telefonos/' + $tel).val()))",
+          ".write": "auth != null && (((root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') && newData.exists()) || (root.child('fidelizacion/admins/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') || newData.parent().parent().child('telefonos/' + $tel).val() === auth.uid || (root.child('fidelizacion/alias/' + auth.uid).exists() && root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === root.child('fidelizacion/telefonos/' + $tel).val()))",
           ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}$/)"
         }
       },
       "intentos": {
         "$tel": {
-          ".write": "auth != null && (root.child('fidelizacion/admins/' + auth.uid).exists() && !newData.exists()) || auth != null && newData.child('uid').val() === auth.uid && newData.child('ts').val() === now && (!data.exists() || data.child('ts').val() < now - 10000)",
+          ".write": "auth != null && ((root.child('fidelizacion/admins/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') && !newData.exists()) || auth != null && newData.child('uid').val() === auth.uid && newData.child('ts').val() === now && (!data.exists() || data.child('ts').val() < now - 10000)",
           ".validate": "$tel.matches(/^[0-9]{10}$/) && newData.hasChildren(['uid', 'pin', 'ts'])",
           "uid": {
             ".validate": "newData.isString()"
@@ -180,10 +180,10 @@
         }
       },
       "alias": {
-        ".read": "auth != null && root.child('fidelizacion/admins/' + auth.uid).exists()",
+        ".read": "auth != null && (root.child('fidelizacion/admins/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
         "$a": {
           ".read": "auth != null && auth.uid === $a",
-          ".write": "auth != null && (root.child('fidelizacion/admins/' + auth.uid).exists() || (auth.uid === $a && (!newData.exists() || (!root.child('fidelizacion/tarjetas/' + $a).exists() && newData.child('uid').val() === root.child('fidelizacion/telefonos/' + newData.child('tel').val()).val() && root.child('fidelizacion/intentos/' + newData.child('tel').val() + '/uid').val() === auth.uid && root.child('fidelizacion/intentos/' + newData.child('tel').val() + '/ts').val() > now - 120000 && root.child('fidelizacion/intentos/' + newData.child('tel').val() + '/pin').val() === root.child('fidelizacion/pines/' + newData.child('tel').val()).val()))))",
+          ".write": "auth != null && ((root.child('fidelizacion/admins/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') || (auth.uid === $a && (!newData.exists() || (!root.child('fidelizacion/tarjetas/' + $a).exists() && newData.child('uid').val() === root.child('fidelizacion/telefonos/' + newData.child('tel').val()).val() && root.child('fidelizacion/intentos/' + newData.child('tel').val() + '/uid').val() === auth.uid && root.child('fidelizacion/intentos/' + newData.child('tel').val() + '/ts').val() > now - 120000 && root.child('fidelizacion/intentos/' + newData.child('tel').val() + '/pin').val() === root.child('fidelizacion/pines/' + newData.child('tel').val()).val()))))",
           ".validate": "newData.hasChildren(['uid', 'tel'])",
           "uid": {
             ".validate": "newData.isString()"
@@ -197,10 +197,10 @@
         }
       },
       "cupones": {
-        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        ".read": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
         "$uid": {
-          ".read": "auth != null && ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) || root.child('fidelizacion/staff/' + auth.uid).exists())",
-          ".write": "auth != null && (root.child('fidelizacion/admins/' + auth.uid).exists() || (newData.exists() && (root.child('fidelizacion/staff/' + auth.uid).exists() || (auth.uid === $uid && !data.exists() && newData.child('estado').val() === 'disponible' && newData.child('creado').val() === now && !root.child('fidelizacion/tarjetas/' + $uid).exists() && newData.parent().parent().child('tarjetas/' + $uid + '/creada').val() === now) || ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) && data.child('estado').val() === 'disponible' && newData.child('estado').val() === 'descartado' && newData.child('tipo').val() === data.child('tipo').val() && newData.child('creado').val() === data.child('creado').val() && newData.child('codigo').val() === data.child('codigo').val() && !newData.hasChild('canjeado')))))",
+          ".read": "auth != null && ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) || (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com'))",
+          ".write": "auth != null && ((root.child('fidelizacion/admins/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') || (newData.exists() && ((root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') || (auth.uid === $uid && !data.exists() && newData.child('estado').val() === 'disponible' && newData.child('creado').val() === now && !root.child('fidelizacion/tarjetas/' + $uid).exists() && newData.parent().parent().child('tarjetas/' + $uid + '/creada').val() === now) || ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) && data.child('estado').val() === 'disponible' && newData.child('estado').val() === 'descartado' && newData.child('tipo').val() === data.child('tipo').val() && newData.child('creado').val() === data.child('creado').val() && newData.child('codigo').val() === data.child('codigo').val() && !newData.hasChild('canjeado')))))",
           ".validate": "newData.hasChildren(['tipo', 'estado', 'creado'])",
           "tipo": {
             ".validate": "newData.val() === 'instagram'"
@@ -226,9 +226,9 @@
         }
       },
       "cuponCodigos": {
-        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        ".read": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
         "$cod": {
-          ".write": "auth != null && (root.child('fidelizacion/admins/' + auth.uid).exists() || (!data.exists() && newData.val() === auth.uid && !root.child('fidelizacion/cupones/' + auth.uid).exists() && newData.parent().parent().child('cupones/' + auth.uid + '/codigo').val() === $cod))",
+          ".write": "auth != null && ((root.child('fidelizacion/admins/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') || (!data.exists() && newData.val() === auth.uid && !root.child('fidelizacion/cupones/' + auth.uid).exists() && newData.parent().parent().child('cupones/' + auth.uid + '/codigo').val() === $cod))",
           ".validate": "newData.isString() && $cod.matches(/^ML-[2-9A-HJKMNP-Z]{3}-[2-9A-HJKMNP-Z]{3}$/)"
         }
       },
@@ -239,26 +239,26 @@
         }
       },
       "codigos": {
-        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        ".read": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
         "$k": {
-          ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
-          ".write": "auth != null && (root.child('fidelizacion/admins/' + auth.uid).exists() || (!data.exists() && newData.isString() && (newData.val() === auth.uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === newData.val()) && !root.child('fidelizacion/tarjetaCodigo/' + newData.val()).exists() && newData.parent().parent().child('tarjetaCodigo/' + newData.val()).val() === $k && newData.parent().parent().child('tarjetas/' + newData.val()).exists()))",
+          ".read": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
+          ".write": "auth != null && ((root.child('fidelizacion/admins/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') || (!data.exists() && newData.isString() && (newData.val() === auth.uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === newData.val()) && !root.child('fidelizacion/tarjetaCodigo/' + newData.val()).exists() && newData.parent().parent().child('tarjetaCodigo/' + newData.val()).val() === $k && newData.parent().parent().child('tarjetas/' + newData.val()).exists()))",
           ".validate": "newData.isString() && $k.matches(/^[A-Z]{3,10}-[A-Z]{3,10}-[A-Z]{3,10}$/)"
         }
       },
       "tarjetaCodigo": {
-        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        ".read": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
         "$uid": {
-          ".read": "auth != null && ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) || root.child('fidelizacion/staff/' + auth.uid).exists())",
-          ".write": "auth != null && (root.child('fidelizacion/admins/' + auth.uid).exists() || ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) && !data.exists() && newData.parent().parent().child('codigos/' + newData.val()).val() === $uid))",
+          ".read": "auth != null && ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) || (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com'))",
+          ".write": "auth != null && ((root.child('fidelizacion/admins/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') || ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) && !data.exists() && newData.parent().parent().child('codigos/' + newData.val()).val() === $uid))",
           ".validate": "newData.isString() && newData.val().matches(/^[A-Z]{3,10}-[A-Z]{3,10}-[A-Z]{3,10}$/)"
         }
       }
     },
     "vouchers": {
-      ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+      ".read": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com')",
       "$codigo": {
-        ".write": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists() && newData.exists() && (!data.exists() || data.child('estado').val() === 'activo')",
+        ".write": "auth != null && (root.child('fidelizacion/staff/' + auth.uid).exists() || auth.token.email === 'gerencia@candela-app.com') && newData.exists() && (!data.exists() || data.child('estado').val() === 'activo')",
         ".validate": "$codigo.matches(/^CND-[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{4}$/) && newData.hasChildren(['codigo', 'tipo', 'encabezado', 'titulo', 'destacado', 'origen', 'vence', 'creado', 'creadoPor', 'estado']) && (newData.child('tipo').val() === 'monto' ? newData.hasChild('monto') : newData.hasChild('items')) && (data.exists() || (newData.child('estado').val() === 'activo' && newData.child('creado').val() === now && newData.child('creadoPor').val() === auth.token.email && newData.child('vence').val() > now))",
         "codigo": {
           ".validate": "newData.val() === $codigo"

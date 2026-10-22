@@ -147,6 +147,12 @@ const Fidel = (() => {
     return `ML-${t.slice(0, 3)}-${t.slice(3)}`;
   }
 
+  // ¿La cuenta es personal / administradora? Se pregunta a la base: las reglas deciden
+  // (por fidelizacion/staff y fidelizacion/admins, o por el email de gerencia).
+  const puedeLeer = (db, ruta) => db.ref(ruta).limitToFirst(1).once("value").then(() => true, () => false);
+  function esPersonal(db) { return puedeLeer(db, "fidelizacion/canjes"); }
+  function esAdministradora(db) { return puedeLeer(db, "fidelizacion/alias"); }
+
   // Contenido del QR personal de cada tarjeta (lo lee el personal)
   const QR_PREFIX = "CANDELA:";
   function qrDeTarjeta(uid) { return QR_PREFIX + uid; }
@@ -265,6 +271,7 @@ const Fidel = (() => {
     normalizarTelefono, normalizarTelefonoFlexible, diasHastaCumple, motivoSinSello, tarjetaConSello,
     INSTAGRAM, INSTAGRAM_URL, cuponVigente, generarCodigoCupon, normalizarCodigoCupon,
     generarAlias, mostrarAlias, normalizarAlias,
+    esPersonal, esAdministradora,
     qrDeTarjeta, uidDeQr, qrSvg, qrSvgMarca, tarjetaHtml,
     fmtFecha, fmtFechaHora, fmtCumple,
   };
