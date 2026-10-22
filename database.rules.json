@@ -199,7 +199,7 @@
         ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
         "$uid": {
           ".read": "auth != null && ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) || root.child('fidelizacion/staff/' + auth.uid).exists())",
-          ".write": "auth != null && newData.exists() && (root.child('fidelizacion/staff/' + auth.uid).exists() || (auth.uid === $uid && !data.exists() && newData.child('estado').val() === 'disponible' && newData.child('creado').val() === now && !root.child('fidelizacion/tarjetas/' + $uid).exists() && newData.parent().parent().child('tarjetas/' + $uid + '/creada').val() === now) || ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) && data.child('estado').val() === 'disponible' && newData.child('estado').val() === 'descartado' && newData.child('tipo').val() === data.child('tipo').val() && newData.child('creado').val() === data.child('creado').val() && !newData.hasChild('canjeado')))",
+          ".write": "auth != null && newData.exists() && (root.child('fidelizacion/staff/' + auth.uid).exists() || (auth.uid === $uid && !data.exists() && newData.child('estado').val() === 'disponible' && newData.child('creado').val() === now && !root.child('fidelizacion/tarjetas/' + $uid).exists() && newData.parent().parent().child('tarjetas/' + $uid + '/creada').val() === now && newData.parent().parent().child('cuponCodigos/' + newData.child('codigo').val()).val() === $uid) || ((auth.uid === $uid || root.child('fidelizacion/alias/' + auth.uid + '/uid').val() === $uid) && data.child('estado').val() === 'disponible' && newData.child('estado').val() === 'descartado' && newData.child('tipo').val() === data.child('tipo').val() && newData.child('creado').val() === data.child('creado').val() && newData.child('codigo').val() === data.child('codigo').val() && !newData.hasChild('canjeado')))",
           ".validate": "newData.hasChildren(['tipo', 'estado', 'creado'])",
           "tipo": {
             ".validate": "newData.val() === 'instagram'"
@@ -216,9 +216,19 @@
           "staff": {
             ".validate": "newData.isString()"
           },
+          "codigo": {
+            ".validate": "newData.isString() && newData.val().matches(/^ML-[2-9A-HJKMNP-Z]{3}-[2-9A-HJKMNP-Z]{3}$/)"
+          },
           "$other": {
             ".validate": false
           }
+        }
+      },
+      "cuponCodigos": {
+        ".read": "auth != null && root.child('fidelizacion/staff/' + auth.uid).exists()",
+        "$cod": {
+          ".write": "auth != null && !data.exists() && newData.val() === auth.uid && !root.child('fidelizacion/cupones/' + auth.uid).exists() && newData.parent().parent().child('cupones/' + auth.uid + '/codigo').val() === $cod",
+          ".validate": "newData.isString() && $cod.matches(/^ML-[2-9A-HJKMNP-Z]{3}-[2-9A-HJKMNP-Z]{3}$/)"
         }
       }
     },

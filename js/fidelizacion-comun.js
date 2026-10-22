@@ -115,6 +115,22 @@ const Fidel = (() => {
     return !!c && c.estado === "disponible" && c.creado >= inicioDia(now);
   }
 
+  // Código del cupón para tipear en caja (ej. ML-K7M-3QP): sin 0/O, 1/I/L para no confundirse
+  const ALFABETO_CUPON = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+  function generarCodigoCupon() {
+    const n = new Uint32Array(6);
+    crypto.getRandomValues(n);
+    const c = Array.from(n, x => ALFABETO_CUPON[x % ALFABETO_CUPON.length]).join("");
+    return `ML-${c.slice(0, 3)}-${c.slice(3)}`;
+  }
+  // Acepta "ml k7m 3qp", "K7M3QP", "ML-K7M-3QP"… y devuelve "ML-K7M-3QP" (o null)
+  function normalizarCodigoCupon(raw) {
+    let t = String(raw || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+    if (t.startsWith("ML")) t = t.slice(2);
+    if (!new RegExp(`^[${ALFABETO_CUPON}]{6}$`).test(t)) return null;
+    return `ML-${t.slice(0, 3)}-${t.slice(3)}`;
+  }
+
   // Contenido del QR personal de cada tarjeta (lo lee el personal)
   const QR_PREFIX = "CANDELA:";
   function qrDeTarjeta(uid) { return QR_PREFIX + uid; }
@@ -227,7 +243,7 @@ const Fidel = (() => {
     watchServerOffset, serverNow,
     inicioDia, inicioSemana, msDelDia,
     normalizarTelefono, normalizarTelefonoFlexible, diasHastaCumple, motivoSinSello, tarjetaConSello,
-    INSTAGRAM, INSTAGRAM_URL, cuponVigente,
+    INSTAGRAM, INSTAGRAM_URL, cuponVigente, generarCodigoCupon, normalizarCodigoCupon,
     qrDeTarjeta, uidDeQr, qrSvg, qrSvgMarca, tarjetaHtml,
     fmtFecha, fmtFechaHora, fmtCumple,
   };

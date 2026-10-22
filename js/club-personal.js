@@ -198,8 +198,8 @@ const Club = (() => {
       <div class="card club-pad">
         <div class="club-search">
           <button class="btn btn-primary" onclick="Club.escanear('buscar')">📷 Escanear código del cliente</button>
-          <div class="fg"><label class="fl" for="club-tel">o buscar por WhatsApp</label>
-            <input class="fc" id="club-tel" type="tel" inputmode="numeric" placeholder="387 512 3456" onkeydown="if(event.key==='Enter')Club.buscarTel()"></div>
+          <div class="fg"><label class="fl" for="club-tel">o buscar por WhatsApp o código de cupón</label>
+            <input class="fc" id="club-tel" autocapitalize="characters" autocomplete="off" placeholder="387 512 3456 · ML-K7M-3QP" onkeydown="if(event.key==='Enter')Club.buscarTel()"></div>
           <button class="btn btn-outline" onclick="Club.buscarTel()">Buscar</button>
         </div>
         <div id="club-reader-wrap"></div>
@@ -208,9 +208,18 @@ const Club = (() => {
     if (clienteUid) renderCliente();
   }
 
-  function buscarTel() {
-    const tel = Fidel.normalizarTelefono(document.getElementById("club-tel").value);
-    if (!tel) return toast("⚠️ Escribí 10 números: código de área sin 0 y número sin 15");
+  async function buscarTel() {
+    const valor = document.getElementById("club-tel").value;
+    // ¿Es un código de cupón? (letras y números, ej. ML-K7M-3QP)
+    if (/[a-z]/i.test(valor)) {
+      const cod = Fidel.normalizarCodigoCupon(valor);
+      if (!cod) return toast("⚠️ El código de cupón tiene 6 letras/números, ej. ML-K7M-3QP");
+      const uid = (await db.ref(`fidelizacion/cuponCodigos/${cod}`).once("value")).val();
+      if (!uid || !tarjetas[uid]) return toast(`No existe ningún cupón ${cod}`);
+      return abrirCliente(uid);
+    }
+    const tel = Fidel.normalizarTelefono(valor);
+    if (!tel) return toast("⚠️ Escribí el WhatsApp (10 números) o el código del cupón");
     const hit = Object.entries(tarjetas).find(([, c]) => c.telefono === tel);
     if (!hit) return toast("No hay ninguna tarjeta con ese WhatsApp");
     abrirCliente(hit[0]);
@@ -323,7 +332,7 @@ const Club = (() => {
     if (Fidel.cuponVigente(cu, Fidel.serverNow())) return `
       <div class="club-premio" style="background:linear-gradient(45deg,#f09433,#dc2743 55%,#bc1888)">
         <div>🥐 <b>Cupón de bienvenida: 1 medialuna para llevar</b>
-          <div style="font-size:13px;opacity:.9">Pedile que te muestre que sigue a <b>@${Fidel.INSTAGRAM}</b> en Instagram. Vale solo hoy.</div></div>
+          <div style="font-size:13px;opacity:.9">${cu.codigo ? `Código <b style="letter-spacing:1px">${e(cu.codigo)}</b> · ` : ""}Pedile que te muestre que sigue a <b>@${Fidel.INSTAGRAM}</b> en Instagram. Vale solo hoy.</div></div>
         <button class="btn" style="background:#fff;color:#bc1888" onclick="Club.canjearCupon()">Entregar medialuna</button>
       </div>`;
     const txt = cu.estado === "canjeado" ? `entregado el ${Fidel.fmtFechaHora(cu.canjeado)}`

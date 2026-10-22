@@ -93,8 +93,7 @@ input:focus,select:focus{outline:none;border-color:var(--rojo)}
 .cupon .cuerpo .txt{font-size:14.5px;line-height:1.5}
 .cupon .ticket{border:2px dashed var(--rojo);border-radius:14px;padding:12px;margin:14px 0 4px;background:#fff}
 .cupon .ticket .k{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--rojo)}
-.cupon .ticket .qr{width:130px;height:130px;margin:8px auto 4px}
-.cupon .ticket .qr svg{width:100%;height:100%;display:block}
+.cupon .ticket .codigo{font:800 30px/1.1 'Montserrat',monospace;letter-spacing:3px;color:var(--negro);margin:10px 0 6px;user-select:all}
 .cupon .aviso{font-size:12px;color:var(--gris);margin-top:12px}
 .cupon .pasos{text-align:left;font-size:13px;margin:12px 0 0;padding-left:20px}
 .cupon .pasos li{margin:4px 0}
@@ -218,10 +217,12 @@ async function registrar(ev){
       [`pines/${tel}`]: pin,
     };
     try {
-      // Con el cupón de bienvenida (Instagram)
+      // Con el cupón de bienvenida (Instagram) y su código para validar en caja
+      const codigo = Fidel.generarCodigoCupon();
       await db.ref("fidelizacion").update({
         ...alta,
-        [`cupones/${uid}`]: { tipo: "instagram", estado: "disponible", creado: firebase.database.ServerValue.TIMESTAMP },
+        [`cupones/${uid}`]: { tipo: "instagram", estado: "disponible", creado: firebase.database.ServerValue.TIMESTAMP, codigo },
+        [`cuponCodigos/${codigo}`]: uid,
       });
     } catch (e) {
       // Si las reglas de Firebase todavía no tienen el cupón, registrar igual sin cupón
@@ -416,11 +417,11 @@ function renderCupon(){
         <a class="btn btn-ig ig-grad" href="${Fidel.INSTAGRAM_URL}" target="_blank" rel="noopener">${IGSVG} Seguir a @${Fidel.INSTAGRAM}</a>
         <ol class="pasos">
           <li>Seguinos en Instagram.</li>
-          <li>Volvé a esta pantalla y mostrala en caja.</li>
+          <li>Volvé a esta pantalla y mostrale el código al personal en caja.</li>
         </ol>
         <div class="ticket">
           <div class="k">Cupón · 1 medialuna para llevar</div>
-          <div class="qr">${Fidel.qrSvg(Fidel.qrDeTarjeta(cardUid))}</div>
+          ${cupon.codigo ? `<div class="codigo">${esc(cupon.codigo)}</div>` : `<div class="txt" style="margin:8px 0">En caja, decí tu WhatsApp para validarlo.</div>`}
           <div class="muted">${esc(card ? card.nombre : "")} · válido solo hoy</div>
         </div>
         <p class="aviso">⚠️ No cierres este cartel hasta canjearlo: <b>si lo cerrás, se pierde el cupón.</b></p>
