@@ -130,6 +130,7 @@
   .saldo-cell.zero{color:var(--ink-soft)}
   .saldo-cell.warn{color:var(--warn)}
   .editIcon{border:none;background:transparent;color:var(--ink-soft);cursor:pointer;font-size:11px;margin-left:4px;opacity:.55;padding:1px 3px}
+  .bal td.excedido{color:var(--crit);font-weight:700;background:var(--crit-soft)}
   .editIcon:hover{opacity:1;color:var(--accent-ink)}
 
   /* calendario */
@@ -242,8 +243,10 @@
         <div class="card-body">
           <span class="eyebrow">Cómo se calculan los días</span>
           <ul style="margin:8px 0 0;padding-left:18px;font-size:12px;color:var(--ink-soft);line-height:1.7">
-            <li>Ley de Contrato de Trabajo, art. 150: 14 / 21 / 28 / 35 días corridos según antigüedad al 31/12 de cada año (≤5, ≤10, ≤20, +20 años).</li>
-            <li>Quien ingresó a mitad de año: si trabajó al menos medio año, día completo; si no, proporcional (1 día cada 20 trabajados).</li>
+            <li>Ley de Contrato de Trabajo, art. 150: 14 / 21 / 28 / 35 días corridos según la antigüedad al 31/12 de cada año (hasta 5 años, más de 5, más de 10, más de 20).</li>
+            <li>Quien ingresó durante el año: si trabajó al menos la mitad del año, le corresponden los días completos; si no, 1 día cada 20 de trabajo efectivo (sin contar los francos: 6 días por semana).</li>
+            <li>Las vacaciones que se toman durante un año salen del período anterior: lo que se pide para <span class="anioGoce"></span> sale del período <span class="anioPeriodo"></span>.</li>
+            <li>Si a alguien le reconocen una antigüedad anterior, corregí su fecha de ingreso con el ✎ junto a "ingresó".</li>
             <li>Podés ajustar el número a mano con el lápiz ✎ si el valor real difiere (por convenio, acuerdo particular, etc.).</li>
           </ul>
         </div>
@@ -380,113 +383,24 @@ window.SolicitudesSync = {
 };
 </script>
 
+<script src="calculo.js"></script>
 <script>
 "use strict";
-const APP_VERSION="2026-09-26 confirmar-editar-rechazar-a-confirmar";
+const APP_VERSION="2026-10-23 calculo-dias";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-// fecha de ingreso de cada persona (aprox:true = fecha aproximada, ajustar si hace falta precisión).
-const PEOPLE=[
-  {n:"Lucía",ingreso:"2023-12-01"},
-  {n:"Luciana",ingreso:"2023-12-01"},
-  {n:"Gabriel",ingreso:"2024-06-01"},
-  // Leandro Villagra, el barista — no confundir con Leandro Tolaba (producción/Cuadra, más abajo).
-  {n:"Leandro Villagra",ingreso:"2026-06-15"},
-  {n:"Leandro Tolaba",ingreso:"2024-08-01"},
-  {n:"Mariano",ingreso:"2025-10-01"},
-  {n:"Luis",ingreso:"2023-12-01"},
-  {n:"Vanesa",ingreso:"2025-06-18"},
-  {n:"Rodrigo",ingreso:"2024-01-01"},
-  {n:"Lucas",ingreso:"2024-05-01"},
-  {n:"Matías",ingreso:"2026-06-01",aprox:true},
-  {n:"Lázaro",ingreso:"2025-01-01",aprox:true},
-  {n:"Gonzalo",ingreso:"2025-01-01",aprox:true},
-  {n:"Jhon",ingreso:"2026-06-01",aprox:true},
-  {n:"Natalia",ingreso:"2019-11-21"},
-  {n:"Javier",ingreso:"2019-11-21"},
-  {n:"Aaron",ingreso:"2023-12-01"},
-  {n:"Érica",ingreso:"2019-11-21"},
-  {n:"Paula",ingreso:"2022-10-05"},
-  {n:"Margarita",ingreso:"2023-01-01"},
-  {n:"Brenda",ingreso:"2024-04-01"},
-  {n:"Valentina",ingreso:"2024-08-08"},
-  {n:"Guadalupe",ingreso:"2024-04-24"},
-  {n:"Dana",ingreso:"2024-08-06"},
-  {n:"Milagros",ingreso:"2023-12-01"},
-  {n:"Zoe",ingreso:"2024-08-01"},
-  {n:"Rebeca",ingreso:"2024-06-01"},
-  // sumados desde la planilla de personal (RRHH): figuran como activos ahí y en la de vacaciones
-  // 2025, pero no estaban en ninguno de los dos módulos. Por ahora solo en Vacaciones (a pedido).
-  {n:"Hugo",ingreso:"2019-11-21"},
-  {n:"Tamara",ingreso:"2022-10-16"},
-  {n:"Magali",ingreso:"2023-02-13"},
-  {n:"Juan",ingreso:"2025-07-17"},
-  {n:"Laura",ingreso:"2022-02-02"},
-  {n:"Tatiana",ingreso:"2023-10-01"},
-  {n:"Walter",ingreso:"2022-02-23"},
-];
-const BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
-
-/* ---------------- CÁLCULO DE DÍAS (Ley de Contrato de Trabajo, art. 150/151/153) ----------------
-   Días según antigüedad al 31/12 del año que corresponde (art. 150): ≤5 años → 14, ≤10 → 21, ≤20 → 28, +20 → 35.
-   Quien no trabajó el año completo: día completo si llegó a la mitad del año (art. 151, aproximando "días
-   hábiles" con días corridos por simplicidad); si no, proporcional a 1 día cada 20 trabajados (art. 153).
-   No se suman días extra de convenio (Panaderos/Pastelería/Gastronómicos): solo Ley, según lo pedido. */
-function tramoLCT(anios){
-  if(anios<=5)return 14;
-  if(anios<=10)return 21;
-  if(anios<=20)return 28;
-  return 35;
-}
-const MS_DIA=86400000;
-function fecha(iso){return new Date(iso+"T00:00:00");}
-function hoy(){return new Date();}
+// La lista de personas, sus fechas de ingreso y el cálculo de días viven en calculo.js (lo comparte
+// con pedido.html, el formulario de cada persona). Acá solo se aplican al estado de este módulo.
 function isoHoy(){const d=hoy();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
-function diffDias(a,b){return Math.round((b-a)/MS_DIA);}
 function anioActual(){return hoy().getFullYear();}
-
-function diasCorresponden(ingresoISO,anio){
-  const ingreso=fecha(ingresoISO);
-  const inicioAnio=fecha(anio+"-01-01");
-  const finAnio=fecha(anio+"-12-31");
-  if(ingreso>finAnio)return{dias:0,proporcional:false,diasTrabajados:0,tramo:0};
-  const anios=diffDias(ingreso,finAnio)/365.2425;
-  const tramo=tramoLCT(anios);
-  const trabajoTodoElAnio=ingreso<=inicioAnio;
-  const desde=trabajoTodoElAnio?inicioAnio:ingreso;
-  const diasTrabajados=diffDias(desde,finAnio)+1;
-  if(trabajoTodoElAnio||diasTrabajados>=182)return{dias:tramo,proporcional:false,anioIncompleto:!trabajoTodoElAnio,diasTrabajados,tramo};
-  return{dias:Math.floor(diasTrabajados/20),proporcional:true,diasTrabajados,tramo};
-}
-function diasCorrespondenEfectivos(name,anio){
-  const p=BY_NAME[name];if(!p)return{dias:0,proporcional:false,manual:false};
-  if(state.overrides[name]&&state.overrides[name][anio]!=null)
-    return{dias:state.overrides[name][anio],proporcional:false,manual:true};
-  return diasCorresponden(p.ingreso,anio);
-}
-function rangoDias(desdeISO,hastaISO){return diffDias(fecha(desdeISO),fecha(hastaISO))+1;}
-// suma de los rangos cargados (lo que da cargar cada vacación con sus fechas)
-function tomadosCalculado(name,periodo){
-  return state.taken.filter(t=>t.n===name&&t.periodo===periodo).reduce((s,t)=>s+rangoDias(t.desde,t.hasta),0);
-}
+function diasCorrespondenEfectivos(name,anio){return correspondeCon(state,name,anio);}
+function tomadosCalculado(name,periodo){return tomadoCalculadoCon(state,name,periodo);}
 // lo que se usa de verdad: prioriza el ajuste manual (útil si no querés cargar cada rango de fechas,
 // o si el total real difiere de lo que dan los rangos cargados) por sobre la suma calculada.
-function tomadosEfectivos(name,periodo){
-  if(state.overridesTomado[name]&&state.overridesTomado[name][periodo]!=null)
-    return{dias:state.overridesTomado[name][periodo],manual:true};
-  return{dias:tomadosCalculado(name,periodo),manual:false};
-}
-function saldoPeriodo(name,periodo){
-  return diasCorrespondenEfectivos(name,periodo).dias-tomadosEfectivos(name,periodo).dias;
-}
-const PRIMER_PERIODO=2025; // el balance solo trackea desde acá (saldo 2025/26 + lo que se va sumando); coincide con las columnas de la tabla
-function aniosDesdeIngreso(name){
-  const p=BY_NAME[name];if(!p)return[anioActual()];
-  const anioIngreso=Math.max(fecha(p.ingreso).getFullYear(),PRIMER_PERIODO);
-  const arr=[];for(let y=anioIngreso;y<=anioActual();y++)arr.push(y);
-  return arr.length?arr:[anioActual()];
-}
+function tomadosEfectivos(name,periodo){return tomadoCon(state,name,periodo);}
+function saldoPeriodo(name,periodo){return saldoCon(state,name,periodo);}
+function aniosDesdeIngreso(name){const a=periodosDe(state,name,anioActual());return a.length?a:[anioActual()];}
 function periodosConSaldo(name){
   return aniosDesdeIngreso(name).filter(y=>saldoPeriodo(name,y)>0);
 }
@@ -641,8 +555,9 @@ function openHistoryPanel(){
 function fmtFecha(iso){const d=fecha(iso);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();}
 function antiguedadTexto(name){
   const p=BY_NAME[name];if(!p)return"";
-  const anios=diffDias(fecha(p.ingreso),hoy())/365.2425;
-  return`ingresó ${fmtFecha(p.ingreso)}${p.aprox?" (aprox.)":""} · ${anios.toFixed(1)} años`;
+  const ing=ingresoDe(state,name);const corregida=ing!==p.ingreso;
+  const anios=diffDias(fecha(ing),hoy())/365.2425;
+  return`ingresó ${fmtFecha(ing)}${corregida?" (corregida)":p.aprox?" (aprox.)":""} · ${anios.toFixed(1)} años<button class="editIcon" data-editing="${p.n}" title="Corregir la fecha de ingreso (antigüedad reconocida)">✎</button>`;
 }
 
 function render(){
@@ -666,7 +581,7 @@ function renderBalance(){
       const c=diasCorrespondenEfectivos(p.n,y);
       const t=tomadosEfectivos(p.n,y);
       h+=`<td>${c.dias}${c.proporcional?"*":""}<button class="editIcon" data-edit="${p.n}|${y}" title="Ajustar manualmente">✎</button></td>`;
-      h+=`<td>${t.dias}${t.manual?"*":""}<button class="editIcon" data-edittom="${p.n}|${y}" title="${t.manual?"Ajustado a mano — click para editar o volver al cálculo automático":"Ajustar manualmente"}">✎</button></td>`;
+      h+=`<td${t.dias>c.dias?` class="excedido" title="Tomó ${t.dias-c.dias} días más de los que le corresponden en ${y}"`:""}>${t.dias}${t.manual?"*":""}<button class="editIcon" data-edittom="${p.n}|${y}" title="${t.manual?"Ajustado a mano — click para editar o volver al cálculo automático":"Ajustar manualmente"}">✎</button></td>`;
     });
     const tot=saldoTotal(p.n);
     const cls=tot>0?(tot>=10?"pos":"warn"):"zero";
@@ -683,6 +598,21 @@ function renderBalance(){
     if(v.trim().toLowerCase()==="auto")delete state.overrides[n][y];
     else{const num=parseInt(v,10);if(!isNaN(num))state.overrides[n][y]=num;}
     persist();render();
+  }));
+  tbl.querySelectorAll("[data-editing]").forEach(b=>b.addEventListener("click",()=>{
+    const n=b.dataset.editing;const p=BY_NAME[n];
+    const cur=ingresoDe(state,n);
+    const v=prompt(`Fecha de ingreso de ${n} para calcular la antigüedad (DD/MM/AAAA). Si la empresa le reconoce una antigüedad anterior, poné esa fecha.\nEn el sistema figura ${fmtFecha(p.ingreso)}. Escribí "auto" para volver a esa.`,fmtFecha(cur));
+    if(v==null)return;
+    const t=v.trim().toLowerCase();
+    if(t==="auto"){if(state.ingresos)delete state.ingresos[n];persist();render();toast(`${n}: vuelve a ${fmtFecha(p.ingreso)}`);return;}
+    const m=t.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/)||t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m)return toast("⚠️ Escribí la fecha como DD/MM/AAAA");
+    const iso=m[1].length===4?`${m[1]}-${m[2]}-${m[3]}`:`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+    if(isNaN(fecha(iso))||iso>isoHoy())return toast("⚠️ Esa fecha no es válida");
+    if(!state.ingresos)state.ingresos={};
+    if(iso===p.ingreso)delete state.ingresos[n];else state.ingresos[n]=iso;
+    persist();render();toast(`${n}: ingreso ${fmtFecha(iso)}`);
   }));
   tbl.querySelectorAll("[data-edittom]").forEach(b=>b.addEventListener("click",()=>{
     const[n,y]=b.dataset.edittom.split("|");
@@ -782,9 +712,12 @@ function renderAlerts(){
 // "solicitudes-update" en el módulo Firebase de arriba). Viven aparte de `state`: no pasan por
 // persist()/undo/historial, son solo lo que cada persona mandó desde afuera.
 let solicitudes={};
-const ANIO_PEDIDO=anioActual()+1;
+const ANIO_PEDIDO=anioActual()+1;          // año en que se toman las vacaciones pedidas
+const PERIODO_PEDIDO=ANIO_PEDIDO-1;          // período del que salen esos días
 function renderSolicitudes(){
-  document.getElementById("solicitudesAnio").textContent=ANIO_PEDIDO;
+  document.getElementById("solicitudesAnio").textContent=`${ANIO_PEDIDO} · salen del período ${PERIODO_PEDIDO}`;
+  document.querySelectorAll(".anioGoce").forEach(e=>e.textContent=ANIO_PEDIDO);
+  document.querySelectorAll(".anioPeriodo").forEach(e=>e.textContent=PERIODO_PEDIDO);
   const el=document.getElementById("solicitudesList");
   const filas=Object.entries(solicitudes).map(([id,s])=>({id,...s})).filter(s=>s.periodo===ANIO_PEDIDO);
   if(!filas.length){el.innerHTML=`<p class="sub" style="padding:0">Todavía no llegó ningún pedido para ${ANIO_PEDIDO}.</p>`;return;}
@@ -793,12 +726,12 @@ function renderSolicitudes(){
   function seSuperponen(a,b){return a.n!==b.n&&a.desde<=b.hasta&&b.desde<=a.hasta;}
   el.innerHTML=filas.map(s=>{
     const dias=rangoDias(s.desde,s.hasta);
-    const corresponde=diasCorrespondenEfectivos(s.n,ANIO_PEDIDO).dias;
-    const excede=corresponde>0&&dias>corresponde;
+    const disp=disponibleParaGoce(state,s.n,ANIO_PEDIDO);
+    const excede=dias>disp.total;
     const cruces=filas.filter(o=>o.id!==s.id&&seSuperponen(s,o));
     const enviado=s.enviadoEn?new Date(s.enviadoEn).toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"}):"—";
     const avisos=[
-      excede?`<span class="pill pend" title="Le corresponden ${corresponde} días para ${ANIO_PEDIDO}">⚠ pide ${dias}d, le corresponden ${corresponde}</span>`:"",
+      excede?`<span class="pill pend" title="Período ${disp.periodo}: le corresponden ${disp.corresponde}${disp.tomado?`, ya usó ${disp.tomado}`:""}${disp.anteriores?`, y le quedan ${disp.anteriores} de períodos anteriores`:""}">⚠ pide ${dias}d, tiene ${disp.total}</span>`:"",
       cruces.length?`<span class="pill pend" title="${cruces.map(c=>c.n).join(', ')}">⚠ se cruza con ${cruces.map(c=>c.n).join(', ')}</span>`:"",
     ].filter(Boolean).join(" ");
     return`<div class="mini-row"><b>${s.n}</b>${s.orden>1?` (opción ${s.orden})`:""} · ${fmtFecha(s.desde)} al ${fmtFecha(s.hasta)} (${dias}d) ${avisos}${s.nota?` · <i>${s.nota}</i>`:""} · <span style="color:var(--ink-soft)">enviado ${enviado}</span> <button class="x" data-id="${s.id}" title="Borrar pedido">×</button></div>`;
@@ -990,6 +923,7 @@ function limpiarPersonasDadasDeBaja(){
   state.taken=state.taken.filter(t=>BY_NAME[t.n]);
   Object.keys(state.overrides).forEach(n=>{if(!BY_NAME[n])delete state.overrides[n];});
   Object.keys(state.overridesTomado).forEach(n=>{if(!BY_NAME[n])delete state.overridesTomado[n];});
+  if(state.ingresos)Object.keys(state.ingresos).forEach(n=>{if(!BY_NAME[n])delete state.ingresos[n];});
 }
 
 /* Correcciones sobre la semilla nov2025-abr2026, hechas después de conseguir la planilla real

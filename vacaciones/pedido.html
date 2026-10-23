@@ -51,6 +51,11 @@
   .ok .ts{margin-top:14px;font-size:12px;color:var(--ink-soft);background:var(--panel-2);border-radius:8px;padding:9px 12px;display:inline-block}
   .err{color:var(--crit);font-size:12.5px;margin-top:10px;display:none}
   .err.show{display:block}
+  .dias{margin-top:12px;border-radius:12px;padding:12px 14px;background:var(--teal-soft);color:var(--ink);font-size:14px;line-height:1.5}
+  .dias b.n{font-size:22px;font-family:var(--font-display);font-weight:400;color:var(--teal-ink)}
+  .dias small{display:block;color:var(--ink-soft);font-size:12.5px;margin-top:3px}
+  .cuenta{font-size:12.5px;color:var(--ink-soft);margin-top:8px;min-height:18px}
+  .cuenta.mucho{color:var(--crit);font-weight:600}
   .footer-note{font-size:11.5px;color:var(--ink-soft);margin-top:16px;text-align:center}
 </style>
 </head>
@@ -70,6 +75,7 @@
     <div class="field">
       <label for="persona">Tu nombre</label>
       <select id="persona"><option value="">Elegí tu nombre…</option></select>
+      <div class="dias" id="diasBox" hidden></div>
     </div>
 
     <div id="opciones"></div>
@@ -96,9 +102,10 @@
   <p class="footer-note">Se guarda el día y la hora en que enviás este formulario, junto con tu nombre y las fechas que pediste.</p>
 </div>
 
+<script src="calculo.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
@@ -112,13 +119,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Misma lista de personas que vacaciones/index.html (PEOPLE) — esta página es pública y no carga
-// el resto de la app, así que se mantiene una copia liviana acá. Si se suma o se saca a alguien del
-// equipo, actualizar en los dos lugares.
-const PERSONAS=["Aaron","Brenda","Dana","Érica","Gabriel","Gonzalo","Guadalupe","Hugo","Javier","Jhon",
-  "Juan","Laura","Lázaro","Leandro Villagra","Leandro Tolaba","Lucas","Lucía","Luciana","Luis","Magali",
-  "Margarita","Mariano","Matías","Milagros","Natalia","Paula","Rebeca","Rodrigo","Tamara","Tatiana",
-  "Valentina","Vanesa","Walter","Zoe"].sort((a,b)=>a.localeCompare(b,"es"));
+// La lista de personas y el cálculo de días salen de calculo.js, el mismo que usa Gerencia en
+// vacaciones/index.html: los dos muestran siempre el mismo número.
+const PERSONAS=PEOPLE.map(p=>p.n).sort((a,b)=>a.localeCompare(b,"es"));
+// Ajustes que hizo Gerencia (fecha de ingreso corregida, días a mano, vacaciones ya tomadas).
+// Si no se puede leer, se muestra el cálculo de la ley igual.
+let estadoVac=null;
+get(ref(db,"vacaciones/state")).then(s=>{estadoVac=s.val()||{};mostrarDias();}).catch(()=>{estadoVac=null;});
 
 const PERIODO = new Date().getFullYear()+1; // "el año que viene", se actualiza solo cada año
 const MIN_OPCIONES = 2;
@@ -140,6 +147,38 @@ document.getElementById("intro").innerHTML =
 
 const selPersona=document.getElementById("persona");
 selPersona.innerHTML += PERSONAS.map(n=>`<option value="${n}">${n}</option>`).join("");
+// Cuántos días tiene para pedir: los del período anterior al año en que se toman (PERIODO - 1),
+// menos lo que ya usó de ese período, más lo que le quede de períodos más viejos.
+function disponible(){
+  const n=selPersona.value;if(!n)return null;
+  return disponibleParaGoce(estadoVac||{},n,PERIODO);
+}
+function mostrarDias(){
+  const box=document.getElementById("diasBox");
+  const d=disponible();
+  if(!d){box.hidden=true;actualizarCuentas();return;}
+  const detalle=[];
+  if(d.proporcional)detalle.push(`Es proporcional porque en ${d.periodo} trabajaste menos de medio año (1 día cada 20 trabajados).`);
+  else detalle.push(`Según tu antigüedad al 31/12/${d.periodo}.`);
+  if(d.tomado)detalle.push(`Ya usaste ${d.tomado} de esos días.`);
+  if(d.anteriores)detalle.push(`Incluye ${d.anteriores} ${d.anteriores===1?"día que te queda":"días que te quedan"} de períodos anteriores.`);
+  box.innerHTML=`Tenés <b class="n">${d.total}</b> días corridos para tus vacaciones ${PERIODO} <small>Período ${d.periodo}: te corresponden ${d.corresponde} días. ${detalle.join(" ")} Si te parece que no está bien, consultalo con Gerencia.</small>`;
+  box.hidden=false;
+  actualizarCuentas();
+}
+function diasDe(desde,hasta){return desde&&hasta&&hasta>=desde?rangoDias(desde,hasta):0;}
+function actualizarCuentas(){
+  const d=disponible();
+  opcionesEl.querySelectorAll(".opcion").forEach(op=>{
+    const n=diasDe(op.querySelector(".fDesde").value,op.querySelector(".fHasta").value);
+    const c=op.querySelector(".cuenta");
+    if(!n){c.textContent="";c.classList.remove("mucho");return;}
+    const mucho=d&&n>d.total;
+    c.textContent=`${n} ${n===1?"día corrido":"días corridos"}${mucho?` — son más de los ${d.total} que tenés`:""}`;
+    c.classList.toggle("mucho",!!mucho);
+  });
+}
+selPersona.addEventListener("change",mostrarDias);
 
 const opcionesEl=document.getElementById("opciones");
 let opcionN=0;
@@ -159,9 +198,11 @@ function agregarOpcion(){
     <div class="row2" style="margin-top:8px">
       <div class="field" style="margin-top:0"><label>Desde</label><input type="date" class="fDesde" min="${VENTANAS[0].desde}" max="${VENTANAS[VENTANAS.length-1].hasta}"></div>
       <div class="field" style="margin-top:0"><label>Hasta</label><input type="date" class="fHasta" min="${VENTANAS[0].desde}" max="${VENTANAS[VENTANAS.length-1].hasta}"></div>
-    </div>`;
+    </div>
+    <div class="cuenta"></div>`;
   opcionesEl.appendChild(div);
   div.querySelector(".quitar").addEventListener("click",()=>{div.remove();actualizarBotonesQuitar();});
+  div.querySelectorAll("input[type=date]").forEach(i=>i.addEventListener("change",actualizarCuentas));
   actualizarBotonesQuitar();
 }
 agregarOpcion();
@@ -220,7 +261,7 @@ document.getElementById("btnEnviar").addEventListener("click", async ()=>{
 document.getElementById("btnOtro").addEventListener("click",()=>{
   document.getElementById("okCard").classList.remove("show");
   document.getElementById("formCard").style.display="";
-  selPersona.value="";
+  selPersona.value="";document.getElementById("diasBox").hidden=true;
   opcionesEl.innerHTML="";opcionN=0;agregarOpcion();agregarOpcion();
   document.getElementById("nota").value="";
   limpiarError();

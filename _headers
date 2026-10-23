@@ -28,3 +28,6 @@
 
 /manifest.webmanifest
   Content-Type: application/manifest+json
+
+/vacaciones/*
+  Cache-Control: public, max-age=0, must-revalidate
