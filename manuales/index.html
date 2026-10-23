@@ -163,34 +163,46 @@ mark{background:#ffe58a;border-radius:3px;padding:0 1px;}
 .versiones{margin-top:8px;font-size:13px;}
 .versiones div{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed var(--cream-dark);}
 .orden-btn{background:none;border:1px solid var(--cream-dark);border-radius:6px;cursor:pointer;padding:1px 6px;font-size:11px;}
-/* Recetario (lectura) */
-.cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
-.cat{padding:7px 13px;border-radius:100px;border:1.5px solid var(--cream-dark);background:var(--white);font-size:13px;cursor:pointer;font-weight:500;}
-.cat.on{background:var(--black);color:var(--cream);border-color:var(--black);}
-.rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
-/* Card que gira: adelante la foto, atrás los ingredientes con cantidades (igual que en el Recetario editable). */
-.giro{perspective:1200px;height:310px;}
-.giro-in{position:relative;width:100%;height:100%;transition:transform .55s cubic-bezier(.25,.8,.25,1);transform-style:preserve-3d;cursor:pointer;border-radius:16px;outline:none;}
+/* Recetario (lectura): mismo diseño que el Recetario editable (recetario/index.html) — inicio por
+   categorías, cards que giran (adelante la foto, atrás el resumen) y la ficha con tabla. */
+.rec-panel{background:var(--white);border:1px solid rgba(34,32,31,.07);border-radius:var(--r);padding:22px 24px;box-shadow:0 1px 2px rgba(34,32,31,.05),0 2px 8px rgba(34,32,31,.04);margin-bottom:16px;}
+.rec-migas{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:14px;}
+.rec-migas a{color:var(--terra);text-decoration:none;font-weight:600;cursor:pointer;}
+.rec-migas span{color:var(--gray);}
+.rec-lbl{display:block;font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:6px;}
+.rec-buscar{width:100%;font:inherit;font-size:15px;padding:11px 14px;border-radius:10px;border:1px solid var(--cream-dark);background:var(--cream);color:var(--black);outline:none;margin-bottom:16px;}
+.rec-buscar:focus{border-color:var(--terra);background:var(--white);}
+.rec-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
+.rec-cat{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:18px 16px;border-radius:var(--r);border:1.5px solid var(--cream-dark);background:var(--cream);cursor:pointer;font-family:inherit;text-align:left;transition:all .2s;}
+.rec-cat:hover{border-color:var(--terra);background:var(--white);transform:translateY(-2px);box-shadow:var(--shadow);}
+.rec-cat b{font-size:15px;color:var(--black);}
+.rec-cat-ico{font-size:30px;line-height:1;margin-bottom:6px;}
+.rec-sub{font-size:11px;color:var(--gray);font-weight:400;}
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
+.rec-pie-lista{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:12px;}
+.rec-pie-lista button{background:none;border:none;color:var(--terra);font-weight:600;font-size:12px;cursor:pointer;padding:4px 0;}
+.giro{perspective:1200px;height:300px;}
+.giro-in{position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.25,.8,.25,1);transform-style:preserve-3d;cursor:pointer;border-radius:var(--r);outline:none;}
 .giro-in:focus-visible{box-shadow:0 0 0 3px rgba(225,93,70,.35);}
 .giro.girada .giro-in{transform:rotateY(180deg);}
-.cara{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(34,32,31,.06),0 3px 10px rgba(34,32,31,.06);}
-.frente{background:var(--white);}
-.frente .rec-foto{flex:1;min-height:0;aspect-ratio:auto;font-size:52px;}
-.frente .pie{padding:11px 14px 12px;}
-.frente .nom{font-weight:700;font-size:15.5px;line-height:1.25;}
-.frente .sub{font-size:12px;color:var(--gray);margin-top:2px;display:flex;justify-content:space-between;gap:8px;}
-.frente .gira{color:var(--terra);font-weight:600;white-space:nowrap;}
-.dorso{transform:rotateY(180deg);background:var(--black);color:var(--cream);padding:14px 15px 12px;}
-.dorso .nom{font-weight:700;font-size:15px;color:#fff;line-height:1.25;}
-.dorso .rinde{font-size:12px;color:rgba(238,235,215,.6);margin:2px 0 8px;}
+.cara{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--r);background:var(--white);border:1px solid rgba(34,32,31,.08);box-shadow:0 1px 3px rgba(34,32,31,.06);overflow:hidden;display:flex;flex-direction:column;}
+.frente:hover{box-shadow:var(--shadow);}
+.frente .rec-foto{flex:1;min-height:0;background:var(--cream);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:56px;}
+.frente .rec-foto .sinfoto{opacity:.55;}
+.frente .rec-foto img{width:100%;height:100%;object-fit:cover;display:block;}
+.frente .pie{padding:12px 14px;}
+.frente .nom{font-size:15px;font-weight:700;color:var(--black);line-height:1.25;}
+.frente .sub{font-size:11px;color:var(--gray);margin-top:2px;}
+.dorso{transform:rotateY(180deg);padding:14px 16px;background:var(--black);color:var(--cream);}
+.dorso .nom{font-size:15px;font-weight:700;color:var(--cream);line-height:1.25;margin-bottom:4px;}
+.dorso .rinde{font-size:11px;color:#b5b2a6;margin-bottom:8px;}
 .dorso .cuerpo{flex:1;min-height:0;overflow:auto;margin-right:-6px;padding-right:6px;-webkit-overflow-scrolling:touch;}
-.dorso ul{list-style:none;margin:0;padding:0;}
-.dorso li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid rgba(238,235,215,.12);font-size:13.5px;line-height:1.3;}
-.dorso li b{white-space:nowrap;font-weight:700;color:var(--turq);text-align:right;}
-.dorso li small{display:block;color:rgba(238,235,215,.55);font-size:11px;font-weight:400;}
-.dorso .sec{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(238,235,215,.55);margin:9px 0 2px;}
-.dorso .alerg{font-size:11px;padding:2px 8px;margin:0 3px 3px 0;}
-.dorso .ver{margin-top:9px;justify-content:center;width:100%;}
+.dorso ul{list-style:none;margin:0;padding:0;font-size:12.5px;}
+.dorso li{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid rgba(238,235,215,.12);}
+.dorso li b{white-space:nowrap;font-weight:600;color:var(--turq);}
+.dorso li small{color:#b5b2a6;}
+.dorso .sec{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#b5b2a6;margin:10px 0 2px;}
+.dorso .ver{margin-top:10px;justify-content:center;width:100%;}
 .sugerido{display:flex;gap:12px;align-items:center;background:var(--black);color:var(--cream);border-radius:var(--r);padding:14px 16px;margin:0 0 14px;flex-wrap:wrap;}
 .sugerido .sg-ico{font-size:26px;}
 .sugerido .sg-tx{flex:1;min-width:200px;}
@@ -198,19 +210,35 @@ mark{background:#ffe58a;border-radius:3px;padding:0 1px;}
 .sugerido .sg-tx span{font-size:13px;color:rgba(238,235,215,.75);}
 .sugerido .sg-bt{display:flex;gap:6px;flex-wrap:wrap;}
 .sugerido .btn-ghost{color:var(--cream);border-color:rgba(238,235,215,.35);background:transparent;}
-.rec-acciones{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:-4px 0 12px;}
 @media (prefers-reduced-motion: reduce){.giro-in{transition:none;}}
-@media (max-width:520px){.giro{height:350px;}}
-.rec-card{background:var(--white);border-radius:12px;overflow:hidden;cursor:pointer;border:1.5px solid transparent;}
-.rec-card:hover{border-color:var(--terra);}
-.rec-foto{aspect-ratio:4/3;background:var(--cream-mid);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden;}
-.rec-foto img{width:100%;height:100%;object-fit:cover;}
-.rec-card .t{padding:9px 11px 11px;font-weight:600;font-size:14px;line-height:1.3;}
-.rec-card .t small{display:block;font-weight:400;color:var(--gray);font-size:11px;margin-top:2px;}
-.rec-hero{display:flex;gap:16px;flex-wrap:wrap;}
-.rec-hero .rec-foto{width:260px;max-width:100%;border-radius:12px;}
+.rec-detalle-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin:6px 0 16px;}
+.rec-titulo{font-size:22px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px;}
+.rec-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.rec-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:100px;font-weight:600;}
+.rec-plato{background:var(--turq-pale);color:#1A6B62;}
+.rec-subreceta{background:#FFF8E8;color:#8A5A00;}
+.rec-chip{font-size:11px;padding:3px 10px;border-radius:100px;background:var(--cream);color:var(--black-soft);font-weight:500;}
+.rec-acciones-det{display:flex;gap:8px;flex-wrap:wrap;}
+.rec-hero{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;}
+.rec-hero .rec-foto{width:280px;max-width:100%;aspect-ratio:4/3;border-radius:12px;background:var(--cream);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:13px;color:var(--gray);}
+.rec-hero .rec-foto img{width:100%;height:100%;object-fit:cover;}
+.rec-tit{font-size:14px;font-weight:600;color:var(--black);margin:0 0 10px;}
+.rec-pasos{padding-left:20px;display:flex;flex-direction:column;gap:6px;line-height:1.5;margin:0;}
+.rec-aler{display:inline-block;font-size:12px;padding:4px 12px;border-radius:100px;background:#fff3ee;color:var(--terra);font-weight:600;border:1px solid var(--terra-pale);}
 .alerg{display:inline-block;background:#fdecea;color:#b42318;border-radius:100px;padding:3px 10px;font-size:12px;font-weight:600;margin:0 4px 4px 0;}
-.rec-pasos{margin-left:20px;} .rec-pasos li{margin-bottom:8px;}
+.rec-tablewrap{overflow-x:auto;margin:0 -4px;}
+.rec-tabla{width:100%;border-collapse:collapse;font-size:13px;}
+.rec-tabla th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--cream-dark);white-space:nowrap;}
+.rec-tabla td{padding:11px 10px;border-bottom:1px solid var(--cream-mid);vertical-align:top;}
+.rec-tabla .num{text-align:right;white-space:nowrap;}
+.rec-tabla a{color:var(--terra);font-weight:600;text-decoration:none;}
+.rec-usos a{color:var(--terra);font-weight:600;text-decoration:none;margin-right:10px;}
+@media(max-width:700px){
+  .rec-panel{padding:16px 14px;}
+  .rec-hero .rec-foto{width:100%;}
+  .rec-tabla{font-size:12.5px;}
+  .rec-tabla th,.rec-tabla td{padding:9px 6px;}
+}
 @media(max-width:640px){
   /* Lectura en el celular: más ancho para el texto, letra un poco más grande, y las tablas
      como tarjetas (una fila = una tarjeta) para que no se partan las palabras en columnas finitas. */
@@ -443,7 +471,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, creat
 // El contenido se carga importando el documento de Drive (.docx o .html): se parte en un manual
 // por cada Título 1, agrupados por "Parte N — …". Drive sigue siendo el original: cuando cambia,
 // se vuelve a importar.
-const APP_VERSION = "2026-10-22 club";
+const APP_VERSION = "2026-10-23 recetario";
 const GERENCIA_EMAIL = "gerencia@candela-app.com";
 const DOMINIO = "candela-app.com";
 const LIBS = {
@@ -2116,6 +2144,29 @@ async function cargarFotoReceta(r) {
   } catch { S.rec.fotos[r.id] = null; }
   document.querySelectorAll(`[data-foto="${r.id}"]`).forEach(el => { if (S.rec.fotos[r.id]) el.innerHTML = `<img src="${S.rec.fotos[r.id]}" alt="">`; });
 }
+// Ícono de cada categoría: el mismo que usa el Recetario editable.
+function iconoCategoria(c) {
+  const k = clave(c);
+  if (k.includes("croissant") || k.includes("medialuna")) return "🥐";
+  if (k.includes("envasad")) return "📦";
+  if (k.includes("horneado")) return "🧁";
+  if (k.includes("jugo") || k.includes("bebida") || k.includes("licuado")) return "🧃";
+  if (k.includes("base")) return "🥣";
+  if (k.includes("combo")) return "🍱";
+  if (k.includes("postre") || k.includes("dulce") || k.includes("torta")) return "🍰";
+  if (k.includes("salsa") || k.includes("aderezo")) return "🫙";
+  if (k.includes("masa") || k.includes("pan")) return "🥖";
+  if (k.includes("trago")) return "🥤";
+  if (k.includes("entrada") || k.includes("ensalada")) return "🥗";
+  if (k.includes("sandw") || k.includes("sanwi") || k.includes("tostado")) return "🥪";
+  if (k.includes("desayuno") || k.includes("merienda")) return "☕";
+  if (c === "Sin categoría") return "📁";
+  return "🍽️";
+}
+const TIPOS_RECETA = { plato: "Plato", subreceta: "Subreceta" };
+const nombreLineaReceta = l => l.tipo === "subreceta" ? (S.rec.recetas[l.recetaId]?.nombre || l.nombre || "") : (l.nombre || "");
+const rindeReceta = r => [r.rendimiento ? `Rinde ${fmtCant(r.rendimiento, r.unidadRendimiento)}` : "", r.porciones ? `${r.porciones} porción${r.porciones == 1 ? "" : "es"}` : ""].filter(Boolean).join(" · ");
+// Igual que el Recetario editable: primero las categorías; adentro de cada una, las cards.
 function vistaRecetario() {
   escucharRecetario();
   const todas = Object.values(S.rec.recetas);
@@ -2124,76 +2175,112 @@ function vistaRecetario() {
   else if (S.rec.cargando && !todas.length) cuerpo = `<div class="muted">Cargando recetas…</div>`;
   else if (!todas.length) cuerpo = `<div class="bloque">Todavía no hay recetas cargadas.</div>`;
   else {
-    const cats = [...new Set(todas.map(categoriaReceta))].sort(compararCategorias);
+    const porCat = {};
+    todas.forEach(r => { const c = categoriaReceta(r); porCat[c] = (porCat[c] || 0) + 1; });
+    const cats = Object.keys(porCat).sort(compararCategorias);
+    if (S.recCat && !porCat[S.recCat]) S.recCat = "";
     const q = clave(S.recQ);
-    const lista = todas.filter(r => (!S.recCat || categoriaReceta(r) === S.recCat) && (!q || clave(r.nombre + " " + (r.codigo || "") + " " + r.ingredientes.map(l => l.nombre).join(" ")).includes(q)))
-      .sort((a, b) => compararCategorias(categoriaReceta(a), categoriaReceta(b)) || a.nombre.localeCompare(b.nombre, "es"));
-    cuerpo = `<div class="buscar"><span>🔎</span><input class="input" id="rec-buscar" data-input="rec-buscar" placeholder="Buscar receta o ingrediente…" value="${esc(S.recQ)}" autocomplete="off"></div>
-      <div class="cats"><button class="cat ${!S.recCat ? "on" : ""}" data-act="rec-cat" data-cat="">Todas</button>${cats.map(c => `<button class="cat ${S.recCat === c ? "on" : ""}" data-act="rec-cat" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div>
-      ${lista.length ? `<div class="rec-acciones"><span class="muted">${lista.length} receta${lista.length === 1 ? "" : "s"} · tocá una card para ver los ingredientes</span>
-        <button class="btn btn-ghost btn-sm" data-act="girar-todas">${S.recTodasGiradas ? "📷 Ver las fotos" : "📋 Ver todos los ingredientes"}</button></div>
-        <div class="rec-grid">${lista.map(cardReceta).join("")}</div>` : `<div class="bloque">Nada coincide.</div>`}`;
-    setTimeout(() => lista.slice(0, 40).forEach(cargarFotoReceta), 0);
+    const migas = S.recCat ? `<div class="rec-migas"><a data-act="rec-cat" data-cat="">🏠 Recetas</a><span>›</span><b>${iconoCategoria(S.recCat)} ${esc(S.recCat)}</b></div>` : "";
+    const buscador = `<label class="rec-lbl" for="rec-buscar">Buscar</label>
+      <input class="rec-buscar" id="rec-buscar" data-input="rec-buscar" placeholder="${S.recCat ? `Buscar en ${esc(S.recCat)}` : "Buscar una receta, código o ingrediente"}" value="${esc(S.recQ)}" autocomplete="off" enterkeyhint="search">`;
+    let contenido;
+    if (!S.recCat && !q) {
+      contenido = `<div class="rec-cats">${cats.map(c => `<button class="rec-cat" data-act="rec-cat" data-cat="${esc(c)}">
+          <span class="rec-cat-ico">${iconoCategoria(c)}</span><b>${esc(c)}</b><span class="rec-sub">${porCat[c]} receta${porCat[c] === 1 ? "" : "s"}</span></button>`).join("")}</div>`;
+    } else {
+      const lista = todas.filter(r => (!S.recCat || categoriaReceta(r) === S.recCat) && (!q || clave(r.nombre + " " + (r.codigo || "") + " " + r.ingredientes.map(nombreLineaReceta).join(" ")).includes(q)))
+        .sort((a, b) => compararCategorias(categoriaReceta(a), categoriaReceta(b)) || a.nombre.localeCompare(b.nombre, "es"));
+      contenido = lista.length
+        ? `<div class="rec-grid">${lista.map(cardReceta).join("")}</div>
+           <div class="rec-pie-lista"><span class="rec-sub">${lista.length} receta${lista.length === 1 ? "" : "s"} · tocá una card para ver el resumen del otro lado</span>
+             <button data-act="girar-todas">${S.recTodasGiradas ? "📷 Ver las fotos" : "📋 Dar vuelta todas"}</button></div>`
+        : `<div class="rec-sub" style="text-align:center;padding:30px 10px;font-size:13px">Ninguna receta coincide con la búsqueda.</div>`;
+      setTimeout(() => lista.slice(0, 40).forEach(cargarFotoReceta), 0);
+    }
+    cuerpo = `<div class="rec-panel">${migas}${buscador}${contenido}</div>`;
   }
   return `${barra()}<div class="main">
-    <div class="h-pag">📖 Recetario</div>
+    <div class="h-pag">🍳 Recetario · Cocina</div>
     <div class="sub-pag">Fichas técnicas de cocina: ingredientes, cantidades, pasos y alérgenos.${esGerencia() ? ` Se editan en <a href="/recetario/" target="_blank" rel="noopener">el Recetario</a>.` : ""}</div>
     ${cuerpo}
   </div>`;
 }
-// Adelante: foto, nombre y categoría. Atrás: lo que hace falta para armarlo en el momento
-// (ingredientes con cantidad, lo que se usa si hay merma, empaque y alérgenos).
+// Card con dos caras, como en el Recetario editable: adelante la foto y el nombre; atrás, un resumen
+// con las cantidades.
 function cardReceta(r) {
   const girada = S.recTodasGiradas ? !S.recGiradas.has(r.id) : S.recGiradas.has(r.id);
-  const linea = l => {
-    const sub = l.tipo === "subreceta";
-    const nombre = sub ? (S.rec.recetas[l.recetaId]?.nombre || l.nombre || "") : (l.nombre || "");
-    const usa = l.merma && l.cantidad != null ? `<small>se usa ${esc(fmtCant(Math.round(bruta(Number(l.cantidad), l.merma) * 10) / 10, l.unidad))} (merma ${esc(l.merma)} %)</small>` : "";
-    return `<li><span>${esc(nombre)}${sub ? ` <small style="display:inline">· subreceta</small>` : ""}${usa}</span><b>${esc(fmtCant(l.cantidad, l.unidad))}</b></li>`;
-  };
-  const al = Object.keys(alergenosDe(r));
-  const rinde = [r.rendimiento ? `Rinde ${fmtCant(r.rendimiento, r.unidadRendimiento)}` : "", r.porciones ? `${r.porciones} porción${r.porciones == 1 ? "" : "es"}` : ""].filter(Boolean).join(" · ");
+  const linea = l => `<li><span>${esc(nombreLineaReceta(l))}${l.tipo === "subreceta" ? ` <small>(subreceta)</small>` : ""}</span><b>${esc(fmtCant(l.cantidad, l.unidad))}</b></li>`;
+  const rinde = rindeReceta(r);
+  const foto = S.rec.fotos[r.id] ? `<img src="${S.rec.fotos[r.id]}" alt="${esc(r.nombre)}">` : `<span class="sinfoto">${iconoCategoria(categoriaReceta(r))}</span>`;
   return `<div class="giro ${girada ? "girada" : ""}" data-receta="${esc(r.id)}">
-    <div class="giro-in" data-act="girar" data-id="${esc(r.id)}" role="button" tabindex="0" aria-label="${esc(r.nombre)}: dar vuelta">
+    <div class="giro-in" data-act="girar" data-id="${esc(r.id)}" role="button" tabindex="0" aria-label="${esc(r.nombre)}: dar vuelta la card">
       <div class="cara frente">
-        <div class="rec-foto" data-foto="${esc(r.id)}">${S.rec.fotos[r.id] ? `<img src="${S.rec.fotos[r.id]}" alt="">` : r.tipo === "subreceta" ? "🧪" : "🍽️"}</div>
-        <div class="pie"><div class="nom">${esc(r.nombre)}</div><div class="sub"><span>${esc(categoriaReceta(r))}${r.codigo ? " · " + esc(r.codigo) : ""}</span><span class="gira">↻ ingredientes</span></div></div>
+        <div class="rec-foto" data-foto="${esc(r.id)}">${foto}</div>
+        <div class="pie"><div class="nom">${esc(r.nombre)}</div><div class="sub">${esc([r.codigo, TIPOS_RECETA[r.tipo] || r.tipo].filter(Boolean).join(" · "))}</div></div>
       </div>
       <div class="cara dorso">
         <div class="nom">${esc(r.nombre)}</div>
-        ${rinde ? `<div class="rinde">${esc(rinde)}</div>` : `<div class="rinde"></div>`}
+        <div class="rinde">${esc(rinde)}</div>
         <div class="cuerpo">
           ${r.ingredientes.length ? `<ul>${r.ingredientes.map(linea).join("")}</ul>` : `<div class="rinde">Sin ingredientes cargados.</div>`}
           ${r.empaque.length ? `<div class="sec">Empaque</div><ul>${r.empaque.map(linea).join("")}</ul>` : ""}
-          ${al.length ? `<div class="sec">Alérgenos</div>${al.map(k => `<span class="alerg">${esc(ALERGENOS[k] || k)}</span>`).join("")}` : ""}
         </div>
-        <button class="btn btn-primary btn-sm ver" data-act="receta" data-id="${esc(r.id)}">Ver ficha completa (pasos) →</button>
+        <button class="btn btn-primary btn-sm ver" data-act="receta" data-id="${esc(r.id)}">Ver ficha completa →</button>
       </div>
     </div>
   </div>`;
 }
+// Ficha como la del Recetario editable (sin editar, eliminar ni costeo).
 function vistaReceta() {
   const r = S.rec.recetas[S.recId];
   if (!r) { S.vista = "recetario"; return vistaRecetario(); }
-  const al = alergenosDe(r);
-  const tabla = (lineas, conMerma) => `<div class="doc" style="padding:0;background:none"><div class="tabla"><table class="apilada en-linea"><thead><tr><th>${conMerma ? "Ingrediente" : "Envase"}</th><th>Cant.</th>${conMerma ? "<th>Merma</th><th>Se usa</th>" : ""}</tr></thead><tbody>${lineas.map(l => {
-    const sub = l.tipo === "subreceta" && S.rec.recetas[l.recetaId];
-    return `<tr><td>${sub ? `<a href="#" data-act="receta" data-id="${esc(l.recetaId)}">${esc(sub.nombre)}</a> <span class="muted">· subreceta</span>` : esc(l.nombre || "")}</td><td data-label="Cantidad">${esc(fmtCant(l.cantidad, l.unidad))}</td>${conMerma && l.merma ? `<td data-label="Merma">${esc(l.merma)} %</td><td data-label="Se usa">${esc(fmtCant(Math.round(bruta(Number(l.cantidad), l.merma) * 10) / 10, l.unidad))}</td>` : conMerma ? `<td class="vacia">—</td><td class="vacia">—</td>` : ""}</tr>`;
-  }).join("")}</tbody></table></div></div>`;
+  const al = Object.keys(alergenosDe(r));
+  const usos = r.tipo === "subreceta" ? Object.values(S.rec.recetas).filter(o => o.ingredientes.some(l => l.tipo === "subreceta" && l.recetaId === r.id)) : [];
+  const tabla = (lineas, conMerma) => `<div class="rec-tablewrap"><table class="rec-tabla">
+    <thead><tr><th>${conMerma ? "Componente" : "Envase / etiqueta"}</th><th class="num">Cant. neta</th>${conMerma ? `<th class="num">Merma</th><th class="num">Cant. bruta</th>` : ""}</tr></thead>
+    <tbody>${lineas.map(l => {
+      const sub = l.tipo === "subreceta";
+      const nombre = esc(nombreLineaReceta(l));
+      const b = bruta(l.cantidad == null ? null : Number(l.cantidad), l.merma);
+      return `<tr><td>${sub && S.rec.recetas[l.recetaId] ? `<a href="#" data-act="receta" data-id="${esc(l.recetaId)}">${nombre}</a>` : nombre}<div class="rec-sub">${sub ? "Subreceta" : conMerma ? "Ingrediente" : "Empaque"}</div></td>
+        <td class="num">${esc(fmtCant(l.cantidad, l.unidad))}</td>
+        ${conMerma ? `<td class="num">${l.merma ? esc(String(l.merma).replace(".", ",")) + " %" : "—"}</td><td class="num">${esc(fmtCant(b == null ? null : Math.round(b * 10) / 10, l.unidad))}</td>` : ""}</tr>`;
+    }).join("")}</tbody></table></div>`;
   setTimeout(() => cargarFotoReceta(r), 0);
-  const rinde = [r.rendimiento ? `Rinde ${fmtCant(r.rendimiento, r.unidadRendimiento)}` : "", r.porciones ? `${r.porciones} porción${r.porciones == 1 ? "" : "es"}` : ""].filter(Boolean).join(" · ");
+  const rinde = rindeReceta(r);
   return `${barra()}<div class="main">
-    <div class="man-head"><span class="vol" data-act="recetario">← Recetario</span><h1>${esc(r.nombre)}</h1>
-      <div class="ver">${esc([categoriaReceta(r), r.codigo, rinde].filter(Boolean).join(" · "))}</div></div>
-    <div class="bloque rec-hero">
-      ${r.tieneFoto ? `<div class="rec-foto" data-foto="${esc(r.id)}">${S.rec.fotos[r.id] ? `<img src="${S.rec.fotos[r.id]}" alt="">` : "🍽️"}</div>` : ""}
-      <div style="flex:1;min-width:240px"><h3>Alérgenos</h3>${Object.keys(al).length ? Object.keys(al).map(k => `<span class="alerg">${esc(ALERGENOS[k] || k)}</span>`).join("") : `<div class="muted">No contiene alérgenos de declaración obligatoria.</div>`}</div>
+    <div class="rec-migas" style="margin-top:4px"><a data-act="rec-cat" data-cat="">🏠 Recetas</a><span>›</span><a data-act="rec-cat" data-cat="${esc(categoriaReceta(r))}">${iconoCategoria(categoriaReceta(r))} ${esc(categoriaReceta(r))}</a></div>
+    <div class="rec-detalle-head">
+      <div>
+        <div class="rec-titulo">${esc(r.nombre)}</div>
+        <div class="rec-chips">
+          <span class="rec-badge rec-${esc(r.tipo)}">${esc(TIPOS_RECETA[r.tipo] || r.tipo || "")}</span>
+          ${r.codigo ? `<span class="rec-chip">${esc(r.codigo)}</span>` : ""}
+          <span class="rec-chip">${esc(categoriaReceta(r))}</span>
+          ${rinde ? `<span class="rec-sub">${esc(rinde)}</span>` : ""}
+        </div>
+      </div>
+      <div class="rec-acciones-det">
+        <button class="btn btn-ghost btn-sm" data-act="imprimir">🖨️ Imprimir</button>
+        <button class="btn btn-ghost btn-sm" data-act="recetario">← Volver</button>
+      </div>
     </div>
-    <div class="bloque"><h3>Ingredientes</h3>${r.ingredientes.length ? tabla(r.ingredientes, true) : `<div class="muted">Sin ingredientes cargados.</div>`}
-      ${r.empaque.length ? `<h3 style="margin-top:14px">Empaque</h3>${tabla(r.empaque, false)}` : ""}</div>
-    <div class="bloque"><h3>Preparación</h3>${r.pasos.length ? `<ol class="rec-pasos">${r.pasos.map(p => `<li>${esc(p)}</li>`).join("")}</ol>` : `<div class="muted">Sin pasos cargados.</div>`}</div>
-    ${r.observaciones ? `<div class="bloque"><h3>Observaciones</h3><div style="white-space:pre-wrap">${esc(r.observaciones)}</div></div>` : ""}
-    <div class="man-pie"><span></span><button class="btn btn-ghost btn-sm" data-act="imprimir">🖨️ Imprimir</button></div>
+    <div class="rec-panel rec-hero">
+      ${r.tieneFoto ? `<div class="rec-foto" data-foto="${esc(r.id)}">${S.rec.fotos[r.id] ? `<img src="${S.rec.fotos[r.id]}" alt="">` : "Cargando foto…"}</div>` : ""}
+      <div style="flex:1;min-width:240px">
+        <div class="rec-tit">Preparación</div>
+        ${r.pasos.length ? `<ol class="rec-pasos">${r.pasos.map(p => `<li>${esc(p)}</li>`).join("")}</ol>` : `<div class="rec-sub">Sin pasos cargados.</div>`}
+        <div class="rec-tit" style="margin-top:18px">Alérgenos <span class="rec-sub">(ANMAT)</span></div>
+        ${al.length ? `<div class="rec-chips">${al.map(k => `<span class="rec-aler">${esc(ALERGENOS[k] || k)}</span>`).join("")}</div>` : `<div class="rec-sub">No contiene alérgenos de declaración obligatoria.</div>`}
+      </div>
+    </div>
+    <div class="rec-panel">
+      <div class="rec-tit" style="margin-bottom:12px">Ingredientes</div>
+      ${r.ingredientes.length ? tabla(r.ingredientes, true) : `<div class="rec-sub">Sin ingredientes cargados.</div>`}
+      ${r.empaque.length ? `<div class="rec-tit" style="margin:20px 0 12px">Empaque</div>${tabla(r.empaque, false)}` : ""}
+    </div>
+    ${r.observaciones ? `<div class="rec-panel"><div class="rec-tit">Observaciones</div><div style="white-space:pre-wrap">${esc(r.observaciones)}</div></div>` : ""}
+    ${usos.length ? `<div class="rec-panel rec-usos"><div class="rec-tit">Se usa en</div>${usos.map(u => `<a href="#" data-act="receta" data-id="${esc(u.id)}">${esc(u.nombre)}</a>`).join("")}</div>` : ""}
   </div>`;
 }
 
@@ -2274,7 +2361,7 @@ async function onClick(ev) {
     else if (act === "tab") { S.tabGer = el.getAttribute("data-tab"); pintar(); }
     else if (act === "recetario") { S.vista = "recetario"; S.recId = null; pintar(); window.scrollTo(0, 0); }
     else if (act === "receta") { ev.preventDefault(); S.vista = "receta"; S.recId = el.getAttribute("data-id"); pintar(); window.scrollTo(0, 0); }
-    else if (act === "rec-cat") { S.recCat = el.getAttribute("data-cat"); pintar(); }
+    else if (act === "rec-cat") { ev.preventDefault(); S.recCat = el.getAttribute("data-cat"); S.recQ = ""; S.vista = "recetario"; S.recId = null; pintar(); window.scrollTo(0, 0); }
     else if (act === "girar") {
       const id = el.getAttribute("data-id");
       S.recGiradas.has(id) ? S.recGiradas.delete(id) : S.recGiradas.add(id);
