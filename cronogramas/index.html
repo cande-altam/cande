@@ -161,6 +161,12 @@
   @media (prefers-color-scheme:dark){td.cell.wknd{background:rgba(233,118,95,.05)}}
   .cellsel{width:100%;border:none;background:transparent;padding:6px 5px;font-size:12.5px;font-weight:500;cursor:pointer;border-radius:6px;text-align:center;text-align-last:center;-webkit-appearance:none;appearance:none;color:var(--ink)}
   .cellsel:hover{background:var(--panel-2)}
+  .equipoDet{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  .equipoDet summary{cursor:pointer;font-weight:600;font-size:13.5px;list-style:revert;padding:4px 0}
+  .equipoDet .grupo{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);margin:10px 0 2px;font-weight:600}
+  .btnSacar{margin-left:auto;border:1px solid var(--line-strong);background:transparent;color:var(--crit);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btnSacar:hover{background:var(--crit-soft)}
+  .btnVolver{margin-left:auto;border:1px solid var(--line-strong);background:transparent;color:var(--ink);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
   .cellsel:focus{outline:2px solid var(--accent);outline-offset:-2px}
   .cellsel.filled{color:var(--ink)}
   .cellsel.empty{color:var(--line-strong)}
@@ -421,6 +427,15 @@
           <button class="btn primary" id="btnAddPersona" style="margin-top:11px;width:100%">+ Agregar persona</button>
           <button class="btn" id="btnCancelarEdicionPersona" style="margin-top:7px;width:100%;display:none">Cancelar edición</button>
           <div class="mini-list" id="personaList"></div>
+          <details class="equipoDet" id="equipoDet">
+            <summary>👥 Todo el equipo <span id="equipoCount"></span></summary>
+            <p class="sub" style="padding:4px 0 6px">Para sacar a alguien que ya no trabaja acá. Deja de aparecer en las listas y en el autocompletado; las semanas que ya pasaron quedan como estaban.</p>
+            <div class="mini-list" id="equipoList"></div>
+          </details>
+          <details class="equipoDet" id="bajaDet" style="display:none">
+            <summary>Dados de baja <span id="bajaCount"></span></summary>
+            <div class="mini-list" id="bajaList"></div>
+          </details>
         </div>
       </section>
 
@@ -838,7 +853,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-10-10 descargar-quincena";
+const APP_VERSION="2026-10-23 sacar-del-equipo";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -959,8 +974,12 @@ const PEOPLE_BASE=[
 ];
 let PEOPLE=PEOPLE_BASE.slice();
 let BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
+// state.peopleBaja: quienes se sacaron del equipo (de la lista fija o agregados a mano). Se guarda
+// el nombre y la fecha, y para los agregados a mano también sus datos, así se pueden volver a sumar.
+function nombresDeBaja(){return new Set((state.peopleBaja||[]).map(b=>b.n));}
 function rebuildPeople(){
-  PEOPLE=PEOPLE_BASE.concat(state.peopleExtra||[]);
+  const baja=nombresDeBaja();
+  PEOPLE=PEOPLE_BASE.filter(p=>!baja.has(p.n)).concat(state.peopleExtra||[]);
   BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
 }
 const EVENT_HE=["Dana","Brenda","Guadalupe","Aaron","Luciana","Gabriel","Valentina"];
@@ -1014,7 +1033,7 @@ function peopleFor(role,loc){
 }
 
 /* ---------------- STATE ---------------- */
-function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{},expertos:[],expertoTurno:{},stickyNotes:[],rowLabelOverride:{}};}
+function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{},expertos:[],expertoTurno:{},stickyNotes:[],rowLabelOverride:{},peopleBaja:[]};}
 // múltiples semanas en simultáneo: se puede tener septiembre entero cargado, cada semana con sus
 // propias asignaciones/ausencias/refuerzos, y saltar de una a otra sin que se pisen entre sí. Lo que
 // SÍ es común a todas las semanas (quién trabaja acá, sus puestos, reglas fijas, incompatibilidades,
@@ -1506,7 +1525,7 @@ function validate(){
     if(!name)return;
     (dayShift[d+"|"+shift]=dayShift[d+"|"+shift]||[]).push({name,loc});
     (dayAll[d]=dayAll[d]||{})[name]=true;
-    worked[name].add(d);
+    (worked[name]=worked[name]||new Set()).add(d);
   }
   Object.keys(state.assign).forEach(k=>{const[d,loc,sh]=k.split("|");add(+d,sh,loc,state.assign[k]);});
   state.ex.forEach(e=>add(e.day,e.shift,e.loc,e.n));
@@ -1670,7 +1689,7 @@ function selHTML(d,loc,shift,role,idx,active,closed){
   const opts=peopleFor(role,loc).map(p=>{
     const nm=p.n===cur?nombreDestacadoEnTurno(p.n,d,loc,shift):nombreDestacado(p.n);
     return `<option value="${p.n}" ${p.n===cur?"selected":""}>${nm}${roleFor(p.n)!==role?" ⤵":""}</option>`;
-  }).join("");
+  }).join("")+(cur&&!BY_NAME[cur]?`<option value="${escAttr(cur)}" selected>${cur} (ya no está)</option>`:"");
   // dupe detection for this cell
   let dupe=false;
   if(cur){Object.keys(state.assign).forEach(kk=>{if(kk!==k){const[dd,,sh]=kk.split("|");if(+dd===d&&sh===shift&&state.assign[kk]===cur)dupe=true;}});
@@ -1742,7 +1761,7 @@ function extraCellHTML(e){
   const opts=PEOPLE.map(p=>{
     const nm=p.n===e.n?nombreDestacadoEnTurno(p.n,e.day,e.loc,e.shift):nombreDestacado(p.n);
     return `<option value="${p.n}" ${p.n===e.n?"selected":""}>${nm}${roleFor(p.n)!==e.role?" ⤵":""}</option>`;
-  }).join("");
+  }).join("")+(e.n&&!BY_NAME[e.n]?`<option value="${escAttr(e.n)}" selected>${e.n} (ya no está)</option>`:"");
   let dupe=false;
   Object.keys(state.assign).forEach(kk=>{const[dd,,sh]=kk.split("|");if(+dd===e.day&&sh===e.shift&&state.assign[kk]===e.n)dupe=true;});
   state.ex.forEach(o=>{if(o!==e&&o.n===e.n&&o.day===e.day&&o.shift===e.shift)dupe=true;});
@@ -2570,6 +2589,7 @@ function renderMini(){
     ).join(""):`<p class="sub" style="padding:0">Todavía no agregaste a nadie nuevo desde acá.</p>`;
     pl.querySelectorAll(".editIcon").forEach(b=>b.addEventListener("click",()=>iniciarEdicionPersona(+b.dataset.i)));
   }
+  renderEquipo();
   const il=document.getElementById("incompatList");
   if(il){
     il.innerHTML=state.incompat.length?state.incompat.map((r,i)=>
@@ -2615,14 +2635,7 @@ function renderMini(){
     if(t==="rolebackup"){delete state.backupOverride[b.dataset.i];fillPersonSelects();renderMini();render();persist();return;}
     if(t==="persona"){
       const p=state.peopleExtra[+b.dataset.i];
-      if(!confirm(`¿Sacar a ${p.n} del equipo? También se van a borrar sus turnos, francos y reglas asignadas.`))return;
-      state.peopleExtra.splice(+b.dataset.i,1);
-      cancelarEdicionPersona(); // por si justo estabas editando a esta persona (o a otra que corrió de índice)
-      rebuildPeople();
-      limpiarPersonasDadasDeBaja();
-      dedupeFixed();regenerateFixedHalfExtras();
-      fillPersonSelects();renderMini();render();persist();
-      toast(`${p.n} sacado del equipo`);
+      if(p)sacarDelEquipo(p.n);
       return;
     }
     if(t==="incompat"){state.incompat.splice(+b.dataset.i,1);renderMini();render();persist();return;}
@@ -2642,6 +2655,47 @@ function renderMini(){
     if(t==="fixed")regenerateFixedHalfExtras(); // si borraste una regla fija de medio turno, su refuerzo desaparece del calendario ya mismo
     renderMini();render();persist();
   }));
+}
+// "Todo el equipo": cualquiera (de la lista fija o agregado a mano) se puede sacar; los dados de
+// baja se pueden volver a sumar.
+function renderEquipo(){
+  const el=document.getElementById("equipoList");if(!el)return;
+  const porRol={};
+  PEOPLE.forEach(p=>{const r=roleFor(p.n)||p.role;(porRol[r]=porRol[r]||[]).push(p);});
+  document.getElementById("equipoCount").textContent=`(${PEOPLE.length})`;
+  el.innerHTML=Object.keys(ROLE_LABEL).filter(r=>porRol[r]).map(r=>`<div class="grupo">${ROLE_LABEL[r]}</div>`+
+    porRol[r].sort((a,b)=>a.n.localeCompare(b.n,"es")).map(p=>`<div class="mini-row"><b>${p.n}</b> · ${p.loc==="both"?"los dos locales":p.loc==="SL"?"San Luis":"SLA"}<button type="button" class="btnSacar" data-sacar="${escAttr(p.n)}">Sacar</button></div>`).join("")).join("");
+  el.querySelectorAll("[data-sacar]").forEach(b=>b.addEventListener("click",()=>sacarDelEquipo(b.dataset.sacar)));
+  const baja=state.peopleBaja||[];
+  const det=document.getElementById("bajaDet");det.style.display=baja.length?"":"none";
+  document.getElementById("bajaCount").textContent=`(${baja.length})`;
+  document.getElementById("bajaList").innerHTML=baja.map((b,i)=>`<div class="mini-row"><b>${b.n}</b> · desde ${b.fecha?new Date(b.fecha+"T00:00:00").toLocaleDateString("es-AR",{day:"numeric",month:"short"}):"—"}<button type="button" class="btnVolver" data-volver="${i}">↺ Volver a sumar</button></div>`).join("");
+  document.querySelectorAll("[data-volver]").forEach(b=>b.addEventListener("click",()=>volverAlEquipo(+b.dataset.volver)));
+}
+function sacarDelEquipo(nombre){
+  const extraIdx=(state.peopleExtra||[]).findIndex(p=>p.n===nombre);
+  const enBase=PEOPLE_BASE.some(p=>p.n===nombre);
+  if(extraIdx<0&&!enBase)return;
+  if(!confirm(`¿Sacar a ${nombre} del equipo?\n\nDeja de aparecer en las listas y en el autocompletado, y se borran sus francos, turnos fijos y reglas. En esta semana y las próximas se libera su lugar; las semanas que ya pasaron quedan como estaban.\n\nSi fue un error, lo podés volver a sumar desde "Dados de baja".`))return;
+  const hoy=new Date();const fecha=`${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,"0")}-${String(hoy.getDate()).padStart(2,"0")}`;
+  const registro={n:nombre,fecha};
+  if(extraIdx>=0){registro.persona=state.peopleExtra[extraIdx];state.peopleExtra.splice(extraIdx,1);}
+  state.peopleBaja=(state.peopleBaja||[]).filter(b=>b.n!==nombre).concat(registro);
+  cancelarEdicionPersona();
+  rebuildPeople();
+  limpiarPersonasDadasDeBaja();
+  dedupeFixed();regenerateFixedHalfExtras();
+  fillPersonSelects();renderMini();render();persist();
+  toast(`${nombre} sacado del equipo`);
+}
+function volverAlEquipo(i){
+  const b=(state.peopleBaja||[])[i];if(!b)return;
+  if(BY_NAME[b.n])return toast(`${b.n} ya está en el equipo`);
+  state.peopleBaja.splice(i,1);
+  if(b.persona)state.peopleExtra.push(b.persona);
+  rebuildPeople();
+  fillPersonSelects();renderMini();render();persist();
+  toast(`${b.n} volvió al equipo`);
 }
 function initControls(){
   document.getElementById("btnAddPersona").addEventListener("click",()=>{
@@ -2664,6 +2718,11 @@ function initControls(){
       return;
     }
     if(BY_NAME[nombre])return toast(`${nombre} ya está en el equipo`);
+    if(nombresDeBaja().has(nombre)){
+      const i=state.peopleBaja.findIndex(b=>b.n===nombre);
+      if(PEOPLE_BASE.some(p=>p.n===nombre)){volverAlEquipo(i);return;}
+      state.peopleBaja.splice(i,1);
+    }
     const persona={n:nombre,role,loc};
     if(francoVal!=="auto")persona.franco=DAYS[+francoVal][0];
     state.peopleExtra.push(persona);
@@ -2949,14 +3008,23 @@ document.getElementById("authPass").focus();
 // saca del estado cualquier referencia a alguien que ya no está en el equipo (PEOPLE) — franco fijo,
 // turno fijo, puesto cambiado, ausencias, refuerzos manuales — para que no queden datos fantasma
 // colgados cuando alguien deja de trabajar acá.
+// Las semanas que ya terminaron no se tocan: quedan como historial de quién trabajó.
+function semanaPasada(){
+  const ws=(state.weekStart||"").trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(ws))return false;
+  const fin=new Date(ws+"T00:00:00");fin.setDate(fin.getDate()+7);
+  return fin<=new Date();
+}
 function limpiarPersonasDadasDeBaja(){
   state.fixed=state.fixed.filter(f=>BY_NAME[f.n]);
-  state.abs=state.abs.filter(a=>BY_NAME[a.n]);
-  state.ex=state.ex.filter(e=>BY_NAME[e.n]);
+  const pasada=semanaPasada();
+  if(!pasada){
+    state.abs=state.abs.filter(a=>BY_NAME[a.n]);
+    state.ex=state.ex.filter(e=>BY_NAME[e.n]);
+  }
   Object.keys(state.francoFixed).forEach(n=>{if(!BY_NAME[n])delete state.francoFixed[n];});
   Object.keys(state.roleOverride).forEach(n=>{if(!BY_NAME[n])delete state.roleOverride[n];});
   Object.keys(state.backupOverride).forEach(n=>{if(!BY_NAME[n])delete state.backupOverride[n];});
-  Object.keys(state.assign).forEach(k=>{if(!BY_NAME[state.assign[k]])delete state.assign[k];});
+  if(!pasada)Object.keys(state.assign).forEach(k=>{if(!BY_NAME[state.assign[k]])delete state.assign[k];});
   if(!state.incompat)state.incompat=[];
   state.incompat=state.incompat.filter(r=>BY_NAME[r.a]&&BY_NAME[r.b]);
   if(!state.ausObviada)state.ausObviada={};
@@ -2964,7 +3032,7 @@ function limpiarPersonasDadasDeBaja(){
   if(!state.expertos)state.expertos=[];
   state.expertos=state.expertos.filter(n=>BY_NAME[n]);
   if(!state.expertoTurno)state.expertoTurno={};
-  Object.keys(state.expertoTurno).forEach(k=>{if(!BY_NAME[state.expertoTurno[k]])delete state.expertoTurno[k];});
+  if(!pasada)Object.keys(state.expertoTurno).forEach(k=>{if(!BY_NAME[state.expertoTurno[k]])delete state.expertoTurno[k];});
   if(!state.rowLabelOverride)state.rowLabelOverride={};
 }
 // Leandro (el barista, SLA) pasa a llamarse "Leandro Villagra" para no confundirlo con Leandro
@@ -2985,6 +3053,7 @@ function renombrarLeandroVillagra(){
 }
 function runMigrations(){
   if(!state.peopleExtra)state.peopleExtra=[];
+  if(!state.peopleBaja)state.peopleBaja=[];
   rebuildPeople(); // primero, así BY_NAME ya incluye a la gente agregada a mano antes de todo lo demás
   state.ex.forEach(e=>{if(e.id==null)e.id=Date.now()+"-"+Math.round(Math.random()*1e6);});
   renombrarLeandroVillagra();
