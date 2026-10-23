@@ -208,7 +208,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
 
 <noscript>
   <div class="wrap" style="margin-top:20px">
-    <p><a href="/manuales/">Manuales y Recetario</a> · <a href="/informes/carga.html">Informe del turno</a> · <a href="/vacaciones/pedido.html">Pedir vacaciones</a> · <a href="/cronogramas/">Cronogramas</a> · <a href="/vacaciones/">Vacaciones</a> · <a href="/informes/">Informes de turno</a> · <a href="/recetario/">Recetario</a> · <a href="/costeo-proveedores/">Costeo &amp; Proveedores</a> · <a href="/presupuestos/">Presupuestos</a></p>
+    <p><a href="/manuales/">Manuales y Recetario</a> · <a href="/informes/carga.html">Informe del turno (Experto del turno)</a> · <a href="/vacaciones/pedido.html">Pedir vacaciones</a> · <a href="/cronogramas/">Cronogramas</a> · <a href="/vacaciones/">Vacaciones</a> · <a href="/informes/">Informes de turno</a> · <a href="/recetario/">Recetario</a> · <a href="/costeo-proveedores/">Costeo &amp; Proveedores</a> · <a href="/presupuestos/">Presupuestos</a></p>
   </div>
 </noscript>
 
@@ -219,10 +219,10 @@ const HERRAMIENTAS = [
     desc: "Los manuales de cada puesto y, para baristas y cocina, el Recetario con las fichas de cada plato.",
     para: "Todo el equipo", acceso: "Usuario propio",
     claves: "manual manuales procedimiento procedimientos recetario receta recetas ficha plato ingredientes capacitacion induccion club candela caja apertura cierre" },
-  { id: "informe-carga", url: "/informes/carga.html", icono: "📝", area: "equipo", titulo: "Informe del turno",
-    desc: "Lo carga el Experto Candela al cerrar: checklist, incidencias y qué dejar dicho.",
+  { id: "informe-carga", url: "/informes/carga.html", icono: "📝", area: "equipo", titulo: "Informe del turno · Experto",
+    desc: "Solo para el Experto del turno: lo carga al cerrar, con checklist, incidencias y qué dejar dicho. Los jefes de área tienen su propio informe.",
     para: "Experto del turno", acceso: "",
-    claves: "informe cierre turno checklist incidencia incidencias novedades experto cargar" },
+    claves: "informe cierre turno checklist incidencia incidencias novedades experto cargar experto del turno" },
   { id: "vacaciones-pedido", url: "/vacaciones/pedido.html", icono: "✈️", area: "equipo", titulo: "Pedir vacaciones",
     desc: "Cada persona elige las fechas que le gustaría tomarse, con más de una opción.",
     para: "Todo el equipo", acceso: "",
@@ -260,7 +260,7 @@ const AREAS = [
 ];
 // Lo que más se hace en el día: un toque y estás adentro.
 const TAREAS = [
-  { herramienta: "informe-carga", icono: "📝", titulo: "Cargar el informe del turno", sub: "Al cerrar", claves: "cierre" },
+  { herramienta: "informe-carga", icono: "📝", titulo: "Informe del Experto del turno", sub: "Al cerrar el turno", claves: "cierre experto" },
   { herramienta: "cronogramas", icono: "🗓️", titulo: "Ver los turnos de la semana", sub: "Cronogramas", claves: "horario franco" },
   { herramienta: "manuales", icono: "🍳", titulo: "Buscar una receta", sub: "Recetario del equipo", claves: "plato ingredientes" },
   { herramienta: "costeo", icono: "🧾", titulo: "Cargar una factura", sub: "Costeo & Proveedores", claves: "proveedor foto" },

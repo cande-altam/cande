@@ -717,17 +717,33 @@ const legacyStateRef = ref(db, "cronogramas/state"); // ruta vieja, de antes de 
 // tiempo — con una sola variable, el eco del primero podía llegar después de que ya hubiéramos
 // anotado el segundo, no coincidir, y confundirse con un cambio "de otro dispositivo" pisando tu
 // edición más reciente.
+// Firebase no guarda listas ni objetos vacíos y devuelve las claves ordenadas: para reconocer el eco
+// de un guardado propio hay que comparar los dos lados así. Sin esto, cada guardado propio volvía
+// como si fuera "de otro dispositivo".
+function jsonComoFirebase(v){
+  const n=x=>{
+    if(x===null||x===undefined)return undefined;
+    if(Array.isArray(x)){const a=x.map(n);return a.some(y=>y!==undefined)?a.map(y=>y===undefined?null:y):undefined;}
+    if(typeof x==="object"){const o={};Object.keys(x).sort().forEach(k=>{const y=n(x[k]);if(y!==undefined)o[k]=y;});return Object.keys(o).length?o:undefined;}
+    return x;
+  };
+  const r=n(v);return r===undefined?"null":JSON.stringify(r);
+}
+window.jsonComoFirebase=jsonComoFirebase;
 function makeSyncChannel(nodeRef, updateEvent, wrapDetail){
   wrapDetail = wrapDetail || (remote=>remote);
   let pendingEchoes = [];
   let pushTimer = null;
   let unsub = onValue(nodeRef, snap=>{
     const remote = snap.val();
-    const remoteJSON = remote==null ? null : JSON.stringify(remote);
+    const remoteJSON = remote==null ? null : jsonComoFirebase(remote);
     if(remoteJSON!==null){
       const idx=pendingEchoes.indexOf(remoteJSON);
       if(idx>=0){pendingEchoes.splice(idx,1);return;} // era el eco de uno de nuestros guardados
     }
+    // hay un cambio de este dispositivo esperando para subir: es más nuevo que lo que llega, así que
+    // no se pisa (si no, se perdía lo último que tocaste justo cuando otro dispositivo guardaba)
+    if(pushTimer!==null)return;
     window.dispatchEvent(new CustomEvent(updateEvent,{detail:wrapDetail(remote)}));
   }, err=>{
     console.error(updateEvent+" onValue:",err);
@@ -737,12 +753,17 @@ function makeSyncChannel(nodeRef, updateEvent, wrapDetail){
     push(stateObj){
       clearTimeout(pushTimer);
       pushTimer = setTimeout(()=>{
-        const json = JSON.stringify(stateObj);
+        pushTimer = null;
+        const json = jsonComoFirebase(stateObj);
         pendingEchoes.push(json);
         if(pendingEchoes.length>25)pendingEchoes.shift(); // por las dudas, que no crezca sin límite
         window.dispatchEvent(new CustomEvent("cloudsync-saving"));
+        // si la nube ya tenía exactamente esto, Firebase no avisa nada: el eco esperado se descarta
+        // apenas se confirma el guardado, para que no se "coma" después un cambio real igual de otro
+        // dispositivo
+        const olvidarEco=()=>{const i=pendingEchoes.indexOf(json);if(i>=0)pendingEchoes.splice(i,1);};
         set(nodeRef, stateObj)
-          .then(()=>window.dispatchEvent(new CustomEvent("cloudsync-saved")))
+          .then(()=>{olvidarEco();window.dispatchEvent(new CustomEvent("cloudsync-saved"));})
           .catch(err=>{
             pendingEchoes=pendingEchoes.filter(j=>j!==json);
             console.error(updateEvent+" push:",err);window.dispatchEvent(new CustomEvent("cloudsync-error",{detail:{code:err.code,message:err.message}}));
@@ -855,7 +876,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-10-23 locales";
+const APP_VERSION="2026-10-23 sync-equipo";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -1049,6 +1070,12 @@ const FALLBACK_WEEK_KEY="sin-fecha";
 function weekKeyOf(s){return (s&&s.weekStart||"").trim()||FALLBACK_WEEK_KEY;}
 function weekPart(s){const o={};WEEK_FIELDS.forEach(k=>o[k]=s[k]);return o;}
 function configPart(s){const o={};Object.keys(defaultState()).forEach(k=>{if(!WEEK_FIELDS.includes(k))o[k]=s[k];});return o;}
+// Lo que se sube a la nube. _v:2 = "esta config trae todos los campos": si falta alguno es porque
+// está vacío (Firebase no guarda vacíos). Una versión vieja del sitio no conoce los campos nuevos y
+// los borra al guardar; sin la marca, esos campos se conservan en vez de vaciarse.
+const CONFIG_VERSION=2;
+const CAMPOS_CONFIG_NUEVOS=["peopleBaja","locOverride"];
+function configParaNube(s){return Object.assign(configPart(s),{_v:CONFIG_VERSION});}
 function blankWeek(weekStart){return {label:"",weekStart:weekStart||"",assign:{},abs:[],ex:[],rules:[],comments:{},expertoTurno:{}};}
 // las reglas "semilla" (seedFixedRules, seedCocinaComprasCajero) se cargan una sola vez por tag.
 // Antes se detectaba "ya cargada" mirando si quedaba algún turno fijo con ese tag — pero si borrabas
@@ -1108,7 +1135,7 @@ function persist(){
   localStorage.setItem(LS_ACTIVE,key);
   syncUndoRedoButtons();
   if(!suspendHistory){
-    if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(configPart(state));}
+    if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(configParaNube(state));}
     if(window.CloudSyncWeek){setSyncStatus("saving");window.CloudSyncWeek.push(key,weekPart(state));}
     maybeSnapshot();
   }
@@ -1252,7 +1279,7 @@ function restoreHistorySnapshot(json){
   renderWeekSwitcher();
   renderMini();render();
   syncUndoRedoButtons();
-  if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(configPart(state));}
+  if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(configParaNube(state));}
   if(window.CloudSyncWeek){setSyncStatus("saving");window.CloudSyncWeek.push(key,weekPart(state));}
 }
 function undoLast(){
@@ -3111,20 +3138,35 @@ function applyRemoteConfig(remote){
   if(remote==null){
     // todavía no hay nada guardado en la nube (primera vez que se usa desde algún dispositivo):
     // subimos lo que ya tenemos acá para sembrarla.
-    if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(configPart(state));}
+    if(window.CloudSync){setSyncStatus("saving");window.CloudSync.push(configParaNube(state));}
     setSyncStatus("ok");
     return;
   }
-  if(JSON.stringify(remote)===JSON.stringify(configPart(state))){setSyncStatus("ok");return;} // ya estábamos al día
+  if(jsonComoFirebase(remote)===jsonComoFirebase(configParaNube(state))){setSyncStatus("ok");return;} // ya estábamos al día
   suspendHistory=true; // esto llega de otro dispositivo, no es una acción de este usuario: no cuenta para deshacer
-  Object.assign(state,remote); // remote solo trae campos de config: no toca la semana activa
+  // La nube manda la config entera: un campo que falta está VACÍO (Firebase no guarda vacíos). Antes
+  // se mezclaba con Object.assign y un campo que quedaba vacío (sacar al último agregado a mano,
+  // volver a sumar al último dado de baja) conservaba la copia vieja de este dispositivo, que la
+  // volvía a subir: lo sacado volvía y lo sumado se volvía a sacar.
+  const def=defaultState(), completa=(remote._v||0)>=CONFIG_VERSION;
+  Object.keys(def).filter(k=>!WEEK_FIELDS.includes(k)).forEach(k=>{
+    if(Object.prototype.hasOwnProperty.call(remote,k))state[k]=remote[k];
+    else if(completa||!CAMPOS_CONFIG_NUEVOS.includes(k))state[k]=def[k];
+    // si viene de una versión vieja (sin _v), los campos que no conoce se conservan
+  });
+  const semanaAntes=jsonComoFirebase(weekPart(state));
   runMigrations(); // por si este dispositivo tiene reglas nuevas que la nube todavía no vio
   saveLocalConfig(configPart(state));
+  persist(); // con suspendHistory: guarda en este dispositivo, sin subir
   suspendHistory=false;
   fillPersonSelects();
   renderMini();render();
   syncUndoRedoButtons();
-  persist(); // si las migraciones cambiaron algo, se lo mandamos de vuelta a la nube
+  // Se sube SOLO si este dispositivo tiene algo distinto que aportar (migraciones, o campos que una
+  // versión vieja borró). Antes se volvía a subir siempre todo lo recibido, y con dos dispositivos
+  // abiertos esas subidas cruzadas pisaban el cambio más reciente.
+  const aporta=jsonComoFirebase(configParaNube(state))!==jsonComoFirebase(Object.assign({},remote,{_v:CONFIG_VERSION}))||jsonComoFirebase(weekPart(state))!==semanaAntes;
+  if(aporta)persist();
   setSyncStatus("ok");
   if(!isFirst)toast("Datos del equipo actualizados desde otro dispositivo ☁️");
 }
@@ -3138,17 +3180,22 @@ function applyRemoteWeek(detail){
     setSyncStatus("ok");
     return;
   }
-  if(JSON.stringify(remote)===JSON.stringify(weekPart(state))){setSyncStatus("ok");return;} // ya estábamos al día
+  if(jsonComoFirebase(remote)===jsonComoFirebase(weekPart(state))){setSyncStatus("ok");return;} // ya estábamos al día
   suspendHistory=true;
-  Object.assign(state,remote);
+  // la semana llega entera: lo que falta está vacío (ver applyRemoteConfig)
+  const vacia=blankWeek(remote.weekStart||state.weekStart);
+  WEEK_FIELDS.forEach(k=>{state[k]=Object.prototype.hasOwnProperty.call(remote,k)?remote[k]:(k in vacia?vacia[k]:state[k]);});
+  const configAntes=jsonComoFirebase(configPart(state));
   runMigrations();
   saveLocalWeek(key,weekPart(state));
+  persist(); // con suspendHistory: guarda en este dispositivo, sin subir
   suspendHistory=false;
   document.getElementById("weekLabel").value=state.label||"";
   document.getElementById("weekStart").value=state.weekStart||"";
   renderMini();render();renderWeekSwitcher();
   syncUndoRedoButtons();
-  persist();
+  // solo se sube si las migraciones cambiaron algo (ver applyRemoteConfig)
+  if(jsonComoFirebase(weekPart(state))!==jsonComoFirebase(remote)||jsonComoFirebase(configPart(state))!==configAntes)persist();
   setSyncStatus("ok");
   toast("Esta semana se actualizó desde otro dispositivo ☁️");
 }
