@@ -164,6 +164,8 @@
   .equipoDet{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
   .equipoDet summary{cursor:pointer;font-weight:600;font-size:13.5px;list-style:revert;padding:4px 0}
   .equipoDet .grupo{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);margin:10px 0 2px;font-weight:600}
+  .selLocal{margin-left:auto;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink);border-radius:8px;padding:3px 6px;font-size:12px;font-family:inherit;max-width:96px}
+  .selLocal+.btnSacar{margin-left:0}
   .btnSacar{margin-left:auto;border:1px solid var(--line-strong);background:transparent;color:var(--crit);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
   .btnSacar:hover{background:var(--crit-soft)}
   .btnVolver{margin-left:auto;border:1px solid var(--line-strong);background:transparent;color:var(--ink);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
@@ -411,7 +413,7 @@
       <section class="card">
         <div class="card-body" style="padding-bottom:16px">
           <span class="eyebrow">Sumar persona al equipo</span>
-          <p class="sub" style="padding:4px 0 0">Se suma a las listas de todo el sitio (turnos, francos, puesto). Después la podés editar o sacar desde acá mismo.</p>
+          <p class="sub" style="padding:4px 0 0">Se suma a las listas de todo el sitio (turnos, francos, puesto). Después la podés editar o sacar desde acá mismo. En "Todo el equipo" se cambia en qué local trabaja cada uno.</p>
           <div class="field">
             <label for="nuevoNombre">Nombre</label>
             <input type="text" id="nuevoNombre" placeholder="Ej: Sofía">
@@ -429,7 +431,7 @@
           <div class="mini-list" id="personaList"></div>
           <details class="equipoDet" id="equipoDet">
             <summary>👥 Todo el equipo <span id="equipoCount"></span></summary>
-            <p class="sub" style="padding:4px 0 6px">Para sacar a alguien que ya no trabaja acá. Deja de aparecer en las listas y en el autocompletado; las semanas que ya pasaron quedan como estaban.</p>
+            <p class="sub" style="padding:4px 0 6px">Elegí en qué local trabaja cada persona (San Luis, SLA o los dos): el autocompletado y las listas de la grilla lo respetan. <b>Sacar</b> es para quien ya no trabaja acá; las semanas que ya pasaron quedan como estaban.</p>
             <div class="mini-list" id="equipoList"></div>
           </details>
           <details class="equipoDet" id="bajaDet" style="display:none">
@@ -853,7 +855,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-10-23 sacar-del-equipo";
+const APP_VERSION="2026-10-23 locales";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -979,7 +981,10 @@ let BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
 function nombresDeBaja(){return new Set((state.peopleBaja||[]).map(b=>b.n));}
 function rebuildPeople(){
   const baja=nombresDeBaja();
-  PEOPLE=PEOPLE_BASE.filter(p=>!baja.has(p.n)).concat(state.peopleExtra||[]);
+  // locOverride: en qué local trabaja cada persona de la lista fija, si se cambió desde "Todo el
+  // equipo" (los agregados a mano guardan su local en su propio registro).
+  const lo=state.locOverride||{};
+  PEOPLE=PEOPLE_BASE.filter(p=>!baja.has(p.n)).map(p=>lo[p.n]?{...p,loc:lo[p.n]}:p).concat(state.peopleExtra||[]);
   BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
 }
 const EVENT_HE=["Dana","Brenda","Guadalupe","Aaron","Luciana","Gabriel","Valentina"];
@@ -1033,7 +1038,7 @@ function peopleFor(role,loc){
 }
 
 /* ---------------- STATE ---------------- */
-function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{},expertos:[],expertoTurno:{},stickyNotes:[],rowLabelOverride:{},peopleBaja:[]};}
+function defaultState(){return {label:"",weekStart:"",assign:{},abs:[],ex:[],rules:[],fixed:[],francoFixed:{},roleOverride:{},backupOverride:{},comments:{},migrationsApplied:[],peopleExtra:[],incompat:[],ausObviada:{},expertos:[],expertoTurno:{},stickyNotes:[],rowLabelOverride:{},peopleBaja:[],locOverride:{}};}
 // múltiples semanas en simultáneo: se puede tener septiembre entero cargado, cada semana con sus
 // propias asignaciones/ausencias/refuerzos, y saltar de una a otra sin que se pisen entre sí. Lo que
 // SÍ es común a todas las semanas (quién trabaja acá, sus puestos, reglas fijas, incompatibilidades,
@@ -1689,7 +1694,8 @@ function selHTML(d,loc,shift,role,idx,active,closed){
   const opts=peopleFor(role,loc).map(p=>{
     const nm=p.n===cur?nombreDestacadoEnTurno(p.n,d,loc,shift):nombreDestacado(p.n);
     return `<option value="${p.n}" ${p.n===cur?"selected":""}>${nm}${roleFor(p.n)!==role?" ⤵":""}</option>`;
-  }).join("")+(cur&&!BY_NAME[cur]?`<option value="${escAttr(cur)}" selected>${cur} (ya no está)</option>`:"");
+  }).join("")+(cur&&!BY_NAME[cur]?`<option value="${escAttr(cur)}" selected>${cur} (ya no está)</option>`
+    :cur&&!peopleFor(role,loc).some(p=>p.n===cur)?`<option value="${escAttr(cur)}" selected>${nombreDestacado(cur)} (${BY_NAME[cur].loc==="both"||BY_NAME[cur].loc===loc?"otro puesto":"otro local"})</option>`:"");
   // dupe detection for this cell
   let dupe=false;
   if(cur){Object.keys(state.assign).forEach(kk=>{if(kk!==k){const[dd,,sh]=kk.split("|");if(+dd===d&&sh===shift&&state.assign[kk]===cur)dupe=true;}});
@@ -2664,13 +2670,28 @@ function renderEquipo(){
   PEOPLE.forEach(p=>{const r=roleFor(p.n)||p.role;(porRol[r]=porRol[r]||[]).push(p);});
   document.getElementById("equipoCount").textContent=`(${PEOPLE.length})`;
   el.innerHTML=Object.keys(ROLE_LABEL).filter(r=>porRol[r]).map(r=>`<div class="grupo">${ROLE_LABEL[r]}</div>`+
-    porRol[r].sort((a,b)=>a.n.localeCompare(b.n,"es")).map(p=>`<div class="mini-row"><b>${p.n}</b> · ${p.loc==="both"?"los dos locales":p.loc==="SL"?"San Luis":"SLA"}<button type="button" class="btnSacar" data-sacar="${escAttr(p.n)}">Sacar</button></div>`).join("")).join("");
+    porRol[r].sort((a,b)=>a.n.localeCompare(b.n,"es")).map(p=>`<div class="mini-row"><b>${p.n}</b><select class="selLocal" data-local="${escAttr(p.n)}" aria-label="Local de ${escAttr(p.n)}">${[["SL","San Luis"],["SLA","SLA"],["both","Los dos"]].map(([v,t])=>`<option value="${v}" ${p.loc===v?"selected":""}>${t}</option>`).join("")}</select><button type="button" class="btnSacar" data-sacar="${escAttr(p.n)}">Sacar</button></div>`).join("")).join("");
   el.querySelectorAll("[data-sacar]").forEach(b=>b.addEventListener("click",()=>sacarDelEquipo(b.dataset.sacar)));
+  el.querySelectorAll("[data-local]").forEach(s=>s.addEventListener("change",()=>cambiarLocal(s.dataset.local,s.value)));
   const baja=state.peopleBaja||[];
   const det=document.getElementById("bajaDet");det.style.display=baja.length?"":"none";
   document.getElementById("bajaCount").textContent=`(${baja.length})`;
   document.getElementById("bajaList").innerHTML=baja.map((b,i)=>`<div class="mini-row"><b>${b.n}</b> · desde ${b.fecha?new Date(b.fecha+"T00:00:00").toLocaleDateString("es-AR",{day:"numeric",month:"short"}):"—"}<button type="button" class="btnVolver" data-volver="${i}">↺ Volver a sumar</button></div>`).join("");
   document.querySelectorAll("[data-volver]").forEach(b=>b.addEventListener("click",()=>volverAlEquipo(+b.dataset.volver)));
+}
+const NOMBRE_LOCAL={SL:"San Luis",SLA:"SLA",both:"los dos locales"};
+function cambiarLocal(nombre,loc){
+  const extra=(state.peopleExtra||[]).find(p=>p.n===nombre);
+  const base=PEOPLE_BASE.find(p=>p.n===nombre);
+  if(extra)extra.loc=loc;
+  else if(base){
+    if(!state.locOverride)state.locOverride={};
+    if(base.loc===loc)delete state.locOverride[nombre];else state.locOverride[nombre]=loc;
+  }else return;
+  rebuildPeople();
+  dedupeFixed();regenerateFixedHalfExtras();
+  fillPersonSelects();renderMini();render();persist();
+  toast(`${nombre} ahora trabaja en ${NOMBRE_LOCAL[loc]}`);
 }
 function sacarDelEquipo(nombre){
   const extraIdx=(state.peopleExtra||[]).findIndex(p=>p.n===nombre);
@@ -3034,6 +3055,7 @@ function limpiarPersonasDadasDeBaja(){
   if(!state.expertoTurno)state.expertoTurno={};
   if(!pasada)Object.keys(state.expertoTurno).forEach(k=>{if(!BY_NAME[state.expertoTurno[k]])delete state.expertoTurno[k];});
   if(!state.rowLabelOverride)state.rowLabelOverride={};
+  if(state.locOverride)Object.keys(state.locOverride).forEach(n=>{if(!BY_NAME[n])delete state.locOverride[n];});
 }
 // Leandro (el barista, SLA) pasa a llamarse "Leandro Villagra" para no confundirlo con Leandro
 // Tolaba (persona aparte, solo en el módulo de Vacaciones — producción/Cuadra). Migra cualquier
@@ -3054,6 +3076,7 @@ function renombrarLeandroVillagra(){
 function runMigrations(){
   if(!state.peopleExtra)state.peopleExtra=[];
   if(!state.peopleBaja)state.peopleBaja=[];
+  if(!state.locOverride)state.locOverride={};
   rebuildPeople(); // primero, así BY_NAME ya incluye a la gente agregada a mano antes de todo lo demás
   state.ex.forEach(e=>{if(e.id==null)e.id=Date.now()+"-"+Math.round(Math.random()*1e6);});
   renombrarLeandroVillagra();
