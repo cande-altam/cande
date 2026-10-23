@@ -364,7 +364,7 @@ const DEFAULT_ADMIN_PASS = "costeo2025";
 // Sirve para saber, sin adivinar, qué versión está corriendo realmente en el navegador (se ve en
 // Configuración). Los navegadores —sobre todo en el celular— guardan el HTML y pueden seguir
 // mostrando una versión vieja aunque el deploy ya haya salido.
-const APP_VERSION = "2026-10-21 14:08";
+const APP_VERSION = "2026-10-23 correcciones";
 
 // Navegación en dos niveles. Doce pestañas planas en una sola barra superan lo que se puede
 // escanear de un vistazo: obligan a leerlas todas para encontrar una, y en el celular quedaban
@@ -6884,6 +6884,7 @@ function panelSyncRecetarioHtml() {
         </div>
         <div class="row-actions">
           <button class="btn btn-primary" onclick="sincronizarRecetario()" ${!state.recetarioConectado || state.recetarioSyncEnCurso ? "disabled" : ""}>${state.recetarioSyncEnCurso ? "Sincronizando…" : "🔄 Sincronizar ahora"}</button>
+          <button class="btn btn-ghost" onclick="exportarRevisionRecetario()" ${!state.recetarioConectado ? "disabled" : ""} title="Baja un archivo con recetas, ingredientes, insumos y productos para revisar los vínculos de una vez">📤 Exportar para revisión</button>
         </div>
       </div>
       <div class="sync-estado">
@@ -6891,6 +6892,7 @@ function panelSyncRecetarioHtml() {
         ${auto ? `<span>Próxima: <b>${prox ? (prox <= Date.now() ? "al abrir Costos conectado" : fechaHoraLarga(prox).slice(0, 10)) : "al abrir Costos conectado"}</b></span>` : ""}
         <label class="sync-auto"><input type="checkbox" ${auto ? "checked" : ""} onchange="setRecetarioSyncAuto(this.checked)"> Cada ${RECETARIO_SYNC_DIAS} días, sola</label>
       </div>
+      ${panelCorreccionesHtml()}
       ${!state.recetarioConectado ? `<div class="alert-box alert-warn" style="margin-top:10px"><div>⚠️ Este navegador no está conectado al Recetario: conectalo desde <a href="#" onclick="navigate('config');return false;">Configuración</a> para sincronizar. Los costos de abajo son los de la última sincronización.</div></div>` : ""}
       ${u ? `
       <div class="stat-row" style="margin-top:12px">
@@ -6933,6 +6935,214 @@ window.imprimirCostosElaboraciones = function() {
       { t: "Variación", num: true, v: c => c.anterior > 0 ? _difImpresa(costoRefElaboracion(c) - c.anterior, c.anterior) : "—" },
     ])}
     <div class="pie">⚠️ = costo incompleto (algún ingrediente sin vincular a un insumo o con unidad incompatible).</div>`);
+};
+
+
+// ── Revisión asistida: exportar los datos y aplicar correcciones preparadas ───────────────────
+// Para resolver de una vez los vínculos que la sincronización no puede decidir sola (ingredientes
+// con otro nombre, platos que en la carta se llaman distinto) sin hacerlo uno por uno:
+// 1) "📤 Exportar para revisión" baja un archivo con recetas, ingredientes, insumos y productos.
+// 2) Con ese archivo se prepara correcciones-recetario.json (en esta misma carpeta del sitio).
+// 3) Acá aparece "🧩 Correcciones preparadas": se ve cada cambio, se destilda lo que no convence y
+//    se aplica todo junto. Nada se aplica sin mirarlo, y cada corrección se aplica una sola vez.
+window.exportarRevisionRecetario = function() {
+  if (!state.recetarioConectado) { showToast("⚠️ Conectate con el Recetario (Configuración) para exportar las recetas.", "warn"); return; }
+  const recetas = [];
+  for (const area of AREAS_RECETARIO) for (const r of Object.values(state.recRecetas[area] || {})) {
+    const c = costoTotalRecetaRecetario(area, r.id);
+    const linea = l => ({ tipo: l.tipo || "ingrediente", ingredienteId: l.ingredienteId || null, recetaId: l.recetaId || null, nombre: l.nombre || "", cantidad: l.cantidad ?? null, unidad: l.unidad || "", merma: l.merma ?? null });
+    recetas.push({ area, id: r.id, nombre: r.nombre || "", tipo: r.tipo || "", grupo: r.grupo || "", codigo: r.codigo || "",
+      rendimiento: r.rendimiento ?? null, unidadRendimiento: r.unidadRendimiento || "", porciones: r.porciones ?? null, margenSeguridad: Number(r.margenSeguridad) || 0,
+      ingredientes: r.ingredientes.map(linea), empaque: r.empaque.map(linea),
+      costo: { total: _redondo(c.costoTotal), porPorcion: _redondo(c.costoPorPorcion), incompleto: !!c.incompleto, motivos: c.motivos },
+      productos: productosDePlato(area, r.id).map(([id]) => id) });
+  }
+  const datos = {
+    tipo: "candela-revision-recetario", version: 1, generado: new Date().toISOString(), app: APP_VERSION,
+    ingredientes: Object.entries(state.recIngredientes || {}).map(([id, i]) => ({ id, nombre: i.nombre || "", unidad: i.unidad || "", tipo: i.tipo || "", insumoId: state.vinculosRecetario[id] || null, pesoUnidad: state.pesosRecetario[id] || null })),
+    recetas,
+    insumos: Object.entries(state.insumos).map(([id, ins]) => ({ id, nombre: ins.nombre || "", unidad: ins.unidad || "", esBase: esBaseInsumo(ins),
+      precio: _redondo(precioEfectivoInsumo(id)), marcas: [...new Set(Object.values(ins.precios || {}).map(x => x && x.marca).filter(Boolean))].slice(0, 6),
+      alias: Object.keys(ins.alias || {}).slice(0, 10), recetario: ins.recetario || null })),
+    productos: Object.entries(state.productos).map(([id, p]) => ({ id, nombre: p.nombre || "", categoria: p.categoria || "", precioVenta: Number(p.precioVenta) || null,
+      recetario: p.recetario || null, creadoDesde: p.creadoDesde || null, fuente: costoProductoFuente(p), costo: _redondo(calcCostoProducto(p)) })),
+  };
+  const texto = JSON.stringify(datos);
+  const blob = new Blob([texto], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `candela-revision-recetario-${todayISO()}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(`📤 Se descargó la revisión: ${recetas.length} recetas, ${datos.ingredientes.length} ingredientes, ${datos.insumos.length} insumos y ${datos.productos.length} productos.`, "success");
+};
+
+async function cargarCorreccionesRecetario() {
+  try {
+    if (typeof fetch !== "function") return;
+    const r = await fetch(`correcciones-recetario.json?ts=${Date.now()}`, { cache: "no-store" });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j && j.tipo === "candela-correcciones-recetario" && j.id) { state.correccionesRec = j; solicitarRender(); }
+  } catch { /* sin archivo de correcciones: no hay nada que mostrar */ }
+}
+const correccionAplicada = id => !!(state.recetarioSync && state.recetarioSync.correcciones && state.recetarioSync.correcciones[id]);
+
+// Cada cambio, validado contra los datos de hoy: lo que ya no existe o ya está hecho no se aplica.
+function planCorrecciones(j) {
+  const items = [];
+  const ingrediente = id => state.recIngredientes?.[id];
+  const nuevos = {};
+  for (const n of aArrayRecetario(j.insumosNuevos)) {
+    const existente = Object.entries(state.insumos).find(([, ins]) => claveAliasInsumo(ins.nombre) === claveAliasInsumo(n.nombre));
+    nuevos[n.clave] = existente ? existente[0] : null;
+    items.push({ k: `nuevo:${n.clave}`, grupo: "insumosNuevos", n,
+      texto: `➕ Crear el insumo <b>${escapeHtml(n.nombre)}</b> (${escapeHtml(n.unidad || "sin unidad")})${n.nota ? ` · ${escapeHtml(n.nota)}` : ""}`,
+      ok: !existente, motivo: existente ? `ya existe "${state.insumos[existente[0]].nombre}": se usa ese` : "" });
+  }
+  for (const v of aArrayRecetario(j.vinculosIngredientes)) {
+    const ing = ingrediente(v.ingredienteId);
+    const insId = v.insumoId || (v.insumoClave ? (nuevos[v.insumoClave] || `nuevo:${v.insumoClave}`) : null);
+    const ins = insId && !String(insId).startsWith("nuevo:") ? state.insumos[insId] : null;
+    const insNombre = ins ? ins.nombre : (aArrayRecetario(j.insumosNuevos).find(n => n.clave === v.insumoClave)?.nombre || v.insumo || "");
+    const ya = state.vinculosRecetario[v.ingredienteId] && state.vinculosRecetario[v.ingredienteId] === insId;
+    const motivo = !ing ? "el ingrediente ya no está en el Recetario" : (!ins && !String(insId || "").startsWith("nuevo:")) ? "el insumo ya no existe" : ya ? "ya estaba vinculado así" : "";
+    items.push({ k: `ing:${v.ingredienteId}`, grupo: "vinculosIngredientes", v, insId,
+      texto: `🧂 <b>${escapeHtml(ing?.nombre || v.ingrediente || v.ingredienteId)}</b> → ${escapeHtml(insNombre)}${v.nota ? ` <span class="text-muted">· ${escapeHtml(v.nota)}</span>` : ""}`,
+      ok: !motivo, motivo });
+  }
+  for (const pz of aArrayRecetario(j.pesos)) {
+    const ing = ingrediente(pz.ingredienteId);
+    items.push({ k: `peso:${pz.ingredienteId}`, grupo: "pesos", pz,
+      texto: `⚖️ 1 u de <b>${escapeHtml(ing?.nombre || pz.ingrediente || "")}</b> = ${escapeHtml(String(pz.cantidad))} ${escapeHtml(pz.unidad)}${pz.nota ? ` <span class="text-muted">· ${escapeHtml(pz.nota)}</span>` : ""}`,
+      ok: !!ing && Number(pz.cantidad) > 0, motivo: !ing ? "el ingrediente ya no está en el Recetario" : "" });
+  }
+  for (const pl of aArrayRecetario(j.platos)) {
+    const r = state.recRecetas[pl.area || "cocina"]?.[pl.recetaId];
+    const ids = aArrayRecetario(pl.productoIds).filter(id => state.productos[id]);
+    const faltan = aArrayRecetario(pl.productoIds).length - ids.length;
+    const ya = ids.length && ids.every(id => state.productos[id].recetario?.recetaId === pl.recetaId);
+    items.push({ k: `plato:${pl.recetaId}`, grupo: "platos", pl: { ...pl, area: pl.area || "cocina", productoIds: ids },
+      texto: `🍽️ <b>${escapeHtml(r?.nombre || pl.plato || "")}</b> → ${ids.map(id => escapeHtml(state.productos[id].nombre)).join(" · ") || "—"}${faltan ? ` <span class="text-muted">(${faltan} ya no existe)</span>` : ""}`,
+      ok: !!r && ids.length > 0 && !ya, motivo: !r ? "el plato ya no está en el Recetario" : !ids.length ? "los productos ya no existen" : ya ? "ya estaba vinculado así" : "" });
+  }
+  for (const b of aArrayRecetario(j.bases)) {
+    const r = state.recRecetas[b.area || "cocina"]?.[b.recetaId], ins = state.insumos[b.insumoId];
+    items.push({ k: `base:${b.insumoId}`, grupo: "bases", b: { ...b, area: b.area || "cocina" },
+      texto: `🧪 Base <b>${escapeHtml(ins?.nombre || b.insumo || "")}</b> toma el costo de la subreceta ${escapeHtml(r?.nombre || b.subreceta || "")}`,
+      ok: !!r && !!ins, motivo: !r ? "la subreceta ya no está" : !ins ? "el insumo ya no existe" : "" });
+  }
+  for (const pb of aArrayRecetario(j.productosBorrar)) {
+    const p = state.productos[pb.id];
+    const seguro = p && p.creadoDesde === "recetario" && !(Number(p.precioVenta) > 0);
+    items.push({ k: `borrar:${pb.id}`, grupo: "productosBorrar", pb,
+      texto: `🗑️ Borrar el producto provisorio <b>${escapeHtml(p?.nombre || pb.nombre || "")}</b>${pb.nota ? ` <span class="text-muted">· ${escapeHtml(pb.nota)}</span>` : ""}`,
+      ok: !!seguro, motivo: !p ? "ya no existe" : !seguro ? "tiene precio o no lo creó la sincronización: no se borra" : "" });
+  }
+  for (const al of aArrayRecetario(j.alias)) {
+    const ins = state.insumos[al.insumoId];
+    const clave = claveAliasInsumo(al.texto);
+    items.push({ k: `alias:${al.insumoId}:${clave}`, grupo: "alias", al: { ...al, clave },
+      texto: `🏷️ <b>${escapeHtml(ins?.nombre || "")}</b> también se reconoce como «${escapeHtml(al.texto)}»`,
+      ok: !!ins && !!clave && !(ins.alias && ins.alias[clave]), motivo: !ins ? "el insumo ya no existe" : "" });
+  }
+  return items;
+}
+const GRUPOS_CORRECCION = { insumosNuevos: "Insumos nuevos", vinculosIngredientes: "Ingredientes → insumo", pesos: "Cuánto pesa una unidad", platos: "Platos → productos de la carta", bases: "Bases que toman el costo de su subreceta", alias: "Nombres alternativos", productosBorrar: "Productos provisorios que sobran" };
+window.toggleCorrecciones = function() { state.verCorrecciones = !state.verCorrecciones; render(); };
+function panelCorreccionesHtml() {
+  const j = state.correccionesRec;
+  if (!j || correccionAplicada(j.id)) return "";
+  if (!state.recetarioConectado) return `<div class="alert-box alert-turq" style="margin-top:10px"><div>🧩 Hay correcciones preparadas para el Recetario. Conectate al Recetario (Configuración) para revisarlas y aplicarlas.</div></div>`;
+  const items = planCorrecciones(j);
+  const aplicables = items.filter(i => i.ok).length;
+  if (!state.verCorrecciones) return `<div class="alert-box alert-turq" style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:220px">🧩 <b>Correcciones preparadas</b>${j.descripcion ? `: ${escapeHtml(j.descripcion)}` : ""} — <b>${aplicables}</b> cambio(s) para aplicar.</div><button class="btn btn-primary btn-sm" onclick="toggleCorrecciones()">Revisar y aplicar</button></div>`;
+  const grupos = Object.keys(GRUPOS_CORRECCION).map(g => {
+    const its = items.filter(i => i.grupo === g);
+    if (!its.length) return "";
+    return `<div style="margin-top:12px"><div class="form-label" style="margin-bottom:6px">${GRUPOS_CORRECCION[g]} (${its.filter(i => i.ok).length})</div>
+      ${its.map(i => `<label style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--cream-mid);font-size:13px;${i.ok ? "" : "opacity:.55"}">
+        <input type="checkbox" data-corr="${escapeHtml(i.k)}" ${i.ok ? "checked" : "disabled"} style="margin-top:3px"><span>${i.texto}${i.motivo ? ` <span class="text-muted">— ${escapeHtml(i.motivo)}</span>` : ""}</span></label>`).join("")}</div>`;
+  }).join("");
+  return `<div class="section-block" style="margin-top:12px;border:2px solid var(--terra)" id="correcciones-rec">
+    <div class="section-header"><div><div class="section-title">🧩 Correcciones preparadas</div>
+      <div class="text-muted" style="font-size:12px">${escapeHtml(j.descripcion || "")}${j.nota ? `<br>${escapeHtml(j.nota)}` : ""}</div></div>
+      <div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="toggleCorrecciones()">Cerrar</button></div></div>
+    ${grupos}
+    <div class="row-actions" style="margin-top:14px;justify-content:flex-start">
+      <button class="btn btn-primary" onclick="aplicarCorreccionesRecetario()" ${state.aplicandoCorrecciones ? "disabled" : ""}>${state.aplicandoCorrecciones ? "Aplicando…" : `✅ Aplicar lo tildado`}</button>
+      <span class="text-muted" style="font-size:12px">Después se recalculan los costos de todas las recetas.</span>
+    </div>
+  </div>`;
+}
+window.aplicarCorreccionesRecetario = async function() {
+  const j = state.correccionesRec;
+  if (!j || state.aplicandoCorrecciones) return;
+  const marcados = new Set([...document.querySelectorAll("input[data-corr]:checked")].map(el => el.getAttribute("data-corr")));
+  const items = planCorrecciones(j).filter(i => i.ok && marcados.has(i.k));
+  if (!items.length) { showToast("⚠️ No hay nada tildado para aplicar.", "warn"); return; }
+  state.aplicandoCorrecciones = true; render();
+  try {
+    const upd = {};
+    const ahora = Date.now();
+    const idNuevo = {};
+    for (const i of items.filter(i => i.grupo === "insumosNuevos")) {
+      const id = push(ref(db, "costeo/insumos")).key;
+      idNuevo[i.n.clave] = id;
+      const nuevo = { nombre: i.n.nombre, unidad: i.n.unidad || "", precios: {}, historial: {}, creadoTs: ahora, creadoDesde: "correccion-recetario" };
+      if (Number(i.n.precio) > 0) nuevo.precioActual = Number(i.n.precio);
+      upd[`insumos/${id}`] = nuevo;
+    }
+    // Insumos nuevos que no se crearon (destildados): sus vínculos tampoco se aplican.
+    const existentePorClave = {};
+    for (const n of aArrayRecetario(j.insumosNuevos)) {
+      const e = Object.entries(state.insumos).find(([, ins]) => claveAliasInsumo(ins.nombre) === claveAliasInsumo(n.nombre));
+      if (e) existentePorClave[n.clave] = e[0];
+    }
+    for (const i of items.filter(i => i.grupo === "vinculosIngredientes")) {
+      let insId = i.v.insumoId;
+      if (!insId && i.v.insumoClave) insId = idNuevo[i.v.insumoClave] || existentePorClave[i.v.insumoClave] || null;
+      if (insId) upd[`vinculosRecetario/${i.v.ingredienteId}`] = insId;
+    }
+    for (const i of items.filter(i => i.grupo === "pesos")) upd[`pesosUnidadRecetario/${i.pz.ingredienteId}`] = { cantidad: Number(i.pz.cantidad), unidad: i.pz.unidad };
+    for (const i of items.filter(i => i.grupo === "platos")) {
+      for (const id of i.pl.productoIds) { upd[`productos/${id}/recetario`] = { area: i.pl.area, recetaId: i.pl.recetaId }; upd[`productos/${id}/costoRecetario`] = null; }
+      // el producto provisorio sin precio que la sincronización había creado para este plato sobra
+      for (const [id, p] of productosDePlato(i.pl.area, i.pl.recetaId))
+        if (p.creadoDesde === "recetario" && !(Number(p.precioVenta) > 0) && !i.pl.productoIds.includes(id)) upd[`productos/${id}`] = null;
+    }
+    for (const i of items.filter(i => i.grupo === "bases")) upd[`insumos/${i.b.insumoId}/recetario`] = { area: i.b.area, recetaId: i.b.recetaId };
+    for (const i of items.filter(i => i.grupo === "alias")) upd[`insumos/${i.al.insumoId}/alias/${i.al.clave}`] = true;
+    for (const i of items.filter(i => i.grupo === "productosBorrar")) upd[`productos/${i.pb.id}`] = null;
+    upd[`recetarioSync/correcciones/${j.id}`] = { ts: ahora, aplicados: items.length, descartados: planCorrecciones(j).filter(x => x.ok).length - items.length };
+    await update(ref(db, "costeo"), upd);
+    // reflejar en el estado local (los listeners también lo traen, pero así el recálculo ya los usa)
+    for (const [k, v] of Object.entries(upd)) {
+      const [raiz, id, ...resto] = k.split("/");
+      const tabla = raiz === "vinculosRecetario" ? "vinculosRecetario" : raiz === "pesosUnidadRecetario" ? "pesosRecetario" : raiz === "insumos" ? "insumos" : raiz === "productos" ? "productos" : null;
+      if (!tabla) continue;
+      const t = { ...state[tabla] };
+      if (!resto.length) { if (v === null) delete t[id]; else t[id] = v; }
+      else {
+        const o = { ...(t[id] || {}) };
+        if (resto.length === 1) { if (v === null) delete o[resto[0]]; else o[resto[0]] = v; }
+        else { o[resto[0]] = { ...(o[resto[0]] || {}), [resto[1]]: v }; }
+        t[id] = o;
+      }
+      state[tabla] = t;
+    }
+    state.recetarioSync = { ...state.recetarioSync, correcciones: { ...(state.recetarioSync?.correcciones || {}), [j.id]: upd[`recetarioSync/correcciones/${j.id}`] } };
+    invalidarCacheCosteo();
+    state.verCorrecciones = false;
+    showToast(`✅ Se aplicaron ${items.length} correcciones. Recalculando los costos…`, "success");
+    await window.sincronizarRecetario({ automatica: true });
+  } catch (err) {
+    console.error(err);
+    showToast("❌ No se pudieron aplicar las correcciones. Revisá la conexión y probá de nuevo.", "error");
+  } finally {
+    state.aplicandoCorrecciones = false;
+    render();
+  }
 };
 
 window.guardarCostoSinIvaRapido = async function(id, val) {
@@ -8821,6 +9031,7 @@ window.probarEscaneo = async function() {
 // ── Bootstrap ────────────────────────────────────────────
 attachListeners();
 iniciarRecetarioAuth();
+cargarCorreccionesRecetario();
 render();
 </script>
 </body>
