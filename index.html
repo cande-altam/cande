@@ -2,104 +2,416 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Candela — Administración</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Candela · Espacio de trabajo</title>
+<meta name="description" content="Herramientas internas de Candela Café & Patisserie">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#22201F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Candela">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="/img/icono-180.png">
+<link rel="icon" type="image/png" href="/img/icono-192.png">
+<link rel="manifest" href="/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --cream:#EEEBD7; --cream-dark:#dedad8;
-  --black:#22201F; --gray:#9a9888;
-  --terra:#E15D46; --terra-light:#ea7a65;
-  --turq:#9BD6CC; --turq-dark:#6bbfb4;
-  --white:#ffffff;
-  --shadow-md:0 4px 16px rgba(34,32,31,.08),0 2px 6px rgba(34,32,31,.05);
-  --shadow-lg:0 12px 40px rgba(34,32,31,.12),0 4px 12px rgba(34,32,31,.06);
+  --bg:#EEEBD7; --panel:#ffffff; --panel-2:#F7F5EA; --ink:#22201F; --ink-soft:#6b675b; --muted:#9a9888;
+  --line:#dedad0; --terra:#E15D46; --terra-ink:#B83A25; --terra-pale:#f9ddd8;
+  --turq:#9BD6CC; --turq-ink:#2f7d71; --turq-pale:#dff2ee; --amber-pale:#fbefd2; --amber-ink:#8a5a00;
+  --dark:#22201F; --dark-ink:#EEEBD7;
+  --shadow:0 1px 2px rgba(34,32,31,.05),0 4px 14px rgba(34,32,31,.06);
+  --shadow-hover:0 2px 4px rgba(34,32,31,.06),0 12px 30px rgba(34,32,31,.11);
+  --r:16px;
 }
-body{
-  font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--black);
-  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1A1917; --panel:#242220; --panel-2:#2B2825; --ink:#EEEBD7; --ink-soft:#B4AE9C; --muted:#8c877a;
+    --line:#3A362F; --terra:#E9765F; --terra-ink:#F0937F; --terra-pale:#3B2621;
+    --turq-ink:#9BD6CC; --turq-pale:#233531; --amber-pale:#3a3020; --amber-ink:#f0c46b;
+    --dark:#0f0e0d; --dark-ink:#EEEBD7;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+    --shadow-hover:0 2px 4px rgba(0,0,0,.35),0 12px 30px rgba(0,0,0,.4);
+  }
 }
-.wrap{max-width:480px;width:100%;text-align:center;}
-.brand{font-size:15px;font-weight:600;color:var(--gray);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
-h1{font-size:26px;font-weight:700;margin-bottom:8px;letter-spacing:-.3px;}
-.sub{color:var(--gray);font-size:14px;margin-bottom:32px;}
-.cards{display:flex;flex-direction:column;gap:14px;}
-.card{
-  display:flex;align-items:center;gap:16px;text-align:left;text-decoration:none;color:var(--black);
-  background:var(--white);border:1.5px solid var(--cream-dark);border-radius:16px;
-  padding:20px 22px;box-shadow:var(--shadow-md);transition:all .2s cubic-bezier(.25,.8,.25,1);
+html{-webkit-text-size-adjust:100%;}
+[hidden]{display:none!important;}
+body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;line-height:1.45;}
+button{font-family:inherit;color:inherit;-webkit-appearance:none;appearance:none;}
+a{color:inherit;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px calc(40px + env(safe-area-inset-bottom));}
+
+/* Encabezado */
+.hero{background:var(--dark);color:var(--dark-ink);padding:calc(18px + env(safe-area-inset-top)) 0 64px;}
+.hero .wrap{padding-bottom:0;}
+.top{display:flex;align-items:center;gap:12px;}
+.marca{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.marca img{width:34px;height:auto;display:block;}
+.marca b{font-size:16px;letter-spacing:.2px;}
+.marca span{display:block;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:rgba(238,235,215,.55);font-weight:600;}
+.reloj{margin-left:auto;font-size:13px;color:rgba(238,235,215,.7);font-variant-numeric:tabular-nums;text-align:right;}
+.saludo{margin-top:30px;}
+.saludo h1{font-size:30px;font-weight:800;letter-spacing:-.6px;line-height:1.15;}
+.saludo p{color:rgba(238,235,215,.7);font-size:14.5px;margin-top:6px;}
+
+/* Buscador */
+.buscar{position:relative;margin:-30px 0 0;z-index:2;}
+.buscar input{width:100%;font:inherit;font-size:16px;padding:17px 18px 17px 50px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);box-shadow:var(--shadow-hover);outline:none;}
+.buscar input:focus{border-color:var(--terra);box-shadow:0 0 0 4px rgba(225,93,70,.15),var(--shadow-hover);}
+.buscar .lupa{position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:18px;opacity:.6;pointer-events:none;}
+.buscar kbd{position:absolute;right:14px;top:50%;transform:translateY(-50%);font:600 11px/1 inherit;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:4px 7px;background:var(--panel-2);}
+@media (hover:none){.buscar kbd{display:none;}}
+
+/* Secciones */
+.sec{margin-top:30px;}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;}
+.sec-h h2{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ink-soft);font-weight:700;}
+.sec-h p{font-size:13px;color:var(--muted);}
+.sec-h .limpiar{margin-left:auto;background:none;border:none;font-size:12.5px;color:var(--muted);cursor:pointer;text-decoration:underline;}
+
+/* Tareas rápidas */
+.tareas{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.tarea{display:flex;align-items:center;gap:12px;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 14px;box-shadow:var(--shadow);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;min-height:62px;}
+.tarea:hover{transform:translateY(-1px);box-shadow:var(--shadow-hover);border-color:var(--terra);}
+.tarea:active{transform:scale(.99);}
+.tarea .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:19px;flex-shrink:0;background:var(--terra-pale);}
+.tarea b{font-size:14px;font-weight:700;line-height:1.25;display:block;}
+.tarea small{font-size:12px;color:var(--muted);display:block;margin-top:1px;}
+
+/* Herramientas */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;display:flex;flex-direction:column;}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);border-color:var(--turq);}
+.card a.abrir{display:flex;flex-direction:column;gap:10px;padding:16px 16px 14px;text-decoration:none;flex:1;border-radius:var(--r);}
+.card a.abrir:focus-visible{outline:3px solid var(--terra);outline-offset:2px;}
+.card .fila{display:flex;align-items:center;gap:12px;padding-right:34px;}
+.card .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;flex-shrink:0;}
+.card h3{font-size:15.5px;font-weight:700;line-height:1.25;}
+.card .desc{font-size:13px;color:var(--ink-soft);line-height:1.45;}
+.card .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:2px;}
+.tag{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-2);color:var(--ink-soft);border:1px solid var(--line);white-space:nowrap;}
+.tag.llave{background:var(--amber-pale);color:var(--amber-ink);border-color:transparent;}
+.tag.equipo{background:var(--turq-pale);color:var(--turq-ink);border-color:transparent;}
+.estrella{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:10px;border:none;background:transparent;cursor:pointer;font-size:17px;line-height:1;color:var(--muted);display:grid;place-items:center;}
+.estrella:hover{background:var(--panel-2);color:var(--ink);}
+.estrella.on{color:#E0A100;}
+.a-equipo .ic{background:var(--turq-pale);}
+.a-personal .ic{background:var(--terra-pale);}
+.a-cocina .ic{background:var(--amber-pale);}
+.a-admin .ic{background:var(--panel-2);border:1px solid var(--line);}
+
+/* Recientes */
+.recientes{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+.recientes::-webkit-scrollbar{display:none;}
+.chip{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px 8px 10px;font-size:13.5px;font-weight:600;white-space:nowrap;box-shadow:var(--shadow);}
+.chip:hover{border-color:var(--terra);}
+.chip small{font-weight:500;color:var(--muted);font-size:12px;}
+
+/* Resultados de búsqueda */
+.vacio{background:var(--panel);border:1px dashed var(--line);border-radius:var(--r);padding:22px;text-align:center;color:var(--ink-soft);font-size:14px;}
+.oculto{display:none!important;}
+mark{background:rgba(225,93,70,.22);color:inherit;border-radius:3px;padding:0 1px;}
+.res-sel{border-color:var(--terra)!important;box-shadow:0 0 0 3px rgba(225,93,70,.18),var(--shadow-hover)!important;}
+
+/* Instalar en el celular */
+.instalar{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:30px;box-shadow:var(--shadow);}
+.instalar img{width:40px;height:40px;border-radius:10px;flex-shrink:0;}
+.instalar div{font-size:13px;color:var(--ink-soft);line-height:1.4;flex:1;}
+.instalar b{color:var(--ink);display:block;font-size:14px;}
+.instalar .btn{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
+.instalar .x{border:none;background:none;font-size:18px;color:var(--muted);cursor:pointer;padding:4px 6px;}
+
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:space-between;}
+
+@media (max-width:900px){
+  .grid{grid-template-columns:repeat(2,1fr);}
+  .tareas{grid-template-columns:repeat(2,1fr);}
 }
-.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--turq);}
-.card-icon{font-size:28px;flex-shrink:0;}
-.card-title{font-size:15px;font-weight:600;margin-bottom:3px;}
-.card-desc{font-size:12.5px;color:var(--gray);line-height:1.4;}
+@media (max-width:560px){
+  .wrap{padding-left:16px;padding-right:16px;}
+  .hero{padding-bottom:58px;}
+  .saludo{margin-top:22px;}
+  .saludo h1{font-size:25px;}
+  .grid{grid-template-columns:1fr;gap:10px;}
+  .tareas{grid-template-columns:1fr 1fr;gap:8px;}
+  .tarea{flex-direction:column;align-items:flex-start;gap:8px;padding:12px;}
+  .tarea small{display:none;}
+  .card a.abrir{padding:14px 14px 12px;}
+  .reloj .hora{display:none;}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="brand">☕ Candela Café &amp; Patisserie</div>
-  <h1>Administración</h1>
-  <div class="sub">Elegí a qué herramienta querés entrar.</div>
-  <div class="cards">
-    <a class="card" href="/manuales/">
-      <span class="card-icon">📚</span>
-      <div>
-        <div class="card-title">Manuales y Recetario · equipo</div>
-        <div class="card-desc">Cada persona entra con su usuario: los manuales de su puesto y, para baristas y cocina, el Recetario</div>
-      </div>
-    </a>
-    <a class="card" href="/recetario/">
-      <span class="card-icon">📖</span>
-      <div>
-        <div class="card-title">Recetario · carga de recetas</div>
-        <div class="card-desc">Fichas técnicas de Cocina: ingredientes, merma, pasos, alérgenos y PDF para imprimir</div>
-      </div>
-    </a>
-    <a class="card" href="/costeo-proveedores/">
-      <span class="card-icon">🧾</span>
-      <div>
-        <div class="card-title">Costeo &amp; Proveedores</div>
-        <div class="card-desc">Facturas, órdenes de pago, precio de insumos y costeo de productos</div>
-      </div>
-    </a>
-    <a class="card" href="/presupuestos/">
-      <span class="card-icon">📄</span>
-      <div>
-        <div class="card-title">Presupuestos</div>
-        <div class="card-desc">Cotizaciones para clientes, con envío a Pedidos de Clientes al aceptarse</div>
-      </div>
-    </a>
-    <a class="card" href="/cronogramas/">
-      <span class="card-icon">🗓️</span>
-      <div>
-        <div class="card-title">Cronogramas</div>
-        <div class="card-desc">Turnos semanales de San Luis y SLA, con autocompletado y auditoría de reglas</div>
-      </div>
-    </a>
-    <a class="card" href="/vacaciones/">
-      <span class="card-icon">🏖️</span>
-      <div>
-        <div class="card-title">Vacaciones</div>
-        <div class="card-desc">Días que corresponden por antigüedad, balance por persona y calendario del equipo</div>
-      </div>
-    </a>
-    <a class="card" href="/informes/carga.html">
-      <span class="card-icon">📝</span>
-      <div>
-        <div class="card-title">Informe del turno</div>
-        <div class="card-desc">Lo carga el Experto Candela al cerrar. Checklist, incidencias y qué dejar dicho</div>
-      </div>
-    </a>
-    <a class="card" href="/informes/">
-      <span class="card-icon">🔎</span>
-      <div>
-        <div class="card-title">Informes de turno · Gerencia</div>
-        <div class="card-desc">Lectura de los informes, qué turnos faltan y qué incidencias se repiten</div>
-      </div>
-    </a>
+<header class="hero">
+  <div class="wrap">
+    <div class="top">
+      <a class="marca" href="/"><img src="/img/isotipo.png" alt="" width="34" height="26"><div><b>Candela</b><span>Espacio de trabajo</span></div></a>
+      <div class="reloj" id="reloj"></div>
+    </div>
+    <div class="saludo">
+      <h1 id="saludo">Hola</h1>
+      <p id="subSaludo">Todas las herramientas de Candela en un solo lugar.</p>
+    </div>
   </div>
-</div>
+</header>
+
+<main class="wrap">
+  <div class="buscar">
+    <span class="lupa">🔎</span>
+    <input id="q" type="search" placeholder="Buscá: factura, turnos, receta…" autocomplete="off" enterkeyhint="go" aria-label="Buscar una herramienta o tarea">
+    <kbd>/</kbd>
+  </div>
+
+  <div id="busqueda" class="oculto">
+    <section class="sec">
+      <div class="sec-h"><h2>Resultados</h2><p id="resCuenta"></p></div>
+      <div class="grid" id="resultados"></div>
+    </section>
+  </div>
+
+  <div id="portada">
+    <section class="sec" id="secRecientes" hidden>
+      <div class="sec-h"><h2>Seguí donde estabas</h2><button class="limpiar" id="limpiarRecientes" type="button">Borrar</button></div>
+      <div class="recientes" id="recientes"></div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-h"><h2>Tareas rápidas</h2></div>
+      <div class="tareas" id="tareas"></div>
+    </section>
+
+    <section class="sec" id="secFavoritos" hidden>
+      <div class="sec-h"><h2>⭐ Tus accesos</h2><p>Los marcaste con la estrella</p></div>
+      <div class="grid" id="favoritos"></div>
+    </section>
+
+    <div id="areas"></div>
+  </div>
+
+  <div class="instalar" id="instalar" hidden>
+    <img src="/img/icono-192.png" alt="">
+    <div><b>Tené Candela a un toque</b><span id="instalarTexto">Agregalo a la pantalla de inicio y se abre como una app.</span></div>
+    <button class="btn" id="instalarBtn" type="button" hidden>Instalar</button>
+    <button class="x" id="instalarCerrar" type="button" aria-label="Cerrar">×</button>
+  </div>
+
+  <footer>
+    <span>Candela Café &amp; Patisserie · uso interno</span>
+    <span>Tip: tocá ☆ en una herramienta para tenerla arriba</span>
+  </footer>
+</main>
+
+<noscript>
+  <div class="wrap" style="margin-top:20px">
+    <p><a href="/manuales/">Manuales y Recetario</a> · <a href="/informes/carga.html">Informe del turno</a> · <a href="/vacaciones/pedido.html">Pedir vacaciones</a> · <a href="/cronogramas/">Cronogramas</a> · <a href="/vacaciones/">Vacaciones</a> · <a href="/informes/">Informes de turno</a> · <a href="/recetario/">Recetario</a> · <a href="/costeo-proveedores/">Costeo &amp; Proveedores</a> · <a href="/presupuestos/">Presupuestos</a></p>
+  </div>
+</noscript>
+
+<script>
+// Herramientas del sitio. "claves" son palabras que alguien podría buscar para llegar ahí.
+const HERRAMIENTAS = [
+  { id: "manuales", url: "/manuales/", icono: "📚", area: "equipo", titulo: "Manuales y Recetario",
+    desc: "Los manuales de cada puesto y, para baristas y cocina, el Recetario con las fichas de cada plato.",
+    para: "Todo el equipo", acceso: "Usuario propio",
+    claves: "manual manuales procedimiento procedimientos recetario receta recetas ficha plato ingredientes capacitacion induccion club candela caja apertura cierre" },
+  { id: "informe-carga", url: "/informes/carga.html", icono: "📝", area: "equipo", titulo: "Informe del turno",
+    desc: "Lo carga el Experto Candela al cerrar: checklist, incidencias y qué dejar dicho.",
+    para: "Experto del turno", acceso: "",
+    claves: "informe cierre turno checklist incidencia incidencias novedades experto cargar" },
+  { id: "vacaciones-pedido", url: "/vacaciones/pedido.html", icono: "✈️", area: "equipo", titulo: "Pedir vacaciones",
+    desc: "Cada persona elige las fechas que le gustaría tomarse, con más de una opción.",
+    para: "Todo el equipo", acceso: "",
+    claves: "vacaciones pedido pedir licencia dias descanso fechas" },
+  { id: "cronogramas", url: "/cronogramas/", icono: "🗓️", area: "personal", titulo: "Cronogramas",
+    desc: "Turnos semanales de San Luis y SLA, con autocompletado, francos y control de reglas.",
+    para: "Gerencia", acceso: "Contraseña",
+    claves: "cronograma cronogramas turno turnos horario horarios semana franco francos grilla personal equipo" },
+  { id: "vacaciones", url: "/vacaciones/", icono: "🏖️", area: "personal", titulo: "Vacaciones",
+    desc: "Días que corresponden por antigüedad, balance por persona, pedidos y calendario del equipo.",
+    para: "Gerencia", acceso: "Contraseña",
+    claves: "vacaciones balance antiguedad calendario licencias aprobar pedidos" },
+  { id: "informes", url: "/informes/", icono: "🔎", area: "personal", titulo: "Informes de turno",
+    desc: "Lectura de los informes, qué turnos faltan y qué incidencias se repiten.",
+    para: "Gerencia", acceso: "Contraseña",
+    claves: "informes turno lectura incidencias faltan revisar gerencia" },
+  { id: "recetario", url: "/recetario/", icono: "📖", area: "cocina", titulo: "Recetario · carga",
+    desc: "Fichas técnicas de Cocina: ingredientes, merma, pasos, alérgenos, foto y PDF para imprimir.",
+    para: "Gerencia y jefe de cocina", acceso: "Contraseña",
+    claves: "recetario receta recetas ficha tecnica cocina ingredientes merma alergenos foto pdf cargar editar" },
+  { id: "costeo", url: "/costeo-proveedores/", icono: "🧾", area: "admin", titulo: "Costeo & Proveedores",
+    desc: "Facturas, órdenes de pago, precio de insumos, listas de precios y costo y precio de venta de cada producto.",
+    para: "Administración", acceso: "Contraseña",
+    claves: "costeo costos costo factura facturas proveedor proveedores orden pago insumos precio precios venta lista listas delivery margen" },
+  { id: "presupuestos", url: "/presupuestos/", icono: "📄", area: "admin", titulo: "Presupuestos",
+    desc: "Cotizaciones para clientes; al aceptarse pasan a Pedidos de Clientes.",
+    para: "Administración", acceso: "Contraseña",
+    claves: "presupuesto presupuestos cotizacion cotizaciones cliente clientes evento catering pedido" },
+];
+const AREAS = [
+  { id: "equipo", titulo: "Día a día del equipo", desc: "Lo que usa cualquier persona del equipo" },
+  { id: "personal", titulo: "Gestión del personal", desc: "Turnos, vacaciones y lo que pasó en cada turno" },
+  { id: "cocina", titulo: "Cocina y producto", desc: "Recetas y fichas técnicas" },
+  { id: "admin", titulo: "Administración", desc: "Costos, proveedores y cotizaciones" },
+];
+// Lo que más se hace en el día: un toque y estás adentro.
+const TAREAS = [
+  { herramienta: "informe-carga", icono: "📝", titulo: "Cargar el informe del turno", sub: "Al cerrar", claves: "cierre" },
+  { herramienta: "cronogramas", icono: "🗓️", titulo: "Ver los turnos de la semana", sub: "Cronogramas", claves: "horario franco" },
+  { herramienta: "manuales", icono: "🍳", titulo: "Buscar una receta", sub: "Recetario del equipo", claves: "plato ingredientes" },
+  { herramienta: "costeo", icono: "🧾", titulo: "Cargar una factura", sub: "Costeo & Proveedores", claves: "proveedor foto" },
+  { herramienta: "presupuestos", icono: "📄", titulo: "Armar un presupuesto", sub: "Para un cliente", claves: "cotizacion evento" },
+  { herramienta: "vacaciones-pedido", icono: "✈️", titulo: "Pedir vacaciones", sub: "Para todo el equipo", claves: "licencia" },
+];
+
+const POR_ID = Object.fromEntries(HERRAMIENTAS.map(h => [h.id, h]));
+const LS_FAV = "candela-inicio-favoritos", LS_REC = "candela-inicio-recientes", LS_INST = "candela-inicio-instalar-cerrado";
+// localStorage puede fallar (modo privado, datos bloqueados): la página funciona igual sin él.
+const leer = (k, def) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? def; } catch { return def; } };
+const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+let favoritos = leer(LS_FAV, []).filter(id => POR_ID[id]);
+let recientes = leer(LS_REC, []).filter(r => r && POR_ID[r.id]);
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+function resaltar(texto, q) {
+  if (!q) return esc(texto);
+  const i = norm(texto).indexOf(norm(q));
+  if (i < 0) return esc(texto);
+  return esc(texto.slice(0, i)) + "<mark>" + esc(texto.slice(i, i + q.length)) + "</mark>" + esc(texto.slice(i + q.length));
+}
+
+function tarjeta(h, q = "") {
+  const fav = favoritos.includes(h.id);
+  const tags = [`<span class="tag ${h.para === "Todo el equipo" ? "equipo" : ""}">${esc(h.para)}</span>`];
+  if (h.acceso) tags.push(`<span class="tag ${h.acceso === "Contraseña" ? "llave" : ""}">${h.acceso === "Contraseña" ? "🔒 " : "👤 "}${esc(h.acceso)}</span>`);
+  return `<article class="card a-${h.area}" data-id="${h.id}">
+    <a class="abrir" href="${h.url}" data-ir="${h.id}">
+      <div class="fila"><span class="ic" aria-hidden="true">${h.icono}</span><h3>${resaltar(h.titulo, q)}</h3></div>
+      <p class="desc">${resaltar(h.desc, q)}</p>
+      <div class="tags">${tags.join("")}</div>
+    </a>
+    <button class="estrella ${fav ? "on" : ""}" type="button" data-fav="${h.id}" aria-pressed="${fav}" aria-label="${fav ? "Sacar de tus accesos" : "Agregar a tus accesos"}" title="${fav ? "Sacar de tus accesos" : "Tenerla arriba, en tus accesos"}">${fav ? "★" : "☆"}</button>
+  </article>`;
+}
+function tareaHtml(t, q = "") {
+  const h = POR_ID[t.herramienta];
+  return `<a class="tarea" href="${h.url}" data-ir="${h.id}"><span class="ic" aria-hidden="true">${t.icono}</span><span><b>${resaltar(t.titulo, q)}</b><small>${esc(t.sub)}</small></span></a>`;
+}
+function hace(ts) {
+  const min = Math.round((Date.now() - ts) / 60000);
+  if (min < 1) return "recién";
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.round(h / 24);
+  return d === 1 ? "ayer" : `hace ${d} días`;
+}
+
+function pintarPortada() {
+  document.getElementById("tareas").innerHTML = TAREAS.map(t => tareaHtml(t)).join("");
+  const secFav = document.getElementById("secFavoritos");
+  secFav.hidden = !favoritos.length;
+  document.getElementById("favoritos").innerHTML = favoritos.map(id => tarjeta(POR_ID[id])).join("");
+  const secRec = document.getElementById("secRecientes");
+  secRec.hidden = !recientes.length;
+  document.getElementById("recientes").innerHTML = recientes.slice(0, 5).map(r => { const h = POR_ID[r.id]; return `<a class="chip" href="${h.url}" data-ir="${h.id}"><span aria-hidden="true">${h.icono}</span>${esc(h.titulo)} <small>${hace(r.ts)}</small></a>`; }).join("");
+  document.getElementById("areas").innerHTML = AREAS.map(a => `<section class="sec">
+      <div class="sec-h"><h2>${esc(a.titulo)}</h2><p>${esc(a.desc)}</p></div>
+      <div class="grid">${HERRAMIENTAS.filter(h => h.area === a.id).map(h => tarjeta(h)).join("")}</div>
+    </section>`).join("");
+}
+
+// Búsqueda: herramientas por título, descripción y palabras clave; las tareas rápidas suman sus
+// palabras a la herramienta a la que llevan. Enter abre la primera.
+let primerResultado = null;
+function buscar(q) {
+  const k = norm(q.trim());
+  const portada = document.getElementById("portada"), caja = document.getElementById("busqueda");
+  if (!k) { portada.classList.remove("oculto"); caja.classList.add("oculto"); primerResultado = null; return; }
+  const palabras = k.split(/\s+/).filter(Boolean);
+  const puntos = h => {
+    const extra = TAREAS.filter(t => t.herramienta === h.id).map(t => t.titulo + " " + t.claves).join(" ");
+    const titulo = norm(h.titulo), resto = norm(h.desc + " " + h.claves + " " + extra + " " + h.para);
+    let p = 0;
+    for (const w of palabras) {
+      if (titulo.includes(w)) p += titulo.startsWith(w) ? 6 : 4;
+      else if (resto.split(/\s+/).some(x => x.startsWith(w))) p += 2;
+      else if (resto.includes(w)) p += 1;
+      else return 0;
+    }
+    return p;
+  };
+  const lista = HERRAMIENTAS.map(h => ({ h, p: puntos(h) })).filter(x => x.p > 0).sort((a, b) => b.p - a.p).map(x => x.h);
+  primerResultado = lista[0] || null;
+  portada.classList.add("oculto"); caja.classList.remove("oculto");
+  document.getElementById("resCuenta").textContent = lista.length ? `${lista.length} ${lista.length === 1 ? "herramienta" : "herramientas"} · Enter abre la primera` : "";
+  document.getElementById("resultados").innerHTML = lista.length
+    ? lista.map((h, i) => tarjeta(h, q.trim()).replace('class="card', i === 0 ? 'class="card res-sel' : 'class="card')).join("")
+    : `<div class="vacio" style="grid-column:1/-1">No encontré nada con «${esc(q.trim())}». Probá con otra palabra: <b>factura</b>, <b>turnos</b>, <b>receta</b>, <b>vacaciones</b>…</div>`;
+}
+
+function anotarReciente(id) {
+  recientes = [{ id, ts: Date.now() }, ...recientes.filter(r => r.id !== id)].slice(0, 8);
+  guardar(LS_REC, recientes);
+}
+
+document.addEventListener("click", e => {
+  const fav = e.target.closest("[data-fav]");
+  if (fav) {
+    const id = fav.dataset.fav;
+    favoritos = favoritos.includes(id) ? favoritos.filter(x => x !== id) : [...favoritos, id];
+    guardar(LS_FAV, favoritos);
+    pintarPortada();
+    const q = document.getElementById("q").value; if (q.trim()) buscar(q);
+    return;
+  }
+  const ir = e.target.closest("[data-ir]");
+  if (ir) anotarReciente(ir.dataset.ir);
+});
+document.getElementById("limpiarRecientes").addEventListener("click", () => { recientes = []; guardar(LS_REC, []); pintarPortada(); });
+const input = document.getElementById("q");
+input.addEventListener("input", () => buscar(input.value));
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && primerResultado) { anotarReciente(primerResultado.id); location.href = primerResultado.url; }
+  if (e.key === "Escape") { input.value = ""; buscar(""); input.blur(); }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== input && !e.metaKey && !e.ctrlKey) { e.preventDefault(); input.focus(); }
+});
+
+// Saludo y fecha (hora del dispositivo)
+function pintarHora() {
+  const ahora = new Date(), h = ahora.getHours();
+  document.getElementById("saludo").textContent = h >= 5 && h < 13 ? "Buen día ☀️" : h >= 13 && h < 20 ? "Buenas tardes" : "Buenas noches 🌙";
+  const fecha = ahora.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
+  const hora = ahora.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+  document.getElementById("reloj").innerHTML = `<span>${esc(fecha.charAt(0).toUpperCase() + fecha.slice(1))}</span><span class="hora"> · ${esc(hora)}</span>`;
+}
+
+// Instalar como app: Android/Chrome ofrece el botón; en iPhone/iPad se explica cómo.
+let promptInstalar = null;
+const yaInstalada = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+function mostrarInstalar(texto, conBoton) {
+  if (yaInstalada() || leer(LS_INST, false)) return;
+  document.getElementById("instalarTexto").textContent = texto;
+  document.getElementById("instalarBtn").hidden = !conBoton;
+  document.getElementById("instalar").hidden = false;
+}
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); promptInstalar = e; mostrarInstalar("Instalalo y se abre como una app, sin buscar el link.", true); });
+document.getElementById("instalarBtn").addEventListener("click", async () => { if (!promptInstalar) return; promptInstalar.prompt(); await promptInstalar.userChoice.catch(() => {}); promptInstalar = null; document.getElementById("instalar").hidden = true; });
+document.getElementById("instalarCerrar").addEventListener("click", () => { guardar(LS_INST, true); document.getElementById("instalar").hidden = true; });
+if (/iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1))
+  mostrarInstalar("En Safari tocá Compartir ⬆️ y después «Agregar a inicio».", false);
+
+pintarHora(); setInterval(pintarHora, 30000);
+pintarPortada();
+// Al volver con el botón "atrás" el navegador puede mostrar la página guardada: se refrescan los recientes.
+window.addEventListener("pageshow", e => { if (e.persisted) { recientes = leer(LS_REC, []).filter(r => r && POR_ID[r.id]); pintarPortada(); pintarHora(); } });
+</script>
 </body>
 </html>

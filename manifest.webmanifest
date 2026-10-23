@@ -1,0 +1,15 @@
+{
+  "name": "Candela · Espacio de trabajo",
+  "short_name": "Candela",
+  "description": "Herramientas internas de Candela Café & Patisserie",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#EEEBD7",
+  "theme_color": "#22201F",
+  "lang": "es-AR",
+  "icons": [
+    { "src": "/img/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

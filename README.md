@@ -9,6 +9,16 @@ Este repositorio (rama `claude/business-app-features-9mfa1a`) contiene las herra
 | **Manuales y Recetario** | `manuales/` | El lugar del equipo: cada persona entra con su usuario y ve los manuales de su rol y, si su rol lo tiene (baristas y cocina), el Recetario en modo lectura. Gerencia da de alta y de baja, arma los roles y escribe los manuales ahí mismo |
 | **Presupuestos** | `presupuestos/` | Cotizaciones a clientes con ítems libres; al aceptarse, registra el pedido en el sistema de Pedidos de Clientes (otro proyecto/rama) |
 
+### Inicio (`index.html`)
+
+La página de entrada del sitio, pensada como espacio de trabajo:
+- **Buscador** ("factura", "turnos", "receta"…): encuentra la herramienta por nombre, descripción o palabras clave; **Enter** abre la primera y la tecla **/** lo enfoca.
+- **Tareas rápidas:** cargar el informe del turno, ver los turnos, buscar una receta, cargar una factura, armar un presupuesto y pedir vacaciones.
+- **Tus accesos (☆) y "Seguí donde estabas":** las herramientas marcadas con la estrella y las últimas abiertas quedan arriba. Se guardan en cada dispositivo (localStorage); si el navegador no lo permite, la página funciona igual.
+- Las herramientas van agrupadas por área, con para quién son y si piden contraseña.
+- Se puede **instalar como app** (`manifest.webmanifest` e íconos en `img/`): en Android aparece el botón; en iPhone/iPad, cómo hacerlo desde Safari.
+- Para sumar una herramienta nueva: agregarla a `HERRAMIENTAS` (y, si corresponde, a `TAREAS`) en el script de `index.html`.
+
 ---
 
 ## Módulo: Costeo & Proveedores (IA)
