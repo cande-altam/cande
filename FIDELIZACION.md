@@ -72,19 +72,13 @@ Subí los archivos nuevos junto con `index.html` (Netlify o donde esté publicad
 
 ---
 
-## Cupón de bienvenida: 1 medialuna por seguir en Instagram
+## Instagram
 
-- **Quién lo recibe:** solo los clientes **nuevos**, al registrarse. A los que ya estaban registrados y a los que entran con "¿Ya tenés tarjeta?" no les aparece.
-- **Qué ve el cliente:** unos segundos después de su primer sello aparece un cartel: *"Si todavía no nos seguís en Instagram, seguinos en @candelacafe.salta y cambiá este cupón por 1 medialuna para llevar ahora"*. Tiene un botón para seguir la cuenta y el **código de 3 palabras del cliente** para validar en caja.
-- **Si lo cierra, se pierde.** Antes de cerrarlo se le pregunta "¿Seguro?". Tocar afuera del cartel no lo cierra. Si recarga la página o vuelve desde Instagram, el cartel sigue ahí.
-- **Vale solo el día del registro** ("para llevar ahora").
-- **En caja:** ⭐ Club → Atender → tipear el **código de 3 palabras** en el buscador (también sirve el WhatsApp; no importan mayúsculas, puntos ni espacios) → aparece **🥐 Cupón de bienvenida** → verificar que siga a @candelacafe.salta → **Entregar medialuna**. En el celular del cliente el cartel cambia a "¡Listo, medialuna entregada!".
-- **Control:** el cupón se guarda en Firebase. El cliente no puede marcarlo como entregado ni recuperarlo después de cerrarlo, y no se puede usar dos veces. En la ficha del cliente se ve si se entregó, si lo cerró o si venció.
-- Además, la tarjeta del cliente muestra siempre un botón para seguir a **@candelacafe.salta**.
+La tarjeta del cliente muestra siempre un recuadro para seguir a **@candelacafe.salta** en Instagram.
 
 ## Código de cada cliente (3 palabras)
 
-Cada tarjeta tiene un código propio de 3 palabras, como un alias bancario (por ejemplo **TORTA.LUNA.CANELA**). Aparece en la tarjeta, en el recuadro rojo donde la tarjeta física tiene el QR; tocándolo se agranda. Es el código que se tipea en caja para canjear la merienda y el cupón de bienvenida. No importan mayúsculas, puntos o espacios: "torta luna canela" también sirve. Las palabras no tienen tildes ni ñ y no se repiten entre clientes. Los clientes que se registraron antes reciben su código la próxima vez que abren la tarjeta.
+Cada tarjeta tiene un código propio de 3 palabras, como un alias bancario (por ejemplo **TORTA.LUNA.CANELA**). Aparece en la tarjeta, en el recuadro rojo donde la tarjeta física tiene el QR; tocándolo se agranda. Es el código que se tipea en caja para canjear la merienda. No importan mayúsculas, puntos o espacios: "torta luna canela" también sirve. Las palabras no tienen tildes ni ñ y no se repiten entre clientes. Los clientes que se registraron antes reciben su código la próxima vez que abren la tarjeta.
 
 ## Base de clientes unificada (👥 Clientes)
 
@@ -104,7 +98,7 @@ Pasa cuando abre el QR en otro celular, desde otra app (cámara de Instagram, Wh
 **No tiene PIN o se lo olvidó.** (Los que se registraron antes del PIN lo crean desde su tarjeta, en el recuadro “🔑 Creá tu PIN”.)
 En la caja: **⭐ Club → Atender → buscar su WhatsApp → 🔑 Asignar PIN**, el cliente elige 4 números y entra con “¿Ya tenés tarjeta?”. No hace falta la cámara.
 
-**Borrar un cliente (solo la administradora).** En **👥 Clientes**, con la sesión de ⭐ Club abierta con la cuenta de administradora, se abre el cliente → **🗑️ Borrar cliente** → escribir BORRAR. Se borra su tarjeta del Club (sellos, visitas, PIN, código, cupón) y sus datos de contacto de pedidos; los pedidos ya hechos quedan en el historial. Para habilitar a la administradora: en Firebase → Realtime Database → Data, agregar `fidelizacion/admins/<UID de su cuenta>: true` (el mismo UID que figura en `fidelizacion/staff`). Las reglas no dejan borrar datos del Club a nadie más.
+**Borrar un cliente (solo la administradora).** En **👥 Clientes**, con la sesión de ⭐ Club abierta con la cuenta de administradora, se abre el cliente → **🗑️ Borrar cliente** → escribir BORRAR. Se borra su tarjeta del Club (sellos, visitas, PIN, código) y sus datos de contacto de pedidos; los pedidos ya hechos quedan en el historial. Para habilitar a la administradora: en Firebase → Realtime Database → Data, agregar `fidelizacion/admins/<UID de su cuenta>: true` (el mismo UID que figura en `fidelizacion/staff`). Las reglas no dejan borrar datos del Club a nadie más.
 
 **"No se pudo abrir la cámara".**
 El navegador necesita permiso de cámara y el sistema tiene que estar abierto con `https://`. Mientras tanto se puede buscar al cliente por WhatsApp.

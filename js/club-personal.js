@@ -3,7 +3,7 @@
 // El personal ingresa con una cuenta de Firebase (email y
 // contraseña) habilitada en fidelizacion/staff/{uid}. Desde acá:
 // buscar clientes por su alias de palabras o WhatsApp, entregar
-// premios y cupones, asignar PIN, imprimir los QR de mesa
+// premios, asignar PIN, imprimir los QR de mesa
 // y configurar el programa.
 // Usa globals de index.html: db, e(), toast(), closeModal().
 // =============================================================
@@ -19,7 +19,6 @@ const Club = (() => {
   let clienteUid = null;       // cliente abierto en "Atender"
   let visitasCliente = [];
   let pinCliente = null;
-  let cuponCliente = null;     // cupón de bienvenida (Instagram) del cliente abierto
   let codigoCliente = null;    // alias de palabras del cliente abierto       // true/false: si el cliente ya tiene PIN para entrar desde otro celular
   let escuchando = false;
   let authListo = false;
@@ -211,13 +210,12 @@ const Club = (() => {
 
   async function buscarTel() {
     const valor = document.getElementById("club-tel").value;
-    // ¿Tiene letras? Es el código de palabras del cliente (o un código de cupón viejo ML-XXX-XXX)
+    // ¿Tiene letras? Es el código de 3 palabras del cliente
     if (/[a-z]/i.test(valor)) {
       const alias = Fidel.normalizarAlias(valor);
-      const ml = !alias && Fidel.normalizarCodigoCupon(valor);
-      if (!alias && !ml) return toast("⚠️ El código son 3 palabras, ej. TORTA.LUNA.CANELA");
-      const uid = (await db.ref(alias ? `fidelizacion/codigos/${alias}` : `fidelizacion/cuponCodigos/${ml}`).once("value")).val();
-      if (!uid || !tarjetas[uid]) return toast(`No existe ningún cliente con el código ${alias ? Fidel.mostrarAlias(alias) : ml}`);
+      if (!alias) return toast("⚠️ El código son 3 palabras, ej. TORTA.LUNA.CANELA");
+      const uid = (await db.ref(`fidelizacion/codigos/${alias}`).once("value")).val();
+      if (!uid || !tarjetas[uid]) return toast(`No existe ningún cliente con el código ${Fidel.mostrarAlias(alias)}`);
       return abrirCliente(uid);
     }
     const tel = Fidel.normalizarTelefono(valor);
@@ -231,14 +229,12 @@ const Club = (() => {
     clienteUid = uid;
     visitasCliente = [];
     pinCliente = null;
-    cuponCliente = null;
     codigoCliente = null;
     if (tab !== "atender") { tab = "atender"; render(); } else renderCliente();
     const s = await db.ref(`fidelizacion/visitas/${uid}`).limitToLast(15).once("value");
     visitasCliente = Object.values(s.val() || {}).sort((a, b) => b.ts - a.ts);
     const c = tarjetas[uid];
     if (c) pinCliente = (await db.ref(`fidelizacion/pines/${c.telefono}`).once("value")).exists();
-    cuponCliente = (await db.ref(`fidelizacion/cupones/${uid}`).once("value")).val();
     codigoCliente = await db.ref(`fidelizacion/tarjetaCodigo/${uid}`).once("value").then(x => x.val(), () => null);
     renderCliente();
   }
@@ -268,7 +264,6 @@ const Club = (() => {
             <div>🎁 <b>${premios > 1 ? premios + " premios" : "1 premio"} para canjear</b><div style="font-size:13px;opacity:.8">${e(config.premio)}</div></div>
             <button class="btn btn-primary" onclick="Club.canjear()">Entregar premio</button>
           </div>` : ""}
-        ${htmlCupon()}
         <div class="club-kv">
           <div><b>${c.totalSellos}</b><span>Visitas totales</span></div>
           <div><b>${c.canjes}</b><span>Premios canjeados</span></div>
@@ -303,36 +298,6 @@ const Club = (() => {
         });
         toast(`✅ Premio registrado para ${c.nombre}`);
       } catch (err) { console.error(err); toast("⚠️ No se pudo registrar el canje"); }
-    });
-  }
-
-  // ── Cupón de bienvenida: 1 medialuna por seguir en Instagram ──
-  function htmlCupon() {
-    const cu = cuponCliente;
-    if (!cu) return "";
-    if (Fidel.cuponVigente(cu, Fidel.serverNow())) return `
-      <div class="club-premio" style="background:linear-gradient(45deg,#f09433,#dc2743 55%,#bc1888)">
-        <div>🥐 <b>Cupón de bienvenida: 1 medialuna para llevar</b>
-          <div style="font-size:13px;opacity:.9">${codigoCliente ? `Código <b style="letter-spacing:1px">${e(Fidel.mostrarAlias(codigoCliente))}</b> · ` : ""}Pedile que te muestre que sigue a <b>@${Fidel.INSTAGRAM}</b> en Instagram. Vale solo hoy.</div></div>
-        <button class="btn" style="background:#fff;color:#bc1888" onclick="Club.canjearCupon()">Entregar medialuna</button>
-      </div>`;
-    const txt = cu.estado === "canjeado" ? `entregado el ${Fidel.fmtFechaHora(cu.canjeado)}`
-      : cu.estado === "descartado" ? "el cliente cerró el cartel sin usarlo"
-      : "venció sin usarse";
-    return `<div class="club-meta" style="margin:8px 0">🥐 Cupón de bienvenida (Instagram): ${txt}</div>`;
-  }
-
-  function canjearCupon() {
-    const c = tarjetas[clienteUid];
-    if (!c || !Fidel.cuponVigente(cuponCliente, Fidel.serverNow())) return;
-    confirmar("🥐 Entregar medialuna", `¿${e(c.nombre)} ya sigue a <b>@${Fidel.INSTAGRAM}</b> en Instagram y le entregaste la medialuna para llevar?`, "Sí, entregada", async () => {
-      const uid = clienteUid;
-      try {
-        await db.ref(`fidelizacion/cupones/${uid}`).update({ estado: "canjeado", canjeado: firebase.database.ServerValue.TIMESTAMP, staff: user.email || user.uid });
-        cuponCliente = (await db.ref(`fidelizacion/cupones/${uid}`).once("value")).val();
-        toast(`✅ Medialuna entregada a ${c.nombre}`);
-        renderCliente();
-      } catch (err) { console.error(err); toast("⚠️ No se pudo registrar la medialuna"); }
     });
   }
 
@@ -505,6 +470,7 @@ const Club = (() => {
     const c = tarjetas[uid];
     if (!c) return;
     const leer = r => db.ref(`fidelizacion/${r}`).once("value").then(x => x.val(), () => null);
+    // (cupones: datos del cupón de bienvenida que existió un tiempo; se limpian si quedaron)
     const [codigo, cupon, alias] = await Promise.all([leer(`tarjetaCodigo/${uid}`), leer(`cupones/${uid}`), leer("alias")]);
     const upd = {
       [`tarjetas/${uid}`]: null, [`telefonos/${c.telefono}`]: null, [`pines/${c.telefono}`]: null,
@@ -528,7 +494,7 @@ const Club = (() => {
 
   return {
     init, render, setTab, logout, buscarTel, abrirCliente, cerrarCliente, canjear,
-    detenerEscaner, asignarPin, borrarSocio, guardarPin, canjearCupon, imprimirQr, datos, irACliente,
+    detenerEscaner, asignarPin, borrarSocio, guardarPin, imprimirQr, datos, irACliente,
     guardarConfig, guardarLocales, confirmarOk,
   };
 })();

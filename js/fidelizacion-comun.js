@@ -106,14 +106,9 @@ const Fidel = (() => {
     };
   }
 
-  // Instagram de Candela (cupón de bienvenida y botón de la tarjeta)
+  // Instagram de Candela (botón de la tarjeta)
   const INSTAGRAM = "candelacafe.salta";
   const INSTAGRAM_URL = "https://www.instagram.com/" + INSTAGRAM + "/";
-
-  // El cupón de bienvenida vale solo el día del registro ("para llevar ahora")
-  function cuponVigente(c, now) {
-    return !!c && c.estado === "disponible" && c.creado >= inicioDia(now);
-  }
 
   // Alias de cada cliente, como un alias bancario: 3 palabras (ej. TORTA.LUNA.CANELA).
   // En Firebase se guarda con guiones (TORTA-LUNA-CANELA) porque las claves no admiten puntos.
@@ -129,22 +124,6 @@ const Fidel = (() => {
     const p = String(raw || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
       .split(/[^A-Z]+/).filter(Boolean);
     return p.length === 3 && p.every(w => w.length >= 3 && w.length <= 10) ? p.join("-") : null;
-  }
-
-  // Código del cupón para tipear en caja (ej. ML-K7M-3QP): sin 0/O, 1/I/L para no confundirse
-  const ALFABETO_CUPON = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
-  function generarCodigoCupon() {
-    const n = new Uint32Array(6);
-    crypto.getRandomValues(n);
-    const c = Array.from(n, x => ALFABETO_CUPON[x % ALFABETO_CUPON.length]).join("");
-    return `ML-${c.slice(0, 3)}-${c.slice(3)}`;
-  }
-  // Acepta "ml k7m 3qp", "K7M3QP", "ML-K7M-3QP"… y devuelve "ML-K7M-3QP" (o null)
-  function normalizarCodigoCupon(raw) {
-    let t = String(raw || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
-    if (t.startsWith("ML")) t = t.slice(2);
-    if (!new RegExp(`^[${ALFABETO_CUPON}]{6}$`).test(t)) return null;
-    return `ML-${t.slice(0, 3)}-${t.slice(3)}`;
   }
 
   // ¿La cuenta es personal / administradora? Se pregunta a la base: las reglas deciden
@@ -269,7 +248,7 @@ const Fidel = (() => {
     watchServerOffset, serverNow,
     inicioDia, inicioSemana, msDelDia,
     normalizarTelefono, normalizarTelefonoFlexible, diasHastaCumple, motivoSinSello, tarjetaConSello,
-    INSTAGRAM, INSTAGRAM_URL, cuponVigente, generarCodigoCupon, normalizarCodigoCupon,
+    INSTAGRAM, INSTAGRAM_URL,
     generarAlias, mostrarAlias, normalizarAlias,
     esPersonal, esAdministradora,
     qrDeTarjeta, uidDeQr, qrSvg, qrSvgMarca, tarjetaHtml,
