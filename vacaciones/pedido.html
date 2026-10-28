@@ -36,7 +36,8 @@
   .field{margin-top:14px}
   .field label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:6px;font-weight:600}
   .field select,.field input,.field textarea{width:100%;background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:10px 12px;font-size:15px;font-family:inherit;color:var(--ink)}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+  .row2 input{min-width:0;padding-left:8px;padding-right:6px}
   .opcion{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:16px;background:var(--panel-2);position:relative}
   .opcion .num{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--accent-ink)}
   .opcion .quitar{position:absolute;top:10px;right:10px;border:none;background:transparent;color:var(--ink-soft);font-size:17px;cursor:pointer;line-height:1;padding:3px}
@@ -121,7 +122,7 @@ const db = getDatabase(app);
 
 // La lista de personas y el cálculo de días salen de calculo.js, el mismo que usa Gerencia en
 // vacaciones/index.html: los dos muestran siempre el mismo número.
-const PERSONAS=PEOPLE.map(p=>p.n).sort((a,b)=>a.localeCompare(b,"es"));
+const PERSONAS=PEOPLE.map(p=>p.n).sort((a,b)=>nombreCompleto(a).localeCompare(nombreCompleto(b),"es"));
 // Ajustes que hizo Gerencia (fecha de ingreso corregida, días a mano, vacaciones ya tomadas).
 // Si no se puede leer, se muestra el cálculo de la ley igual.
 let estadoVac=null;
@@ -146,12 +147,14 @@ document.getElementById("intro").innerHTML =
   +`<br><br><b>Meses habilitados para pedir:</b> ${VENTANAS_TXT}. Fuera de esas fechas no se puede pedir.`;
 
 const selPersona=document.getElementById("persona");
-selPersona.innerHTML += PERSONAS.map(n=>`<option value="${n}">${n}</option>`).join("");
+// se muestra con apellido (hay nombres parecidos: Lucía y Luciana, dos Leandro); se guarda la clave `n`
+selPersona.innerHTML += PERSONAS.map(n=>`<option value="${n}">${nombreCompleto(n)}</option>`).join("");
 // Cuántos días tiene para pedir: los del período anterior al año en que se toman (PERIODO - 1),
 // menos lo que ya usó de ese período, más lo que le quede de períodos más viejos.
 function disponible(){
   const n=selPersona.value;if(!n)return null;
-  return disponibleParaGoce(estadoVac||{},n,PERIODO);
+  // con la planilla de Drive aplicada aunque Gerencia todavía no haya abierto su módulo
+  return disponibleParaGoce(conPlanilla(estadoVac||{}),n,PERIODO);
 }
 function mostrarDias(){
   const box=document.getElementById("diasBox");
@@ -162,7 +165,7 @@ function mostrarDias(){
   else detalle.push(`Según tu antigüedad al 31/12/${d.periodo}.`);
   if(d.tomado)detalle.push(`Ya usaste ${d.tomado} de esos días.`);
   if(d.anteriores)detalle.push(`Incluye ${d.anteriores} ${d.anteriores===1?"día que te queda":"días que te quedan"} de períodos anteriores.`);
-  box.innerHTML=`Tenés <b class="n">${d.total}</b> días corridos para tus vacaciones ${PERIODO} <small>Período ${d.periodo}: te corresponden ${d.corresponde} días. ${detalle.join(" ")} Si te parece que no está bien, consultalo con Gerencia.</small>`;
+  box.innerHTML=`${nombreCompleto(selPersona.value)}: tenés <b class="n">${d.total}</b> días corridos para tus vacaciones ${PERIODO} <small>Período ${d.periodo}: te corresponden ${d.corresponde} días. ${detalle.join(" ")} Si te parece que no está bien, consultalo con Gerencia.</small>`;
   box.hidden=false;
   actualizarCuentas();
 }

@@ -386,7 +386,7 @@ window.SolicitudesSync = {
 <script src="calculo.js"></script>
 <script>
 "use strict";
-const APP_VERSION="2026-10-23 calculo-dias";
+const APP_VERSION="2026-10-28 planilla-drive";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -581,7 +581,8 @@ function renderBalance(){
       const c=diasCorrespondenEfectivos(p.n,y);
       const t=tomadosEfectivos(p.n,y);
       h+=`<td>${c.dias}${c.proporcional?"*":""}<button class="editIcon" data-edit="${p.n}|${y}" title="Ajustar manualmente">✎</button></td>`;
-      h+=`<td${t.dias>c.dias?` class="excedido" title="Tomó ${t.dias-c.dias} días más de los que le corresponden en ${y}"`:""}>${t.dias}${t.manual?"*":""}<button class="editIcon" data-edittom="${p.n}|${y}" title="${t.manual?"Ajustado a mano — click para editar o volver al cálculo automático":"Ajustar manualmente"}">✎</button></td>`;
+      const pag=t.manual?0:pagadosCon(state,p.n,y);
+      h+=`<td${t.dias>c.dias?` class="excedido" title="Tomó ${t.dias-c.dias} días más de los que le corresponden en ${y}"`:pag?` title="Incluye ${pag} días pagados"`:""}>${t.dias}${t.manual?"*":""}${pag?`<small> (${pag} pag.)</small>`:""}<button class="editIcon" data-edittom="${p.n}|${y}" title="${t.manual?"Ajustado a mano — click para editar o volver al cálculo automático":"Ajustar manualmente"}">✎</button></td>`;
     });
     const tot=saldoTotal(p.n);
     const cls=tot>0?(tot>=10?"pos":"warn"):"zero";
@@ -869,6 +870,7 @@ function seedOverrides(){
 }
 function seedTaken(){
   const TAG="seed-2026-v1";
+  if(planillaAplicada(state))return; // reemplazada por la planilla de Drive (calculo.js)
   if(state.taken.some(t=>t.seedTag===TAG))return;
   let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,periodo:2025,estado:"confirmada",nota:"",...extra});
   state.taken.push(
@@ -895,6 +897,7 @@ function seedTaken(){
    mostrar no es lo que esperás. */
 function seedTakenNov2025Abr2026(){
   const TAG="seed-nov2025-abr2026-v1";
+  if(planillaAplicada(state))return;
   if(state.taken.some(t=>t.seedTag===TAG))return;
   let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,periodo:2025,estado:"confirmada",nota:"",...extra});
   state.taken.push(
@@ -937,6 +940,7 @@ function limpiarPersonasDadasDeBaja(){
      vuelve a cargar, pero en la ficha correcta. */
 function corregirSemillaNov2025Abr2026(){
   const TAG="seed-nov2025-abr2026-v1";
+  if(planillaAplicada(state))return;
   if(!state.taken.some(t=>t.seedTag===TAG))return; // todavía no corrió la semilla base
   const paula=state.taken.find(t=>t.seedTag===TAG&&t.n==="Paula"&&t.hasta==="2026-02-13");
   if(paula)paula.hasta="2026-02-14";
@@ -956,6 +960,7 @@ function corregirSemillaNov2025Abr2026(){
    del total (mismo mecanismo que ya se usaba para Érica), no como rango de fechas. */
 function seedTakenPersonalAdicional(){
   const TAG="seed-personal-adicional-v1";
+  if(planillaAplicada(state))return;
   if(state.taken.some(t=>t.seedTag===TAG))return;
   let n=0;const mk=extra=>({id:`seed-${TAG}-${n++}`,seedTag:TAG,periodo:2025,estado:"confirmada",nota:"",...extra});
   state.taken.push(
@@ -982,6 +987,8 @@ function runMigrations(){
   seedTakenNov2025Abr2026();
   corregirSemillaNov2025Abr2026();
   seedTakenPersonalAdicional();
+  // la planilla "Vacaciones.xlsx" de Drive (calculo.js) reemplaza las semillas de arriba, una sola vez
+  if(aplicarPlanilla(state))persist();
   limpiarPersonasDadasDeBaja();
 }
 
