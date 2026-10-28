@@ -88,6 +88,16 @@
   .ok-card p{color:var(--ink-soft);font-size:13.5px;margin:0}
   .ok-card .ts{margin-top:14px;font-size:12px;color:var(--ink-soft);background:var(--panel-2);border-radius:8px;padding:9px 12px;display:inline-block}
   .footer-note{font-size:11.5px;color:var(--ink-soft);margin-top:8px;text-align:center}
+
+  /* quién informa: un solo formulario para el Experto del turno y el jefe de cocina */
+  .quien{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .quien button{border:2px solid var(--line-strong);background:var(--panel-2);border-radius:11px;padding:12px 8px;cursor:pointer;font-weight:700;font-size:14.5px;color:var(--ink);line-height:1.25}
+  .quien button small{display:block;font-weight:400;font-size:11.5px;color:var(--ink-soft);margin-top:3px}
+  .quien button.on{border-color:var(--accent);background:var(--crit-soft);color:var(--accent-ink)}
+  .ctlRow{border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-top:8px;background:var(--panel-2)}
+  .ctlRow .chkRow{margin-top:0}
+  .ctlRow .txt{flex:1 1 170px;font-size:14px;line-height:1.35}
+  [hidden]{display:none !important}
 </style>
 </head>
 <body>
@@ -101,6 +111,15 @@
   </div>
 
   <div id="formWrap">
+    <!-- Paso 0: quién informa. Mismo formulario, distinto checklist e incidencias. -->
+    <div class="card">
+      <span class="eyebrow">Quién informa</span>
+      <div class="quien" id="quien">
+        <button type="button" data-modo="experto">⭐ Experto del turno<small>Caja, salón y barra</small></button>
+        <button type="button" data-modo="cocina">👨‍🍳 Jefe de cocina<small>La cocina del local</small></button>
+      </div>
+    </div>
+
     <!-- Paso 1: qué turno es. Sin esto no se puede precargar nada del cronograma. -->
     <div class="card">
       <span class="eyebrow">De qué turno</span>
@@ -126,7 +145,7 @@
         </select>
       </div>
       <div class="field">
-        <label for="fExperto">Experto Candela</label>
+        <label for="fExperto" id="lblExperto">Experto Candela</label>
         <select id="fExperto"><option value="">Elegí quién fue el Experto…</option></select>
       </div>
       <div id="avisoCron"></div>
@@ -146,6 +165,12 @@
       <div id="checklist"></div>
     </div>
 
+    <div class="card" id="cardControles" hidden>
+      <span class="eyebrow">Control de la cocina</span>
+      <p class="seccion-sub">Lo que revisaste en el turno. Tocá “No” solo en lo que no estuvo bien.</p>
+      <div id="controles"></div>
+    </div>
+
     <div class="card">
       <span class="eyebrow">Incidencias</span>
       <p class="seccion-sub">Marcá solo lo que pasó en este turno.</p>
@@ -156,7 +181,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card soloExperto">
       <span class="eyebrow">Reclamos que escalaron</span>
       <p class="seccion-sub">Solo los que no se resolvieron en el mostrador.</p>
       <div class="field" style="margin-top:6px">
@@ -165,7 +190,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card soloExperto">
       <span class="eyebrow">Compensaciones otorgadas</span>
       <p class="seccion-sub">Descuentos, productos sin cargo o cortesías que diste en el turno.</p>
       <div id="compensaciones"></div>
@@ -174,7 +199,7 @@
 
     <div class="card">
       <span class="eyebrow">Para el turno siguiente</span>
-      <p class="seccion-sub">Lo que la próxima persona necesita saber al entrar.</p>
+      <p class="seccion-sub" id="subSiguiente">Lo que la próxima persona necesita saber al entrar.</p>
       <div class="field" style="margin-top:6px">
         <textarea id="fSiguiente" rows="3" placeholder="Ej: quedó poco pan de campo, el molino chico hace ruido"></textarea>
       </div>
@@ -210,7 +235,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const APP_VERSION = "2026-08-21 experto-candela";
+const APP_VERSION = "2026-10-28 informe-cocina";
 document.getElementById("appVersion").textContent = "v" + APP_VERSION;
 
 // ---------------------------------------------------------------------------
@@ -244,6 +269,50 @@ const INCIDENCIAS = [
 ];
 
 const TIPOS_COMPENSACION = ["Descuento", "Producto sin cargo", "Cortesía", "Otra"];
+
+// ---------------------------------------------------------------------------
+// INFORME DE COCINA (jefe de cocina). Mismo formulario, mismo envío; cambia qué se controla.
+// Los controles salen del checklist del manual "Jefe de cocina". `soloSL`: solo se muestra en San
+// Luis (el envío de sándwiches sale de ahí).
+// ---------------------------------------------------------------------------
+const ROLES_COCINA = [
+  { key: "cocinero", label: "Cocinero",           cron: ["cocina"] },
+  { key: "ayudante", label: "Ayudante de cocina", cron: ["ayudante"] }
+];
+const CONTROLES_COCINA = [
+  { t: "Heladeras y freezer a temperatura" },
+  { t: "Todo lo guardado, rotulado con fecha" },
+  { t: "Pedidos de producción e insumos revisados" },
+  { t: "Comandas saliendo en 8 a 12 minutos" },
+  { t: "Envío de sándwiches a SLA en horario y suficiente", soloSL: true },
+  { t: "Producción hecha y rotulada para el turno siguiente" },
+  { t: "Cocina limpia y ordenada, bacha vacía" },
+  { t: "Novedades pasadas al cocinero del turno siguiente" }
+];
+const INCIDENCIAS_COCINA = [
+  "Heladera o freezer fuera de temperatura",
+  "Producto vencido o sin rotular",
+  "Faltante de insumo o mercadería",
+  "Comandas demoradas",
+  "Plato que salió distinto de la ficha",
+  "Envío a SLA tarde o incompleto",
+  "Pedido de producción o insumos no cargado",
+  "Equipo o instalación que falla",
+  "Rotura de vajilla"
+];
+const MODOS = {
+  experto: { quien: "Experto Candela", elegir: "Elegí quién fue el Experto…", roles: ROLES_CHECK, incidencias: INCIDENCIAS,
+    siguiente: "Lo que la próxima persona necesita saber al entrar.", ph: "Ej: quedó poco pan de campo, el molino chico hace ruido" },
+  cocina: { quien: "Jefe de cocina", elegir: "Elegí quién está a cargo de la cocina…", roles: ROLES_COCINA, incidencias: INCIDENCIAS_COCINA,
+    siguiente: "Lo que el cocinero del turno siguiente necesita saber: qué quedó hecho, qué falta, qué cambió.", ph: "Ej: quedan 2 bandejas de base de tarta, falta cortar cebolla" }
+};
+// Se puede entrar directo con ?quien=cocina; si no, se recuerda lo último elegido en este teléfono.
+let modo = (() => {
+  const q = new URLSearchParams(location.search).get("quien");
+  if (q === "cocina" || q === "experto") return q;
+  try { return localStorage.getItem("candela-informe-quien") === "cocina" ? "cocina" : "experto"; } catch { return "experto"; }
+})();
+const M = () => MODOS[modo];
 
 const hoyISO = () => {
   const d = new Date();
@@ -328,7 +397,33 @@ $("fFecha").value = hoyISO();
 // El turno se adivina por la hora: antes de las 16 es mañana. Es solo un valor inicial.
 $("fTurno").value = new Date().getHours() < 16 ? "M" : "T";
 
+// Quiénes tienen alguno de esos roles en el cronograma de la semana (cualquier día y local).
+function gentePorRol(roles) {
+  const set = new Set();
+  for (const [k, n] of Object.entries(cron?.assign || {})) if (n && roles.includes(k.split("|")[3])) set.add(String(n).trim());
+  for (const e of cron?.ex || []) if (e?.n && roles.includes(e.role)) set.add(String(e.n).trim());
+  return [...set].sort((a, b) => a.localeCompare(b, "es"));
+}
+
+function llenarJefes() {
+  const sel = $("fExperto");
+  const previo = sel.value;
+  const enTurno = equipoDelTurno($("fFecha").value, $("fLocal").value, $("fTurno").value)
+    .filter(p => p.rolCron === "cocina").map(p => p.nombre);
+  const cocina = gentePorRol(["cocina"]).filter(n => !enTurno.includes(n));
+  const resto = todaLaGente().filter(n => !enTurno.includes(n) && !cocina.includes(n));
+  const grupo = (label, nombres) => nombres.length
+    ? `<optgroup label="${esc(label)}">${nombres.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}</optgroup>`
+    : "";
+  sel.innerHTML = `<option value="">${esc(M().elegir)}</option>`
+    + grupo("👨‍🍳 En la cocina de este turno", enTurno)
+    + grupo("👨‍🍳 Cocina", cocina)
+    + grupo("Resto del equipo", resto);
+  if (previo && [...sel.options].some(o => o.value === previo)) sel.value = previo;
+}
+
 function llenarExpertos() {
+  if (modo === "cocina") return llenarJefes();
   const sel = $("fExperto");
   const previo = sel.value;
   const equipo = equipoDelTurno($("fFecha").value, $("fLocal").value, $("fTurno").value).map(p => p.nombre);
@@ -341,20 +436,20 @@ function llenarExpertos() {
     ? `<optgroup label="${esc(label)}">${nombres.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}</optgroup>`
     : "";
 
-  sel.innerHTML = `<option value="">Elegí quién fue el Experto…</option>`
+  sel.innerHTML = `<option value="">${esc(M().elegir)}</option>`
     + grupo("⭐ Expertos en este turno", enTurno)
     + grupo("⭐ Otros Expertos", otrosExpertos)
     + grupo("Resto del equipo", resto);
 
   // Si hay un solo Experto asignado a ese turno, ya es la respuesta: se elige solo.
   if (!previo && enTurno.length === 1) sel.value = enTurno[0];
-  else if (previo) sel.value = previo;
+  else if (previo && [...sel.options].some(o => o.value === previo)) sel.value = previo;
 }
 
 function llenarChecklist() {
   const equipo = equipoDelTurno($("fFecha").value, $("fLocal").value, $("fTurno").value);
   const cont = $("checklist");
-  cont.innerHTML = ROLES_CHECK.map(rol => {
+  cont.innerHTML = M().roles.map(rol => {
     const personas = equipo.filter(p => rol.cron.includes(p.rolCron)).map(p => p.nombre);
     // Siempre al menos una fila: si el cronograma no trajo a nadie, se escribe el nombre a mano.
     const filas = personas.length ? personas : [""];
@@ -408,8 +503,66 @@ $("checklist").addEventListener("click", (ev) => {
   }
 });
 
-$("incidencias").innerHTML = INCIDENCIAS.map((t, i) =>
-  `<label class="inc" data-i="${i}"><input type="checkbox" value="${esc(t)}"><span>${esc(t)}</span></label>`).join("");
+function llenarIncidencias() {
+  $("incidencias").innerHTML = M().incidencias.map((t, i) =>
+    `<label class="inc" data-i="${i}"><input type="checkbox" value="${esc(t)}"><span>${esc(t)}</span></label>`).join("");
+}
+
+// Controles de la cocina: uno por fila, "Bien" o "No" (con qué pasó).
+function llenarControles() {
+  const previos = Object.fromEntries(leerControles().map(c => [c.item, c]));
+  $("controles").innerHTML = CONTROLES_COCINA
+    .filter(c => !c.soloSL || $("fLocal").value === "SL")
+    .map(c => {
+      const p = previos[c.t];
+      const no = p && !p.ok;
+      return `<div class="ctlRow chkFila" data-item="${esc(c.t)}">
+        <div class="chkRow">
+          <span class="txt">${esc(c.t)}</span>
+          <div class="tri">
+            <button type="button" class="si ${no ? "" : "on"}" data-v="si">Bien</button>
+            <button type="button" class="no ${no ? "on" : ""}" data-v="no">No</button>
+          </div>
+        </div>
+        <input class="motivo" type="text" placeholder="¿Qué pasó?" value="${esc(p?.motivo || "")}" ${no ? "" : "hidden"}>
+      </div>`;
+    }).join("");
+}
+function leerControles() {
+  return [...$("controles").querySelectorAll(".ctlRow")].map(f => {
+    const ok = f.querySelector(".tri button.on")?.dataset.v !== "no";
+    return { item: f.dataset.item, ok, motivo: ok ? "" : f.querySelector(".motivo").value.trim() };
+  });
+}
+$("controles").addEventListener("click", (ev) => {
+  const b = ev.target.closest(".tri button");
+  if (!b) return;
+  const fila = b.closest(".ctlRow");
+  fila.querySelectorAll(".tri button").forEach(x => x.classList.toggle("on", x === b));
+  const motivo = fila.querySelector(".motivo");
+  motivo.hidden = b.dataset.v !== "no";
+  if (!motivo.hidden) motivo.focus();
+});
+
+function aplicarModo() {
+  document.querySelectorAll("#quien button").forEach(b => b.classList.toggle("on", b.dataset.modo === modo));
+  $("lblExperto").textContent = M().quien;
+  $("cardControles").hidden = modo !== "cocina";
+  document.querySelectorAll(".soloExperto").forEach(el => el.hidden = modo === "cocina");
+  $("subSiguiente").textContent = M().siguiente;
+  $("fSiguiente").placeholder = M().ph;
+  $("fExperto").value = "";
+  llenarIncidencias();
+  $("fIncOtra").value = "";
+  alCambiarTurno();
+}
+$("quien").addEventListener("click", (ev) => {
+  const b = ev.target.closest("button[data-modo]");
+  if (!b || b.dataset.modo === modo) return;
+  modo = b.dataset.modo;
+  try { localStorage.setItem("candela-informe-quien", modo); } catch {}
+  aplicarModo();
+});
 $("incidencias").addEventListener("change", (ev) => {
   const lab = ev.target.closest(".inc");
   if (lab) lab.classList.toggle("on", ev.target.checked);
@@ -453,7 +606,8 @@ function avisoCronograma() {
     cont.innerHTML = `<div class="aviso info">El cronograma cargado es de otra semana, así que los nombres van a mano.</div>`;
     return;
   }
-  const n = equipoDelTurno($("fFecha").value, $("fLocal").value, $("fTurno").value).length;
+  const rolesCron = M().roles.flatMap(r => r.cron);
+  const n = equipoDelTurno($("fFecha").value, $("fLocal").value, $("fTurno").value).filter(p => rolesCron.includes(p.rolCron)).length;
   cont.innerHTML = n
     ? `<div class="aviso ok">Se precargaron ${n} persona(s) del cronograma para este turno.</div>`
     : `<div class="aviso info">El cronograma no tiene a nadie asignado a este turno. Cargá los nombres a mano.</div>`;
@@ -479,7 +633,7 @@ async function chequearExistente() {
     const prev = snap.val();
     if (!prev) return;
     informeExistente = prev;
-    cont.innerHTML = `<div class="aviso warn">Ya hay un informe cargado para este turno, enviado por <b>${esc(prev.experto || "—")}</b>. Si enviás otro, lo reemplaza (el anterior queda guardado en el historial).</div>`;
+    cont.innerHTML = `<div class="aviso warn">Ya hay un informe ${modo === "cocina" ? "de cocina " : ""}cargado para este turno, enviado por <b>${esc(prev.experto || "—")}</b>. Si enviás otro, lo reemplaza (el anterior queda guardado en el historial).</div>`;
   } catch (e) {
     console.error("No se pudo verificar si el informe ya existe:", e);
   }
@@ -489,12 +643,14 @@ async function chequearExistente() {
 // del mismo turno. Es lo que hace que "qué turnos faltan" sea una pregunta con respuesta exacta.
 function idInforme() {
   const fecha = $("fFecha").value, loc = $("fLocal").value, turno = $("fTurno").value;
-  return fecha && loc && turno ? `${fecha}_${loc}_${turno}` : "";
+  // El de cocina lleva "_cocina" al final: es otro informe del mismo turno y no pisa al del Experto.
+  return fecha && loc && turno ? `${fecha}_${loc}_${turno}${modo === "cocina" ? "_cocina" : ""}` : "";
 }
 
 function alCambiarTurno() {
   llenarExpertos();
   llenarChecklist();
+  llenarControles();
   avisoCronograma();
   chequearExistente();
 }
@@ -515,7 +671,7 @@ function leerChecklist() {
   const out = [];
   for (const bloque of $("checklist").querySelectorAll(".rolBloque")) {
     const rolKey = bloque.dataset.rol;
-    const rolLabel = ROLES_CHECK.find(r => r.key === rolKey)?.label || rolKey;
+    const rolLabel = M().roles.find(r => r.key === rolKey)?.label || rolKey;
     for (const fila of bloque.querySelectorAll(".chkFila")) {
       const nombre = fila.querySelector(".nom").value.trim();
       if (!nombre) continue;   // una fila sin nombre es una fila que no se usó
@@ -551,19 +707,24 @@ async function enviar({ sinNovedades }) {
   const fecha = $("fFecha").value, loc = $("fLocal").value, turno = $("fTurno").value;
   const experto = $("fExperto").value;
   if (!fecha) return mostrarError("Elegí la fecha del turno.");
-  if (!experto) return mostrarError("Elegí quién fue el Experto Candela.");
+  if (!experto) return mostrarError(modo === "cocina" ? "Elegí quién está a cargo de la cocina." : "Elegí quién fue el Experto Candela.");
   if (informeExistente && !confirm(`Ya hay un informe de este turno enviado por ${informeExistente.experto || "—"}.\n\n¿Reemplazarlo?`)) return;
 
   const checklist = sinNovedades
     ? leerChecklist().map(p => ({ ...p, cumplio: true, motivo: "" }))
     : leerChecklist();
 
+  const cocina = modo === "cocina";
+  // `experto` es quien firma el informe (las reglas de Firebase lo piden): en el de cocina es el
+  // jefe de cocina, y `tipo` dice cuál de los dos es.
   const informe = {
+    tipo: modo,
     fecha, loc, turno, experto,
     checklist,
+    ...(cocina ? { controles: sinNovedades ? leerControles().map(c => ({ ...c, ok: true, motivo: "" })) : leerControles() } : {}),
     incidencias: sinNovedades ? [] : leerIncidencias(),
-    reclamos: sinNovedades ? "" : $("fReclamo").value.trim(),
-    compensaciones: sinNovedades ? [] : leerCompensaciones(),
+    reclamos: sinNovedades || cocina ? "" : $("fReclamo").value.trim(),
+    compensaciones: sinNovedades || cocina ? [] : leerCompensaciones(),
     paraElSiguiente: sinNovedades ? "" : $("fSiguiente").value.trim(),
     sinNovedades: !!sinNovedades,
     enviadoEn: new Date().toISOString()
@@ -587,12 +748,12 @@ async function enviar({ sinNovedades }) {
     // informe sin índice (se avisa de menos) que un índice sin informe (se avisa de algo que no
     // existe y se manda a alguien a "reemplazar" la nada).
     await set(ref(db, "informes/indice/" + id), {
-      fecha: informe.fecha, loc: informe.loc, turno: informe.turno,
+      tipo: informe.tipo, fecha: informe.fecha, loc: informe.loc, turno: informe.turno,
       experto: informe.experto, enviadoEn: informe.enviadoEn
     });
     $("formWrap").style.display = "none";
     $("okCard").classList.add("show");
-    $("okDetalle").textContent = `${LOCALES[loc]} · ${TURNOS[turno]} · ${fecha}`;
+    $("okDetalle").textContent = `${cocina ? "Cocina · " : ""}${LOCALES[loc]} · ${TURNOS[turno]} · ${fecha}`;
     $("okTs").textContent = "Enviado el " + new Date().toLocaleString("es-AR", { dateStyle: "long", timeStyle: "short" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (e) {
@@ -615,6 +776,9 @@ $("btnOtro").addEventListener("click", () => {
   $("compensaciones").innerHTML = "";
   $("incidencias").querySelectorAll("input:checked").forEach(c => { c.checked = false; c.closest(".inc").classList.remove("on"); });
   llenarChecklist();
+  llenarControles();
+  $("controles").querySelectorAll(".ctlRow").forEach(f => { f.querySelector(".tri .si").classList.add("on"); f.querySelector(".tri .no").classList.remove("on"); const m = f.querySelector(".motivo"); m.value = ""; m.hidden = true; });
+  llenarExpertos();
   chequearExistente();
   limpiarError();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -622,8 +786,8 @@ $("btnOtro").addEventListener("click", () => {
 
 // Arranque: primero se pinta el formulario usable sin cronograma, y después se enriquece. Así la
 // página nunca queda en blanco esperando a la red.
-llenarChecklist();
-llenarExpertos();
+// Arranque en el modo elegido (por defecto el del Experto); aplicarModo ya precarga todo.
+aplicarModo();
 await cargarCronograma();
 alCambiarTurno();
 </script>

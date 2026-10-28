@@ -117,6 +117,9 @@
   .pill.turno{background:var(--chip);color:var(--ink-soft)}
   .pill.sn{background:var(--ok-soft);color:var(--ok)}
   .pill.inc{background:var(--crit-soft);color:var(--crit)}
+  .pill.coc{background:var(--warn-soft);color:var(--warn)}
+  .est.nada{color:var(--ink-soft);opacity:.5}
+  tr.fila-cocina td{border-top:2px solid var(--line-strong)}
   .bloque{margin-top:13px}
   .bloque h4{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);font-weight:700;font-family:var(--font-body)}
   .bloque ul{margin:0;padding-left:18px}
@@ -186,6 +189,10 @@
             <select id="fTurno"><option value="">Todos</option><option value="M">Mañana</option><option value="T">Tarde</option></select>
           </div>
           <div class="field">
+            <label for="fTipo">Quién informa</label>
+            <select id="fTipo"><option value="">Todos</option><option value="experto">⭐ Experto del turno</option><option value="cocina">👨‍🍳 Jefe de cocina</option></select>
+          </div>
+          <div class="field">
             <label for="fPersona">Persona</label>
             <select id="fPersona"><option value="">Todas</option></select>
           </div>
@@ -209,7 +216,7 @@
     <main>
       <div class="card">
         <h2>La semana de un vistazo</h2>
-        <p class="sub">Qué turnos informaron y cuáles faltan. Tocá un turno informado para abrirlo.</p>
+        <p class="sub">Qué turnos informaron y cuáles faltan. Tocá un turno informado para abrirlo. La última fila son los informes del jefe de cocina.</p>
         <div class="sem" id="semana"></div>
       </div>
 
@@ -232,7 +239,7 @@
           <div id="lista"></div>
         </div>
       </div>
-      <p class="footer-note">Los informes los cargan los Expertos Candela desde <b>carga.html</b>. Esta pantalla es de solo lectura.</p>
+      <p class="footer-note">Los informes los cargan los Expertos Candela y el jefe de cocina desde <b>carga.html</b>. Esta pantalla es de solo lectura.</p>
     </main>
   </div>
 </div>
@@ -257,7 +264,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-const APP_VERSION = "2026-08-21 experto-candela";
+const APP_VERSION = "2026-10-28 informe-cocina";
 document.getElementById("appVersion").textContent = "v" + APP_VERSION;
 
 const LOCALES = { SLA: "SLA 5.0", SL: "San Luis" };
@@ -412,7 +419,7 @@ function filtros() {
   return {
     desde: $("fDesde").value, hasta: $("fHasta").value,
     loc: $("fLocal").value, turno: $("fTurno").value,
-    persona: $("fPersona").value, incidencia: $("fIncidencia").value
+    persona: $("fPersona").value, incidencia: $("fIncidencia").value, tipo: $("fTipo").value
   };
 }
 // El rango de fechas NO se aplica acá: se usa como base para la lista, el resumen y los faltantes,
@@ -430,6 +437,7 @@ function aplicarFiltros(lista) {
   return lista.filter(r => {
     if (f.loc && r.loc !== f.loc) return false;
     if (f.turno && r.turno !== f.turno) return false;
+    if (f.tipo && tipoDe(r) !== f.tipo) return false;
     if (f.persona) {
       const enChecklist = (r.checklist || []).some(c => c.nombre === f.persona);
       if (r.experto !== f.persona && !enChecklist) return false;
@@ -439,10 +447,13 @@ function aplicarFiltros(lista) {
   });
 }
 
-["fDesde", "fHasta", "fLocal", "fTurno", "fPersona", "fIncidencia"].forEach(id =>
+// Los informes viejos no tienen `tipo`: son todos del Experto.
+const tipoDe = (r) => r?.tipo === "cocina" ? "cocina" : "experto";
+
+["fDesde", "fHasta", "fLocal", "fTurno", "fPersona", "fIncidencia", "fTipo"].forEach(id =>
   $(id).addEventListener("change", render));
 $("btnLimpiar").addEventListener("click", () => {
-  $("fLocal").value = ""; $("fTurno").value = ""; $("fPersona").value = ""; $("fIncidencia").value = "";
+  $("fLocal").value = ""; $("fTurno").value = ""; $("fPersona").value = ""; $("fIncidencia").value = ""; $("fTipo").value = "";
   $("fHasta").value = hoyISO(); $("fDesde").value = sumarDias(hoyISO(), -13);
   render();
 });
@@ -480,9 +491,12 @@ function yaTermino(fecha, turno) {
   return turno === "M" && new Date().getHours() >= 16;
 }
 
+// Solo los del Experto: hay uno esperado por turno y local. El de cocina no se cuenta como faltante
+// (el jefe no está en los cuatro turnos), se ve aparte en la semana.
 function faltantes() {
   const f = filtros();
   const out = [];
+  if (f.tipo === "cocina") return out;
   if (!f.desde || !f.hasta || f.desde > f.hasta) return out;
   for (let d = f.desde; d <= f.hasta; d = sumarDias(d, 1)) {
     for (const [loc, turno] of SLOTS) {
@@ -534,10 +548,18 @@ function renderKpis(lista) {
 function renderSemana() {
   const lunes = lunesDe($("fHasta").value || hoyISO());
   const dias = Array.from({ length: 7 }, (_, i) => sumarDias(lunes, i));
+  const conNovedadDe = (r) => (r.incidencias || []).length || (r.checklist || []).some(c => !c.cumplio)
+    || (r.controles || []).some(c => !c.ok) || (r.reclamos || "").trim();
+  const celdaCocina = (fecha) => {
+    const ids = Object.keys(registros).filter(id => id.startsWith(fecha + "_") && tipoDe(registros[id]) === "cocina").sort();
+    if (!ids.length) return `<div class="est nada">—</div>`;
+    const novedad = ids.some(id => conNovedadDe(registros[id]));
+    return `<div class="est ${novedad ? "novedad" : "ok"}" data-ir="${esc(ids[0])}" title="${esc(ids.map(id => registros[id].experto || "").join(", "))}">${novedad ? "!" : "✓"}${ids.length > 1 ? ids.length : ""}</div>`;
+  };
   const celda = (fecha, loc, turno) => {
     const r = registros[`${fecha}_${loc}_${turno}`];
     if (r) {
-      const conNovedad = (r.incidencias || []).length || (r.checklist || []).some(c => !c.cumplio) || (r.reclamos || "").trim();
+      const conNovedad = conNovedadDe(r);
       return `<div class="est ${conNovedad ? "novedad" : "ok"}" data-ir="${esc(fecha + "_" + loc + "_" + turno)}" title="${esc(r.experto || "")}">${conNovedad ? "!" : "✓"}</div>`;
     }
     if (!yaTermino(fecha, turno)) return `<div class="est futuro">·</div>`;
@@ -548,9 +570,10 @@ function renderSemana() {
     <tbody>${SLOTS.map(([loc, turno]) => `<tr>
       <td>${LOCALES[loc]} · ${TURNOS[turno]}</td>
       ${dias.map(d => `<td>${celda(d, loc, turno)}</td>`).join("")}
-    </tr>`).join("")}</tbody>
+    </tr>`).join("")}
+    <tr class="fila-cocina"><td>👨‍🍳 Cocina</td>${dias.map(d => `<td>${celdaCocina(d)}</td>`).join("")}</tr></tbody>
   </table>
-  <div class="footer-note" style="text-align:left;margin-top:10px">✓ informado sin novedades · <b style="color:var(--warn)">!</b> informado con algo para mirar · <b style="color:var(--crit)">falta</b> el turno terminó y no informó · · turno que todavía no terminó</div>`;
+  <div class="footer-note" style="text-align:left;margin-top:10px">✓ informado sin novedades · <b style="color:var(--warn)">!</b> informado con algo para mirar · <b style="color:var(--crit)">falta</b> el turno terminó y no informó · · turno que todavía no terminó · <b>—</b> la cocina no informó ese día</div>`;
 
   $("semana").querySelectorAll(".est[data-ir]").forEach(el => el.addEventListener("click", () => {
     abiertos.add(el.dataset.ir);
@@ -603,12 +626,16 @@ function infHtml(r) {
   const incidencias = r.incidencias || [];
   const incumplen = (r.checklist || []).filter(c => !c.cumplio);
   const comps = r.compensaciones || [];
+  const cocina = tipoDe(r) === "cocina";
+  const controlesMal = (r.controles || []).filter(c => !c.ok);
   const chips = [
+    cocina ? `<span class="pill coc">👨‍🍳 Cocina</span>` : "",
     `<span class="pill loc">${esc(LOCALES[r.loc] || r.loc)}</span>`,
     `<span class="pill turno">${esc(TURNOS[r.turno] || r.turno)}</span>`,
     r.sinNovedades && !incidencias.length && !incumplen.length ? `<span class="pill sn">Sin novedades</span>` : "",
     incidencias.length ? `<span class="pill inc">${incidencias.length} incidencia(s)</span>` : "",
-    incumplen.length ? `<span class="pill inc">${incumplen.length} no cumplió</span>` : ""
+    incumplen.length ? `<span class="pill inc">${incumplen.length} no cumplió</span>` : "",
+    controlesMal.length ? `<span class="pill inc">${controlesMal.length} control(es) mal</span>` : ""
   ].filter(Boolean).join(" ");
 
   const bloque = (titulo, html) => html ? `<div class="bloque"><h4>${titulo}</h4>${html}</div>` : "";
@@ -617,6 +644,8 @@ function infHtml(r) {
     ${bloque("Checklist", (r.checklist || []).length
       ? `<ul>${r.checklist.map(c => `<li>${esc(c.nombre)} <span style="opacity:.6">· ${esc(c.rolLabel || c.rol || "")}</span> — ${c.cumplio ? "cumplió" : `<span class="no-cumplio">no cumplió${c.motivo ? ": " + esc(c.motivo) : ""}</span>`}</li>`).join("")}</ul>`
       : `<div class="empty">Sin checklist cargado.</div>`)}
+    ${bloque("Control de la cocina", (r.controles || []).length
+      ? `<ul>${r.controles.map(c => `<li>${esc(c.item)} — ${c.ok ? "bien" : `<span class="no-cumplio">no${c.motivo ? ": " + esc(c.motivo) : ""}</span>`}</li>`).join("")}</ul>` : "")}
     ${bloque("Incidencias", incidencias.length
       ? `<ul>${incidencias.map(i => `<li>${esc(i.tipo)}${i.detalle ? ": " + esc(i.detalle) : ""}</li>`).join("")}</ul>` : "")}
     ${bloque("Reclamos que escalaron", (r.reclamos || "").trim() ? `<div class="texto">${esc(r.reclamos)}</div>` : "")}
@@ -631,7 +660,7 @@ function infHtml(r) {
     <div class="inf-head">
       <span class="fecha">${esc(fmtFechaLarga(r.fecha))}</span>
       ${chips}
-      <span class="quien">⭐ ${esc(r.experto || "—")}</span>
+      <span class="quien">${cocina ? "👨‍🍳" : "⭐"} ${esc(r.experto || "—")}</span>
       <span class="flechita">▾</span>
     </div>
     <div class="inf-body">${cuerpo}</div>

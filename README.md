@@ -224,7 +224,7 @@ Son dos páginas separadas, siguiendo el patrón de `vacaciones/` (`pedido.html`
 
 | Archivo | Para quién | Acceso |
 |---|---|---|
-| `informes/carga.html` | El Experto, al cerrar el turno | Sin clave |
+| `informes/carga.html` | El Experto o el jefe de cocina, al cerrar el turno | Sin clave |
 | `informes/index.html` | Gerencia | Cuenta de Firebase Auth (ver abajo) |
 
 ### La página de carga
@@ -244,6 +244,16 @@ Se lee `cronogramas/state` una sola vez al abrir:
 - **El equipo del checklist**: sale de `state.assign` (clave `dia|local|turno|rol|indice`) más los sumados sueltos de `state.ex`. Los roles del manual no son los del cronograma: "Vendedor / Mozo" es `atencion`, "Ayudante de cocina" junta `cocina` y `ayudante`, y **Limpieza no existe en el cronograma** — esa fila va siempre a mano.
 
 **Nada de esto es obligatorio.** Si el cronograma no está, falla la lectura o es de otra semana, el formulario avisa y sigue siendo completamente usable a mano. Un informe que no se puede cargar porque falla otro módulo es un informe que no se carga; está cubierto por un test que corre la página con la lectura del cronograma rota y envía igual.
+
+### Informe de cocina (jefe de cocina)
+
+Es el **mismo formulario**: arriba se elige "⭐ Experto del turno" o "👨‍🍳 Jefe de cocina" (el teléfono recuerda la última elección; también se puede entrar directo con `carga.html?quien=cocina`). En modo cocina:
+
+- El **checklist del equipo** precarga solo a los de cocina del cronograma (rol `cocina` = cocineros, `ayudante` = ayudante de cocina) y el desplegable de quién firma pone primero a quien está en la cocina de ese turno.
+- Hay un bloque **Control de la cocina** (Bien / No, con qué pasó), sacado del checklist del manual "Jefe de cocina": heladeras, rotulado, pedidos revisados, comandas en 8 a 12 min, envío de sándwiches a SLA (solo en San Luis), producción rotulada, limpieza y novedades pasadas.
+- Las **incidencias** son las de cocina; no aparecen reclamos ni compensaciones.
+- Se guarda con `tipo: "cocina"` e id `{fecha}_{local}_{turno}_cocina`, así no pisa ni cuenta como el informe del Experto de ese turno. El jefe va en el campo `experto` (las reglas de Firebase lo piden en todo informe). Los informes viejos, sin `tipo`, son del Experto.
+- En **Informes de turno**, Gerencia filtra por "Quién informa", ve los controles en cada informe y una fila "👨‍🍳 Cocina" en la semana. La cocina **no entra en "turnos sin informe"**: el jefe no está en los cuatro turnos.
 
 ### Un turno, un informe
 
