@@ -236,6 +236,7 @@ mark{background:#ffe58a;border-radius:3px;padding:0 1px;}
 .sugerido .sg-tx b{display:block;color:#fff;font-size:15px;}
 .sugerido .sg-tx span{font-size:13px;color:rgba(238,235,215,.75);}
 .sugerido .sg-bt{display:flex;gap:6px;flex-wrap:wrap;}
+.sugerido .sg-lista{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
 .sugerido .btn-ghost{color:var(--cream);border-color:rgba(238,235,215,.35);background:transparent;}
 @media (prefers-reduced-motion: reduce){.giro-in{transition:none;}}
 .rec-detalle-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin:6px 0 16px;}
@@ -572,7 +573,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, creat
 // El contenido se carga importando el documento de Drive (.docx o .html): se parte en un manual
 // por cada Título 1, agrupados por "Parte N — …". Drive sigue siendo el original: cuando cambia,
 // se vuelve a importar.
-const APP_VERSION = "2026-10-26 organigrama";
+const APP_VERSION = "2026-10-28 checklists";
 const GERENCIA_EMAIL = "gerencia@candela-app.com";
 const DOMINIO = "candela-app.com";
 const LIBS = {
@@ -1503,7 +1504,11 @@ function vistaInicio() {
   const g = esGerencia();
   const avisosSug = sugeridosPendientes().map(x => `<div class="sugerido"><div class="sg-ico">${x.emoji}</div><div class="sg-tx"><b>Manual listo para sumar: ${esc(x.titulo)}</b><span>${esc(x.descripcion)}</span></div>
     <div class="sg-bt"><button class="btn btn-primary btn-sm" data-act="sugerido" data-id="${x.clave}">Revisar y publicar</button><button class="btn btn-ghost btn-sm" data-act="sugerido-no" data-id="${x.clave}">Descartar</button></div></div>`).join("");
-  const accionesG = g ? `${avisosSug}<div class="acciones" style="margin:-4px 0 14px"><button class="btn btn-primary btn-sm" data-act="nuevo-manual">➕ Nuevo manual</button><button class="btn btn-ghost btn-sm" data-act="gerencia-tab" data-tab="contenido">Ordenar, ocultar e importar</button></div>` : "";
+  const agr = g ? agregadosPendientes() : [];
+  const avisoAgr = agr.length ? `<div class="sugerido"><div class="sg-ico">☑️</div><div class="sg-tx"><b>${esc(AGREGADOS.titulo)}</b><span>${esc(AGREGADOS.descripcion)} Abrí cada manual, revisalo y publicalo.</span>
+      <div class="sg-lista">${agr.map(({ destino }) => `<button class="btn btn-primary btn-sm" data-act="agregado" data-id="${esc(destino[0])}">${esc(destino[1].titulo)}</button>`).join("")}</div></div>
+    <div class="sg-bt"><button class="btn btn-ghost btn-sm" data-act="sugerido-no" data-id="${AGREGADOS.clave}">Descartar</button></div></div>` : "";
+  const accionesG = g ? `${avisosSug}${avisoAgr}<div class="acciones" style="margin:-4px 0 14px"><button class="btn btn-primary btn-sm" data-act="nuevo-manual">➕ Nuevo manual</button><button class="btn btn-ghost btn-sm" data-act="gerencia-tab" data-tab="contenido">Ordenar, ocultar e importar</button></div>` : "";
   if (!lista.length) {
     return `${barra()}<div class="main"><div class="h-pag">Manuales de procedimiento</div>
       <div class="bloque" style="margin-top:14px">${g
@@ -1836,6 +1841,129 @@ const SUGERIDOS = [
   { clave: "organigrama-v2", titulo: "Organigrama", emoji: "🧭", reemplaza: "organigrama", version: "2.0",
     descripcion: "Rehecho como un árbol claro, que también se lee bien en el celular (antes era un dibujo con guiones que se desarmaba). Mismo contenido." },
 ];
+
+// ── Checklists recuperados de los manuales de Drive ─────────────────────────────────────────
+// Ítems que estaban en las versiones de Drive (v1.0 de abril-mayo, v2.0 de junio y el documento
+// unificado de septiembre) y no llegaron al manual publicado. Se respetó la regla del informe de
+// revisión: checklists de resultados y no más de 10 ítems por momento. Se insertan al final del
+// momento que corresponde (sin repetir lo que ya está) y Gerencia los revisa en el editor antes de
+// publicar; las secciones nuevas van antes de "Pendientes de definición".
+const AGREGADOS = {
+  clave: "checklists-drive-2026-10",
+  titulo: "Checklists recuperados de Drive",
+  descripcion: "Ítems y planillas de los manuales de Drive que no habían llegado al sitio. Se suman a cada checklist, sin pasar de 10 por momento.",
+  manuales: [
+    { manual: "cajeros", checklists: [
+      { lista: "Checklist — Cajero", momento: "Apertura", items: ["Tablet o computadora cargada e impresora de tickets con papel", "Superficie de trabajo limpia y ordenada"] },
+      { lista: "Checklist — Cajero", momento: "Durante el turno", items: ["Cada pedido entregado completo y correcto"] },
+      { lista: "Checklist — Cajero", momento: "Cierre", items: ["Vouchers ordenados, transferencias controladas y cierres de posnet impresos"] },
+    ] },
+    { manual: "baristas", checklists: [
+      { lista: "Checklist — Barista", momento: "Apertura", items: ["Grupos purgados antes del café de prueba", "Hielo, jarabes y leches alternativas suficientes para el turno", "Paños limpios: uno para la lanza, uno general y uno para la jarra"] },
+      { lista: "Checklist — Barista", momento: "Durante el turno", items: ["Barra seca y ordenada; utensilios lavados entre preparaciones", "Paños sucios cambiados"] },
+      { lista: "Checklist — Barista", momento: "Cierre", items: ["Heladera limpia y cargada con lácteos para el turno siguiente", "Piso de barra limpio"] },
+    ] },
+    { manual: "vendedores y mozos", checklists: [
+      { lista: "Checklist — Vendedores", momento: "Apertura", items: ["Bolsas, cajas, pinzas y guantes disponibles", "Mensajes y notas del turno anterior revisados"] },
+      { lista: "Checklist — Vendedores", momento: "Durante el turno", items: ["Un adicional ofrecido en cada venta, una vez y sin insistir", "Descartables repuestos: bolsas, cajas y papel"] },
+      { lista: "Checklist — Vendedores", momento: "Cierre", items: ["Heladeras repuestas para el turno siguiente", "Faltantes e incidencias anotados para el turno siguiente"] },
+      { lista: "Checklist — Mozos", momento: "Apertura", items: ["Vajilla completa y guardada en su lugar"] },
+      { lista: "Checklist — Mozos", momento: "Cierre", items: ["Repisas, cajones y mobiliario ordenados"] },
+    ] },
+    { manual: "manejo y lavado de vajilla", checklists: [
+      { lista: "Checklist — Vajilla", momento: "Durante el turno", items: ["Vajilla separada por tipo al dejarla en la bacha"] },
+    ], secciones: [{ titulo: "Planillas: recuento mensual y registro de roturas", marca: "Recuento mensual de vajilla", html: `
+<h2>Planillas: recuento mensual y registro de roturas</h2>
+<p>Las dos planillas para imprimir están en Drive (<b>planillas-vajilla</b>, en "Manuales — material de trabajo"). Ya traen las columnas de <b>pieza</b> y <b>turno</b> en el registro de roturas, y el <b>stock mínimo</b> en el recuento.</p>
+<h3>Registro de roturas</h3>
+<p>Toda rotura se anota <b>el mismo día</b>, sin importar cómo pasó. No es para buscar culpables: es para reponer antes de que falte. Las piezas astilladas o rajadas también se anotan y se retiran.</p>
+<div class="tabla"><table><thead><tr><th>Fecha</th><th>Turno</th><th>Pieza</th><th>Cantidad</th><th>Rota o astillada</th><th>Anotó</th></tr></thead><tbody>
+<tr><td>Día</td><td>Mañana o tarde</td><td>Qué pieza (taza de 180 cc, plato de postre…)</td><td>Cuántas</td><td>R o A</td><td>Quién la anotó</td></tr></tbody></table></div>
+<h3>Recuento mensual de vajilla</h3>
+<p>Se cuenta una vez por mes en cada local, en tres hojas: <b>vajilla de salón y barra</b> (tazas, vasos, jarras, cubiertos, platos, cuencos y tablas), <b>servicio, barra y cocina</b> (azucareros, saleros, bandejas, teteras, pitcher, tamper, utensilios y contenedores) y <b>descartables y textiles</b> (vasos de polipapel, servilletas, sorbetes, bandejas, microfibras y repasadores).</p>
+<h2>Checklist — Recuento de vajilla</h2>
+<p>☐ Todo limpio y guardado: antes de abrir o después de cerrar</p>
+<p>☐ Cada pieza contada en salón, barra, cocina y depósito</p>
+<p>☐ Total comparado con el mes anterior: la diferencia coincide con las roturas anotadas</p>
+<p>☐ Lo que falta para llegar al stock mínimo, anotado en "Pedir"</p>
+<p>☐ Piezas astilladas o rajadas retiradas, sin contar</p>
+<p>☐ Planilla firmada por quien contó y por quien revisó</p>` }] },
+    { manual: "experto del turno", secciones: [{ titulo: "Núcleo de apertura: los 10 que no pueden fallar", marca: "Núcleo de apertura", html: `
+<h2>Núcleo de apertura: los 10 que no pueden fallar</h2>
+<p>De los incidentes revisados en San Luis, la mayoría ya estaba escrita en un checklist. Por eso, antes de abrir, el Experto verifica <b>este núcleo</b> todos los días, en todos los puestos. El resto de los checklists lo controla cada uno en su puesto.</p>
+<p>☐ Heladeras y freezers de todos los sectores a temperatura</p>
+<p>☐ Fondo de caja contado y apertura registrada en FUDO</p>
+<p>☐ Stock del día cargado en FUDO antes de vender</p>
+<p>☐ Vitrina con lo más fresco adelante y precios visibles</p>
+<p>☐ Cafetera a temperatura y café de prueba correcto</p>
+<p>☐ Pedidos de clientes del día revisados</p>
+<p>☐ Lo que hay que leudar, puesto a leudar</p>
+<p>☐ Baño de clientes limpio</p>
+<p>☐ Salón y mesas limpios y armados</p>
+<p>☐ Todo el equipo con uniforme completo y manos lavadas</p>` }] },
+    { manual: "compras", checklists: [
+      { lista: "Checklist — Compras", momento: "Recorrido", items: ["Si el efectivo no alcanzó, transferencia pedida a Administración"] },
+      { lista: "Checklist — Compras", momento: "Cierre", items: ["Lo que no se consiguió, anotado para mañana"] },
+    ] },
+  ],
+};
+const textoNormal = t => clave(String(t || "")).replace(/[^a-z0-9]+/g, " ").trim();
+const manualDeAgregado = m => Object.entries(S.indice || {}).find(([, x]) => clave(x.titulo) === m.manual);
+function agregadosPendientes() {
+  if (!esGerencia()) return [];
+  if (S.meta?.sugeridos?.[AGREGADOS.clave]) return [];
+  const hechos = S.meta?.agregados?.[AGREGADOS.clave] || {};
+  return AGREGADOS.manuales.map(m => ({ m, destino: manualDeAgregado(m) })).filter(x => x.destino && !hechos[x.destino[0]]);
+}
+// Inserta los ítems al final del momento que corresponde y las secciones antes de los pendientes.
+// Lo que ya está en el manual (mismo texto) no se repite.
+function aplicarAgregados(html, m) {
+  const d = new DOMParser().parseFromString(`<div>${html || ""}</div>`, "text/html");
+  const raiz = d.body.firstChild;
+  // Para no repetir: se compara contra los ítems de checklist (☐) que ya están; las secciones nuevas,
+  // contra todo el texto.
+  const todo = [...raiz.querySelectorAll("p,li")].filter(e => /^\s*☐/.test(e.textContent)).map(e => textoNormal(e.textContent)).join(" | ");
+  const todoTexto = textoNormal(raiz.textContent);
+  const hechos = [], noUbicados = [];
+  const esTitulo = e => /^H[34]$/.test(e.tagName);
+  for (const c of m.checklists || []) {
+    const h2 = [...raiz.children].find(e => e.tagName === "H2" && textoNormal(e.textContent).startsWith(textoNormal(c.lista)));
+    const nuevos = c.items.filter(it => !todo.includes(textoNormal(it)));
+    if (!nuevos.length) continue;
+    if (!h2) { noUbicados.push(...nuevos); continue; }
+    const rango = [];
+    for (let e = h2.nextElementSibling; e && e.tagName !== "H2"; e = e.nextElementSibling) rango.push(e);
+    const h3 = rango.find(e => esTitulo(e) && textoNormal(e.textContent).startsWith(textoNormal(c.momento)));
+    let ancla = h3 || h2, dentro = !h3;
+    for (const e of rango) {
+      if (e === h3) { dentro = true; continue; }
+      if (dentro && h3 && esTitulo(e)) break;
+      if (dentro && /^\s*☐/.test(e.textContent)) ancla = e;
+    }
+    for (const it of nuevos) { const p = d.createElement("p"); p.textContent = "☐ " + it; ancla.after(p); ancla = p; hechos.push(it); }
+  }
+  for (const sec of m.secciones || []) {
+    if (todoTexto.includes(textoNormal(sec.marca))) continue;
+    const antes = [...raiz.children].find(e => e.tagName === "H2" && /^(pendientes de definicion|documentos relacionados)/.test(textoNormal(e.textContent)));
+    const tmp = d.createElement("div"); tmp.innerHTML = sec.html.trim();
+    for (const n of [...tmp.childNodes]) { if (antes) antes.before(n); else raiz.appendChild(n); }
+    hechos.push(sec.titulo);
+  }
+  for (const it of noUbicados) { const p = d.createElement("p"); p.textContent = "☐ " + it; raiz.appendChild(p); hechos.push(it); }
+  return { html: raiz.innerHTML, hechos };
+}
+async function abrirAgregado(id) {
+  const x = agregadosPendientes().find(y => y.destino[0] === id); if (!x) return;
+  let hechos = [];
+  await abrirEditor(id, null, { agregado: AGREGADOS.clave, pendiente: true, transformar: html => { const r = aplicarAgregados(html, x.m); hechos = r.hechos; return r.html; } });
+  if (!hechos.length) {
+    S.edit = null; S.vista = "inicio";
+    await update(ref(db, "manuales/contenido/meta"), { [`agregados/${AGREGADOS.clave}/${id}`]: Date.now() });
+    toast("Ese manual ya tenía todo: no hay nada para sumar.");
+    pintar(); return;
+  }
+  estadoEditor(`Se sumaron ${hechos.length}: ${hechos.join(" · ")}. Revisalo y tocá Publicar.`);
+}
 const destinoSugerido = x => x.reemplaza ? Object.entries(S.indice || {}).find(([, m]) => clave(m.titulo) === x.reemplaza) : null;
 function sugeridosPendientes() {
   if (!esGerencia()) return [];
@@ -1888,7 +2016,11 @@ async function abrirEditor(id, borradorKey, cambios) {
       visible: true, roles: {}, html: "<h2>1. Objetivo</h2><p>Escribí acá.</p>" };
   }
   S.edit = { ...e, pendiente: false, estado: e.recuperado ? `Recuperé lo que estabas escribiendo (${new Date(e.recuperado).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}).` : "" };
-  if (cambios) S.edit = { ...S.edit, ...cambios };
+  if (cambios) {
+    const { transformar, ...resto } = cambios;
+    S.edit = { ...S.edit, ...resto };
+    if (typeof transformar === "function") S.edit.html = transformar(S.edit.html);
+  }
   S.versiones = null;
   S.vista = "editar";
   pintar(); window.scrollTo(0, 0);
@@ -1916,7 +2048,7 @@ async function guardarBorrador() {
   clearTimeout(_timerBorrador);
   const e = leerEditor(); if (!e || !e.pendiente) return;
   const k = claveBorrador(e);
-  const b = { id: e.id || null, titulo: e.titulo, parte: e.parte, nuevaParte: e.nuevaParte || "", version: e.version, aplicaA: e.aplicaA, visible: e.visible, roles: e.roles, html: limpiarHtml(e.html), guardadoEn: Date.now(), ...(e.origen ? { origen: e.origen } : {}) };
+  const b = { id: e.id || null, titulo: e.titulo, parte: e.parte, nuevaParte: e.nuevaParte || "", version: e.version, aplicaA: e.aplicaA, visible: e.visible, roles: e.roles, html: limpiarHtml(e.html), guardadoEn: Date.now(), ...(e.origen ? { origen: e.origen } : {}), ...(e.agregado ? { agregado: e.agregado } : {}) };
   try { localStorage.setItem("manual-borrador-" + k, JSON.stringify(b)); } catch {}
   try {
     await set(ref(db, `manuales/borradores/${k}`), b);
@@ -1959,6 +2091,7 @@ async function publicarEdicion() {
   const upd = {
     [`contenido/indice/${id}`]: entrada, [`contenido/html/${id}`]: a.html, [`contenido/texto/${id}`]: a.texto.slice(0, 200000),
     "contenido/meta/editadoEn": ahora, [`borradores/${claveBorrador(e)}`]: null,
+    ...(e.agregado ? { [`contenido/meta/agregados/${e.agregado}/${id}`]: ahora } : {}),
   };
   if (previo && previo.hash !== hash) {
     upd[`historial/${id}/${ahora}`] = { titulo: previo.titulo, version: previo.version || "", html: S.html[id] ?? (await cargarHtml(id)), guardadoEn: previo.editado || S.meta?.importadoEn || ahora };
@@ -2513,6 +2646,7 @@ async function onClick(ev) {
     else if (act === "nuevo-manual") await abrirEditor(null);
     else if (act === "sugerido") abrirSugerido(el.getAttribute("data-id"));
     else if (act === "sugerido-no") await descartarSugerido(el.getAttribute("data-id"));
+    else if (act === "agregado") await abrirAgregado(el.getAttribute("data-id"));
     else if (act === "seguir-borrador") await abrirEditor(null, el.getAttribute("data-k"));
     else if (act === "descartar-borrador") await descartarBorrador(el.getAttribute("data-k"));
     else if (act === "salir-editor") await salirEditor();
