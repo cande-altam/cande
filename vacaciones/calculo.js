@@ -23,8 +23,7 @@ const PEOPLE=[
   {n:"Lucía",ap:"Altamirano",ingreso:"2023-12-01"},
   {n:"Luciana",ap:"Maizares",ingreso:"2023-12-01"},
   {n:"Gabriel",ap:"Cruz",ingreso:"2024-06-01"},
-  // Leandro Villagra, el barista — no confundir con Leandro Tolaba (producción/Cuadra, más abajo).
-  {n:"Leandro Villagra",ingreso:"2026-06-03"},
+  // (Leandro Villagra, el barista, dejó el equipo en oct 2026)
   {n:"Leandro Tolaba",ingreso:"2024-08-01"},
   {n:"Mariano",ap:"Martinegro",ingreso:"2025-10-01",aprox:true},
   {n:"Luis",ap:"Comune",ingreso:"2023-12-01"},
@@ -58,6 +57,19 @@ const PEOPLE=[
   {n:"Walter",ap:"Martínez",ingreso:"2022-02-23"},
 ];
 const BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
+// Puesto de cada uno (el mismo de Cronogramas), para ver en el planificador quiénes del MISMO
+// puesto piden las mismas fechas. Quien no figura acá va a "Producción y otros".
+const PUESTOS={caja:"Caja",atencion:"Atención",barra:"Barra",cocina:"Cocina",ayudante:"Ayudante de cocina",compras:"Compras",otros:"Producción y otros"};
+const PUESTO_DE={
+  Natalia:"caja",Javier:"caja",Aaron:"caja",
+  "Érica":"atencion",Paula:"atencion",Margarita:"atencion",Brenda:"atencion",Valentina:"atencion",
+  Guadalupe:"atencion",Dana:"atencion",Milagros:"atencion",Zoe:"atencion",Rebeca:"atencion",
+  Luciana:"barra",Gabriel:"barra",Mariano:"barra",
+  Luis:"cocina",Vanesa:"cocina",Lucas:"cocina","Matías":"cocina",Gonzalo:"cocina",
+  "Lázaro":"ayudante",Jhon:"ayudante",
+  Rodrigo:"compras",
+};
+function puestoDe(n){return PUESTO_DE[n]||"otros";}
 function nombreCompleto(n){const p=BY_NAME[n];return p&&p.ap?`${n} ${p.ap}`:n;}
 const PRIMER_PERIODO=2025; // el balance arranca acá (saldo 2025/26 + lo que se va sumando)
 const DIAS_TRABAJO_SEMANA=6; // 1 franco por semana, igual que en Cronogramas

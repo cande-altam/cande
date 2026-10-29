@@ -3100,6 +3100,20 @@ function renombrarLeandroVillagra(){
   if(Object.prototype.hasOwnProperty.call(state.roleOverride,DE)){state.roleOverride[A]=state.roleOverride[DE];delete state.roleOverride[DE];}
   if(Object.prototype.hasOwnProperty.call(state.backupOverride,DE)){state.backupOverride[A]=state.backupOverride[DE];delete state.backupOverride[DE];}
 }
+// Leandro Villagra dejó el equipo (oct 2026). Lo habían sumado a mano, así que vive en
+// state.peopleExtra: se le da de baja una sola vez, igual que con "Sacar" (queda en "Dados de baja"
+// y se puede volver a sumar; si alguien lo vuelve a sumar, esto no lo saca de nuevo).
+function bajaLeandroVillagra(){
+  const TAG="baja-leandro-villagra-2026-10";
+  if(migrationDone(TAG))return;
+  marcarMigracion(TAG);
+  const nombre="Leandro Villagra";
+  const i=(state.peopleExtra||[]).findIndex(p=>p.n===nombre);
+  if(i<0)return;
+  state.peopleBaja=(state.peopleBaja||[]).filter(b=>b.n!==nombre).concat({n:nombre,fecha:"2026-10-29",persona:state.peopleExtra[i]});
+  state.peopleExtra.splice(i,1);
+  rebuildPeople();
+}
 function runMigrations(){
   if(!state.peopleExtra)state.peopleExtra=[];
   if(!state.peopleBaja)state.peopleBaja=[];
@@ -3107,6 +3121,7 @@ function runMigrations(){
   rebuildPeople(); // primero, así BY_NAME ya incluye a la gente agregada a mano antes de todo lo demás
   state.ex.forEach(e=>{if(e.id==null)e.id=Date.now()+"-"+Math.round(Math.random()*1e6);});
   renombrarLeandroVillagra();
+  bajaLeandroVillagra();
   seedFixedRules();
   seedCocinaComprasCajero();
   limpiarPersonasDadasDeBaja();

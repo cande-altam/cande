@@ -78,6 +78,8 @@
 
   .layout{display:grid;grid-template-columns:340px 1fr;gap:18px;margin-top:18px;align-items:start}
   @media (max-width:1000px){.layout{grid-template-columns:1fr;display:flex;flex-direction:column}main{order:1}.rail{order:2}}
+  /* que las tablas y calendarios anchos scrolleen adentro de su tarjeta, no la página entera */
+  main,.rail{min-width:0;max-width:100%}
 
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
   .card h2{font-size:16px;padding:14px 16px 0}
@@ -136,7 +138,7 @@
   /* calendario */
   .calHead{display:flex;align-items:center;gap:10px;padding:14px 16px 0}
   .calHead h2{flex:1}
-  .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:12px 16px 16px}
+  .calGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:12px 16px 16px}
   .calGrid .dow{background:var(--panel-2);padding:6px 4px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--ink-soft)}
   .calGrid .day{background:var(--panel);min-height:78px;padding:5px;font-size:11px}
   .calGrid .day.otherMonth{background:var(--panel-2);opacity:.4}
@@ -145,6 +147,75 @@
   .calChip{display:block;font-size:10px;font-weight:700;border-radius:5px;padding:1px 5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .calChip.conf{background:var(--ok-soft);color:var(--ok)}
   .calChip.pend{background:var(--warn-soft);color:var(--warn)}
+
+  /* planificador de pedidos */
+  .pl-filtros{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .pl-chip{border:1px solid var(--line-strong);background:var(--panel-2);border-radius:20px;padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink)}
+  .pl-chip.on{background:var(--negro);border-color:var(--negro);color:var(--crema)}
+  .pl-chip small{opacity:.65;font-weight:400;margin-left:3px}
+  .pl-tit{display:block;margin-top:14px}
+  .pl-ayuda{font-size:11.5px;color:var(--ink-soft);margin:2px 0 6px}
+  .pl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  .pl-anio{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(15px,1fr);gap:2px;align-items:end;min-width:640px;padding:16px 0 22px;position:relative}
+  .pl-sem{height:62px;display:flex;flex-direction:column;justify-content:flex-end;cursor:pointer;border-radius:4px;position:relative;background:var(--panel-2)}
+  .pl-sem i{display:block;background:var(--teal);border-radius:3px 3px 0 0;min-height:0}
+  .pl-sem.choca i{background:var(--crit)}
+  .pl-sem.sel{background:var(--chip);box-shadow:inset 0 -3px 0 var(--ink)}
+  .pl-sem b{position:absolute;top:-14px;left:0;right:0;text-align:center;font-size:9.5px;color:var(--ink-soft);font-weight:700}
+  .pl-sem .mes{position:absolute;bottom:-18px;left:0;font-size:9.5px;color:var(--ink-soft);white-space:nowrap;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .pl-mesHead{display:flex;align-items:center;gap:10px;margin-top:22px}
+  .pl-mesHead h3{flex:1;text-align:center;font-size:17px}
+  .pl-leyenda{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--ink-soft);margin:8px 0 6px}
+  .pl-leyenda span{display:inline-flex;align-items:center;gap:5px}
+  .pl-leyenda .pl-barra{position:static;display:inline-block;width:22px;height:10px;padding:0}
+  .pl{--dias:31;--nom:128px;min-width:calc(var(--nom) + var(--dias) * 22px);font-size:12px}
+  .pl-fila{display:flex;border-bottom:1px solid var(--line)}
+  .pl-nom{flex:0 0 var(--nom);position:sticky;left:0;z-index:3;background:var(--panel);padding:5px 8px 5px 0;font-weight:600;line-height:1.2;border-right:1px solid var(--line)}
+  .pl-nom small{display:block;font-weight:400;font-size:10.5px;color:var(--ink-soft)}
+  .pl-nom .ok{color:var(--ok)}
+  .pl-dias{flex:1;display:grid;grid-template-columns:repeat(var(--dias),1fr)}
+  .pl-dia{text-align:center;font-size:10px;color:var(--ink-soft);padding:3px 0;line-height:1.15}
+  .pl-dia b{display:block;font-size:11px;color:var(--ink)}
+  .pl-dia.finde{background:var(--chip)}
+  .pl-dia.hoy b{color:var(--accent-ink)}
+  .pl-carriles{flex:1;padding:3px 0;background-image:linear-gradient(to right,var(--line) 1px,transparent 1px);background-size:calc(100% / var(--dias)) 100%}
+  .pl-carril{position:relative;height:20px;margin:2px 0}
+  .pl-barra{position:absolute;top:0;bottom:0;border-radius:6px;border:none;padding:0 5px;font-size:10.5px;font-weight:700;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:#fff;background:var(--terracota)}
+  .pl-barra.op2{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--terracota) 75%,transparent) 0 6px,color-mix(in srgb,var(--terracota) 50%,transparent) 6px 12px);color:#fff}
+  .pl-barra.op3{background:var(--panel);border:2px dashed var(--terracota);color:var(--accent-ink)}
+  .pl-barra.aprobada{background:var(--ok);color:#fff}
+  .pl-barra.tomada{background:var(--ok-soft);border:1px solid var(--ok);color:var(--ok);cursor:default}
+  .pl-barra.resuelta{background:var(--chip);color:var(--ink-soft);text-decoration:line-through;border:1px solid var(--line-strong)}
+  .pl-barra.choca{box-shadow:0 0 0 2px var(--crit)}
+  .pl-barra.sigue-izq{border-top-left-radius:0;border-bottom-left-radius:0}
+  .pl-barra.sigue-der{border-top-right-radius:0;border-bottom-right-radius:0}
+  .pl-grupo{padding:9px 0 3px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--accent-ink);position:sticky;left:0}
+  .pl-cuenta .pl-nom{font-weight:700;font-size:11px}
+  .pl-cuenta .pl-dia{font-weight:700;font-size:11px;color:var(--ink)}
+  .pl-cuenta .pl-dia.n2{background:var(--warn-soft);color:var(--warn)}
+  .pl-cuenta .pl-dia.choca{background:var(--crit-soft);color:var(--crit)}
+  .pl-vacio{padding:16px 0;color:var(--ink-soft);font-size:12.5px}
+  .pl-choques{background:var(--crit-soft);border:1px solid color-mix(in srgb,var(--crit) 30%,transparent);border-radius:11px;padding:10px 12px;margin-bottom:6px}
+  .pl-choques b.t{color:var(--crit);font-size:12.5px}
+  .pl-choque{display:block;width:100%;text-align:left;border:none;background:transparent;padding:6px 0;border-top:1px solid color-mix(in srgb,var(--crit) 18%,transparent);font-size:12.5px;cursor:pointer;color:var(--ink);line-height:1.35}
+  .pl-choque:first-of-type{border-top:none}
+  .pl-choque small{color:var(--ink-soft)}
+  .pl-ok{background:var(--ok-soft);color:var(--ok);border-radius:11px;padding:9px 12px;font-size:12.5px;font-weight:600;margin-bottom:6px}
+  .pl-lista{margin-top:16px;font-size:12.5px}
+  .pl-lista summary{cursor:pointer;font-weight:700;color:var(--ink-soft)}
+  /* detalle de un pedido */
+  .det h4{margin:14px 0 6px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--accent-ink)}
+  .det .fechas{font-family:var(--font-display);font-size:20px;line-height:1.2}
+  .det .datos{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .det .dato{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:11.5px}
+  .det .dato b{display:block;font-size:14px}
+  .det .co{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;margin-top:6px;font-size:12.5px;cursor:pointer;background:var(--panel-2);width:100%;text-align:left;color:var(--ink)}
+  .det .co.mismo{border-color:color-mix(in srgb,var(--crit) 45%,transparent);background:var(--crit-soft)}
+  .det .co .r{margin-left:auto;text-align:right;font-size:11px;color:var(--ink-soft);white-space:nowrap}
+  .det .acciones{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .det .acciones .btn{flex:1 1 140px;justify-content:center}
+  .det .nota{font-style:italic;color:var(--ink-soft);margin-top:6px;font-size:12.5px}
+  @media (max-width:640px){.noteOverlay.sheet{align-items:flex-end;padding:0}.noteOverlay.sheet .noteCard{border-radius:16px 16px 0 0;max-height:88vh;overflow:auto}}
 
   .alert{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:10px;margin-top:8px;font-size:12.5px;border:1px solid transparent}
   .alert .dot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex:none}
@@ -260,13 +331,33 @@
         <div class="card-body" id="alertList"></div>
       </section>
 
-      <section class="card" style="margin-bottom:18px">
+      <section class="card" style="margin-bottom:18px" id="planCard">
         <div class="calHead" style="padding-bottom:6px">
           <h2 style="flex:1">Pedidos para <span id="solicitudesAnio"></span></h2>
           <button class="btn sm" id="btnCopiarLink" type="button" title="Copiar el link para mandarles a todos">🔗 Copiar link para compartir</button>
         </div>
-        <p class="sub">Cada persona carga sus fechas preferidas desde ese link (sin necesitar esta contraseña) — queda registrado el día y la hora en que lo mandó.</p>
-        <div class="card-body" id="solicitudesList"></div>
+        <p class="sub">Cada persona carga sus fechas desde ese link, con más de una opción. Acá ves todas juntas: con quiénes coincide cada una y, tocando una barra, la aprobás.</p>
+        <div class="card-body">
+          <div class="pl-filtros" id="plFiltros"></div>
+          <div id="plChoques"></div>
+          <span class="eyebrow pl-tit">El año de un vistazo</span>
+          <p class="pl-ayuda">Cuánta gente pidió cada semana. En rojo, las semanas donde se pisan dos del mismo puesto. Tocá una semana para verla.</p>
+          <div class="pl-scroll"><div class="pl-anio" id="plAnio"></div></div>
+          <div class="pl-mesHead">
+            <button class="btn icon-btn" id="plPrev" title="Mes anterior">‹</button>
+            <h3 id="plMesTit"></h3>
+            <button class="btn icon-btn" id="plNext" title="Mes siguiente">›</button>
+          </div>
+          <div class="pl-leyenda">
+            <span><i class="pl-barra op1"></i>1ª opción</span><span><i class="pl-barra op2"></i>2ª</span><span><i class="pl-barra op3"></i>3ª o más</span>
+            <span><i class="pl-barra aprobada"></i>Aprobada</span><span><i class="pl-barra tomada"></i>Ya cargada</span><span><i class="pl-barra resuelta"></i>Descartada / ya tiene otra</span>
+          </div>
+          <div class="pl-scroll"><div class="pl" id="plMes"></div></div>
+          <details class="pl-lista">
+            <summary>Ver los pedidos como lista</summary>
+            <div id="solicitudesList" style="margin-top:10px"></div>
+          </details>
+        </div>
       </section>
 
       <section class="card" style="margin-bottom:18px">
@@ -386,7 +477,7 @@ window.SolicitudesSync = {
 <script src="calculo.js"></script>
 <script>
 "use strict";
-const APP_VERSION="2026-10-28 planilla-drive";
+const APP_VERSION="2026-10-29 planificador";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -413,7 +504,7 @@ function saldoTotal(name){
 }
 
 /* ---------------- ESTADO ---------------- */
-function defaultState(){return{taken:[],overrides:{},overridesTomado:{}};}
+function defaultState(){return{taken:[],overrides:{},overridesTomado:{},pedidosDescartados:{}};}
 let state=defaultState();
 const LS="candela_vacaciones_v1";
 const UNDO_LIMIT=60;
@@ -565,6 +656,7 @@ function render(){
   renderVacList();
   renderAlerts();
   renderSolicitudes();
+  renderPlanificador();
   renderCalendar();
   fillFormSelects();
 }
@@ -720,7 +812,7 @@ function renderSolicitudes(){
   document.querySelectorAll(".anioGoce").forEach(e=>e.textContent=ANIO_PEDIDO);
   document.querySelectorAll(".anioPeriodo").forEach(e=>e.textContent=PERIODO_PEDIDO);
   const el=document.getElementById("solicitudesList");
-  const filas=Object.entries(solicitudes).map(([id,s])=>({id,...s})).filter(s=>s.periodo===ANIO_PEDIDO);
+  const filas=Object.entries(solicitudes).map(([id,s])=>({id,...s})).filter(s=>s.periodo===ANIO_PEDIDO&&BY_NAME[s.n]);
   if(!filas.length){el.innerHTML=`<p class="sub" style="padding:0">Todavía no llegó ningún pedido para ${ANIO_PEDIDO}.</p>`;return;}
   filas.sort((a,b)=>(a.enviadoEn||"").localeCompare(b.enviadoEn||""));
   // superposición: dos pedidos de PERSONAS DISTINTAS con fechas que se cruzan
@@ -735,7 +827,7 @@ function renderSolicitudes(){
       excede?`<span class="pill pend" title="Período ${disp.periodo}: le corresponden ${disp.corresponde}${disp.tomado?`, ya usó ${disp.tomado}`:""}${disp.anteriores?`, y le quedan ${disp.anteriores} de períodos anteriores`:""}">⚠ pide ${dias}d, tiene ${disp.total}</span>`:"",
       cruces.length?`<span class="pill pend" title="${cruces.map(c=>c.n).join(', ')}">⚠ se cruza con ${cruces.map(c=>c.n).join(', ')}</span>`:"",
     ].filter(Boolean).join(" ");
-    return`<div class="mini-row"><b>${s.n}</b>${s.orden>1?` (opción ${s.orden})`:""} · ${fmtFecha(s.desde)} al ${fmtFecha(s.hasta)} (${dias}d) ${avisos}${s.nota?` · <i>${s.nota}</i>`:""} · <span style="color:var(--ink-soft)">enviado ${enviado}</span> <button class="x" data-id="${s.id}" title="Borrar pedido">×</button></div>`;
+    return`<div class="mini-row"><b>${s.n}</b>${s.orden>1?` (opción ${s.orden})`:""} · ${fmtFecha(s.desde)} al ${fmtFecha(s.hasta)} (${dias}d) ${avisos}${s.nota?` · <i>${escH(s.nota)}</i>`:""} · <span style="color:var(--ink-soft)">enviado ${enviado}</span> <button class="x" data-id="${s.id}" title="Borrar pedido">×</button></div>`;
   }).join("");
   el.querySelectorAll(".x").forEach(b=>b.addEventListener("click",()=>{
     if(!confirm("¿Borrar este pedido?"))return;
@@ -743,7 +835,258 @@ function renderSolicitudes(){
     toast("Pedido borrado");
   }));
 }
-window.addEventListener("solicitudes-update",e=>{solicitudes=e.detail||{};renderSolicitudes();});
+window.addEventListener("solicitudes-update",e=>{solicitudes=e.detail||{};renderSolicitudes();renderPlanificador();});
+/* ---------------- PLANIFICADOR DE PEDIDOS ----------------
+   Todas las opciones que mandó cada persona, en un calendario: el año por semanas (cuánta gente
+   pidió cada una) y el mes día por día, una fila por persona. Lo que importa para decidir es quién
+   coincide con quién DEL MISMO PUESTO (dos cajeros afuera a la vez), así que eso va en rojo.
+   Aprobar una opción la carga como vacación confirmada (state.taken con `solicitud` = id del
+   pedido); las otras opciones de esa persona quedan "resueltas". Descartar se guarda en
+   state.pedidosDescartados. Los pedidos en sí (vacaciones/solicitudes) no se tocan. */
+const escH=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let planMes=null, planPuesto="";
+const ORDEN_PUESTOS=Object.keys(PUESTOS);
+function isoDe(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function sumarDiasISO(iso,n){const d=fecha(iso);d.setDate(d.getDate()+n);return isoDe(d);}
+function diasEnComun(a,b){const d=a.desde>b.desde?a.desde:b.desde,h=a.hasta<b.hasta?a.hasta:b.hasta;return d<=h?rangoDias(d,h):0;}
+function fmtCorto(iso){const[y,m,d]=iso.split("-");return`${d}/${m}`;}
+function aprobadaDe(id){return state.taken.find(t=>t.solicitud===id);}
+function esDescartado(id){return !!(state.pedidosDescartados&&state.pedidosDescartados[id]);}
+// Todo lo que se dibuja: los pedidos del año (de gente que sigue en el equipo) y las vacaciones ya
+// cargadas que terminan de hoy en adelante y no salieron de un pedido.
+function itemsPlan(){
+  const pedidos=Object.entries(solicitudes).map(([id,s])=>({id,...s}))
+    .filter(s=>s.periodo===ANIO_PEDIDO&&BY_NAME[s.n]&&s.desde&&s.hasta&&s.hasta>=s.desde);
+  const conAprobada=new Set(pedidos.filter(s=>aprobadaDe(s.id)).map(s=>s.n));
+  const items=pedidos.map(s=>{
+    const estado=aprobadaDe(s.id)?"aprobada":esDescartado(s.id)?"descartada":conAprobada.has(s.n)?"resuelta":"abierta";
+    return{tipo:"pedido",id:s.id,n:s.n,desde:s.desde,hasta:s.hasta,orden:s.orden||1,nota:s.nota||"",enviadoEn:s.enviadoEn||"",estado};
+  });
+  const hoyISO=isoHoy();
+  state.taken.filter(t=>!t.solicitud&&BY_NAME[t.n]&&t.hasta>=hoyISO).forEach(t=>
+    items.push({tipo:"tomada",id:"t-"+t.id,n:t.n,desde:t.desde,hasta:t.hasta,orden:0,nota:t.nota||"",estado:t.estado==="confirmada"?"tomada":"tomada-pend"}));
+  return items;
+}
+// "activo" = todavía cuenta para ver coincidencias (no descartado ni reemplazado por otra opción)
+const activo=it=>it.estado==="abierta"||it.estado==="aprobada"||it.estado==="tomada"||it.estado==="tomada-pend";
+const filtraPuesto=it=>!planPuesto||puestoDe(it.n)===planPuesto;
+function choquesDe(it,items){
+  return items.filter(o=>o.n!==it.n&&activo(o)&&diasEnComun(it,o)>0);
+}
+function ordenLlegada(items){ // posición de cada pedido según cuándo lo mandó
+  const ped=items.filter(i=>i.tipo==="pedido").sort((a,b)=>(a.enviadoEn||"").localeCompare(b.enviadoEn||""));
+  const primero={};ped.forEach(p=>{if(!(p.n in primero))primero[p.n]=Object.keys(primero).length+1;});
+  return primero;
+}
+function etiquetaOpcion(it){return it.tipo==="tomada"?"ya cargada":it.orden+"ª opción";}
+
+function renderPlanificador(){
+  if(!document.getElementById("plMes"))return;
+  const items=itemsPlan();
+  // filtros por puesto (solo los que tienen algo)
+  const cuenta={};items.filter(i=>i.tipo==="pedido").forEach(i=>{const p=puestoDe(i.n);(cuenta[p]=cuenta[p]||new Set()).add(i.n);});
+  const totalPers=new Set(items.filter(i=>i.tipo==="pedido").map(i=>i.n)).size;
+  document.getElementById("plFiltros").innerHTML=`<button class="pl-chip ${planPuesto?"":"on"}" data-puesto="">Todos<small>${totalPers}</small></button>`
+    +ORDEN_PUESTOS.filter(p=>cuenta[p]).map(p=>`<button class="pl-chip ${planPuesto===p?"on":""}" data-puesto="${p}">${PUESTOS[p]}<small>${cuenta[p].size}</small></button>`).join("");
+  const vis=items.filter(filtraPuesto);
+  renderChoques(items,vis);
+  // rango de meses: del primero al último con algo pedido (o este mes si no hay nada)
+  const fechas=vis.filter(i=>i.tipo==="pedido").flatMap(i=>[i.desde,i.hasta]).sort();
+  const hoyISO=isoHoy();
+  let ini=(fechas[0]||hoyISO).slice(0,7), fin=(fechas[fechas.length-1]||hoyISO).slice(0,7);
+  if(hoyISO.slice(0,7)>ini&&hoyISO.slice(0,7)<=fin)ini=hoyISO.slice(0,7);
+  if(!planMes||planMes<ini||planMes>fin){
+    const proximo=fechas.find(f=>f>=hoyISO);
+    planMes=(proximo||fechas[0]||hoyISO).slice(0,7);
+  }
+  renderAnio(vis,ini,fin,items);
+  renderMesPlan(vis,items,ini,fin);
+}
+
+function renderChoques(items,vis){
+  const el=document.getElementById("plChoques");
+  const abiertos=vis.filter(i=>i.tipo==="pedido"&&i.estado!=="descartada"&&i.estado!=="resuelta");
+  if(!abiertos.length){el.innerHTML="";return;}
+  const pares=[],vistos=new Set();
+  for(const a of vis.filter(activo))for(const b of vis.filter(activo)){
+    if(a.n>=b.n||puestoDe(a.n)!==puestoDe(b.n))continue;
+    if(a.estado!=="abierta"&&b.estado!=="abierta")continue; // las dos ya decididas
+    const d=diasEnComun(a,b);if(!d)continue;
+    const k=a.id+"|"+b.id;if(vistos.has(k))continue;vistos.add(k);
+    pares.push({a,b,d});
+  }
+  if(!pares.length){el.innerHTML=`<div class="pl-ok">✓ Ningún pedido pendiente se pisa con alguien del mismo puesto.</div>`;return;}
+  pares.sort((x,y)=>(x.a.desde>x.b.desde?x.a.desde:x.b.desde).localeCompare(y.a.desde>y.b.desde?y.a.desde:y.b.desde));
+  const lado=i=>`<b>${escH(i.n)}</b> <small>(${etiquetaOpcion(i)}${i.estado==="aprobada"?", aprobada":""})</small>`;
+  const MAX=8;
+  el.innerHTML=`<div class="pl-choques"><b class="t">⚠ ${pares.length} coincidencia${pares.length===1?"":"s"} en el mismo puesto</b>
+    ${pares.slice(0,MAX).map(({a,b,d})=>{const abre=a.estado==="abierta"?a:b;return`<button class="pl-choque" data-abrir="${escH(abre.id)}" data-mes="${(a.desde>b.desde?a.desde:b.desde).slice(0,7)}">${PUESTOS[puestoDe(a.n)]} · ${lado(a)} y ${lado(b)}<br><small>${d} día${d===1?"":"s"} en común, desde el ${fmtCorto(a.desde>b.desde?a.desde:b.desde)}</small></button>`;}).join("")}
+    ${pares.length>MAX?`<small style="color:var(--ink-soft)">…y ${pares.length-MAX} más (filtrá por puesto para verlas).</small>`:""}</div>`;
+}
+
+function renderAnio(vis,ini,fin,items){
+  const el=document.getElementById("plAnio");
+  const desde=fecha(ini+"-01");const lunes=new Date(desde);lunes.setDate(lunes.getDate()-((lunes.getDay()+6)%7));
+  const [fy,fm]=fin.split("-").map(Number);const hasta=isoDe(new Date(fy,fm,0));
+  const act=vis.filter(activo);
+  const semanas=[];
+  for(let d=isoDe(lunes);d<=hasta;d=sumarDiasISO(d,7)){
+    const h=sumarDiasISO(d,6),rango={desde:d,hasta:h};
+    const en=act.filter(i=>diasEnComun(i,rango)>0);
+    const personas=new Set(en.map(i=>i.n));
+    // choque real: dos del mismo puesto afuera el MISMO día de esa semana, no solo la misma semana
+    const choca=en.some(a=>en.some(b=>{
+      if(a.n>=b.n||puestoDe(a.n)!==puestoDe(b.n))return false;
+      const cruce={desde:a.desde>b.desde?a.desde:b.desde,hasta:a.hasta<b.hasta?a.hasta:b.hasta};
+      return cruce.desde<=cruce.hasta&&diasEnComun(cruce,rango)>0;
+    }));
+    semanas.push({d,h,n:personas.size,choca,nombres:[...personas]});
+  }
+  const max=Math.max(1,...semanas.map(s=>s.n));
+  let mesPrevio="";
+  el.innerHTML=semanas.map(s=>{
+    const mesSem=s.d.slice(0,7)<ini?ini:(sumarDiasISO(s.d,3)).slice(0,7);
+    let etiqueta="";
+    if(mesSem!==mesPrevio){etiqueta=MESES[+mesSem.slice(5,7)-1].slice(0,3)+(!mesPrevio||mesSem.endsWith("-01")?" "+mesSem.slice(2,4):"");mesPrevio=mesSem;}
+    return`<div class="pl-sem ${s.choca?"choca":""} ${mesSem===planMes?"sel":""}" data-mes="${mesSem}" title="Semana del ${fmtCorto(s.d)} al ${fmtCorto(s.h)}: ${s.n?s.nombres.join(", "):"nadie"}">${s.n?`<b>${s.n}</b>`:""}<i style="height:${Math.round(s.n/max*100)}%"></i>${etiqueta?`<span class="mes">${etiqueta}</span>`:""}</div>`;
+  }).join("");
+}
+
+function renderMesPlan(vis,items,ini,fin){
+  const [y,m]=planMes.split("-").map(Number);
+  const dias=new Date(y,m,0).getDate();
+  const m0=planMes+"-01",m1=planMes+"-"+String(dias).padStart(2,"0"),rangoMes={desde:m0,hasta:m1};
+  document.getElementById("plMesTit").textContent=`${MESES[m-1]} ${y}`;
+  document.getElementById("plPrev").disabled=planMes<=ini;
+  document.getElementById("plNext").disabled=planMes>=fin;
+  const el=document.getElementById("plMes");
+  el.style.setProperty("--dias",dias);
+  const enMes=vis.filter(i=>diasEnComun(i,rangoMes)>0);
+  const hoyISO=isoHoy();
+  const DL=["D","L","M","M","J","V","S"];
+  const celdasDias=Array.from({length:dias},(_,i)=>{const d=new Date(y,m-1,i+1);const iso=isoDe(d);
+    return`<div class="pl-dia ${d.getDay()===0||d.getDay()===6?"finde":""} ${iso===hoyISO?"hoy":""}">${DL[d.getDay()]}<b>${i+1}</b></div>`;}).join("");
+  if(!enMes.length){
+    el.innerHTML=`<div class="pl-fila"><div class="pl-nom"></div><div class="pl-dias">${celdasDias}</div></div><div class="pl-vacio">Nadie pidió fechas en este mes${planPuesto?" para este puesto":""}.</div>`;
+    return;
+  }
+  const llegada=ordenLlegada(items);
+  const act=items.filter(activo);
+  const porPersona={};enMes.forEach(i=>(porPersona[i.n]=porPersona[i.n]||[]).push(i));
+  const nombres=Object.keys(porPersona).sort((a,b)=>ORDEN_PUESTOS.indexOf(puestoDe(a))-ORDEN_PUESTOS.indexOf(puestoDe(b))||a.localeCompare(b,"es"));
+  let h=`<div class="pl-fila"><div class="pl-nom"></div><div class="pl-dias">${celdasDias}</div></div>`;
+  let grupo="";
+  for(const n of nombres){
+    const pu=puestoDe(n);
+    if(pu!==grupo){grupo=pu;h+=`<div class="pl-grupo">${PUESTOS[pu]}</div>`;}
+    const its=porPersona[n].sort((a,b)=>a.orden-b.orden);
+    const aprob=items.some(i=>i.n===n&&i.estado==="aprobada");
+    const disp=disponibleParaGoce(state,n,ANIO_PEDIDO).total;
+    h+=`<div class="pl-fila"><div class="pl-nom">${escH(nombreCompleto(n))}<small>${aprob?`<span class="ok">✓ aprobada</span> · `:""}${disp} días${llegada[n]?` · pidió ${llegada[n]}º`:""}</small></div><div class="pl-carriles">`;
+    for(const it of its){
+      const d0=it.desde<m0?m0:it.desde,d1=it.hasta>m1?m1:it.hasta;
+      const a=+d0.slice(8,10),b=+d1.slice(8,10);
+      const choca=activo(it)&&act.some(o=>o.n!==it.n&&puestoDe(o.n)===pu&&diasEnComun(it,o)>0);
+      const cls=it.tipo==="tomada"?"tomada":it.estado==="aprobada"?"aprobada":(it.estado==="resuelta"||it.estado==="descartada")?"resuelta":"op"+Math.min(it.orden,3);
+      const txt=it.tipo==="tomada"?"Ya cargada":`${it.estado==="aprobada"?"✓ ":""}${it.orden}ª · ${rangoDias(it.desde,it.hasta)}d`;
+      h+=`<div class="pl-carril"><button type="button" class="pl-barra ${cls} ${choca?"choca":""} ${it.desde<m0?"sigue-izq":""} ${it.hasta>m1?"sigue-der":""}" style="left:${(a-1)/dias*100}%;width:${(b-a+1)/dias*100}%" ${it.tipo==="pedido"?`data-abrir="${escH(it.id)}"`:""} title="${escH(n)} · ${etiquetaOpcion(it)} · ${fmtFecha(it.desde)} al ${fmtFecha(it.hasta)}">${txt}</button></div>`;
+    }
+    h+=`</div></div>`;
+  }
+  // fila de cuántos piden cada día (de lo que se ve), en rojo si se pisan dos del mismo puesto
+  const actVis=enMes.filter(activo);
+  h+=`<div class="pl-fila pl-cuenta"><div class="pl-nom">Afuera ese día</div><div class="pl-dias">${Array.from({length:dias},(_,i)=>{
+    const iso=planMes+"-"+String(i+1).padStart(2,"0");
+    const en=actVis.filter(it=>it.desde<=iso&&iso<=it.hasta);
+    const pers=new Set(en.map(i=>i.n));
+    const porP={};en.forEach(i=>{const p=puestoDe(i.n);(porP[p]=porP[p]||new Set()).add(i.n);});
+    const choca=Object.values(porP).some(s=>s.size>1);
+    return`<div class="pl-dia ${choca?"choca":pers.size>1?"n2":""}" title="${escH([...pers].join(", "))}">${pers.size||""}</div>`;}).join("")}</div></div>`;
+  el.innerHTML=h;
+}
+
+function abrirPedido(id){
+  const items=itemsPlan();
+  const it=items.find(i=>i.id===id);if(!it)return;
+  const pu=puestoDe(it.n);
+  const dias=rangoDias(it.desde,it.hasta);
+  const disp=disponibleParaGoce(state,it.n,ANIO_PEDIDO);
+  const llegada=ordenLlegada(items);
+  const anios=(diffDias(fecha(ingresoDe(state,it.n)),hoy())/365.2425).toFixed(1);
+  const co=choquesDe(it,items).sort((a,b)=>(puestoDe(b.n)===pu)-(puestoDe(a.n)===pu)||a.desde.localeCompare(b.desde));
+  const otras=items.filter(o=>o.n===it.n&&o.id!==it.id&&o.tipo==="pedido").sort((a,b)=>a.orden-b.orden);
+  const enviado=it.enviadoEn?new Date(it.enviadoEn).toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"}):"—";
+  const coHtml=co.length?co.map(o=>{const mismo=puestoDe(o.n)===pu;
+    return`<button type="button" class="co ${mismo?"mismo":""}" ${o.tipo==="pedido"?`data-abrir="${escH(o.id)}"`:""}><span><b>${escH(nombreCompleto(o.n))}</b> · ${PUESTOS[puestoDe(o.n)]}<br><small>${etiquetaOpcion(o)}${o.estado==="aprobada"?" ✓ aprobada":""} · ${fmtCorto(o.desde)} al ${fmtCorto(o.hasta)}</small></span><span class="r">${diasEnComun(it,o)} d en común${o.tipo==="pedido"&&llegada[o.n]?`<br>pidió ${llegada[o.n]}º`:""}</span></button>`;}).join("")
+    :`<p class="sub" style="padding:0">No coincide con nadie. 🎉</p>`;
+  const estadoTxt={aprobada:"✓ Aprobada",descartada:"Descartada",resuelta:"Ya tiene otra opción aprobada",abierta:"Sin decidir"}[it.estado];
+  const acciones=it.estado==="aprobada"
+    ?`<button class="btn" data-acc="quitar">Quitar la aprobación</button>`
+    :it.estado==="descartada"
+      ?`<button class="btn" data-acc="reconsiderar">Volver a considerar</button><button class="btn primary" data-acc="aprobar">✓ Aprobar esta opción</button>`
+      :`<button class="btn" data-acc="descartar">Descartar</button><button class="btn primary" data-acc="aprobar">✓ Aprobar esta opción</button>`;
+  document.getElementById("planOverlay")?.remove();
+  const ov=document.createElement("div");ov.className="noteOverlay sheet";ov.id="planOverlay";
+  ov.innerHTML=`<div class="noteCard" style="max-width:480px"><div class="noteHead"><span>${escH(nombreCompleto(it.n))} · ${PUESTOS[pu]} · ${it.orden}ª opción</span><button type="button" data-acc="cerrar">✕</button></div>
+    <div class="noteBody det">
+      <div class="fechas">${fmtFecha(it.desde)} al ${fmtFecha(it.hasta)}</div>
+      <div class="datos">
+        <span class="dato"><b>${dias}</b>días pedidos</span>
+        <span class="dato" ${dias>disp.total?'style="border-color:var(--crit);color:var(--crit)"':""}><b>${disp.total}</b>días que tiene</span>
+        <span class="dato"><b>${llegada[it.n]||"—"}º</b>en pedir · ${enviado}</span>
+        <span class="dato"><b>${anios}</b>años en Candela</span>
+        <span class="dato"><b>${estadoTxt}</b>estado</span>
+      </div>
+      ${it.nota?`<div class="nota">“${escH(it.nota)}”</div>`:""}
+      <h4>Coincide con</h4>${coHtml}
+      ${otras.length?`<h4>Sus otras opciones</h4>${otras.map(o=>`<button type="button" class="co" data-abrir="${escH(o.id)}"><span><b>${o.orden}ª opción</b> · ${fmtCorto(o.desde)} al ${fmtCorto(o.hasta)} (${rangoDias(o.desde,o.hasta)}d)</span><span class="r">${choquesDe(o,items).filter(x=>puestoDe(x.n)===pu).length?`<span style="color:var(--crit)">choca con ${choquesDe(o,items).filter(x=>puestoDe(x.n)===pu).map(x=>escH(x.n)).join(", ")}</span>`:"sin choques en su puesto"}</span></button>`).join("")}`:""}
+      <div class="acciones">${acciones}</div>
+    </div></div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener("click",e=>{
+    if(e.target===ov)return ov.remove();
+    const b=e.target.closest("[data-acc],[data-abrir]");if(!b)return;
+    if(b.dataset.abrir)return abrirPedido(b.dataset.abrir);
+    const acc=b.dataset.acc;
+    if(acc==="cerrar")return ov.remove();
+    if(acc==="aprobar")return aprobarPedido(it,items);
+    if(acc==="quitar"){state.taken=state.taken.filter(t=>t.solicitud!==it.id);persist();render();toast("Aprobación quitada");return abrirPedido(it.id);}
+    if(acc==="descartar"){state.pedidosDescartados=Object.assign({},state.pedidosDescartados,{[it.id]:true});persist();render();toast("Opción descartada");return abrirPedido(it.id);}
+    if(acc==="reconsiderar"){if(state.pedidosDescartados)delete state.pedidosDescartados[it.id];persist();render();return abrirPedido(it.id);}
+  });
+}
+function aprobarPedido(it,items){
+  const dias=rangoDias(it.desde,it.hasta);
+  const disp=disponibleParaGoce(state,it.n,ANIO_PEDIDO);
+  const pu=puestoDe(it.n);
+  const avisos=[];
+  if(dias>disp.total)avisos.push(`Pide ${dias} días y tiene ${disp.total}.`);
+  const yaAfuera=items.filter(o=>o.n!==it.n&&puestoDe(o.n)===pu&&(o.estado==="aprobada"||o.estado==="tomada")&&diasEnComun(it,o)>0);
+  if(yaAfuera.length)avisos.push(`Ya está aprobado que en esas fechas no estén: ${yaAfuera.map(o=>o.n).join(", ")} (${PUESTOS[pu]}).`);
+  const otraAprob=items.find(o=>o.n===it.n&&o.estado==="aprobada");
+  if(otraAprob)avisos.push(`${it.n} ya tiene aprobada su ${otraAprob.orden}ª opción: queda aprobada también esta.`);
+  if(avisos.length&&!confirm(avisos.join("\n")+"\n\n¿Aprobar igual?"))return;
+  if(state.pedidosDescartados)delete state.pedidosDescartados[it.id];
+  state.taken.push({id:Date.now()+"-"+Math.round(Math.random()*1e6),n:it.n,desde:it.desde,hasta:it.hasta,periodo:PERIODO_PEDIDO,estado:"confirmada",nota:`Pedido: ${it.orden}ª opción`,solicitud:it.id});
+  persist();render();
+  toast(`✓ Aprobada: ${it.n}, ${fmtCorto(it.desde)} al ${fmtCorto(it.hasta)}`);
+  abrirPedido(it.id);
+}
+function initPlanificador(){
+  const card=document.getElementById("planCard");
+  card.addEventListener("click",e=>{
+    const chip=e.target.closest("[data-puesto]");
+    if(chip){planPuesto=chip.dataset.puesto;renderPlanificador();return;}
+    const sem=e.target.closest(".pl-sem[data-mes]");
+    if(sem){planMes=sem.dataset.mes;renderPlanificador();document.getElementById("plMesTit").scrollIntoView({behavior:"smooth",block:"start"});return;}
+    const ab=e.target.closest("[data-abrir]");
+    if(ab){if(ab.dataset.mes)planMes=ab.dataset.mes;renderPlanificador();abrirPedido(ab.dataset.abrir);}
+  });
+  const mover=n=>{const[y,m]=planMes.split("-").map(Number);const d=new Date(y,m-1+n,1);planMes=isoDe(d).slice(0,7);renderPlanificador();};
+  document.getElementById("plPrev").addEventListener("click",()=>mover(-1));
+  document.getElementById("plNext").addEventListener("click",()=>mover(1));
+}
+
 
 let calMonth=hoy().getMonth(),calYear=hoy().getFullYear();
 function vacacionesEnDia(iso){
@@ -997,6 +1340,7 @@ document.getElementById("appVersion").textContent="v"+APP_VERSION;
 loadLS();
 runMigrations();
 initControls();
+initPlanificador();
 render();
 undoStack.length=0;redoStack.length=0;syncUndoRedoButtons();
 if(sessionStorage.getItem(AUTH_KEY)==="ok")showApp();
