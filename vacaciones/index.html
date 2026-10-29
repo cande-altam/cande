@@ -147,6 +147,14 @@
   .calChip{display:block;font-size:10px;font-weight:700;border-radius:5px;padding:1px 5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .calChip.conf{background:var(--ok-soft);color:var(--ok)}
   .calChip.pend{background:var(--warn-soft);color:var(--warn)}
+  .calChip.pedido{background:transparent;border:1px dashed var(--terracota);color:var(--accent-ink)}
+  .calChip{border-left:3px solid var(--pc,transparent)}
+  .cal-op{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-soft);margin:2px 0 0;cursor:pointer}
+  .cal-op input{accent-color:var(--accent);width:16px;height:16px}
+  .pc-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--pc);margin-right:5px;vertical-align:0}
+  .prox{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .prox .mini-row{border-left:4px solid var(--pc,var(--line))}
+  .prox .mini-row .r{margin-left:auto;color:var(--ink-soft);font-size:11.5px;white-space:nowrap}
 
   /* planificador de pedidos */
   .pl-filtros{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
@@ -374,7 +382,15 @@
           <h2 id="calTitle">Calendario</h2>
           <button class="btn icon-btn" id="calNext" title="Mes siguiente">›</button>
         </div>
+        <div class="card-body" style="padding-bottom:0">
+          <div class="pl-filtros" id="calFiltros"></div>
+          <label class="cal-op"><input type="checkbox" id="calPedidos"> Mostrar también los pedidos sin decidir</label>
+        </div>
         <div class="calGrid" id="calGrid"></div>
+        <div class="card-body" style="padding-top:0">
+          <span class="eyebrow" id="proxTit">Próximas vacaciones</span>
+          <div id="proxList" class="prox"></div>
+        </div>
       </section>
 
       <p class="footer-note">Hecho para Candela · los datos se sincronizan entre dispositivos.</p>
@@ -477,7 +493,7 @@ window.SolicitudesSync = {
 <script src="calculo.js"></script>
 <script>
 "use strict";
-const APP_VERSION="2026-10-29 planificador";
+const APP_VERSION="2026-10-29 calendario-puestos";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -1076,7 +1092,7 @@ function initPlanificador(){
   const card=document.getElementById("planCard");
   card.addEventListener("click",e=>{
     const chip=e.target.closest("[data-puesto]");
-    if(chip){planPuesto=chip.dataset.puesto;renderPlanificador();return;}
+    if(chip){planPuesto=chip.dataset.puesto;renderPlanificador();renderCalendar();return;}
     const sem=e.target.closest(".pl-sem[data-mes]");
     if(sem){planMes=sem.dataset.mes;renderPlanificador();document.getElementById("plMesTit").scrollIntoView({behavior:"smooth",block:"start"});return;}
     const ab=e.target.closest("[data-abrir]");
@@ -1089,16 +1105,34 @@ function initPlanificador(){
 
 
 let calMonth=hoy().getMonth(),calYear=hoy().getFullYear();
-function vacacionesEnDia(iso){
-  return state.taken.filter(t=>t.desde<=iso&&iso<=t.hasta);
+// Color por puesto: el mismo en el calendario, la lista de próximas y los filtros.
+const PUESTO_COLOR={caja:"#2C6F63",atencion:"#7FC6BA",barra:"#E15D46",cocina:"#C98A1E",ayudante:"#8a7a5c",compras:"#9b6bd6",pasteleria:"#d65b9a",panaderia:"#b07a3b",administracion:"#4a78c2",otros:"#999"};
+let calConPedidos=false;
+// Vacaciones del calendario (cargadas o aprobadas), del puesto elegido. Con el tilde, también las
+// opciones de pedidos que todavía no se decidieron (punteadas).
+function vacacionesCalendario(){
+  const out=state.taken.filter(t=>BY_NAME[t.n]&&filtraPuesto(t)).map(t=>({n:t.n,desde:t.desde,hasta:t.hasta,clase:t.estado==="confirmada"?"conf":"pend",txt:t.n,nota:t.nota||""}));
+  if(calConPedidos)itemsPlan().filter(i=>i.tipo==="pedido"&&i.estado==="abierta"&&filtraPuesto(i))
+    .forEach(i=>out.push({n:i.n,desde:i.desde,hasta:i.hasta,clase:"pedido",txt:`${i.n} · ${i.orden}ª`,nota:"pedido sin decidir",id:i.id}));
+  return out;
+}
+function renderCalFiltros(){
+  const hoyISO=isoHoy();
+  const futuras=state.taken.filter(t=>BY_NAME[t.n]&&t.hasta>=hoyISO);
+  const cuenta={};futuras.forEach(t=>{const p=puestoDe(t.n);(cuenta[p]=cuenta[p]||new Set()).add(t.n);});
+  const total=new Set(futuras.map(t=>t.n)).size;
+  document.getElementById("calFiltros").innerHTML=`<button class="pl-chip ${planPuesto?"":"on"}" data-puesto="">Todos<small>${total}</small></button>`
+    +ORDEN_PUESTOS.filter(p=>p!=="otros"||cuenta[p]).map(p=>`<button class="pl-chip ${planPuesto===p?"on":""}" data-puesto="${p}" style="--pc:${PUESTO_COLOR[p]}"><span class="pc-dot"></span>${PUESTOS[p]}<small>${cuenta[p]?cuenta[p].size:0}</small></button>`).join("");
 }
 function renderCalendar(){
-  document.getElementById("calTitle").textContent=`${MESES[calMonth]} ${calYear}`;
+  renderCalFiltros();
+  document.getElementById("calTitle").textContent=`${MESES[calMonth]} ${calYear}${planPuesto?" · "+PUESTOS[planPuesto]:""}`;
   const primerDia=new Date(calYear,calMonth,1);
   const ultimoDia=new Date(calYear,calMonth+1,0);
   let startOffset=primerDia.getDay()-1;if(startOffset<0)startOffset=6; // lunes=0
   const totalCeldas=Math.ceil((startOffset+ultimoDia.getDate())/7)*7;
   const grid=document.getElementById("calGrid");
+  const todas=vacacionesCalendario();
   let h=DAYS.map(d=>`<div class="dow">${d}</div>`).join("");
   const todayISO=isoHoy();
   for(let i=0;i<totalCeldas;i++){
@@ -1106,10 +1140,26 @@ function renderCalendar(){
     const d=new Date(calYear,calMonth,dayNum);
     const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
     const otherMonth=d.getMonth()!==calMonth;
-    const vac=otherMonth?[]:vacacionesEnDia(iso);
-    h+=`<div class="day ${otherMonth?"otherMonth":""} ${iso===todayISO?"today":""}"><div class="daynum">${d.getDate()}</div>${vac.map(v=>`<span class="calChip ${v.estado==="confirmada"?"conf":"pend"}" title="${v.n} · ${fmtFecha(v.desde)} al ${fmtFecha(v.hasta)}">${v.n}</span>`).join("")}</div>`;
+    const vac=otherMonth?[]:todas.filter(t=>t.desde<=iso&&iso<=t.hasta).sort((a,b)=>ORDEN_PUESTOS.indexOf(puestoDe(a.n))-ORDEN_PUESTOS.indexOf(puestoDe(b.n)));
+    h+=`<div class="day ${otherMonth?"otherMonth":""} ${iso===todayISO?"today":""}"><div class="daynum">${d.getDate()}</div>${vac.map(v=>`<span class="calChip ${v.clase}" style="--pc:${PUESTO_COLOR[puestoDe(v.n)]}" ${v.id?`data-abrir="${escH(v.id)}"`:""} title="${escH(v.n)} · ${PUESTOS[puestoDe(v.n)]} · ${fmtFecha(v.desde)} al ${fmtFecha(v.hasta)}${v.nota?" · "+escH(v.nota):""}">${escH(v.txt)}</span>`).join("")}</div>`;
   }
   grid.innerHTML=h;
+  renderProximas();
+}
+// Las vacaciones que vienen (de hoy en adelante), del puesto elegido, en orden de fecha.
+function renderProximas(){
+  const hoyISO=isoHoy();
+  const lista=state.taken.filter(t=>BY_NAME[t.n]&&filtraPuesto(t)&&t.hasta>=hoyISO).sort((a,b)=>a.desde.localeCompare(b.desde)||a.n.localeCompare(b.n,"es"));
+  document.getElementById("proxTit").textContent=`Próximas vacaciones${planPuesto?" · "+PUESTOS[planPuesto]:""}`;
+  const el=document.getElementById("proxList");
+  if(!lista.length){el.innerHTML=`<p class="sub" style="padding:0">No hay vacaciones cargadas de acá en adelante${planPuesto?" para este puesto":""}.</p>`;return;}
+  el.innerHTML=lista.map(t=>{
+    const cruza=lista.filter(o=>o!==t&&o.n!==t.n&&puestoDe(o.n)===puestoDe(t.n)&&diasEnComun(t,o)>0).map(o=>o.n);
+    return`<div class="mini-row" style="--pc:${PUESTO_COLOR[puestoDe(t.n)]}"><b>${escH(nombreCompleto(t.n))}</b> <span style="color:var(--ink-soft)">${PUESTOS[puestoDe(t.n)]}</span> · ${fmtFecha(t.desde)} al ${fmtFecha(t.hasta)} (${rangoDias(t.desde,t.hasta)}d)
+      ${t.estado==="confirmada"?"":`<span class="pill pend">a confirmar</span>`}
+      ${cruza.length?`<span class="pill pend" title="Mismo puesto, mismas fechas">⚠ con ${escH([...new Set(cruza)].join(", "))}</span>`:""}
+      <button class="btn sm" data-ir-mes="${t.desde.slice(0,7)}" style="margin-left:auto">Ver en el calendario</button></div>`;
+  }).join("");
 }
 
 function fillFormSelects(){
@@ -1194,6 +1244,17 @@ function initControls(){
   });
   document.getElementById("btnCancelEditVac").addEventListener("click",cancelarEdicionVac);
 
+  document.getElementById("calFiltros").addEventListener("click",e=>{
+    const chip=e.target.closest("[data-puesto]");if(!chip)return;
+    planPuesto=chip.dataset.puesto;renderPlanificador();renderCalendar();
+  });
+  document.getElementById("calPedidos").addEventListener("change",e=>{calConPedidos=e.target.checked;renderCalendar();});
+  document.getElementById("calGrid").addEventListener("click",e=>{const c=e.target.closest("[data-abrir]");if(c)abrirPedido(c.dataset.abrir);});
+  document.getElementById("proxList").addEventListener("click",e=>{
+    const b=e.target.closest("[data-ir-mes]");if(!b)return;
+    const[y,m]=b.dataset.irMes.split("-").map(Number);calYear=y;calMonth=m-1;renderCalendar();
+    document.getElementById("calTitle").scrollIntoView({behavior:"smooth",block:"start"});
+  });
   document.getElementById("calPrev").addEventListener("click",()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();});
   document.getElementById("calNext").addEventListener("click",()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();});
 
