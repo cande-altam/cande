@@ -171,6 +171,7 @@
   .pl-sem i{display:block;background:var(--teal);min-height:0}
   .pl-sem i.p{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--terracota) 35%,transparent) 0 3px,transparent 3px 6px);border-radius:3px 3px 0 0}
   .pl-sem.choca i:not(.p){background:var(--crit)}
+  .pl-sem.sel{background:var(--chip);box-shadow:inset 0 -3px 0 var(--ink)}
   .pl-sem b{position:absolute;top:-14px;left:-4px;right:-4px;text-align:center;font-size:9.5px;color:var(--ink-soft);font-weight:700;white-space:nowrap}
   .pl-sem b em{font-style:normal;color:var(--accent-ink);font-weight:600}
   .pl-sem .mes{position:absolute;bottom:-18px;left:0;font-size:9.5px;color:var(--ink-soft);white-space:nowrap;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
@@ -193,9 +194,10 @@
   .pl-lista summary{cursor:pointer;font-weight:700;color:var(--ink-soft)}
   .tb-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 4px}
   .tb-tools .sep{flex:1}
-  .tb-zoom{display:inline-flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden}
-  .tb-zoom button{border:none;background:var(--panel-2);padding:5px 12px;font-weight:800;cursor:pointer;font-size:15px;color:var(--ink)}
-  .tb-zoom button+button{border-left:1px solid var(--line-strong)}
+  .tb-meses{display:inline-flex;align-items:center;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;background:var(--panel-2)}
+  .tb-meses button{border:none;background:transparent;padding:7px 14px;font-weight:800;cursor:pointer;font-size:18px;line-height:1;color:var(--ink)}
+  .tb-meses button:disabled{opacity:.3;cursor:default}
+  .tb-meses b{min-width:132px;text-align:center;font-family:var(--font-display);font-weight:400;font-size:17px}
   .tb-sel{background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:5px 8px;font-size:12px;max-width:190px}
   .tb-scroll{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:12px;background:var(--panel);position:relative;overscroll-behavior:contain}
   .tb{--nom:156px;--d:16px;--fin:color-mix(in srgb,var(--chip) 75%,transparent);position:relative;width:max-content;min-width:100%;font-size:12px}
@@ -208,17 +210,20 @@
   .tb-nom small.mal{color:var(--crit);font-weight:700}
   .tb-nom .mas{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:1px solid var(--line-strong);background:var(--panel-2);border-radius:6px;width:20px;height:20px;font-size:14px;line-height:1;cursor:pointer;padding:0;color:var(--ink-soft)}
   .tb-nom .mas:hover{color:var(--accent-ink);border-color:var(--accent)}
-  .tb-tl{position:relative;flex:0 0 auto;width:calc(var(--dias) * var(--d));background-image:linear-gradient(to right,color-mix(in srgb,var(--line) 65%,transparent) 1px,transparent 1px),linear-gradient(to right,transparent calc(5 * var(--d)),var(--fin) calc(5 * var(--d)));background-size:var(--d) 100%,calc(7 * var(--d)) 100%}
+  .tb-tl{position:relative;flex:0 0 auto;width:calc(var(--dias) * var(--d));background-image:linear-gradient(to right,color-mix(in srgb,var(--line) 65%,transparent) 1px,transparent 1px),linear-gradient(to right,transparent calc(5 * var(--d)),var(--fin) calc(5 * var(--d)));background-size:var(--d) 100%,calc(7 * var(--d)) 100%;background-position:0 0,calc(var(--off,0) * var(--d) * -1) 0}
   .tb.chico .tb-tl{background-size:calc(7 * var(--d)) 100%,calc(7 * var(--d)) 100%}
   .tb-head{position:sticky;top:0;z-index:6;background:var(--panel);border-bottom:2px solid var(--line-strong);min-height:40px}
   .tb-head .tb-nom{z-index:7;font-size:11px;color:var(--ink-soft);font-weight:700}
   .tb-head .tb-tl{background:var(--panel)}
   .tb-mes{position:absolute;top:0;height:20px;border-left:2px solid var(--line-strong);padding:2px 5px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:hidden}
-  .tb-dn{position:absolute;top:21px;width:var(--d);text-align:center;font-size:9.5px;color:var(--ink-soft);line-height:17px}
+  .tb-dn{position:absolute;top:4px;width:var(--d);text-align:center;font-size:11px;font-weight:700;color:var(--ink);line-height:14px;padding:2px 0;border-radius:5px}
+  .tb-dn em{display:block;font-style:normal;font-size:9px;font-weight:600;color:var(--ink-soft)}
+  .tb-nom small.otros{color:var(--accent-ink);font-weight:600}
+  .tb-g.sigue-izq,.tb-b.sigue-izq{border-top-left-radius:0;border-bottom-left-radius:0}
+  .tb-g.sigue-der,.tb-b.sigue-der{border-top-right-radius:0;border-bottom-right-radius:0}
   .tb-dn.fs{background:var(--fin)}
-  .tb-dn.hoy{color:#fff;background:var(--accent);border-radius:4px;font-weight:800}
-  .tb.chico .tb-dn{display:none}
-  .tb.chico .tb-dn.lu{display:block;width:auto;padding-left:2px;text-align:left;border-left:1px solid var(--line)}
+  .tb-dn.hoy{color:#fff;background:var(--accent)}
+  .tb-dn.hoy em{color:#fff}
   .tb-area{min-height:26px;background:var(--panel-2)}
   .tb-area .tb-nom{background:var(--panel-2);font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent-ink);font-weight:800;flex-direction:row;align-items:center;flex-wrap:wrap;gap:0 4px}
   .tb-area .tb-nom small{text-transform:none;letter-spacing:0;font-weight:400;width:100%}
@@ -399,11 +404,11 @@
           <div class="pl-filtros" id="plFiltros"></div>
           <div id="plChoques"></div>
           <span class="eyebrow pl-tit">La temporada de un vistazo</span>
-          <p class="pl-ayuda">Gente afuera por semana: lleno, lo armado; claro, lo pedido que todavía no tiene fecha. En rojo, semanas con dos de la misma área. Tocá una semana para ir.</p>
+          <p class="pl-ayuda">Gente afuera por semana: lleno, lo armado; claro, lo pedido que todavía no tiene fecha. En rojo, semanas con dos de la misma área. Tocá una semana para ir a ese mes.</p>
           <div class="pl-scroll"><div class="pl-anio" id="plAnio"></div></div>
           <div class="tb-tools">
-            <span class="tb-zoom"><button type="button" id="tbMenos" title="Ver más días">−</button><button type="button" id="tbMas" title="Ver los días más grandes">+</button></span>
-            <button class="btn sm" type="button" id="tbHoy">Hoy</button>
+            <span class="tb-meses"><button type="button" id="tbPrev" title="Mes anterior">‹</button><b id="tbMesTit"></b><button type="button" id="tbNext" title="Mes siguiente">›</button></span>
+            <button class="btn sm" type="button" id="tbHoy">Este mes</button>
             <select id="tbSumar" class="tb-sel"></select>
             <span class="sep"></span>
             <button class="btn sm" type="button" id="tbSugerir" title="Propone fechas a quienes pidieron y todavía no tienen nada armado: su 1ª opción si no choca con su área, si no la siguiente">💡 Sugerir para los que faltan</button>
@@ -546,7 +551,7 @@ window.SolicitudesSync = {
 <script src="calculo.js"></script>
 <script>
 "use strict";
-const APP_VERSION="2026-10-30 tablero-ipad";
+const APP_VERSION="2026-10-30 tablero-mes";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -916,10 +921,9 @@ const escH=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"
 let planPuesto="";
 const ORDEN_PUESTOS=Object.keys(PUESTOS);
 const MAX_POR_AREA=1;
-const ZOOMS=[8,12,16,22,30];
 const tactil=()=>matchMedia("(pointer:coarse)").matches;
-let tbDia=(()=>{const def=tactil()?22:16;try{const z=+localStorage.getItem("vac-tablero-zoom");return ZOOMS.includes(z)?z:def;}catch{return def;}})();
-let tbIni=null,tbDias=0,tbPrimeraVez=true;
+let tbDia=16; // ancho de un día en px: se calcula para que el mes entre en la pantalla
+let tbIni=null,tbDias=0;
 function isoDe(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function sumarDiasISO(iso,n){const d=fecha(iso);d.setDate(d.getDate()+n);return isoDe(d);}
 function difISO(a,b){return diffDias(fecha(a),fecha(b));}
@@ -1001,6 +1005,13 @@ const pos=(desde,hasta)=>{
   const a=Math.max(0,difISO(tbIni,desde)),b=Math.min(tbDias-1,difISO(tbIni,hasta));
   return`left:calc(${a} * var(--d));width:calc(${b-a+1} * var(--d) - 2px)`;
 };
+// clases para lo que sigue antes o después del mes que se ve (borde recto de ese lado)
+const corte=(desde,hasta)=>`${desde<tbIni?"sigue-izq":""} ${difISO(tbIni,hasta)>=tbDias?"sigue-der":""}`;
+const DIAS_LETRA=["D","L","M","M","J","V","S"];
+let tbMes=null; // "AAAA-MM" que se está viendo
+let tbMesElegido=false; // hasta que Gerencia navega, sigue al primer mes con pedidos (llegan después)
+function mesesTemporada(r){const out=[];for(let m=r.ini.slice(0,7);m<=r.fin.slice(0,7);){out.push(m);const[y,mm]=m.split("-").map(Number);m=isoDe(new Date(y,mm,1)).slice(0,7);}return out;}
+function mesDe(iso){return iso.slice(0,7);}
 
 function renderPlanificador(){
   const tb=document.getElementById("tb");if(!tb)return;
@@ -1011,40 +1022,56 @@ function renderPlanificador(){
   const cuenta={};personasTemp.forEach(n=>{const p=puestoDe(n);cuenta[p]=(cuenta[p]||0)+1;});
   document.getElementById("plFiltros").innerHTML=`<button class="pl-chip ${planPuesto?"":"on"}" data-puesto="">Todas las áreas<small>${personasTemp.size}</small></button>`
     +ORDEN_PUESTOS.filter(p=>cuenta[p]).map(p=>`<button class="pl-chip ${planPuesto===p?"on":""}" data-puesto="${p}" style="--pc:${PUESTO_COLOR[p]}"><span class="pc-dot"></span>${PUESTOS[p]}<small>${cuenta[p]}</small></button>`).join("");
-  const r=rangoTablero(peds,ubic);tbIni=r.ini;tbDias=r.dias;
+  const temp=rangoTablero(peds,ubic),meses=mesesTemporada(temp);
   const pedsV=peds.filter(filtraPuesto),ubicV=ubic.filter(filtraPuesto);
+  const hoyISO=isoHoy();
+  // mes que se ve: el que eligió Gerencia o, la primera vez, el primero con algo pedido o armado
+  if(!tbMesElegido||!tbMes||!meses.includes(tbMes)){
+    const con=[...pedsV.filter(p=>!p.descartada).map(p=>p.hasta),...plan.filter(filtraPuesto).map(p=>p.hasta)].filter(d=>d>=hoyISO).sort();
+    const primero=con.length?[...pedsV,...plan].filter(x=>x.hasta===con[0])[0]:null;
+    tbMes=primero?mesDe(primero.desde>hoyISO?primero.desde:hoyISO):mesDe(hoyISO);
+    if(!meses.includes(tbMes))tbMes=meses[0];
+  }
+  const [y,m]=tbMes.split("-").map(Number);
+  tbIni=tbMes+"-01";tbDias=new Date(y,m,0).getDate();
+  const tbFin=sumarDiasISO(tbIni,tbDias-1),rangoMes={desde:tbIni,hasta:tbFin};
   renderAvisos(peds,ubic,llegada);
-  renderAnio(pedsV,ubicV);
-  // filas: quien pidió, tiene algo armado o confirmado en la temporada
-  const nombres=[...new Set([...pedsV.map(p=>p.n),...ubicV.map(u=>u.n)])]
+  renderAnio(pedsV,ubicV,temp);
+  // navegación de meses
+  document.getElementById("tbMesTit").textContent=`${MESES[m-1]} ${y}`;
+  document.getElementById("tbPrev").disabled=tbMes<=meses[0];
+  document.getElementById("tbNext").disabled=tbMes>=meses[meses.length-1];
+  // ancho del día: que el mes entre en la pantalla (con un mínimo cómodo para el dedo)
+  const sc=document.getElementById("tbScroll");
+  const nomPx=parseFloat(getComputedStyle(tb).getPropertyValue("--nom"))||150;
+  tbDia=Math.max(tactil()?22:16,Math.floor((sc.clientWidth-nomPx-4)/tbDias));
+  // filas: solo quien pidió fechas en este mes o tiene vacaciones (armadas o cargadas) en este mes
+  const pedsMes=pedsV.filter(p=>diasEnComun(p,rangoMes)>0);
+  const ubicMes=ubicV.filter(u=>diasEnComun(u,rangoMes)>0);
+  const nombres=[...new Set([...pedsMes.map(p=>p.n),...ubicMes.map(u=>u.n)])]
     .sort((a,b)=>ORDEN_PUESTOS.indexOf(puestoDe(a))-ORDEN_PUESTOS.indexOf(puestoDe(b))||nombreCompleto(a).localeCompare(nombreCompleto(b),"es"));
   tb.style.setProperty("--dias",tbDias);tb.style.setProperty("--d",tbDia+"px");
-  tb.classList.toggle("chico",tbDia<12);
-  // cabecera: meses y días
-  let head=`<div class="tb-fila tb-head"><div class="tb-nom">${tbDia<12?"Semanas":"Días"}</div><div class="tb-tl">`;
-  for(let d=tbIni;d<=r.fin;){
-    const [y,m]=d.split("-").map(Number);const finMes=isoDe(new Date(y,m,0));const h=finMes<r.fin?finMes:r.fin;
-    head+=`<span class="tb-mes" style="${pos(d,h)}">${MESES[m-1]} ${y}</span>`;
-    d=sumarDiasISO(h,1);
-  }
-  const hoyISO=isoHoy();
+  // el sombreado de sábado y domingo arranca en el día de la semana del 1º
+  tb.style.setProperty("--off",(new Date(y,m-1,1).getDay()+6)%7);
+  let head=`<div class="tb-fila tb-head"><div class="tb-nom">${nombres.length} persona${nombres.length===1?"":"s"}</div><div class="tb-tl">`;
   for(let i=0;i<tbDias;i++){
-    const iso=sumarDiasISO(tbIni,i),dow=i%7;
-    head+=`<span class="tb-dn ${dow===0?"lu":""} ${dow>=5?"fs":""} ${iso===hoyISO?"hoy":""}" style="left:calc(${i} * var(--d))">${+iso.slice(8)}</span>`;
+    const d=new Date(y,m-1,i+1),iso=isoDe(d),dw=d.getDay();
+    head+=`<span class="tb-dn ${dw===0||dw===6?"fs":""} ${iso===hoyISO?"hoy":""}" style="left:calc(${i} * var(--d))"><em>${DIAS_LETRA[dw]}</em>${i+1}</span>`;
   }
   head+=`</div></div>`;
   let h=head,grupo="";
-  if(!nombres.length)h+=`<div class="pl-vacio" style="padding:16px">Todavía no hay pedidos${planPuesto?" de esta área":""}. Mandá el link y van a ir apareciendo acá.</div>`;
+  if(!nombres.length)h+=`<div class="pl-vacio" style="padding:16px">${pedsV.length||ubicV.length?`Nadie pidió fechas en ${MESES[m-1].toLowerCase()}${planPuesto?" en esta área":""}. Pasá de mes con las flechas o tocá una semana de arriba.`:`Todavía no hay pedidos${planPuesto?" de esta área":""}. Mandá el link y van a ir apareciendo acá.`}</div>`;
   for(const n of nombres){
     const pu=puestoDe(n);
     if(pu!==grupo){grupo=pu;h+=filaArea(pu,ubic);}
     const quedan=leQuedan(n);
-    const ops=pedsV.filter(p=>p.n===n).sort((a,b)=>a.orden-b.orden);
-    const mios=ubicV.filter(u=>u.n===n);
-    h+=`<div class="tb-fila" data-n="${escH(n)}"><div class="tb-nom" style="--pc:${PUESTO_COLOR[pu]}"><span class="nm"><span class="largo">${escH(nombreCompleto(n))}</span><span class="corto">${escH(n)}</span></span><small class="${quedan<0?"mal":""}">${quedan<0?`se pasa ${-quedan} d`:`le quedan ${quedan} d`}${llegada[n]?` · pidió ${llegada[n]}º`:""}</small><button type="button" class="mas" data-sumar="${escH(n)}" title="Armar vacaciones para ${escH(n)}">+</button></div><div class="tb-tl">`;
+    const ops=pedsMes.filter(p=>p.n===n).sort((a,b)=>a.orden-b.orden);
+    const mios=ubicMes.filter(u=>u.n===n);
+    const otrosMeses=pedsV.filter(p=>p.n===n&&!p.descartada&&!diasEnComun(p,rangoMes)).length;
+    h+=`<div class="tb-fila" data-n="${escH(n)}"><div class="tb-nom" style="--pc:${PUESTO_COLOR[pu]}"><span class="nm"><span class="largo">${escH(nombreCompleto(n))}</span><span class="corto">${escH(n)}</span></span><small class="${quedan<0?"mal":""}">${quedan<0?`se pasa ${-quedan} d`:`le quedan ${quedan} d`}${llegada[n]?` · pidió ${llegada[n]}º`:""}</small>${otrosMeses?`<small class="otros" title="Tiene ${otrosMeses} opción(es) pedida(s) en otros meses">+${otrosMeses} en otro mes</small>`:""}<button type="button" class="mas" data-sumar="${escH(n)}" title="Armar vacaciones para ${escH(n)}">+</button></div><div class="tb-tl">`;
     for(const o of ops){
       const usada=mios.some(u=>u.desde===o.desde&&u.hasta===o.hasta);
-      h+=`<button type="button" class="tb-g op${Math.min(o.orden,3)} ${o.descartada?"desc":""} ${usada?"usada":""}" data-op="${escH(o.id)}" style="${pos(o.desde,o.hasta)}" title="Pidió (${o.orden}ª opción): ${fmtFecha(o.desde)} al ${fmtFecha(o.hasta)}">${o.orden}ª · ${fmtCorto(o.desde)}</button>`;
+      h+=`<button type="button" class="tb-g op${Math.min(o.orden,3)} ${o.descartada?"desc":""} ${usada?"usada":""} ${corte(o.desde,o.hasta)}" data-op="${escH(o.id)}" style="${pos(o.desde,o.hasta)}" title="Pidió (${o.orden}ª opción): ${fmtFecha(o.desde)} al ${fmtFecha(o.hasta)}">${o.desde<tbIni?"← ":""}${o.orden}ª · ${fmtCorto(o.desde)} al ${fmtCorto(o.hasta)}</button>`;
     }
     for(const u of mios){
       const dias=rangoDias(u.desde,u.hasta);
@@ -1052,11 +1079,11 @@ function renderPlanificador(){
       const conf=u.tipo==="tk"&&u.conf;
       // en barras cortas no van los bordes para estirar: con el dedo se agarraría siempre un borde
       const bordes=dias*tbDia>=(tactil()?84:44);
-      h+=`<div class="tb-b ${conf?"conf":"plan"} ${u.sugerida?"sug":""} ${choca?"choca":""}" data-seg="${escH(u.id)}" style="${pos(u.desde,u.hasta)}" title="${conf?"Confirmada":u.sugerida?"Sugerida":"Sin confirmar"}: ${fmtFecha(u.desde)} al ${fmtFecha(u.hasta)} — arrastrala o tocala">${bordes?`<i class="h l"></i>`:""}<span>${conf?"✓ ":u.sugerida?"💡 ":""}${dias} d</span>${bordes?`<i class="h r"></i>`:""}</div>`;
+      h+=`<div class="tb-b ${conf?"conf":"plan"} ${u.sugerida?"sug":""} ${choca?"choca":""} ${corte(u.desde,u.hasta)}" data-seg="${escH(u.id)}" style="${pos(u.desde,u.hasta)}" title="${conf?"Confirmada":u.sugerida?"Sugerida":"Sin confirmar"}: ${fmtFecha(u.desde)} al ${fmtFecha(u.hasta)} — arrastrala o tocala">${bordes&&u.desde>=tbIni?`<i class="h l"></i>`:""}<span>${u.desde<tbIni?"← ":""}${conf?"✓ ":u.sugerida?"💡 ":""}${dias} d${u.hasta>tbFin?" →":""}</span>${bordes&&u.hasta<=tbFin?`<i class="h r"></i>`:""}</div>`;
     }
     h+=`</div></div>`;
   }
-  if(difISO(tbIni,hoyISO)>=0&&difISO(hoyISO,r.fin)>=0)h+=`<div class="tb-hoy" style="left:calc(var(--nom) + ${difISO(tbIni,hoyISO)} * var(--d))"></div>`;
+  if(mesDe(hoyISO)===tbMes)h+=`<div class="tb-hoy" style="left:calc(var(--nom) + ${difISO(tbIni,hoyISO)} * var(--d) + var(--d) / 2)"></div>`;
   tb.innerHTML=h;
   // botones de la barra de herramientas
   const sug=plan.filter(p=>p.sugerida).length,armadas=plan.filter(p=>!p.sugerida).length+conf.filter(c=>!c.conf).length;
@@ -1064,14 +1091,10 @@ function renderPlanificador(){
   document.getElementById("tbQuitarSug").textContent=`Quitar sugerencias (${sug})`;
   document.getElementById("tbConfirmarTodo").hidden=!armadas;
   document.getElementById("tbConfirmarTodo").textContent=`✓ Confirmar todo lo que falta (${armadas})`;
+  if(!tbMesElegido&&typeof calYear!=="undefined")sincronizarCalendario();
   const sel=document.getElementById("tbSumar");
   const enTablero=new Set(nombres);
-  sel.innerHTML=`<option value="">+ Sumar a alguien que no pidió…</option>`+PEOPLE.filter(p=>!enTablero.has(p.n)&&filtraPuesto(p)).map(p=>`<option value="${escH(p.n)}">${escH(nombreCompleto(p.n))}</option>`).join("");
-  if(tbPrimeraVez&&nombres.length){
-    tbPrimeraVez=false;
-    const primero=[...pedsV.map(p=>p.desde),...ubicV.map(u=>u.desde)].filter(d=>d>=hoyISO).sort()[0]||hoyISO;
-    requestAnimationFrame(()=>irAFecha(primero));
-  }
+  sel.innerHTML=`<option value="">+ Sumar a alguien en ${MESES[m-1].toLowerCase()}…</option>`+PEOPLE.filter(p=>!enTablero.has(p.n)&&filtraPuesto(p)).map(p=>`<option value="${escH(p.n)}">${escH(nombreCompleto(p.n))}</option>`).join("");
 }
 // fila de un área: cuántos de esa área están afuera cada día (lo armado + lo confirmado)
 function filaArea(pu,ubic){
@@ -1114,11 +1137,11 @@ function renderAvisos(peds,ubic,llegada){
   el.innerHTML=h;
 }
 
-function renderAnio(pedsV,ubicV){
+function renderAnio(pedsV,ubicV,temp){
   const el=document.getElementById("plAnio");
   const sems=[];
-  for(let i=0;i<tbDias;i+=7){
-    const d=sumarDiasISO(tbIni,i),h=sumarDiasISO(d,6),rango={desde:d,hasta:h};
+  for(let i=0;i<temp.dias;i+=7){
+    const d=sumarDiasISO(temp.ini,i),h=sumarDiasISO(d,6),rango={desde:d,hasta:h};
     const ub=ubicV.filter(u=>diasEnComun(u,rango)>0);
     const pers=new Set(ub.map(u=>u.n));
     const pend=new Set(pedsV.filter(p=>!p.descartada&&!personaUbicada(p.n)&&diasEnComun(p,rango)>0).map(p=>p.n));
@@ -1135,13 +1158,16 @@ function renderAnio(pedsV,ubicV){
     const mes=sumarDiasISO(s.d,3).slice(0,7);
     let et="";if(mes!==mesPrevio){et=MESES[+mes.slice(5,7)-1].slice(0,3)+(!mesPrevio||mes.endsWith("-01")?" "+mes.slice(2,4):"");mesPrevio=mes;}
     const tit=`Semana del ${fmtCorto(s.d)}: ${s.u?"armado/confirmado: "+s.nom.join(", "):"nada armado"}${s.p?" · pidieron sin fecha: "+s.pnom.join(", "):""}`;
-    return`<div class="pl-sem ${s.choca?"choca":""}" data-ir="${s.d}" title="${escH(tit)}">${s.u+s.p?`<b>${s.u||""}${s.p?`<em>+${s.p}</em>`:""}</b>`:""}<i class="p" style="height:${Math.round(s.p/max*100)}%"></i><i style="height:${Math.round(s.u/max*100)}%"></i>${et?`<span class="mes">${et}</span>`:""}</div>`;
+    return`<div class="pl-sem ${s.choca?"choca":""} ${mes===tbMes?"sel":""}" data-ir="${sumarDiasISO(s.d,3)}" title="${escH(tit)}">${s.u+s.p?`<b>${s.u||""}${s.p?`<em>+${s.p}</em>`:""}</b>`:""}<i class="p" style="height:${Math.round(s.p/max*100)}%"></i><i style="height:${Math.round(s.u/max*100)}%"></i>${et?`<span class="mes">${et}</span>`:""}</div>`;
   }).join("");
 }
 
 // ── navegación ──
 function irAFecha(iso,n){
-  const sc=document.getElementById("tbScroll");if(!sc||!tbIni)return;
+  if(!iso)return;
+  tbMesElegido=true;
+  if(mesDe(iso)!==tbMes){tbMes=mesDe(iso);renderPlanificador();sincronizarCalendario();}
+  const sc=document.getElementById("tbScroll");if(!sc)return;
   sc.scrollLeft=Math.max(0,difISO(tbIni,iso)*tbDia-tbDia*3);
   if(n){
     const fila=[...document.querySelectorAll("#tb .tb-fila[data-n]")].find(f=>f.dataset.n===n);
@@ -1151,19 +1177,21 @@ function irAFecha(iso,n){
     }
   }
 }
+function cambiarMes(paso){
+  const[y,m]=tbMes.split("-").map(Number);
+  tbMes=isoDe(new Date(y,m-1+paso,1)).slice(0,7);tbMesElegido=true;
+  renderPlanificador();sincronizarCalendario();
+  document.getElementById("tbScroll").scrollTop=0;
+}
+// el calendario de abajo acompaña al mes del tablero
+function sincronizarCalendario(){
+  const[y,m]=tbMes.split("-").map(Number);
+  if(calYear!==y||calMonth!==m-1){calYear=y;calMonth=m-1;renderCalendar();}
+}
 function fechaVisible(){
-  const sc=document.getElementById("tbScroll");
-  return sumarDiasISO(tbIni,Math.max(0,Math.round(sc.scrollLeft/tbDia)+3));
+  const hoyISO=isoHoy();
+  return mesDe(hoyISO)===tbMes?hoyISO:tbIni;
 }
-function cambiarZoom(paso){
-  const i=ZOOMS.indexOf(tbDia),j=Math.max(0,Math.min(ZOOMS.length-1,i+paso));if(i===j)return;
-  const sc=document.getElementById("tbScroll");
-  const centro=(sc.scrollLeft+(sc.clientWidth-140)/2)/tbDia;
-  tbDia=ZOOMS[j];try{localStorage.setItem("vac-tablero-zoom",tbDia);}catch{}
-  renderPlanificador();
-  sc.scrollLeft=Math.max(0,centro*tbDia-(sc.clientWidth-140)/2);
-}
-
 // ── armar ──
 function guardarPlan(msg){persist();render();if(msg)toast(msg);}
 function crearSeg(n,desde,hasta,extra){
@@ -1176,6 +1204,9 @@ function armarPara(n){
   let desde,hasta;
   if(libre){desde=libre.desde;hasta=libre.hasta;}
   else{const q=leQuedan(n);desde=fechaVisible();hasta=sumarDiasISO(desde,Math.max(1,Math.min(14,q>0?q:14))-1);}
+  if(libre&&mesDe(desde)!==tbMes&&!confirm(`${n} pidió para ${fmtCorto(desde)}. ¿Armarlo ahí? (si no, se arma en ${MESES[+tbMes.slice(5)-1].toLowerCase()})`)){
+    const q=leQuedan(n);desde=fechaVisible();hasta=sumarDiasISO(desde,Math.max(1,Math.min(14,q>0?q:14))-1);
+  }
   const id=crearSeg(n,desde,hasta);
   guardarPlan();
   irAFecha(desde,n);
@@ -1384,7 +1415,7 @@ function initTablero(){
   const card=document.getElementById("planCard");
   card.addEventListener("click",e=>{
     const chip=e.target.closest("[data-puesto]");
-    if(chip){planPuesto=chip.dataset.puesto;tbPrimeraVez=true;renderPlanificador();renderCalendar();return;}
+    if(chip){planPuesto=chip.dataset.puesto;renderPlanificador();renderCalendar();return;}
     const ir=e.target.closest("[data-ir],[data-fila]");
     if(ir&&!ir.closest("#tb")){
       const n=ir.dataset.fila;
@@ -1394,9 +1425,10 @@ function initTablero(){
       document.getElementById("tbScroll").scrollIntoView({behavior:"smooth",block:"nearest"});
     }
   });
-  document.getElementById("tbMenos").addEventListener("click",()=>cambiarZoom(-1));
-  document.getElementById("tbMas").addEventListener("click",()=>cambiarZoom(1));
-  document.getElementById("tbHoy").addEventListener("click",()=>irAFecha(isoHoy()));
+  document.getElementById("tbPrev").addEventListener("click",()=>cambiarMes(-1));
+  document.getElementById("tbNext").addEventListener("click",()=>cambiarMes(1));
+  document.getElementById("tbHoy").addEventListener("click",()=>{irAFecha(isoHoy());});
+  let tRes=null;addEventListener("resize",()=>{clearTimeout(tRes);tRes=setTimeout(renderPlanificador,150);});
   document.getElementById("tbSugerir").addEventListener("click",sugerir);
   document.getElementById("tbQuitarSug").addEventListener("click",()=>{
     const ids=planSegs().filter(p=>p.sugerida).map(p=>p.id);
@@ -1557,7 +1589,7 @@ function initControls(){
 
   document.getElementById("calFiltros").addEventListener("click",e=>{
     const chip=e.target.closest("[data-puesto]");if(!chip)return;
-    planPuesto=chip.dataset.puesto;tbPrimeraVez=true;renderPlanificador();renderCalendar();
+    planPuesto=chip.dataset.puesto;renderPlanificador();renderCalendar();
   });
   document.getElementById("calPedidos").addEventListener("change",e=>{calConPedidos=e.target.checked;renderCalendar();});
   document.getElementById("calGrid").addEventListener("click",e=>{const c=e.target.closest("[data-seg],[data-op]");if(!c)return;if(c.dataset.seg)abrirSeg(c.dataset.seg);else abrirOpcion(c.dataset.op);});
