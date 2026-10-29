@@ -58,16 +58,20 @@ const PEOPLE=[
 ];
 const BY_NAME=Object.fromEntries(PEOPLE.map(p=>[p.n,p]));
 // Puesto de cada uno (el mismo de Cronogramas), para ver en el planificador quiénes del MISMO
-// puesto piden las mismas fechas. Quien no figura acá va a "Producción y otros".
-const PUESTOS={caja:"Caja",atencion:"Atención",barra:"Barra",cocina:"Cocina",ayudante:"Ayudante de cocina",compras:"Compras",otros:"Producción y otros"};
+// puesto piden las mismas fechas. Quien no figura acá va a "Otros".
+const PUESTOS={caja:"Caja",atencion:"Atención",barra:"Barra",cocina:"Cocina",ayudante:"Ayudante de cocina",compras:"Compras",
+  pasteleria:"Pastelería",panaderia:"Panadería",administracion:"Administración",otros:"Otros"};
 const PUESTO_DE={
   Natalia:"caja",Javier:"caja",Aaron:"caja",
   "Érica":"atencion",Paula:"atencion",Margarita:"atencion",Brenda:"atencion",Valentina:"atencion",
   Guadalupe:"atencion",Dana:"atencion",Milagros:"atencion",Zoe:"atencion",Rebeca:"atencion",
-  Luciana:"barra",Gabriel:"barra",Mariano:"barra",
+  Luciana:"barra",Gabriel:"barra",Mariano:"barra","Lucía":"barra",
   Luis:"cocina",Vanesa:"cocina",Lucas:"cocina","Matías":"cocina",Gonzalo:"cocina",
   "Lázaro":"ayudante",Jhon:"ayudante",
   Rodrigo:"compras",
+  "Leandro Tolaba":"pasteleria",Hugo:"pasteleria",Tatiana:"pasteleria",Tamara:"pasteleria",Laura:"pasteleria",
+  Walter:"panaderia",Juan:"panaderia",
+  Magali:"administracion",
 };
 function puestoDe(n){return PUESTO_DE[n]||"otros";}
 function nombreCompleto(n){const p=BY_NAME[n];return p&&p.ap?`${n} ${p.ap}`:n;}
