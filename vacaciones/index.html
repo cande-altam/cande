@@ -231,7 +231,18 @@
   .tb-g.usada{border-style:solid;opacity:.5}
   .tb-b{position:absolute;top:21px;height:21px;border-radius:7px;background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;box-shadow:0 1px 3px rgba(0,0,0,.18);z-index:1}
   .tb-b.sug{background:var(--warn-soft);color:var(--warn);border:2px dashed var(--warn);box-shadow:none}
-  .tb-b.conf{background:var(--ok);cursor:pointer;touch-action:auto}
+  .tb-b.conf{background:var(--ok)}
+  .calChip[data-seg],.calChip[data-op]{cursor:pointer}
+  .det .aviso-conf{font-size:11.5px;color:var(--warn);margin:8px 0 0;font-weight:600}
+  /* con el dedo (iPad, celular): barras y bordes más grandes, botones cómodos */
+  @media (pointer:coarse){
+    .tb-fila{min-height:62px}
+    .tb-g{top:5px;height:18px;line-height:15px;font-size:10.5px}
+    .tb-b{top:27px;height:30px;font-size:12.5px;border-radius:9px}
+    .tb-b .h{width:22px}
+    .tb-b .h::after{left:9px;top:8px;bottom:8px;width:3px}
+    .det .botonera .btn{padding:9px 12px;font-size:13px}
+  }
   .tb-b.choca{outline:2.5px solid var(--crit);outline-offset:1px}
   .tb-b .h{position:absolute;top:0;bottom:0;width:10px;cursor:ew-resize}
   .tb-b .h.l{left:0}.tb-b .h.r{right:0}
@@ -383,7 +394,7 @@
           <h2 style="flex:1">Armado de vacaciones <span id="solicitudesAnio"></span></h2>
           <button class="btn sm" id="btnCopiarLink" type="button" title="Copiar el link para mandarles a todos">🔗 Link para que pidan</button>
         </div>
-        <p class="sub">De fondo, punteado, lo que pidió cada uno. Encima, lo que vas armando: arrastrá la barra para moverla, estirala desde los bordes para cambiar los días, o tocala para ver con quién coincide y confirmarla. Hasta que confirmás, el equipo no ve nada.</p>
+        <p class="sub">De fondo, punteado, lo que pidió cada uno. Encima, las vacaciones: <b>arrastrá la barra con el dedo</b> para cambiarla de fecha y <b>sus bordes</b> para cambiar los días, o <b>tocala</b> para moverla con botones, ver con quién coincide y confirmarla.</p>
         <div class="card-body">
           <div class="pl-filtros" id="plFiltros"></div>
           <div id="plChoques"></div>
@@ -400,7 +411,7 @@
             <button class="btn sm primary" type="button" id="tbConfirmarTodo" hidden></button>
           </div>
           <div class="pl-leyenda">
-            <span><i class="sw g"></i>Lo que pidió</span><span><i class="sw plan"></i>Armada (se mueve)</span><span><i class="sw sug"></i>Sugerida</span><span><i class="sw conf"></i>Confirmada</span><span><i class="sw choca"></i>Coincide con su área</span>
+            <span><i class="sw g"></i>Lo que pidió</span><span><i class="sw plan"></i>Sin confirmar</span><span><i class="sw sug"></i>Sugerida</span><span><i class="sw conf"></i>✓ Confirmada</span><span><i class="sw choca"></i>Coincide con su área</span>
           </div>
           <div class="tb-scroll" id="tbScroll"><div class="tb" id="tb"></div></div>
           <details class="pl-lista">
@@ -535,7 +546,7 @@ window.SolicitudesSync = {
 <script src="calculo.js"></script>
 <script>
 "use strict";
-const APP_VERSION="2026-10-30 tablero-armado";
+const APP_VERSION="2026-10-30 tablero-ipad";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -906,7 +917,8 @@ let planPuesto="";
 const ORDEN_PUESTOS=Object.keys(PUESTOS);
 const MAX_POR_AREA=1;
 const ZOOMS=[8,12,16,22,30];
-let tbDia=(()=>{try{const z=+localStorage.getItem("vac-tablero-zoom");return ZOOMS.includes(z)?z:16;}catch{return 16;}})();
+const tactil=()=>matchMedia("(pointer:coarse)").matches;
+let tbDia=(()=>{const def=tactil()?22:16;try{const z=+localStorage.getItem("vac-tablero-zoom");return ZOOMS.includes(z)?z:def;}catch{return def;}})();
 let tbIni=null,tbDias=0,tbPrimeraVez=true;
 function isoDe(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function sumarDiasISO(iso,n){const d=fecha(iso);d.setDate(d.getDate()+n);return isoDe(d);}
@@ -926,10 +938,24 @@ function pedidosAnio(){
 function planSegs(){
   return Object.entries(state.plan||{}).map(([id,p])=>({id,...p,tipo:"plan"})).filter(p=>BY_NAME[p.n]&&p.desde&&p.hasta&&p.hasta>=p.desde);
 }
-// Vacaciones ya confirmadas (de hoy en adelante): se ven en el tablero, en verde.
+// Vacaciones ya cargadas (de hoy en adelante). `conf` solo si están confirmadas: las "a confirmar"
+// se ven y se mueven igual que lo armado.
 function confirmadas(){
   const h=isoHoy();
-  return state.taken.filter(t=>BY_NAME[t.n]&&t.hasta>=h).map(t=>({...t,id:"t-"+t.id,tid:t.id,tipo:"conf"}));
+  return state.taken.filter(t=>BY_NAME[t.n]&&t.hasta>=h).map(t=>({...t,id:"t-"+t.id,tid:t.id,tipo:"tk",conf:t.estado==="confirmada"}));
+}
+function refSeg(id){return id.startsWith("t-")?state.taken.find(t=>"t-"+t.id===id):(state.plan&&state.plan[id]);}
+// Cambia las fechas de una barra. Si ya estaba confirmada, pregunta y la deja sin confirmar: con
+// fechas nuevas hay que volver a comunicarlas.
+function moverSeg(id,desde,hasta){
+  const r=refSeg(id);if(!r)return false;
+  if(desde===r.desde&&hasta===r.hasta)return false;
+  if(id.startsWith("t-")&&r.estado==="confirmada"){
+    if(!confirm(`Las vacaciones de ${r.n} ya estaban confirmadas (${fmtCorto(r.desde)} al ${fmtCorto(r.hasta)}).\n\n¿Cambiarlas a ${fmtCorto(desde)} al ${fmtCorto(hasta)}? Quedan sin confirmar hasta que las vuelvas a confirmar.`))return false;
+    r.estado="pendiente";
+  }
+  r.desde=desde;r.hasta=hasta;delete r.sugerida;
+  return true;
 }
 function ubicadas(){return planSegs().concat(confirmadas());}
 // Ya tiene algo armado o confirmado para esta temporada
@@ -1023,22 +1049,24 @@ function renderPlanificador(){
     for(const u of mios){
       const dias=rangoDias(u.desde,u.hasta);
       const choca=choquesArea(u,ubic).length>=MAX_POR_AREA;
-      if(u.tipo==="conf")h+=`<div class="tb-b conf ${choca?"choca":""}" data-seg="${escH(u.id)}" style="${pos(u.desde,u.hasta)}" title="Confirmada: ${fmtFecha(u.desde)} al ${fmtFecha(u.hasta)}">✓ ${dias} d</div>`;
-      else h+=`<div class="tb-b plan ${u.sugerida?"sug":""} ${choca?"choca":""}" data-seg="${escH(u.id)}" style="${pos(u.desde,u.hasta)}" title="${u.sugerida?"Sugerida":"En armado"}: ${fmtFecha(u.desde)} al ${fmtFecha(u.hasta)} — arrastrala o tocala"><i class="h l"></i><span>${u.sugerida?"💡 ":""}${dias} d</span><i class="h r"></i></div>`;
+      const conf=u.tipo==="tk"&&u.conf;
+      // en barras cortas no van los bordes para estirar: con el dedo se agarraría siempre un borde
+      const bordes=dias*tbDia>=(tactil()?84:44);
+      h+=`<div class="tb-b ${conf?"conf":"plan"} ${u.sugerida?"sug":""} ${choca?"choca":""}" data-seg="${escH(u.id)}" style="${pos(u.desde,u.hasta)}" title="${conf?"Confirmada":u.sugerida?"Sugerida":"Sin confirmar"}: ${fmtFecha(u.desde)} al ${fmtFecha(u.hasta)} — arrastrala o tocala">${bordes?`<i class="h l"></i>`:""}<span>${conf?"✓ ":u.sugerida?"💡 ":""}${dias} d</span>${bordes?`<i class="h r"></i>`:""}</div>`;
     }
     h+=`</div></div>`;
   }
   if(difISO(tbIni,hoyISO)>=0&&difISO(hoyISO,r.fin)>=0)h+=`<div class="tb-hoy" style="left:calc(var(--nom) + ${difISO(tbIni,hoyISO)} * var(--d))"></div>`;
   tb.innerHTML=h;
   // botones de la barra de herramientas
-  const sug=plan.filter(p=>p.sugerida).length,armadas=plan.filter(p=>!p.sugerida).length;
+  const sug=plan.filter(p=>p.sugerida).length,armadas=plan.filter(p=>!p.sugerida).length+conf.filter(c=>!c.conf).length;
   document.getElementById("tbQuitarSug").hidden=!sug;
   document.getElementById("tbQuitarSug").textContent=`Quitar sugerencias (${sug})`;
   document.getElementById("tbConfirmarTodo").hidden=!armadas;
-  document.getElementById("tbConfirmarTodo").textContent=`✓ Confirmar lo armado (${armadas})`;
+  document.getElementById("tbConfirmarTodo").textContent=`✓ Confirmar todo lo que falta (${armadas})`;
   const sel=document.getElementById("tbSumar");
   const enTablero=new Set(nombres);
-  sel.innerHTML=`<option value="">+ Armar para alguien…</option>`+PEOPLE.filter(p=>!enTablero.has(p.n)&&filtraPuesto(p)).map(p=>`<option value="${escH(p.n)}">${escH(nombreCompleto(p.n))}</option>`).join("");
+  sel.innerHTML=`<option value="">+ Sumar a alguien que no pidió…</option>`+PEOPLE.filter(p=>!enTablero.has(p.n)&&filtraPuesto(p)).map(p=>`<option value="${escH(p.n)}">${escH(nombreCompleto(p.n))}</option>`).join("");
   if(tbPrimeraVez&&nombres.length){
     tbPrimeraVez=false;
     const primero=[...pedsV.map(p=>p.desde),...ubicV.map(u=>u.desde)].filter(d=>d>=hoyISO).sort()[0]||hoyISO;
@@ -1069,7 +1097,6 @@ function renderAvisos(peds,ubic,llegada){
   const pares=[],vistos=new Set();
   for(const a of ubicV)for(const b of ubicV){
     if(a.n>=b.n||puestoDe(a.n)!==puestoDe(b.n))continue;
-    if(a.tipo==="conf"&&b.tipo==="conf"&&a.hasta<isoHoy())continue;
     const d=diasEnComun(a,b);if(!d)continue;
     const k=a.id+"|"+b.id;if(vistos.has(k))continue;vistos.add(k);
     pares.push({a,b,d,desde:a.desde>b.desde?a.desde:b.desde});
@@ -1080,7 +1107,7 @@ function renderAvisos(peds,ubic,llegada){
   if(pares.length){
     const MAX=6;
     h+=`<div class="pl-choques"><b class="t">⚠ ${pares.length} coincidencia${pares.length===1?"":"s"} en la misma área (la idea es 1 por área)</b>
-      ${pares.slice(0,MAX).map(({a,b,d,desde})=>`<button class="pl-choque" data-ir="${desde}" data-fila="${escH(a.n)}">${PUESTOS[puestoDe(a.n)]} · <b>${escH(a.n)}</b>${a.tipo==="conf"?" ✓":""} y <b>${escH(b.n)}</b>${b.tipo==="conf"?" ✓":""}<br><small>${d} día${d===1?"":"s"} juntos, desde el ${fmtCorto(desde)}</small></button>`).join("")}
+      ${pares.slice(0,MAX).map(({a,b,d,desde})=>`<button class="pl-choque" data-ir="${desde}" data-fila="${escH(a.n)}">${PUESTOS[puestoDe(a.n)]} · <b>${escH(a.n)}</b>${a.conf?" ✓":""} y <b>${escH(b.n)}</b>${b.conf?" ✓":""}<br><small>${d} día${d===1?"":"s"} juntos, desde el ${fmtCorto(desde)}</small></button>`).join("")}
       ${pares.length>MAX?`<small style="color:var(--ink-soft)">…y ${pares.length-MAX} más (filtrá por área).</small>`:""}</div>`;
   }else if(ubicV.length)h+=`<div class="pl-ok">✓ Nadie de la misma área coincide en lo armado.</div>`;
   if(sinUbicar.length)h+=`<div class="tb-sin"><b>Pidieron y todavía no tienen fecha (${sinUbicar.length}):</b> ${sinUbicar.map(n=>`<button class="pl-chip" data-fila="${escH(n)}" style="--pc:${PUESTO_COLOR[puestoDe(n)]}"><span class="pc-dot"></span>${escH(n)}</button>`).join("")}</div>`;
@@ -1170,7 +1197,7 @@ function sugerir(){
   guardarPlan(`💡 ${personas.length} sugeridas${personas.length-libres?` (${personas.length-libres} chocan igual: miralas en rojo)`:""}. Movelas o confirmalas.`);
 }
 function confirmarSeg(id,sinPreguntar){
-  const p=state.plan&&state.plan[id];if(!p)return null;
+  const p=refSeg(id);if(!p)return null;
   if(!sinPreguntar){
     const avisos=[];
     const ch=choquesArea({...p,id},ubicadas());
@@ -1178,6 +1205,7 @@ function confirmarSeg(id,sinPreguntar){
     const q=leQuedan(p.n);if(q<0)avisos.push(`${p.n} se pasa ${-q} días de los que tiene.`);
     if(avisos.length&&!confirm(avisos.join("\n")+"\n\n¿Confirmar igual?"))return null;
   }
+  if(id.startsWith("t-")){p.estado="confirmada";return id;}
   const tid=Date.now()+"-"+Math.round(Math.random()*1e6);
   state.taken.push({id:tid,n:p.n,desde:p.desde,hasta:p.hasta,periodo:PERIODO_PEDIDO,estado:"confirmada",nota:"Plan de vacaciones",plan:id});
   delete state.plan[id];
@@ -1202,58 +1230,60 @@ function abrirHoja(titulo,cuerpo,onAcc){
   ov.addEventListener("change",e=>onAcc("fecha",e.target));
 }
 function lineaCoincide(o,mismaArea,extra){
-  return`<button type="button" class="co ${mismaArea?"mismo":""}" ${o.tipo==="plan"||o.tipo==="conf"?`data-seg="${escH(o.id)}"`:`data-op="${escH(o.id)}"`}><span><b>${escH(nombreCompleto(o.n))}</b> · ${PUESTOS[puestoDe(o.n)]}<br><small>${o.tipo==="conf"?"✓ confirmada":o.tipo==="plan"?(o.sugerida?"💡 sugerida":"en armado"):`pidió (${o.orden}ª)`} · ${fmtCorto(o.desde)} al ${fmtCorto(o.hasta)}</small></span><span class="r">${extra}</span></button>`;
+  return`<button type="button" class="co ${mismaArea?"mismo":""}" ${o.tipo==="plan"||o.tipo==="tk"?`data-seg="${escH(o.id)}"`:`data-op="${escH(o.id)}"`}><span><b>${escH(nombreCompleto(o.n))}</b> · ${PUESTOS[puestoDe(o.n)]}<br><small>${o.conf?"✓ confirmada":o.tipo==="plan"||o.tipo==="tk"?(o.sugerida?"💡 sugerida":"sin confirmar"):`pidió (${o.orden}ª)`} · ${fmtCorto(o.desde)} al ${fmtCorto(o.hasta)}</small></span><span class="r">${extra}</span></button>`;
 }
 function abrirSeg(id){
-  const esConf=id.startsWith("t-");
-  const seg=esConf?confirmadas().find(c=>c.id===id):planSegs().find(p=>p.id===id);
+  const seg=ubicadas().find(u=>u.id===id);
   if(!seg)return cerrarDetalle();
+  const conf=seg.tipo==="tk"&&seg.conf;
   const n=seg.n,pu=puestoDe(n),dias=rangoDias(seg.desde,seg.hasta);
   const peds=pedidosAnio(),ubic=ubicadas(),llegada=ordenLlegada(peds);
   const ops=peds.filter(p=>p.n===n).sort((a,b)=>a.orden-b.orden);
   const misma=choquesArea(seg,ubic);
   const otras=ubic.filter(o=>o.n!==n&&puestoDe(o.n)!==pu&&diasEnComun(seg,o)>0);
   const quedan=leQuedan(n);
-  const estado=esConf?"✓ Confirmada":seg.sugerida?"💡 Sugerida":"En armado";
+  const estado=conf?"✓ Confirmada":seg.sugerida?"💡 Sugerida":"Sin confirmar";
   const cuerpo=`
     <div class="fechas">${fmtFecha(seg.desde)} al ${fmtFecha(seg.hasta)}</div>
-    ${esConf?"":`<div class="mover">
+    <div class="mover">
       <div class="row2"><label>Desde<input type="date" data-campo="desde" value="${seg.desde}"></label><label>Hasta<input type="date" data-campo="hasta" value="${seg.hasta}"></label></div>
-      <div class="botonera"><span>Correr</span><button class="btn sm" data-acc="mv" data-v="-7">−1 sem</button><button class="btn sm" data-acc="mv" data-v="-1">−1 día</button><button class="btn sm" data-acc="mv" data-v="1">+1 día</button><button class="btn sm" data-acc="mv" data-v="7">+1 sem</button></div>
-      <div class="botonera"><span>Días</span><button class="btn sm" data-acc="len" data-v="-1">− 1</button><b>${dias}</b><button class="btn sm" data-acc="len" data-v="1">+ 1</button></div>
-    </div>`}
+      <div class="botonera"><span>Correr</span><button class="btn" data-acc="mv" data-v="-7">−1 sem</button><button class="btn" data-acc="mv" data-v="-1">−1 día</button><button class="btn" data-acc="mv" data-v="1">+1 día</button><button class="btn" data-acc="mv" data-v="7">+1 sem</button></div>
+      <div class="botonera"><span>Días</span><button class="btn" data-acc="len" data-v="-1">− 1</button><b>${dias}</b><button class="btn" data-acc="len" data-v="1">+ 1</button></div>
+      ${conf?`<p class="aviso-conf">Está confirmada: si la movés, queda sin confirmar.</p>`:""}
+    </div>
     <div class="datos">
       <span class="dato"><b>${dias}</b>días</span>
       <span class="dato" ${quedan<0?'style="border-color:var(--crit);color:var(--crit)"':""}><b>${quedan}</b>${quedan<0?"días de más":"le quedan"}</span>
       <span class="dato"><b>${estado}</b>estado</span>
       ${llegada[n]?`<span class="dato"><b>${llegada[n]}º</b>en pedir</span>`:""}
     </div>
-    <p class="rel">${escH(relacionConPedido(seg,peds))}</p>
-    ${ops.length?`<h4>Lo que pidió</h4>${ops.map(o=>`<div class="co op ${o.descartada?"desc":""}"><span><b>${o.orden}ª opción</b> · ${fmtCorto(o.desde)} al ${fmtCorto(o.hasta)} (${rangoDias(o.desde,o.hasta)} d)${o.nota&&o.orden===1?`<br><small>“${escH(o.nota)}”</small>`:""}</span>${esConf?"":`<button class="btn sm" data-acc="poner" data-v="${escH(o.id)}">Poner acá</button>`}</div>`).join("")}`:`<p class="sub" style="padding:0">No mandó pedido.</p>`}
+    <p class="rel">${escH(relacionConPedido(seg,peds))}${seg.nota&&seg.tipo==="tk"?` · Nota: ${escH(seg.nota)}`:""}</p>
+    ${ops.length?`<h4>Lo que pidió</h4>${ops.map(o=>`<div class="co op ${o.descartada?"desc":""}"><span><b>${o.orden}ª opción</b> · ${fmtCorto(o.desde)} al ${fmtCorto(o.hasta)} (${rangoDias(o.desde,o.hasta)} d)${o.nota&&o.orden===1?`<br><small>“${escH(o.nota)}”</small>`:""}</span><button class="btn sm" data-acc="poner" data-v="${escH(o.id)}">Poner acá</button></div>`).join("")}`:`<p class="sub" style="padding:0">No mandó pedido.</p>`}
     <h4>De ${PUESTOS[pu]} al mismo tiempo</h4>
     ${misma.length?misma.map(o=>lineaCoincide(o,true,`${diasEnComun(seg,o)} d juntos`)).join(""):`<p class="sub" style="padding:0">Nadie de su área. ✓</p>`}
     ${otras.length?`<h4>De otras áreas</h4><p class="sub" style="padding:0">${otras.map(o=>`${escH(o.n)} (${PUESTOS[puestoDe(o.n)]})`).join(" · ")}</p>`:""}
-    <div class="acciones">${esConf
-      ?`<button class="btn" data-acc="volver">Volver a armar (deja de estar confirmada)</button>`
-      :`<button class="btn" data-acc="quitar">Quitar del tablero</button><button class="btn primary" data-acc="confirmar">✓ Confirmar</button>`}</div>`;
+    <div class="acciones">${conf
+      ?`<button class="btn" data-acc="borrar">Borrar</button><button class="btn" data-acc="desconfirmar">Pasar a sin confirmar</button>`
+      :`<button class="btn" data-acc="${seg.tipo==="tk"?"borrar":"quitar"}">${seg.tipo==="tk"?"Borrar":"Quitar del tablero"}</button><button class="btn primary" data-acc="confirmar">✓ Confirmar</button>`}</div>`;
   abrirHoja(`${escH(nombreCompleto(n))} · ${PUESTOS[pu]}`,cuerpo,(acc,el)=>{
-    const p=state.plan&&state.plan[id];
-    if(acc==="mv"&&p){const v=+el.dataset.v;p.desde=sumarDiasISO(p.desde,v);p.hasta=sumarDiasISO(p.hasta,v);delete p.sugerida;guardarPlan();irAFecha(p.desde);return abrirSeg(id);}
-    if(acc==="len"&&p){const nh=sumarDiasISO(p.hasta,+el.dataset.v);if(nh<p.desde)return;p.hasta=nh;delete p.sugerida;guardarPlan();return abrirSeg(id);}
-    if(acc==="fecha"&&p){
+    const r=refSeg(id);if(!r)return cerrarDetalle();
+    const aplicar=(d,h)=>{if(moverSeg(id,d,h)){guardarPlan();irAFecha(d);}abrirSeg(id);};
+    if(acc==="mv"){const v=+el.dataset.v;return aplicar(sumarDiasISO(r.desde,v),sumarDiasISO(r.hasta,v));}
+    if(acc==="len"){const nh=sumarDiasISO(r.hasta,+el.dataset.v);if(nh<r.desde)return;return aplicar(r.desde,nh);}
+    if(acc==="fecha"){
       const campo=el.dataset.campo;if(!campo||!el.value)return;
-      if(campo==="desde"){const largo=difISO(p.desde,p.hasta);p.desde=el.value;p.hasta=sumarDiasISO(el.value,largo);}
-      else{if(el.value<p.desde)return toast("La fecha 'hasta' no puede ser antes que 'desde'");p.hasta=el.value;}
-      delete p.sugerida;guardarPlan();irAFecha(p.desde);return abrirSeg(id);
+      if(campo==="desde")return aplicar(el.value,sumarDiasISO(el.value,difISO(r.desde,r.hasta)));
+      if(el.value<r.desde){toast("La fecha 'hasta' no puede ser antes que 'desde'");return abrirSeg(id);}
+      return aplicar(r.desde,el.value);
     }
-    if(acc==="poner"&&p){const o=pedidosAnio().find(x=>x.id===el.dataset.v);if(!o)return;p.desde=o.desde;p.hasta=o.hasta;delete p.sugerida;guardarPlan();irAFecha(p.desde);return abrirSeg(id);}
-    if(acc==="quitar"&&p){delete state.plan[id];guardarPlan(`Se quitó del tablero`);return cerrarDetalle();}
-    if(acc==="confirmar"&&p){const nid=confirmarSeg(id);if(!nid)return;guardarPlan(`✓ Confirmada: ${n}, ${fmtCorto(seg.desde)} al ${fmtCorto(seg.hasta)}`);return abrirSeg(nid);}
-    if(acc==="volver"&&esConf){
-      if(!confirm(`¿Volver a armar las vacaciones de ${n}? Dejan de estar confirmadas y las podés mover.`))return;
-      state.taken=state.taken.filter(t=>String(t.id)!==String(seg.tid));
-      const nid=crearSeg(n,seg.desde,seg.hasta);guardarPlan();return abrirSeg(nid);
+    if(acc==="poner"){const o=pedidosAnio().find(x=>x.id===el.dataset.v);if(o)aplicar(o.desde,o.hasta);return;}
+    if(acc==="quitar"){delete state.plan[id];guardarPlan(`Se quitó del tablero`);return cerrarDetalle();}
+    if(acc==="borrar"){
+      if(!confirm(`¿Borrar las vacaciones de ${n} del ${fmtCorto(r.desde)} al ${fmtCorto(r.hasta)}?`))return;
+      state.taken=state.taken.filter(t=>"t-"+t.id!==id);guardarPlan("Vacaciones borradas (se puede deshacer con ↩️)");return cerrarDetalle();
     }
+    if(acc==="confirmar"){const nid=confirmarSeg(id);if(!nid)return;guardarPlan(`✓ Confirmada: ${n}, ${fmtCorto(r.desde)} al ${fmtCorto(r.hasta)}`);return abrirSeg(nid);}
+    if(acc==="desconfirmar"){r.estado="pendiente";guardarPlan(`${n}: sin confirmar`);return abrirSeg(id);}
   });
 }
 // ── detalle de una opción pedida ──
@@ -1315,8 +1345,8 @@ function imanar(n,r){
 function initTablero(){
   const tb=document.getElementById("tb");
   tb.addEventListener("pointerdown",e=>{
-    const b=e.target.closest(".tb-b.plan");if(!b||e.button>0)return;
-    const p=state.plan&&state.plan[b.dataset.seg];if(!p)return;
+    const b=e.target.closest(".tb-b[data-seg]");if(!b||e.button>0)return;
+    const p=refSeg(b.dataset.seg);if(!p)return;
     const modo=e.target.classList.contains("h")?(e.target.classList.contains("l")?"izq":"der"):"mover";
     drag={el:b,id:b.dataset.seg,n:p.n,modo,x0:e.clientX,desde:p.desde,hasta:p.hasta,movido:false,dd:0,r:{desde:p.desde,hasta:p.hasta}};
     try{b.setPointerCapture(e.pointerId);}catch{}
@@ -1341,16 +1371,14 @@ function initTablero(){
     document.getElementById("tbTip")?.remove();
     if(e.type==="pointercancel"){renderPlanificador();return;}
     if(!dr.movido){abrirSeg(dr.id);return;}
-    const p=state.plan[dr.id];if(!p)return;
     const r=dr.modo==="mover"?imanar(dr.n,dr.r):dr.r;
-    p.desde=r.desde;p.hasta=r.hasta;delete p.sugerida;
+    if(!moverSeg(dr.id,r.desde,r.hasta)){renderPlanificador();return;}
     guardarPlan(`${dr.n}: ${fmtCorto(r.desde)} al ${fmtCorto(r.hasta)} (${rangoDias(r.desde,r.hasta)} d)${r.iman?` · su ${r.iman}ª opción`:""}`);
   };
   tb.addEventListener("pointerup",soltar);
   tb.addEventListener("pointercancel",soltar);
   tb.addEventListener("click",e=>{
     const g=e.target.closest(".tb-g[data-op]");if(g)return abrirOpcion(g.dataset.op);
-    const c=e.target.closest(".tb-b.conf");if(c)return abrirSeg(c.dataset.seg);
     const mas=e.target.closest("[data-sumar]");if(mas)return armarPara(mas.dataset.sumar);
   });
   const card=document.getElementById("planCard");
@@ -1376,9 +1404,9 @@ function initTablero(){
     ids.forEach(id=>delete state.plan[id]);guardarPlan("Sugerencias quitadas");
   });
   document.getElementById("tbConfirmarTodo").addEventListener("click",()=>{
-    const ps=planSegs().filter(p=>!p.sugerida);
+    const ps=planSegs().filter(p=>!p.sugerida).concat(confirmadas().filter(c=>!c.conf));
     const conChoque=ps.filter(p=>choquesArea(p,ubicadas()).length).length;
-    if(!confirm(`¿Confirmar las ${ps.length} vacaciones armadas?${conChoque?`\n\n⚠ ${conChoque} coinciden con alguien de su misma área.`:""}\n\nLas sugeridas (💡) no se confirman: primero movelas o confirmalas una por una.`))return;
+    if(!confirm(`¿Confirmar estas ${ps.length} vacaciones?\n\n${ps.map(p=>`• ${p.n}: ${fmtCorto(p.desde)} al ${fmtCorto(p.hasta)}`).join("\n")}${conChoque?`\n\n⚠ ${conChoque} coinciden con alguien de su misma área.`:""}\n\nLas sugeridas (💡) no entran: primero movelas o confirmalas una por una.`))return;
     ps.forEach(p=>confirmarSeg(p.id,true));guardarPlan(`✓ ${ps.length} vacaciones confirmadas`);
   });
   document.getElementById("tbSumar").addEventListener("change",e=>{const n=e.target.value;e.target.value="";if(n)armarPara(n);});
@@ -1391,7 +1419,7 @@ let calConPedidos=false;
 // Vacaciones del calendario (confirmadas o a confirmar), del área elegida. Con el tilde, también lo
 // que está en armado en el tablero y lo pedido que todavía no tiene fecha (punteado).
 function vacacionesCalendario(){
-  const out=state.taken.filter(t=>BY_NAME[t.n]&&filtraPuesto(t)).map(t=>({n:t.n,desde:t.desde,hasta:t.hasta,clase:t.estado==="confirmada"?"conf":"pend",txt:t.n,nota:t.nota||""}));
+  const out=state.taken.filter(t=>BY_NAME[t.n]&&filtraPuesto(t)).map(t=>({n:t.n,desde:t.desde,hasta:t.hasta,clase:t.estado==="confirmada"?"conf":"pend",txt:t.estado==="confirmada"?t.n:t.n+" ?",nota:t.estado==="confirmada"?(t.nota||""):"a confirmar"+(t.nota?" · "+t.nota:""),seg:t.hasta>=isoHoy()?"t-"+t.id:""}));
   if(calConPedidos){
     planSegs().filter(filtraPuesto).forEach(p=>out.push({n:p.n,desde:p.desde,hasta:p.hasta,clase:"plan",txt:`${p.n} · ${p.sugerida?"💡":"armada"}`,nota:p.sugerida?"sugerida":"en armado",seg:p.id}));
     pedidosAnio().filter(p=>!p.descartada&&!personaUbicada(p.n)&&filtraPuesto(p))
