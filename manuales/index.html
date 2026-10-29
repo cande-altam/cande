@@ -1997,6 +1997,9 @@ async function descartarSugerido(claveSug) {
   pintar();
 }
 async function abrirEditor(id, borradorKey, cambios) {
+  // un autoguardado pendiente del editor anterior no tiene que dispararse en este (pisaba el aviso
+  // de lo que se cargó); al salir de aquel ya se guardó su borrador
+  clearTimeout(_timerBorrador);
   let e;
   if (borradorKey && S.borradores[borradorKey]) {
     const b = S.borradores[borradorKey];
