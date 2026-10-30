@@ -234,10 +234,16 @@
   .tb-g.op3{opacity:.7}
   .tb-g.desc{opacity:.3;text-decoration:line-through}
   .tb-g.usada{border-style:solid;opacity:.5}
-  .tb-b{position:absolute;top:21px;height:21px;border-radius:7px;background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;box-shadow:0 1px 3px rgba(0,0,0,.18);z-index:1}
+  .tb-b{position:absolute;top:21px;height:21px;border-radius:7px;background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;box-shadow:0 1px 3px rgba(0,0,0,.18);z-index:1}
   .tb-b.sug{background:var(--warn-soft);color:var(--warn);border:2px dashed var(--warn);box-shadow:none}
   .tb-b.conf{background:var(--ok)}
   .calChip[data-seg],.calChip[data-op]{cursor:pointer}
+  .calChip[data-seg]{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+  .calGrid .day.destino{background:color-mix(in srgb,var(--accent) 16%,var(--panel));box-shadow:inset 0 0 0 2px var(--accent)}
+  .cal-fantasma{position:fixed;z-index:700;pointer-events:none;transform:translate(-50%,-140%);background:var(--negro);color:var(--crema);font-size:13px;font-weight:700;padding:7px 11px;border-radius:9px;white-space:nowrap;box-shadow:0 8px 22px rgba(0,0,0,.3)}
+  body.cal-arrastrando{-webkit-user-select:none;user-select:none}
+  .cal-ayuda{font-size:11.5px;color:var(--ink-soft);margin:6px 0 0}
+  @media (pointer:coarse){.calChip{font-size:11.5px;padding:4px 6px;margin-bottom:3px}.calGrid .day{min-height:92px}}
   .det .aviso-conf{font-size:11.5px;color:var(--warn);margin:8px 0 0;font-weight:600}
   /* con el dedo (iPad, celular): barras y bordes más grandes, botones cómodos */
   @media (pointer:coarse){
@@ -442,7 +448,8 @@
         </div>
         <div class="card-body" style="padding-bottom:0">
           <div class="pl-filtros" id="calFiltros"></div>
-          <label class="cal-op"><input type="checkbox" id="calPedidos"> Mostrar también lo que está en armado y los pedidos sin fecha</label>
+          <label class="cal-op"><input type="checkbox" id="calPedidos" checked> Mostrar también lo que está en armado y los pedidos sin fecha</label>
+          <p class="cal-ayuda">✋ Mantené el dedo sobre un nombre y arrastralo a otro día para mover sus vacaciones. Para llevarlas a otro mes, dejá el dedo un momento sobre ‹ o ›. Si lo tocás sin arrastrar, se abren los botones para moverla.</p>
         </div>
         <div class="calGrid" id="calGrid"></div>
         <div class="card-body" style="padding-top:0">
@@ -551,7 +558,7 @@ window.SolicitudesSync = {
 <script src="calculo.js"></script>
 <script>
 "use strict";
-const APP_VERSION="2026-10-30 tablero-mes";
+const APP_VERSION="2026-10-30 calendario-arrastrar";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -1447,13 +1454,13 @@ function initTablero(){
 let calMonth=hoy().getMonth(),calYear=hoy().getFullYear();
 // Color por puesto: el mismo en el calendario, la lista de próximas y los filtros.
 const PUESTO_COLOR={caja:"#2C6F63",atencion:"#7FC6BA",barra:"#E15D46",cocina:"#C98A1E",ayudante:"#8a7a5c",compras:"#9b6bd6",pasteleria:"#d65b9a",panaderia:"#b07a3b",administracion:"#4a78c2",otros:"#999"};
-let calConPedidos=false;
+let calConPedidos=true;
 // Vacaciones del calendario (confirmadas o a confirmar), del área elegida. Con el tilde, también lo
 // que está en armado en el tablero y lo pedido que todavía no tiene fecha (punteado).
 function vacacionesCalendario(){
   const out=state.taken.filter(t=>BY_NAME[t.n]&&filtraPuesto(t)).map(t=>({n:t.n,desde:t.desde,hasta:t.hasta,clase:t.estado==="confirmada"?"conf":"pend",txt:t.estado==="confirmada"?t.n:t.n+" ?",nota:t.estado==="confirmada"?(t.nota||""):"a confirmar"+(t.nota?" · "+t.nota:""),seg:t.hasta>=isoHoy()?"t-"+t.id:""}));
   if(calConPedidos){
-    planSegs().filter(filtraPuesto).forEach(p=>out.push({n:p.n,desde:p.desde,hasta:p.hasta,clase:"plan",txt:`${p.n} · ${p.sugerida?"💡":"armada"}`,nota:p.sugerida?"sugerida":"en armado",seg:p.id}));
+    planSegs().filter(filtraPuesto).forEach(p=>out.push({n:p.n,desde:p.desde,hasta:p.hasta,clase:"plan",txt:`${p.n}${p.sugerida?" 💡":""}`,nota:p.sugerida?"sugerida":"en armado",seg:p.id}));
     pedidosAnio().filter(p=>!p.descartada&&!personaUbicada(p.n)&&filtraPuesto(p))
       .forEach(p=>out.push({n:p.n,desde:p.desde,hasta:p.hasta,clase:"pedido",txt:`${p.n} · ${p.orden}ª`,nota:"pedido sin fecha",op:p.id}));
   }
@@ -1484,10 +1491,64 @@ function renderCalendar(){
     const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
     const otherMonth=d.getMonth()!==calMonth;
     const vac=otherMonth?[]:todas.filter(t=>t.desde<=iso&&iso<=t.hasta).sort((a,b)=>ORDEN_PUESTOS.indexOf(puestoDe(a.n))-ORDEN_PUESTOS.indexOf(puestoDe(b.n)));
-    h+=`<div class="day ${otherMonth?"otherMonth":""} ${iso===todayISO?"today":""}"><div class="daynum">${d.getDate()}</div>${vac.map(v=>`<span class="calChip ${v.clase}" style="--pc:${PUESTO_COLOR[puestoDe(v.n)]}" ${v.seg?`data-seg="${escH(v.seg)}"`:v.op?`data-op="${escH(v.op)}"`:""} title="${escH(v.n)} · ${PUESTOS[puestoDe(v.n)]} · ${fmtFecha(v.desde)} al ${fmtFecha(v.hasta)}${v.nota?" · "+escH(v.nota):""}">${escH(v.txt)}</span>`).join("")}</div>`;
+    h+=`<div class="day ${otherMonth?"otherMonth":""} ${iso===todayISO?"today":""}" ${otherMonth?"":`data-iso="${iso}"`}><div class="daynum">${d.getDate()}</div>${vac.map(v=>`<span class="calChip ${v.clase}" style="--pc:${PUESTO_COLOR[puestoDe(v.n)]}" ${v.seg?`data-seg="${escH(v.seg)}"`:v.op?`data-op="${escH(v.op)}"`:""} title="${escH(v.n)} · ${PUESTOS[puestoDe(v.n)]} · ${fmtFecha(v.desde)} al ${fmtFecha(v.hasta)}${v.nota?" · "+escH(v.nota):""}">${escH(v.txt)}</span>`).join("")}</div>`;
   }
   grid.innerHTML=h;
   renderProximas();
+}
+function mesAnteriorCal(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function mesSiguienteCal(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+/* Arrastrar en el calendario del mes: se agarra el nombre de alguien en cualquiera de sus días y se
+   suelta en otro día; toda la vacación se corre esa cantidad de días (mismo largo). Funciona con el
+   dedo (iPad) y con el mouse. Para cambiar de mes, se deja el dedo sobre ‹ o › un momento. La captura
+   va sobre la grilla (no sobre el nombre) porque al cambiar de mes los nombres se vuelven a dibujar. */
+let calDrag=null;
+function calLimpiarDestino(){document.querySelectorAll("#calGrid .day.destino").forEach(d=>d.classList.remove("destino"));}
+function initCalArrastre(){
+  const grid=document.getElementById("calGrid");
+  grid.addEventListener("pointerdown",e=>{
+    const c=e.target.closest(".calChip[data-seg]");if(!c||e.button>0)return;
+    const r=refSeg(c.dataset.seg),dia=c.closest(".day")?.dataset.iso;if(!r||!dia)return;
+    calDrag={id:c.dataset.seg,n:r.n,dia,desde:r.desde,hasta:r.hasta,x0:e.clientX,y0:e.clientY,movido:false,destino:null,flip:null,flecha:null};
+    try{grid.setPointerCapture(e.pointerId);}catch{}
+    e.preventDefault();
+  });
+  grid.addEventListener("pointermove",e=>{
+    const d=calDrag;if(!d)return;
+    if(!d.movido&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<6)return;
+    if(!d.movido){d.movido=true;document.body.classList.add("cal-arrastrando");}
+    let f=document.getElementById("calFantasma");
+    if(!f){f=document.createElement("div");f.id="calFantasma";f.className="cal-fantasma";document.body.appendChild(f);}
+    f.style.left=e.clientX+"px";f.style.top=e.clientY+"px";
+    const bajo=document.elementFromPoint(e.clientX,e.clientY);
+    const flecha=bajo&&bajo.closest("#calPrev,#calNext");
+    if(flecha&&d.flecha!==flecha.id){
+      clearTimeout(d.flip);d.flecha=flecha.id;
+      d.flip=setTimeout(()=>{if(calDrag!==d)return;(d.flecha==="calPrev"?mesAnteriorCal:mesSiguienteCal)();d.flecha=null;},650);
+    }else if(!flecha&&d.flecha){clearTimeout(d.flip);d.flecha=null;}
+    const cel=bajo&&bajo.closest("#calGrid .day[data-iso]");
+    calLimpiarDestino();
+    if(cel){
+      d.destino=cel.dataset.iso;
+      const delta=difISO(d.dia,d.destino),nd=sumarDiasISO(d.desde,delta),nh=sumarDiasISO(d.hasta,delta);
+      document.querySelectorAll("#calGrid .day[data-iso]").forEach(x=>{if(x.dataset.iso>=nd&&x.dataset.iso<=nh)x.classList.add("destino");});
+      f.textContent=`${d.n}: ${fmtCorto(nd)} al ${fmtCorto(nh)}`;
+    }else{d.destino=null;f.textContent=flecha?`${d.n}: cambiando de mes…`:`${d.n}: soltalo sobre un día`;}
+  });
+  const soltar=e=>{
+    const d=calDrag;if(!d)return;calDrag=null;
+    clearTimeout(d.flip);document.getElementById("calFantasma")?.remove();calLimpiarDestino();
+    document.body.classList.remove("cal-arrastrando");
+    if(e.type==="pointercancel")return renderCalendar();
+    if(!d.movido)return abrirSeg(d.id);
+    if(!d.destino)return renderCalendar();
+    const delta=difISO(d.dia,d.destino);if(!delta)return renderCalendar();
+    const nd=sumarDiasISO(d.desde,delta),nh=sumarDiasISO(d.hasta,delta);
+    if(!moverSeg(d.id,nd,nh))return renderCalendar();
+    guardarPlan(`${d.n}: ${fmtCorto(nd)} al ${fmtCorto(nh)} (${rangoDias(nd,nh)} d)`);
+  };
+  grid.addEventListener("pointerup",soltar);
+  grid.addEventListener("pointercancel",soltar);
 }
 // Las vacaciones que vienen (de hoy en adelante), del puesto elegido, en orden de fecha.
 function renderProximas(){
@@ -1592,14 +1653,15 @@ function initControls(){
     planPuesto=chip.dataset.puesto;renderPlanificador();renderCalendar();
   });
   document.getElementById("calPedidos").addEventListener("change",e=>{calConPedidos=e.target.checked;renderCalendar();});
-  document.getElementById("calGrid").addEventListener("click",e=>{const c=e.target.closest("[data-seg],[data-op]");if(!c)return;if(c.dataset.seg)abrirSeg(c.dataset.seg);else abrirOpcion(c.dataset.op);});
+  document.getElementById("calGrid").addEventListener("click",e=>{const c=e.target.closest("[data-op]");if(c)abrirOpcion(c.dataset.op);});
+  initCalArrastre();
   document.getElementById("proxList").addEventListener("click",e=>{
     const b=e.target.closest("[data-ir-mes]");if(!b)return;
     const[y,m]=b.dataset.irMes.split("-").map(Number);calYear=y;calMonth=m-1;renderCalendar();
     document.getElementById("calTitle").scrollIntoView({behavior:"smooth",block:"start"});
   });
-  document.getElementById("calPrev").addEventListener("click",()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();});
-  document.getElementById("calNext").addEventListener("click",()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();});
+  document.getElementById("calPrev").addEventListener("click",mesAnteriorCal);
+  document.getElementById("calNext").addEventListener("click",mesSiguienteCal);
 
   document.getElementById("syncBannerClose").addEventListener("click",()=>document.getElementById("syncBanner").classList.remove("show"));
 }
