@@ -230,6 +230,8 @@
   .tb-run{position:absolute;top:9px;height:9px;border-radius:3px;background:color-mix(in srgb,var(--ok) 40%,transparent);font-size:9px;font-weight:800;color:#fff;text-align:center;line-height:9px;overflow:hidden}
   .tb-run.mal{background:var(--crit);top:6px;height:14px;line-height:14px}
   .tb-g{position:absolute;top:4px;height:15px;border:1.5px dashed var(--terracota);background:color-mix(in srgb,var(--terracota) 9%,transparent);border-radius:5px;font-size:9.5px;font-weight:700;color:var(--accent-ink);padding:0 4px;text-align:left;white-space:nowrap;overflow:hidden;cursor:pointer;line-height:12px;font-family:inherit}
+  .tb-g{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+  .tb-g.arrastrando{opacity:1;background:var(--accent);color:#fff;border-style:solid;z-index:5;box-shadow:0 6px 16px rgba(0,0,0,.25)}
   .tb-g.op2{border-style:dotted}
   .tb-g.op3{opacity:.7}
   .tb-g.desc{opacity:.3;text-decoration:line-through}
@@ -238,7 +240,7 @@
   .tb-b.sug{background:var(--warn-soft);color:var(--warn);border:2px dashed var(--warn);box-shadow:none}
   .tb-b.conf{background:var(--ok)}
   .calChip[data-seg],.calChip[data-op]{cursor:pointer}
-  .calChip[data-seg]{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+  .calChip[data-seg],.calChip[data-op]{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
   .calGrid .day.destino{background:color-mix(in srgb,var(--accent) 16%,var(--panel));box-shadow:inset 0 0 0 2px var(--accent)}
   .cal-fantasma{position:fixed;z-index:700;pointer-events:none;transform:translate(-50%,-140%);background:var(--negro);color:var(--crema);font-size:13px;font-weight:700;padding:7px 11px;border-radius:9px;white-space:nowrap;box-shadow:0 8px 22px rgba(0,0,0,.3)}
   body.cal-arrastrando{-webkit-user-select:none;user-select:none}
@@ -247,9 +249,9 @@
   .det .aviso-conf{font-size:11.5px;color:var(--warn);margin:8px 0 0;font-weight:600}
   /* con el dedo (iPad, celular): barras y bordes más grandes, botones cómodos */
   @media (pointer:coarse){
-    .tb-fila{min-height:62px}
-    .tb-g{top:5px;height:18px;line-height:15px;font-size:10.5px}
-    .tb-b{top:27px;height:30px;font-size:12.5px;border-radius:9px}
+    .tb-fila{min-height:70px}
+    .tb-g{top:5px;height:24px;line-height:21px;font-size:11px;border-radius:7px}
+    .tb-b{top:33px;height:30px;font-size:12.5px;border-radius:9px}
     .tb-b .h{width:22px}
     .tb-b .h::after{left:9px;top:8px;bottom:8px;width:3px}
     .det .botonera .btn{padding:9px 12px;font-size:13px}
@@ -405,7 +407,7 @@
           <h2 style="flex:1">Armado de vacaciones <span id="solicitudesAnio"></span></h2>
           <button class="btn sm" id="btnCopiarLink" type="button" title="Copiar el link para mandarles a todos">🔗 Link para que pidan</button>
         </div>
-        <p class="sub">De fondo, punteado, lo que pidió cada uno. Encima, las vacaciones: <b>arrastrá la barra con el dedo</b> para cambiarla de fecha y <b>sus bordes</b> para cambiar los días, o <b>tocala</b> para moverla con botones, ver con quién coincide y confirmarla.</p>
+        <p class="sub">De fondo, punteado, lo que pidió cada uno. Encima, las vacaciones: <b>arrastrá con el dedo lo pedido o la barra</b> para cambiarla de fecha y <b>sus bordes</b> para cambiar los días, o <b>tocala</b> para moverla con botones, ver con quién coincide y confirmarla.</p>
         <div class="card-body">
           <div class="pl-filtros" id="plFiltros"></div>
           <div id="plChoques"></div>
@@ -449,7 +451,7 @@
         <div class="card-body" style="padding-bottom:0">
           <div class="pl-filtros" id="calFiltros"></div>
           <label class="cal-op"><input type="checkbox" id="calPedidos" checked> Mostrar también lo que está en armado y los pedidos sin fecha</label>
-          <p class="cal-ayuda">✋ Mantené el dedo sobre un nombre y arrastralo a otro día para mover sus vacaciones. Para llevarlas a otro mes, dejá el dedo un momento sobre ‹ o ›. Si lo tocás sin arrastrar, se abren los botones para moverla.</p>
+          <p class="cal-ayuda">✋ Mantené el dedo sobre un nombre (pedido, armado o confirmado) y arrastralo a otro día para mover sus vacaciones. Lo pedido que movés queda "sin confirmar" hasta que lo confirmes. Para llevarlas a otro mes, dejá el dedo un momento sobre ‹ o ›. Si lo tocás sin arrastrar, se abren los botones para moverla.</p>
         </div>
         <div class="calGrid" id="calGrid"></div>
         <div class="card-body" style="padding-top:0">
@@ -558,7 +560,7 @@ window.SolicitudesSync = {
 <script src="calculo.js"></script>
 <script>
 "use strict";
-const APP_VERSION="2026-10-30 calendario-arrastrar";
+const APP_VERSION="2026-10-30 mover-pedidos";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -1219,6 +1221,17 @@ function armarPara(n){
   irAFecha(desde,n);
   abrirSeg(id);
 }
+// Mover lo que pidió alguien: se arma con las fechas nuevas (sin confirmar). Si ya tenía una barra
+// sin confirmar, se mueve esa en vez de sumar otra; lo pedido queda de fondo como referencia.
+function armarDesdeOpcion(opId,desde,hasta){
+  const o=pedidosAnio().find(p=>p.id===opId);if(!o)return null;
+  const mias=planSegs().filter(p=>p.n===o.n);
+  let id;
+  if(mias.length===1){id=mias[0].id;Object.assign(state.plan[id],{desde,hasta});delete state.plan[id].sugerida;}
+  else id=crearSeg(o.n,desde,hasta);
+  if(state.pedidosDescartados)delete state.pedidosDescartados[o.id];
+  return id;
+}
 function sugerir(){
   const peds=pedidosAnio().filter(p=>!p.descartada&&filtraPuesto(p));
   const llegada=ordenLlegada(peds);
@@ -1383,7 +1396,15 @@ function imanar(n,r){
 function initTablero(){
   const tb=document.getElementById("tb");
   tb.addEventListener("pointerdown",e=>{
-    const b=e.target.closest(".tb-b[data-seg]");if(!b||e.button>0)return;
+    if(e.button>0)return;
+    const g=e.target.closest(".tb-g[data-op]");
+    if(g){
+      const o=pedidosAnio().find(p=>p.id===g.dataset.op);if(!o)return;
+      drag={el:g,op:o.id,n:o.n,modo:"mover",x0:e.clientX,desde:o.desde,hasta:o.hasta,movido:false,dd:0,r:{desde:o.desde,hasta:o.hasta}};
+      try{g.setPointerCapture(e.pointerId);}catch{}
+      e.preventDefault();return;
+    }
+    const b=e.target.closest(".tb-b[data-seg]");if(!b)return;
     const p=refSeg(b.dataset.seg);if(!p)return;
     const modo=e.target.classList.contains("h")?(e.target.classList.contains("l")?"izq":"der"):"mover";
     drag={el:b,id:b.dataset.seg,n:p.n,modo,x0:e.clientX,desde:p.desde,hasta:p.hasta,movido:false,dd:0,r:{desde:p.desde,hasta:p.hasta}};
@@ -1399,7 +1420,7 @@ function initTablero(){
     if(dd!==drag.dd||!document.getElementById("tbTip")){
       drag.dd=dd;drag.r=rangoArrastre(drag,dd);
       drag.el.setAttribute("style",pos(drag.r.desde,drag.r.hasta));
-      const im=imanar(drag.n,drag.r);
+      const im=drag.op?{}:imanar(drag.n,drag.r);
       tipDrag(e.clientX,e.clientY,`${fmtCorto(drag.r.desde)} → ${fmtCorto(drag.r.hasta)} · ${rangoDias(drag.r.desde,drag.r.hasta)} d${im.iman&&drag.modo==="mover"?` · su ${im.iman}ª opción`:""}`);
     }else tipDrag(e.clientX,e.clientY,document.getElementById("tbTip").textContent);
   });
@@ -1408,6 +1429,12 @@ function initTablero(){
     const dr=drag;drag=null;
     document.getElementById("tbTip")?.remove();
     if(e.type==="pointercancel"){renderPlanificador();return;}
+    if(dr.op){
+      if(!dr.movido)return abrirOpcion(dr.op);
+      if(!dr.dd)return renderPlanificador();
+      armarDesdeOpcion(dr.op,dr.r.desde,dr.r.hasta);
+      return guardarPlan(`${dr.n}: ${fmtCorto(dr.r.desde)} al ${fmtCorto(dr.r.hasta)} (${rangoDias(dr.r.desde,dr.r.hasta)} d), sin confirmar`);
+    }
     if(!dr.movido){abrirSeg(dr.id);return;}
     const r=dr.modo==="mover"?imanar(dr.n,dr.r):dr.r;
     if(!moverSeg(dr.id,r.desde,r.hasta)){renderPlanificador();return;}
@@ -1416,7 +1443,6 @@ function initTablero(){
   tb.addEventListener("pointerup",soltar);
   tb.addEventListener("pointercancel",soltar);
   tb.addEventListener("click",e=>{
-    const g=e.target.closest(".tb-g[data-op]");if(g)return abrirOpcion(g.dataset.op);
     const mas=e.target.closest("[data-sumar]");if(mas)return armarPara(mas.dataset.sumar);
   });
   const card=document.getElementById("planCard");
@@ -1496,8 +1522,14 @@ function renderCalendar(){
   grid.innerHTML=h;
   renderProximas();
 }
-function mesAnteriorCal(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
-function mesSiguienteCal(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+// navegar el calendario de abajo también lleva al tablero a ese mes (y deja de seguir al primero con pedidos)
+function seguirCalendario(){
+  tbMesElegido=true;
+  const m=`${calYear}-${String(calMonth+1).padStart(2,"0")}`;
+  if(m!==tbMes){tbMes=m;renderPlanificador();}
+}
+function mesAnteriorCal(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();seguirCalendario();}
+function mesSiguienteCal(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();seguirCalendario();}
 /* Arrastrar en el calendario del mes: se agarra el nombre de alguien en cualquiera de sus días y se
    suelta en otro día; toda la vacación se corre esa cantidad de días (mismo largo). Funciona con el
    dedo (iPad) y con el mouse. Para cambiar de mes, se deja el dedo sobre ‹ o › un momento. La captura
@@ -1507,9 +1539,10 @@ function calLimpiarDestino(){document.querySelectorAll("#calGrid .day.destino").
 function initCalArrastre(){
   const grid=document.getElementById("calGrid");
   grid.addEventListener("pointerdown",e=>{
-    const c=e.target.closest(".calChip[data-seg]");if(!c||e.button>0)return;
-    const r=refSeg(c.dataset.seg),dia=c.closest(".day")?.dataset.iso;if(!r||!dia)return;
-    calDrag={id:c.dataset.seg,n:r.n,dia,desde:r.desde,hasta:r.hasta,x0:e.clientX,y0:e.clientY,movido:false,destino:null,flip:null,flecha:null};
+    const c=e.target.closest(".calChip[data-seg],.calChip[data-op]");if(!c||e.button>0)return;
+    const r=c.dataset.seg?refSeg(c.dataset.seg):pedidosAnio().find(p=>p.id===c.dataset.op),dia=c.closest(".day")?.dataset.iso;if(!r||!dia)return;
+    tbMesElegido=true;
+    calDrag={id:c.dataset.seg||null,op:c.dataset.op||null,n:r.n,dia,desde:r.desde,hasta:r.hasta,x0:e.clientX,y0:e.clientY,movido:false,destino:null,flip:null,flecha:null};
     try{grid.setPointerCapture(e.pointerId);}catch{}
     e.preventDefault();
   });
@@ -1540,10 +1573,11 @@ function initCalArrastre(){
     clearTimeout(d.flip);document.getElementById("calFantasma")?.remove();calLimpiarDestino();
     document.body.classList.remove("cal-arrastrando");
     if(e.type==="pointercancel")return renderCalendar();
-    if(!d.movido)return abrirSeg(d.id);
+    if(!d.movido)return d.op?abrirOpcion(d.op):abrirSeg(d.id);
     if(!d.destino)return renderCalendar();
     const delta=difISO(d.dia,d.destino);if(!delta)return renderCalendar();
     const nd=sumarDiasISO(d.desde,delta),nh=sumarDiasISO(d.hasta,delta);
+    if(d.op){armarDesdeOpcion(d.op,nd,nh);return guardarPlan(`${d.n}: ${fmtCorto(nd)} al ${fmtCorto(nh)} (${rangoDias(nd,nh)} d), sin confirmar`);}
     if(!moverSeg(d.id,nd,nh))return renderCalendar();
     guardarPlan(`${d.n}: ${fmtCorto(nd)} al ${fmtCorto(nh)} (${rangoDias(nd,nh)} d)`);
   };
@@ -1653,11 +1687,10 @@ function initControls(){
     planPuesto=chip.dataset.puesto;renderPlanificador();renderCalendar();
   });
   document.getElementById("calPedidos").addEventListener("change",e=>{calConPedidos=e.target.checked;renderCalendar();});
-  document.getElementById("calGrid").addEventListener("click",e=>{const c=e.target.closest("[data-op]");if(c)abrirOpcion(c.dataset.op);});
   initCalArrastre();
   document.getElementById("proxList").addEventListener("click",e=>{
     const b=e.target.closest("[data-ir-mes]");if(!b)return;
-    const[y,m]=b.dataset.irMes.split("-").map(Number);calYear=y;calMonth=m-1;renderCalendar();
+    const[y,m]=b.dataset.irMes.split("-").map(Number);calYear=y;calMonth=m-1;renderCalendar();seguirCalendario();
     document.getElementById("calTitle").scrollIntoView({behavior:"smooth",block:"start"});
   });
   document.getElementById("calPrev").addEventListener("click",mesAnteriorCal);
