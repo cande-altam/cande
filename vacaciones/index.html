@@ -193,7 +193,7 @@
   .pl-leyenda span{display:inline-flex;align-items:center;gap:5px}
   .sw{display:inline-block;width:22px;height:10px;border-radius:4px}
   .sw.g{border:1.5px dashed var(--terracota);background:color-mix(in srgb,var(--terracota) 10%,transparent)}
-  .sw.plan{background:var(--accent)} .sw.sug{background:var(--warn-soft);border:1.5px dashed var(--warn)} .sw.conf{background:var(--ok)}
+  .sw.plan{background:var(--accent)} .sw.sug{background:var(--warn-soft);border:1.5px dashed var(--warn)} .sw.conf{background:var(--ok)} .sw.cargada{border:2px solid var(--accent);background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--accent) 18%,transparent) 0 3px,transparent 3px 6px)}
   .sw.choca{background:var(--panel);box-shadow:0 0 0 2px var(--crit)}
   .pl-vacio{color:var(--ink-soft);font-size:12.5px}
   .pl-choques{background:var(--crit-soft);border:1px solid color-mix(in srgb,var(--crit) 30%,transparent);border-radius:11px;padding:10px 12px;margin-bottom:8px}
@@ -253,6 +253,7 @@
   .tb-b{position:absolute;top:21px;height:21px;border-radius:7px;background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;box-shadow:0 1px 3px rgba(0,0,0,.18);z-index:1}
   .tb-b.sug{background:var(--warn-soft);color:var(--warn);border:2px dashed var(--warn);box-shadow:none}
   .tb-b.conf{background:var(--ok)}
+  .tb-b.cargada{background:var(--panel);color:var(--accent-ink);border:2px solid var(--accent);box-shadow:none;background-image:repeating-linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,transparent) 0 6px,transparent 6px 12px)}
   .calChip[data-seg],.calChip[data-op]{cursor:pointer}
   .calChip[data-seg],.calChip[data-op]{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
   .calGrid .day.destino{background:color-mix(in srgb,var(--accent) 16%,var(--panel));box-shadow:inset 0 0 0 2px var(--accent)}
@@ -471,7 +472,7 @@
             <button class="btn sm primary" type="button" id="tbConfirmarTodo" hidden></button>
           </div>
           <div class="pl-leyenda">
-            <span><i class="sw g"></i>Lo que pidió</span><span><i class="sw plan"></i>Sin confirmar</span><span><i class="sw sug"></i>Sugerida</span><span><i class="sw conf"></i>✓ Confirmada</span><span><i class="sw choca"></i>Coincide con su área</span>
+            <span><i class="sw g"></i>Lo que pidió</span><span><i class="sw plan"></i>Armada, sin confirmar</span><span><i class="sw cargada"></i>⏳ Cargada a mano, a confirmar</span><span><i class="sw sug"></i>Sugerida</span><span><i class="sw conf"></i>✓ Confirmada</span><span><i class="sw choca"></i>Coincide con su área</span>
           </div>
           <div class="tb-scroll" id="tbScroll"><div class="tb" id="tb"></div></div>
           <details class="pl-lista">
@@ -607,7 +608,7 @@ window.SolicitudesSync = {
 <script src="calculo.js"></script>
 <script>
 "use strict";
-const APP_VERSION="2026-11-02 partes";
+const APP_VERSION="2026-11-02 a-confirmar";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -1150,9 +1151,11 @@ function renderPlanificador(){
       const dias=rangoDias(u.desde,u.hasta);
       const choca=choquesArea(u,ubic).length>=MAX_POR_AREA;
       const conf=u.tipo==="tk"&&u.conf;
+      // cargada a mano en "Vacaciones tomadas" como "A confirmar": no es algo armado acá
+      const cargada=u.tipo==="tk"&&!u.conf;
       // en barras cortas no van los bordes para estirar: con el dedo se agarraría siempre un borde
       const bordes=dias*tbDia>=(tactil()?84:44);
-      h+=`<div class="tb-b ${conf?"conf":"plan"} ${u.sugerida?"sug":""} ${choca?"choca":""} ${corte(u.desde,u.hasta)}" data-seg="${escH(u.id)}" style="${pos(u.desde,u.hasta)}" title="${conf?"Confirmada":u.sugerida?"Sugerida":"Sin confirmar"}: ${fmtFecha(u.desde)} al ${fmtFecha(u.hasta)} — arrastrala o tocala">${bordes&&u.desde>=tbIni?`<i class="h l"></i>`:""}<span>${u.desde<tbIni?"← ":""}${conf?"✓ ":u.sugerida?"💡 ":""}${dias} d${u.hasta>tbFin?" →":""}</span>${bordes&&u.hasta<=tbFin?`<i class="h r"></i>`:""}</div>`;
+      h+=`<div class="tb-b ${conf?"conf":cargada?"cargada":"plan"} ${u.sugerida?"sug":""} ${choca?"choca":""} ${corte(u.desde,u.hasta)}" data-seg="${escH(u.id)}" style="${pos(u.desde,u.hasta)}" title="${conf?"Confirmada":cargada?"Cargada a mano en Vacaciones tomadas, a confirmar":u.sugerida?"Sugerida":"Armada acá, sin confirmar"}: ${fmtFecha(u.desde)} al ${fmtFecha(u.hasta)} — arrastrala o tocala">${bordes&&u.desde>=tbIni?`<i class="h l"></i>`:""}<span>${u.desde<tbIni?"← ":""}${conf?"✓ ":cargada?"⏳ ":u.sugerida?"💡 ":""}${dias} d${u.hasta>tbFin?" →":""}</span>${bordes&&u.hasta<=tbFin?`<i class="h r"></i>`:""}</div>`;
     }
     h+=`</div></div>`;
   }
@@ -1403,7 +1406,8 @@ function abrirSeg(id){
   const misma=choquesArea(seg,ubic);
   const otras=ubic.filter(o=>o.n!==n&&puestoDe(o.n)!==pu&&diasEnComun(seg,o)>0);
   const quedan=leQuedan(n);
-  const estado=conf?"✓ Confirmada":seg.sugerida?"💡 Sugerida":"Sin confirmar";
+  const cargada=seg.tipo==="tk"&&!conf;
+  const estado=conf?"✓ Confirmada":cargada?"⏳ A confirmar":seg.sugerida?"💡 Sugerida":"Sin confirmar";
   const cuerpo=`
     <div class="fechas">${fmtFecha(seg.desde)} al ${fmtFecha(seg.hasta)}</div>
     <div class="mover">
@@ -1418,6 +1422,7 @@ function abrirSeg(id){
       <span class="dato"><b>${estado}</b>estado</span>
       ${llegada[n]?`<span class="dato"><b>${llegada[n]}º</b>en pedir</span>`:""}
     </div>
+    ${cargada?`<p class="aviso-conf" style="color:var(--accent-ink)">⏳ Esta no salió del armado: se cargó a mano en “Cargar vacaciones tomadas” con estado “A confirmar”${seg.periodo?` (período ${seg.periodo})`:""}. Si no corresponde, tocá Borrar; si sí, Confirmar.</p>`:""}
     <p class="rel">${escH(relacionConPedido(seg,peds))}${seg.nota&&seg.tipo==="tk"?` · Nota: ${escH(seg.nota)}`:""}</p>
     ${ops.length?`<h4>Lo que pidió</h4>${ops.map(o=>`<div class="co op ${o.descartada?"desc":""}"><span><b>${etqOpLarga(o)}</b> · ${fmtCorto(o.desde)} al ${fmtCorto(o.hasta)} (${rangoDias(o.desde,o.hasta)} d)${o.nota&&o.orden===1?`<br><small>“${escH(o.nota)}”</small>`:""}</span><button class="btn sm" data-acc="poner" data-v="${escH(o.id)}">Poner acá</button></div>`).join("")}`:`<p class="sub" style="padding:0">No mandó pedido.</p>`}
     <h4>De ${PUESTOS[pu]} al mismo tiempo</h4>
@@ -1584,7 +1589,7 @@ function initTablero(){
   document.getElementById("tbConfirmarTodo").addEventListener("click",()=>{
     const ps=planSegs().filter(p=>!p.sugerida).concat(confirmadas().filter(c=>!c.conf));
     const conChoque=ps.filter(p=>choquesArea(p,ubicadas()).length).length;
-    if(!confirm(`¿Confirmar estas ${ps.length} vacaciones?\n\n${ps.map(p=>`• ${p.n}: ${fmtCorto(p.desde)} al ${fmtCorto(p.hasta)}`).join("\n")}${conChoque?`\n\n⚠ ${conChoque} coinciden con alguien de su misma área.`:""}\n\nLas sugeridas (💡) no entran: primero movelas o confirmalas una por una.`))return;
+    if(!confirm(`¿Confirmar estas ${ps.length} vacaciones?\n\n${ps.map(p=>`• ${p.tipo==="tk"?"⏳ ":""}${p.n}: ${fmtCorto(p.desde)} al ${fmtCorto(p.hasta)}`).join("\n")}${ps.some(p=>p.tipo==="tk")?"\n(⏳ = cargadas a mano como “a confirmar”)":""}${conChoque?`\n\n⚠ ${conChoque} coinciden con alguien de su misma área.`:""}\n\nLas sugeridas (💡) no entran: primero movelas o confirmalas una por una.`))return;
     ps.forEach(p=>confirmarSeg(p.id,true));guardarPlan(`✓ ${ps.length} vacaciones confirmadas`);
   });
   document.getElementById("tbSumar").addEventListener("change",e=>{const n=e.target.value;e.target.value="";if(n)armarPara(n);});
