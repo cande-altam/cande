@@ -934,8 +934,8 @@ function normalizarRecetasRecetario(obj) {
   return out;
 }
 
-// Por ahora hay una sola área ("cocina"); agregar otra acá alcanza para que Costeo también la lea.
-const AREAS_RECETARIO = ["cocina"];
+// Áreas del Recetario que lee Costeo (agregar otra acá alcanza para que también la lea).
+const AREAS_RECETARIO = ["cocina", "cafe"];
 
 function escucharRecetario() {
   onValue(ref(recDb, "recetario/ingredientes"), s => { state.recIngredientes = s.val() || {}; invalidarCacheCosteo(); marcarCargado("recIngredientes"); if (!state.formOpen) solicitarRender(); });

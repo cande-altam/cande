@@ -193,6 +193,9 @@ mark{background:#ffe58a;border-radius:3px;padding:0 1px;}
 /* Recetario (lectura): mismo diseño que el Recetario editable (recetario/index.html) — inicio por
    categorías, cards que giran (adelante la foto, atrás el resumen) y la ficha con tabla. */
 .rec-panel{background:var(--white);border:1px solid rgba(34,32,31,.07);border-radius:var(--r);padding:22px 24px;box-shadow:0 1px 2px rgba(34,32,31,.05),0 2px 8px rgba(34,32,31,.04);margin-bottom:16px;}
+.rec-areas{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px}
+.rec-area{border:1.5px solid var(--line, #ddd);background:#fff;border-radius:999px;padding:9px 16px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;color:inherit}
+.rec-area.on{background:var(--black, #222);border-color:var(--black, #222);color:#fff}
 .rec-migas{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:14px;}
 .rec-migas a{color:var(--terra);text-decoration:none;font-weight:600;cursor:pointer;}
 .rec-migas span{color:var(--gray);}
@@ -573,7 +576,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, creat
 // El contenido se carga importando el documento de Drive (.docx o .html): se parte en un manual
 // por cada Título 1, agrupados por "Parte N — …". Drive sigue siendo el original: cuando cambia,
 // se vuelve a importar.
-const APP_VERSION = "2026-10-28 checklists";
+const APP_VERSION = "2026-11-02 recetario-cafe";
 const GERENCIA_EMAIL = "gerencia@candela-app.com";
 const DOMINIO = "candela-app.com";
 const LIBS = {
@@ -697,13 +700,14 @@ async function iniciarSesion(user) {
   const email = (user.email || "").toLowerCase();
   if (email === GERENCIA_EMAIL) {
     S.rol = "gerencia";
+    S._rolesOk = S._metaOk = S._personalOk = false; // la migración de Café espera tener los tres
     S.errorGerencia = "";
     const sinReglas = () => { S.errorGerencia = "Entraste como Gerencia, pero Firebase no te deja leer los manuales: las reglas nuevas no están publicadas (o se publicaron otras). Pegá el archivo firebase-reglas.json completo en Realtime Database → Rules → Publicar, y recargá esta página."; pintar(); };
     escuchar("manuales/contenido/indice", v => { S.indice = v || {}; pintar(); }, sinReglas);
-    escuchar("manuales/contenido/meta", v => { S.meta = v; pintar(); }, sinReglas);
-    escuchar("manuales/personal", v => { S.personal = v || {}; pintar(); }, sinReglas);
+    escuchar("manuales/contenido/meta", v => { S.meta = v; S._metaOk = true; migrarCafeBaristas(); pintar(); }, sinReglas);
+    escuchar("manuales/personal", v => { S.personal = v || {}; S._personalOk = true; migrarCafeBaristas(); pintar(); }, sinReglas);
     escuchar("manuales/lecturas", v => { S.lecturasTodas = v || {}; S.lecturas = (v || {})[user.uid] || {}; pintar(); }, sinReglas);
-    escuchar("manuales/roles", v => { S.roles = v || {}; pintar(); }, sinReglas);
+    escuchar("manuales/roles", v => { S.roles = v || {}; S._rolesOk = true; migrarCafeBaristas(); pintar(); }, sinReglas);
     escuchar("manuales/borradores", v => { S.borradores = v || {}; if (S.vista !== "editar") pintar(); }, sinReglas);
     escuchar("manuales/papelera", v => { S.papelera = v || {}; pintar(); }, sinReglas);
     escuchar("manuales/invitaciones", v => { S.invitaciones = v || {}; pintar(); }, sinReglas);
@@ -1240,16 +1244,17 @@ async function guardarRolesPersona(uid, roles) {
 }
 
 // ── Roles ────────────────────────────────────────────────
-// Un rol dice qué manuales ve y si entra al Recetario. Los "comunes" (y la portada) van a todos
-// los roles sugeridos. Por pedido de Gerencia, el Recetario es solo para baristas y cocina.
+// Un rol dice qué manuales ve y qué secciones del Recetario (recetarioAreas: {cocina, cafe}). Los
+// "comunes" (y la portada) van a todos los roles sugeridos. Por pedido de Gerencia, el Recetario es
+// solo para baristas y cocina, y la sección Café es exclusiva de los baristas.
 const ROLES_SUGERIDOS = [
   { id: "experto-del-turno", nombre: "Experto del turno", claves: ["experto del turno"] },
   { id: "cajero", nombre: "Cajero/a", claves: ["cajeros"] },
   { id: "vendedor-mozo", nombre: "Vendedor/a y mozo/a", claves: ["vendedores y mozos"] },
-  { id: "barista", nombre: "Barista", claves: ["baristas"], recetario: true },
-  { id: "cocina", nombre: "Cocina de locales", claves: ["cocina de locales"], recetario: true },
-  { id: "jefe-de-cocina", nombre: "Jefe/a de cocina", claves: ["jefe de cocina", "cocina de locales", "ayudante de cocina"], recetario: true },
-  { id: "ayudante-de-cocina", nombre: "Ayudante de cocina", claves: ["ayudante de cocina"], recetario: true },
+  { id: "barista", nombre: "Barista", claves: ["baristas"], recetario: { cocina: true, cafe: true } },
+  { id: "cocina", nombre: "Cocina de locales", claves: ["cocina de locales"], recetario: { cocina: true } },
+  { id: "jefe-de-cocina", nombre: "Jefe/a de cocina", claves: ["jefe de cocina", "cocina de locales", "ayudante de cocina"], recetario: { cocina: true } },
+  { id: "ayudante-de-cocina", nombre: "Ayudante de cocina", claves: ["ayudante de cocina"], recetario: { cocina: true } },
   { id: "maestro-de-area", nombre: "Maestro/a de área", claves: ["maestro de area", "panaderia", "pasteleria", "factureria", "especialidades", "sandwiches", "bases"] },
   { id: "panaderia", nombre: "Panadería", claves: ["panaderia", "bases"] },
   { id: "pasteleria", nombre: "Pastelería", claves: ["pasteleria", "bases"] },
@@ -1269,21 +1274,52 @@ function rolesSugeridos() {
       if (m.visible === false) continue;
       if (esComun(m) || r.claves.some(k => clave(m.titulo).startsWith(k))) manuales[m.id] = true;
     }
-    out[r.id] = { nombre: r.nombre, manuales, recetario: !!r.recetario, orden: i };
+    out[r.id] = { nombre: r.nombre, manuales, recetario: !!r.recetario, ...(r.recetario ? { recetarioAreas: r.recetario } : {}), orden: i };
   });
   return out;
 }
 // Lo que puede ver alguien con estos roles. Se guarda en personal/{uid}/accesos: es lo que
 // revisan las reglas (no pueden recorrer los roles en cada lectura).
+// Secciones del Recetario de un rol. Los roles de antes (recetario: true, sin secciones) ven Cocina.
+function areasRecetarioDeRol(r) {
+  if (!r) return [];
+  if (r.recetarioAreas) return Object.keys(r.recetarioAreas).filter(a => r.recetarioAreas[a] === true && AREAS_RECETARIO[a]);
+  return r.recetario ? ["cocina"] : [];
+}
 function accesosDe(roles, rolesDef = S.roles) {
-  const manuales = {}; let recetario = false; const nombres = [];
+  const manuales = {}, recetarioAreas = {}; const nombres = [];
   for (const rid of Object.keys(roles || {})) {
     const r = rolesDef[rid]; if (!r) continue;
     nombres.push(r.nombre);
     Object.keys(r.manuales || {}).forEach(id => { manuales[id] = true; });
-    if (r.recetario) recetario = true;
+    areasRecetarioDeRol(r).forEach(a => { recetarioAreas[a] = true; });
   }
-  return { manuales, recetario, roles: nombres };
+  const recetario = Object.keys(recetarioAreas).length > 0;
+  return { manuales, recetario, ...(recetario ? { recetarioAreas } : {}), roles: nombres };
+}
+// La primera vez que entra Gerencia después de sumar la sección Café, el rol Barista la recibe
+// (y se actualizan los accesos de los baristas). Queda marcado: si después se la sacan, no vuelve.
+const MIGRACION_CAFE = "recetario-cafe-baristas";
+let migrandoCafe = false;
+async function migrarCafeBaristas() {
+  if (migrandoCafe || !esGerencia() || !S._rolesOk || !S._metaOk || !S._personalOk) return;
+  if (S.meta?.migraciones?.[MIGRACION_CAFE]) return;
+  migrandoCafe = true;
+  try {
+    const upd = { [`contenido/meta/migraciones/${MIGRACION_CAFE}`]: Date.now() };
+    const b = S.roles?.barista;
+    if (b && !b.recetarioAreas?.cafe) {
+      const recetarioAreas = Object.fromEntries([...areasRecetarioDeRol(b), "cafe"].map(a => [a, true]));
+      const rol = { ...b, recetario: true, recetarioAreas };
+      const rolesDef = { ...S.roles, barista: rol };
+      upd["roles/barista"] = rol;
+      Object.assign(upd, updAccesos(rolesDef, ["barista"]));
+    }
+    await update(ref(db, "manuales"), upd);
+    S.meta = { ...(S.meta || {}), migraciones: { ...(S.meta?.migraciones || {}), [MIGRACION_CAFE]: Date.now() } };
+    if (upd["roles/barista"]) toast("☕ Los baristas ya ven la sección Café del Recetario.");
+  } catch (e) { console.error("migrarCafeBaristas", e); }
+  finally { migrandoCafe = false; }
 }
 // Rutas para actualizar los accesos de todos los que tienen alguno de estos roles.
 function updAccesos(rolesDef, rolIds) {
@@ -1303,12 +1339,13 @@ async function crearRolesSugeridos() {
   toast(`✓ ${Object.keys(nuevos).length} roles creados. Revisalos y ajustá lo que haga falta.`);
   pintar();
 }
-async function guardarRol(rid, { nombre, manuales, recetario }) {
+async function guardarRol(rid, { nombre, manuales, recetarioAreas }) {
   nombre = String(nombre || "").trim();
   if (!nombre) throw new Error("El rol necesita un nombre.");
   const id = rid || (() => { let b = slug(nombre), id = b, n = 2; while (S.roles[id]) id = `${b}-${n++}`; return id; })();
   const orden = S.roles[id]?.orden ?? Object.keys(S.roles).length;
-  const rol = { nombre, manuales: manuales || {}, recetario: !!recetario, orden };
+  const areas = Object.fromEntries(Object.keys(recetarioAreas || {}).filter(a => recetarioAreas[a] && AREAS_RECETARIO[a]).map(a => [a, true]));
+  const rol = { nombre, manuales: manuales || {}, recetario: Object.keys(areas).length > 0, ...(Object.keys(areas).length ? { recetarioAreas: areas } : {}), orden };
   const rolesDef = { ...S.roles, [id]: rol };
   await update(ref(db, "manuales"), { [`roles/${id}`]: rol, ...updAccesos(rolesDef, [id]) });
   S.roles = rolesDef;
@@ -1734,7 +1771,7 @@ function vistaGerencia() {
         <h3>👥 Equipo (${gente.filter(p => p.activo).length} con acceso)</h3>
         ${gente.length ? gente.map(p => `<div class="fila-p">
           <div style="min-width:180px;flex:1">
-            <div class="n">${esc(p.nombre)} <span class="chip ${p.activo ? "chip-ok" : "chip-baja"}">${p.activo ? "con acceso" : "dado de baja"}</span>${p.accesos?.recetario ? ` <span class="chip chip-ok">📖 Recetario</span>` : ""}</div>
+            <div class="n">${esc(p.nombre)} <span class="chip ${p.activo ? "chip-ok" : "chip-baja"}">${p.activo ? "con acceso" : "dado de baja"}</span>${p.accesos?.recetario ? ` ${chipRecetario(areasRecetarioDeRol(p.accesos))}` : ""}</div>
             <div class="u">usuario: <b>${esc(p.usuario)}</b> · ${esc((p.accesos?.roles || []).join(", ") || "sin rol")} · ${lecturaDe(p)}${p.ultimoIngreso ? ` · último ingreso ${fechaCorta(p.ultimoIngreso)}` : " · todavía no entró"}</div>
             ${S.editandoRoles === p.uid ? `<form data-form="roles-persona" data-uid="${esc(p.uid)}" style="margin-top:8px">${checksRoles("rol", p.roles || {})}<div class="acciones" style="margin-top:8px"><button class="btn btn-primary btn-sm">Guardar</button><button type="button" class="btn btn-ghost btn-sm" data-act="roles-persona" data-uid="">Cancelar</button></div></form>` : ""}
           </div>
@@ -1753,19 +1790,19 @@ function vistaGerencia() {
     const formRol = (rid, r) => `<form class="bloque" data-form="rol" data-rid="${esc(rid || "")}" style="border:2px solid var(--terra)">
         <h3>${rid ? "✏️ Editar rol" : "➕ Rol nuevo"}</h3>
         <div class="form-g"><div><label class="label" for="rol-n">Nombre</label><input class="input" id="rol-n" name="nombre" value="${esc(r.nombre || "")}" required></div>
-        <label style="display:flex;gap:8px;align-items:center;align-self:end;cursor:pointer;font-weight:600;font-size:14px"><input type="checkbox" name="recetario" ${r.recetario ? "checked" : ""} style="width:18px;height:18px;accent-color:var(--terra)"> 📖 Puede usar el Recetario</label></div>
+        <div style="align-self:end"><span class="label">📖 Recetario: qué secciones ve</span><div style="display:flex;gap:14px;flex-wrap:wrap">${Object.entries(AREAS_RECETARIO).map(([a, d]) => `<label style="display:flex;gap:7px;align-items:center;cursor:pointer;font-weight:600;font-size:14px"><input type="checkbox" name="rol-rec" value="${a}" ${areasRecetarioDeRol(r).includes(a) ? "checked" : ""} style="width:18px;height:18px;accent-color:var(--terra)"> ${d.icon} ${d.label}</label>`).join("")}</div></div></div>
         <div style="margin-top:12px"><span class="label">Manuales que ve</span>${checksManuales("rol-manual", r.manuales || {})}</div>
         <div class="acciones" style="margin-top:14px"><button class="btn btn-primary">Guardar</button><button type="button" class="btn btn-ghost" data-act="editar-rol" data-rid="">Cancelar</button>${rid ? `<button type="button" class="btn btn-danger" data-act="eliminar-rol" data-rid="${esc(rid)}">Eliminar rol</button>` : ""}</div>
       </form>`;
     cuerpo = `
-      <div class="bloque"><div class="muted" style="font-size:13px">Cada rol define <b>qué manuales ve</b> y si <b>usa el Recetario</b>. A cada persona le asignás uno o más roles en <b>Equipo y accesos</b>, y ve la suma. Las reglas del servidor lo hacen cumplir: no alcanza con saber la dirección de un manual.</div>
+      <div class="bloque"><div class="muted" style="font-size:13px">Cada rol define <b>qué manuales ve</b> y <b>qué secciones del Recetario</b> (🍳 Cocina, ☕ Café). A cada persona le asignás uno o más roles en <b>Equipo y accesos</b>, y ve la suma. Las reglas del servidor lo hacen cumplir: no alcanza con saber la dirección de un manual.</div>
         <div class="acciones" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-act="editar-rol" data-rid="__nuevo">➕ Rol nuevo</button>${lista.length ? `<button class="btn btn-ghost btn-sm" data-act="roles-sugeridos">✨ ${rs.length ? "Agregar los roles sugeridos que falten" : "Crear los roles sugeridos"}</button>` : ""}</div></div>
       ${editando === "__nuevo" ? formRol(null, { manuales: Object.fromEntries(lista.filter(esComun).map(m => [m.id, true])) }) : ""}
       ${rs.map(([rid, r]) => editando === rid ? formRol(rid, r) : `<div class="bloque fila-p" style="border-top:none;padding:14px 18px">
-          <div style="flex:1;min-width:200px"><div class="n">${esc(r.nombre)} ${r.recetario ? `<span class="chip chip-ok">📖 Recetario</span>` : ""}</div>
+          <div style="flex:1;min-width:200px"><div class="n">${esc(r.nombre)} ${chipRecetario(areasRecetarioDeRol(r))}</div>
           <div class="u">${Object.keys(r.manuales || {}).filter(id => S.indice[id]).length} manuales · ${Object.values(S.personal).filter(p => p.activo && p.roles?.[rid]).length} persona(s)</div></div>
           <button class="btn btn-ghost btn-sm" data-act="editar-rol" data-rid="${esc(rid)}">✏️ Editar</button></div>`).join("")}
-      ${!rs.length && editando !== "__nuevo" ? `<div class="bloque muted">Todavía no hay roles.${lista.length ? " Tocá «Crear los roles sugeridos»: arma uno por puesto (cajero, barista, cocina…) con sus manuales y los comunes, y el Recetario solo para baristas y cocina." : " Primero cargá los manuales."}</div>` : ""}`;
+      ${!rs.length && editando !== "__nuevo" ? `<div class="bloque muted">Todavía no hay roles.${lista.length ? " Tocá «Crear los roles sugeridos»: arma uno por puesto (cajero, barista, cocina…) con sus manuales y los comunes, y el Recetario solo para baristas y cocina (Café, solo baristas)." : " Primero cargá los manuales."}</div>` : ""}`;
   } else {
     const imp = S.importacion;
     const todos = manualesVisibles();
@@ -2348,24 +2385,35 @@ function vistaEditor() {
 // ── Recetario (solo lectura) ─────────────────────────────
 // Las mismas recetas que carga la cocina en /recetario/, para los roles que lo tienen. Las reglas
 // solo dejan leer recetas y fotos (no borradores) a quien tiene accesos.recetario.
-const AREAS_RECETARIO = { cocina: { label: "Cocina" } };
+const AREAS_RECETARIO = {
+  cocina: { label: "Cocina", icon: "🍳", sub: "Fichas técnicas de cocina: ingredientes, cantidades, pasos y alérgenos." },
+  cafe: { label: "Café", icon: "☕", sub: "Recetas de la barra: cantidades, pasos y alérgenos. Solo para baristas.", tipos: { plato: "Bebida", subreceta: "Base" } },
+};
+const chipRecetario = areas => areas.length ? `<span class="chip chip-ok">📖 ${areas.map(a => `${AREAS_RECETARIO[a].icon} ${AREAS_RECETARIO[a].label}`).join(" · ")}</span>` : "";
+// Secciones que ve quien entró: Gerencia, todas; el resto, las de sus roles.
+function areasRecetarioVisibles() {
+  if (esGerencia()) return Object.keys(AREAS_RECETARIO);
+  return areasRecetarioDeRol(S.perfil?.accesos);
+}
+const tipoReceta = r => AREAS_RECETARIO[r.area]?.tipos?.[r.tipo] || TIPOS_RECETA[r.tipo] || r.tipo || "";
 const ALERGENOS = { gluten: "Gluten (TACC)", crustaceos: "Crustáceos", huevo: "Huevo", pescado: "Pescado", mani: "Maní", soja: "Soja", leche: "Leche", frutos_secos: "Frutos secos", sulfitos: "Sulfitos" };
 const aArr = v => !v ? [] : Array.isArray(v) ? v.filter(Boolean) : Object.values(v);
 function escucharRecetario() {
   if (S.rec.escuchando) return;
   S.rec.escuchando = true; S.rec.cargando = true;
-  for (const area of Object.keys(AREAS_RECETARIO)) {
+  for (const area of areasRecetarioVisibles()) {
     escuchar(`recetario/areas/${area}/recetas`, v => {
       const out = { ...S.rec.recetas };
       for (const k of Object.keys(out)) if (out[k].area === area) delete out[k];
       for (const [id, r] of Object.entries(v || {})) out[id] = { ...r, id, area, ingredientes: aArr(r.ingredientes), empaque: aArr(r.empaque), pasos: aArr(r.pasos) };
-      S.rec.recetas = out; S.rec.cargando = false; S.rec.error = "";
+      S.rec.recetas = out; S.rec.cargando = false; S.rec.error = ""; delete (S.rec.erroresArea || {})[area];
       if (["recetario", "receta"].includes(S.vista)) pintar();
-    }, () => { S.rec.cargando = false; S.rec.error = "No tenés acceso al Recetario, o falta publicar las reglas (README → Manuales)."; S.rec.escuchando = false; if (S.vista === "recetario") pintar(); });
+    }, () => { S.rec.cargando = false; S.rec.erroresArea = { ...(S.rec.erroresArea || {}), [area]: true }; if (S.vista === "recetario") pintar(); });
   }
 }
 // Mismo orden y nombres que el Recetario (recetario/index.html): "Jugos" ahora es "Bebidas".
-const ORDEN_CATEGORIAS = ["Combos", "Sándwiches", "Croissants", "Bebidas", "Horneados", "Bases", "Porciones envasadas"];
+const ORDEN_CATEGORIAS = ["Combos", "Sándwiches", "Croissants", "Bebidas", "Horneados", "Bases", "Porciones envasadas",
+  "Espresso", "Con leche", "Fríos", "Especiales", "Tés e infusiones", "Chocolates"];
 const RENOMBRES_CATEGORIA = { jugos: "Bebidas" };
 function categoriaReceta(r) {
   const g = (r.grupo || "").trim();
@@ -2397,6 +2445,12 @@ async function cargarFotoReceta(r) {
 // Ícono de cada categoría: el mismo que usa el Recetario editable.
 function iconoCategoria(c) {
   const k = clave(c);
+  if (k.includes("espresso") || k.includes("ristretto") || k.includes("cortado")) return "☕";
+  if (k.includes("con leche") || k.includes("latte") || k.includes("capuc") || k.includes("flat")) return "🥛";
+  if (k.includes("frio") || k.includes("frapp") || k.includes("iced") || k.includes("cold")) return "🧊";
+  if (k.includes("especial")) return "✨";
+  if (k.includes("infusion") || k === "tes" || k.startsWith("te ") || k.startsWith("tes ")) return "🍵";
+  if (k.includes("chocolate")) return "🍫";
   if (k.includes("croissant") || k.includes("medialuna")) return "🥐";
   if (k.includes("envasad")) return "📦";
   if (k.includes("horneado")) return "🧁";
@@ -2419,11 +2473,16 @@ const rindeReceta = r => [r.rendimiento ? `Rinde ${fmtCant(r.rendimiento, r.unid
 // Igual que el Recetario editable: primero las categorías; adentro de cada una, las cards.
 function vistaRecetario() {
   escucharRecetario();
-  const todas = Object.values(S.rec.recetas);
+  const areas = areasRecetarioVisibles();
+  if (!areas.includes(S.recArea)) S.recArea = areas[0];
+  const ar = AREAS_RECETARIO[S.recArea] || AREAS_RECETARIO.cocina;
+  const todas = Object.values(S.rec.recetas).filter(r => r.area === S.recArea);
+  const pestanas = areas.length > 1 ? `<div class="rec-areas">${areas.map(a => `<button class="rec-area ${a === S.recArea ? "on" : ""}" data-act="rec-area" data-area="${a}">${AREAS_RECETARIO[a].icon} ${AREAS_RECETARIO[a].label}</button>`).join("")}</div>` : "";
   let cuerpo;
   if (S.rec.error) cuerpo = `<div class="bloque">${esc(S.rec.error)}</div>`;
+  else if (S.rec.erroresArea?.[S.recArea]) cuerpo = `<div class="bloque">No tenés acceso a ${esc(ar.label)} del Recetario, o falta publicar las reglas (README → Recetario).</div>`;
   else if (S.rec.cargando && !todas.length) cuerpo = `<div class="muted">Cargando recetas…</div>`;
-  else if (!todas.length) cuerpo = `<div class="bloque">Todavía no hay recetas cargadas.</div>`;
+  else if (!todas.length) cuerpo = `<div class="bloque">Todavía no hay recetas de ${esc(ar.label.toLowerCase())} cargadas.${esGerencia() ? ` Se cargan en <a href="/recetario/" target="_blank" rel="noopener">el Recetario</a>, eligiendo ${esc(ar.icon + " " + ar.label)} al entrar.` : ""}</div>`;
   else {
     const porCat = {};
     todas.forEach(r => { const c = categoriaReceta(r); porCat[c] = (porCat[c] || 0) + 1; });
@@ -2450,8 +2509,9 @@ function vistaRecetario() {
     cuerpo = `<div class="rec-panel">${migas}${buscador}${contenido}</div>`;
   }
   return `${barra()}<div class="main">
-    <div class="h-pag">🍳 Recetario · Cocina</div>
-    <div class="sub-pag">Fichas técnicas de cocina: ingredientes, cantidades, pasos y alérgenos.${esGerencia() ? ` Se editan en <a href="/recetario/" target="_blank" rel="noopener">el Recetario</a>.` : ""}</div>
+    <div class="h-pag">${ar.icon} Recetario · ${esc(ar.label)}</div>
+    <div class="sub-pag">${esc(ar.sub)}${esGerencia() ? ` Se editan en <a href="/recetario/" target="_blank" rel="noopener">el Recetario</a>.` : ""}</div>
+    ${pestanas}
     ${cuerpo}
   </div>`;
 }
@@ -2466,7 +2526,7 @@ function cardReceta(r) {
     <div class="giro-in" data-act="girar" data-id="${esc(r.id)}" role="button" tabindex="0" aria-label="${esc(r.nombre)}: dar vuelta la card">
       <div class="cara frente">
         <div class="rec-foto" data-foto="${esc(r.id)}">${foto}</div>
-        <div class="pie"><div class="nom">${esc(r.nombre)}</div><div class="sub">${esc([r.codigo, TIPOS_RECETA[r.tipo] || r.tipo].filter(Boolean).join(" · "))}</div></div>
+        <div class="pie"><div class="nom">${esc(r.nombre)}</div><div class="sub">${esc([r.codigo, tipoReceta(r)].filter(Boolean).join(" · "))}</div></div>
       </div>
       <div class="cara dorso">
         <div class="nom">${esc(r.nombre)}</div>
@@ -2504,7 +2564,7 @@ function vistaReceta() {
       <div>
         <div class="rec-titulo">${esc(r.nombre)}</div>
         <div class="rec-chips">
-          <span class="rec-badge rec-${esc(r.tipo)}">${esc(TIPOS_RECETA[r.tipo] || r.tipo || "")}</span>
+          <span class="rec-badge rec-${esc(r.tipo)}">${esc(tipoReceta(r))}</span>
           ${r.codigo ? `<span class="rec-chip">${esc(r.codigo)}</span>` : ""}
           <span class="rec-chip">${esc(categoriaReceta(r))}</span>
           ${rinde ? `<span class="rec-sub">${esc(rinde)}</span>` : ""}
@@ -2611,6 +2671,7 @@ async function onClick(ev) {
     else if (act === "tab") { S.tabGer = el.getAttribute("data-tab"); pintar(); }
     else if (act === "recetario") { S.vista = "recetario"; S.recId = null; pintar(); window.scrollTo(0, 0); }
     else if (act === "receta") { ev.preventDefault(); S.vista = "receta"; S.recId = el.getAttribute("data-id"); pintar(); window.scrollTo(0, 0); }
+    else if (act === "rec-area") { S.recArea = el.getAttribute("data-area"); S.recCat = ""; S.recQ = ""; S.recId = null; S.vista = "recetario"; pintar(); window.scrollTo(0, 0); }
     else if (act === "rec-cat") { ev.preventDefault(); S.recCat = el.getAttribute("data-cat"); S.recQ = ""; S.vista = "recetario"; S.recId = null; pintar(); window.scrollTo(0, 0); }
     else if (act === "girar") {
       const id = el.getAttribute("data-id");
@@ -2703,7 +2764,7 @@ async function onSubmit(ev) {
       } finally { S.creando = false; pintar(); }
       const n = document.getElementById("a-n"); if (n) try { n.focus(); } catch {}
     } else if (tipo === "roles-persona") await guardarRolesPersona(form.getAttribute("data-uid"), marcadosDe(form, "rol"));
-    else if (tipo === "rol") await guardarRol(form.getAttribute("data-rid") || null, { nombre: fd.get("nombre"), recetario: !!fd.get("recetario"), manuales: marcadosDe(form, "rol-manual") });
+    else if (tipo === "rol") await guardarRol(form.getAttribute("data-rid") || null, { nombre: fd.get("nombre"), recetarioAreas: marcadosDe(form, "rol-rec"), manuales: marcadosDe(form, "rol-manual") });
   } catch (e) {
     console.error(e);
     toast(e.code ? mensajeError(e.code) : (e.message || String(e)), "error");

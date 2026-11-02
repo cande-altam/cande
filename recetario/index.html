@@ -81,7 +81,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:va
 
 <script type="module">
 // =============================================================
-// Recetario — fichas técnicas por área de producción (hoy: Cocina).
+// Recetario — fichas técnicas por área de producción (Cocina y Café).
 //
 // • Acceso solo con contraseña. Por detrás es una cuenta real de Firebase Auth por área
 //   ({área}@recetario-candela.app), igual que Gerencia en informes/: una contraseña escrita
@@ -104,6 +104,10 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from
 // crear su cuenta recetario-{clave}@candela-app.com y sumarla a las reglas (ver README).
 const AREAS_RECETARIO = {
   cocina: { label: "Cocina", icon: "🍳" },
+  // Café: de uso exclusivo de los baristas (en Manuales lo ve solo el rol Barista).
+  cafe: { label: "Café", icon: "☕",
+    categorias: ["Espresso", "Con leche", "Fríos", "Especiales", "Tés e infusiones", "Chocolates", "Bases"],
+    tipos: { plato: "Bebida", subreceta: "Base" } },
 };
 
 // Se ingresa solo con contraseña: cada área tiene una cuenta fija en Firebase
@@ -431,7 +435,11 @@ function grupos() {
 // por orden alfabético, y "Sin categoría" al final. "Jugos" se llama ahora "Bebidas".
 const ORDEN_CATEGORIAS = ["Combos", "Sándwiches", "Croissants", "Bebidas", "Horneados", "Bases", "Porciones envasadas"];
 const RENOMBRES_CATEGORIA = { jugos: "Bebidas" };
+// Cada área puede tener sus propias categorías (Café); si no, las de cocina.
+const ordenCategorias = () => AREAS_RECETARIO[area]?.categorias || ORDEN_CATEGORIAS;
 const CATEGORIAS_SUGERIDAS = ORDEN_CATEGORIAS;
+// "Plato"/"Subreceta" en cocina; en Café, "Bebida"/"Base". Lo guardado es siempre plato/subreceta.
+const tipoLabel = t => AREAS_RECETARIO[area]?.tipos?.[t] || TIPOS[t] || t;
 const SIN_CATEGORIA = "Sin categoría";
 function nombreCategoria(g) {
   g = (g || "").trim();
@@ -443,8 +451,9 @@ function categoriaDe(r) {
 }
 function posCategoria(c) {
   const k = clave(c).replace(/s$/, "");
-  const i = ORDEN_CATEGORIAS.findIndex(o => clave(o).replace(/s$/, "") === k);
-  return i < 0 ? ORDEN_CATEGORIAS.length : i;
+  const orden = ordenCategorias();
+  const i = orden.findIndex(o => clave(o).replace(/s$/, "") === k);
+  return i < 0 ? orden.length : i;
 }
 function compararCategorias(a, b) {
   return (a === SIN_CATEGORIA) - (b === SIN_CATEGORIA) || posCategoria(a) - posCategoria(b) || a.localeCompare(b, "es");
@@ -471,6 +480,12 @@ async function aplicarRenombresCategoria() {
 }
 function iconoCategoria(c) {
   const k = clave(c);
+  if (k.includes("espresso") || k.includes("ristretto") || k.includes("cortado")) return "☕";
+  if (k.includes("con leche") || k.includes("latte") || k.includes("capuc") || k.includes("flat")) return "🥛";
+  if (k.includes("frio") || k.includes("frapp") || k.includes("iced") || k.includes("cold")) return "🧊";
+  if (k.includes("especial")) return "✨";
+  if (k.includes("infusion") || k === "tes" || k.startsWith("te ") || k.startsWith("tes ")) return "🍵";
+  if (k.includes("chocolate")) return "🍫";
   if (k.includes("croissant") || k.includes("medialuna")) return "🥐";
   if (k.includes("envasad")) return "📦";
   if (k.includes("horneado")) return "🧁";
@@ -721,7 +736,7 @@ function cardReceta(r) {
           <div class="rec-card-foto" data-foto="${esc(r.id)}">${r.tieneFoto ? `<span class="rec-sub">Cargando foto…</span>` : `<span class="rec-card-sinfoto">${iconoCategoria(categoriaDe(r))}</span>`}</div>
           <div class="rec-card-pie">
             <div class="rec-card-nombre">${esc(r.nombre)}</div>
-            <div class="rec-sub">${esc([r.codigo, TIPOS[r.tipo] || r.tipo, categoriaActual ? "" : categoriaDe(r)].filter(Boolean).join(" · "))}</div>
+            <div class="rec-sub">${esc([r.codigo, tipoLabel(r.tipo), categoriaActual ? "" : categoriaDe(r)].filter(Boolean).join(" · "))}</div>
           </div>
         </div>
         <div class="rec-card-cara rec-card-dorso">
@@ -758,7 +773,7 @@ function pintarDetalle(c) {
       <div>
         <div class="rec-titulo">${esc(r.nombre)}</div>
         <div class="rec-chips">
-          <span class="rec-badge rec-${esc(r.tipo)}">${esc(TIPOS[r.tipo] || r.tipo)}</span>
+          <span class="rec-badge rec-${esc(r.tipo)}">${esc(tipoLabel(r.tipo))}</span>
           ${r.codigo ? `<span class="rec-chip">${esc(r.codigo)}</span>` : ""}
           ${r.grupo ? `<span class="rec-chip">${esc(nombreCategoria(r.grupo))}</span>` : ""}
           <span class="rec-sub">${esc(descRendimiento(r))}${pp ? ` · ${esc(pp)} por porción` : ""}</span>
@@ -942,7 +957,7 @@ function pintarEditor(c) {
     </div>
     <datalist id="rec-dl-ing">${nomsIng.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
     <datalist id="rec-dl-emp">${nomsEmp.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
-    <datalist id="rec-dl-grupo">${[...new Set([...CATEGORIAS_SUGERIDAS, ...gs.map(nombreCategoria)])].sort(compararCategorias).map(g => `<option value="${esc(g)}">`).join("")}</datalist>
+    <datalist id="rec-dl-grupo">${[...new Set([...ordenCategorias(), ...gs.map(nombreCategoria)])].sort(compararCategorias).map(g => `<option value="${esc(g)}">`).join("")}</datalist>
 
     <div class="section-block">
       <div class="section-title" style="margin-bottom:14px">Datos generales</div>
@@ -951,7 +966,7 @@ function pintarEditor(c) {
           <input class="form-input" data-f="nombre" value="${esc(d.nombre)}" placeholder="Ej: Croquetas de jamón (6 u.)"></div>
         <div class="form-group"><label class="form-label">Tipo</label>
           <select class="form-select" data-f="tipo" data-redibujar>
-            ${Object.entries(TIPOS).map(([k, l]) => `<option value="${k}" ${d.tipo === k ? "selected" : ""}>${l}</option>`).join("")}
+            ${Object.keys(TIPOS).map(k => `<option value="${k}" ${d.tipo === k ? "selected" : ""}>${tipoLabel(k)}</option>`).join("")}
           </select>
           <small class="rec-help">${d.tipo === "subreceta" ? "Preparación base (masa, salsa, relleno) que se usa en otras recetas." : "Producto que se sirve o se vende."}</small></div>
         <div class="form-group"><label class="form-label">Código</label>
@@ -1706,7 +1721,7 @@ function fichaHtml(r, logo, hoy) {
       <div class="emi"><b>Recetario · ${esc(areaLabel(area))}</b><span>Impreso ${hoy}</span></div>
     </header>
     <h1>${esc(r.nombre)}</h1>
-    <div class="meta">${esc([TIPOS[r.tipo], descRendimiento(r), nombreCategoria(r.grupo), r.codigo ? `Ref. ${r.codigo}` : ""].filter(Boolean).join(" · "))}</div>
+    <div class="meta">${esc([tipoLabel(r.tipo), descRendimiento(r), nombreCategoria(r.grupo), r.codigo ? `Ref. ${r.codigo}` : ""].filter(Boolean).join(" · "))}</div>
     <div class="top">
       <div class="cards">
         <div class="card dest"><span>Rendimiento</span><b>${r.rendimiento != null ? esc(fmtCant(r.rendimiento, r.unidadRendimiento)) : "—"}</b></div>

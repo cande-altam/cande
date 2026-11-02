@@ -454,8 +454,8 @@ Este bloque **reemplaza** al del paso 3 de Informes. Es el mismo contenido que e
 
     "recetario": {
       "ingredientes": {
-        ".read":  "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'costeo@candela-app.com')",
-        ".write": "auth != null && auth.token.email === 'recetario-cocina@candela-app.com'",
+        ".read":  "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'recetario-cafe@candela-app.com' || auth.token.email === 'costeo@candela-app.com')",
+        ".write": "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'recetario-cafe@candela-app.com')",
         "$id": {
           ".validate": "newData.hasChildren(['nombre', 'tipo'])",
           "nombre": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" }
@@ -464,10 +464,10 @@ Este bloque **reemplaza** al del paso 3 de Informes. Es el mismo contenido que e
       "areas": {
         ".read": "auth != null && auth.token.email === 'costeo@candela-app.com'",
         "$area": {
-          ".read":  "auth != null && $area === 'cocina' && auth.token.email === 'recetario-' + $area + '@candela-app.com'",
-          ".write": "auth != null && $area === 'cocina' && auth.token.email === 'recetario-' + $area + '@candela-app.com'",
+          ".read":  "auth != null && ($area === 'cocina' || $area === 'cafe') && auth.token.email === 'recetario-' + $area + '@candela-app.com'",
+          ".write": "auth != null && ($area === 'cocina' || $area === 'cafe') && auth.token.email === 'recetario-' + $area + '@candela-app.com'",
           "recetas": {
-            ".read": "(auth != null && auth.token.email === 'gerencia@candela-app.com') || (auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true && root.child('manuales/personal').child(auth.uid).child('accesos/recetario').val() === true)",
+            ".read": "(auth != null && auth.token.email === 'gerencia@candela-app.com') || (auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true && (root.child('manuales/personal').child(auth.uid).child('accesos/recetarioAreas').child($area).val() === true || ($area === 'cocina' && root.child('manuales/personal').child(auth.uid).child('accesos/recetario').val() === true && !root.child('manuales/personal').child(auth.uid).child('accesos/recetarioAreas').exists())))",
             "$id": {
               ".validate": "newData.hasChildren(['nombre', 'tipo', 'actualizada'])",
               "nombre": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 150" },
@@ -475,7 +475,7 @@ Este bloque **reemplaza** al del paso 3 de Informes. Es el mismo contenido que e
             }
           },
           "fotos": {
-            ".read": "(auth != null && auth.token.email === 'gerencia@candela-app.com') || (auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true && root.child('manuales/personal').child(auth.uid).child('accesos/recetario').val() === true)",
+            ".read": "(auth != null && auth.token.email === 'gerencia@candela-app.com') || (auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true && (root.child('manuales/personal').child(auth.uid).child('accesos/recetarioAreas').child($area).val() === true || ($area === 'cocina' && root.child('manuales/personal').child(auth.uid).child('accesos/recetario').val() === true && !root.child('manuales/personal').child(auth.uid).child('accesos/recetarioAreas').exists())))",
             "$id": { ".validate": "newData.isString() && newData.val().length < 400000" }
           }
         }
@@ -524,11 +524,19 @@ Este bloque **reemplaza** al del paso 3 de Informes. Es el mismo contenido que e
 Tres cosas a tener en cuenta:
 - **Los nodos de Pedidos de Producción** (`catalogo`, `pedidos`, `stock`, `anuncios`…) están porque ese sistema usa **esta misma base**. Quedan igual de abiertos que hoy. Si en **Data** aparece otra carpeta principal que no está en la lista, hay que agregarla antes de publicar: cualquier nodo que no figure queda bloqueado.
 - **`informes/envios` ahora exige la cuenta de Gerencia**, no cualquier sesión. Con la regla anterior (`auth != null`), la cuenta del recetario —o cualquier cuenta nueva— podía leer los informes. Si Gerencia usa otro mail, cambialo también acá.
-- **`costeo@candela-app.com`** solo puede **leer** el recetario (lo usa Costeo para calcular costos); solo `recetario-cocina@…` puede escribir.
+- **`costeo@candela-app.com`** solo puede **leer** el recetario (lo usa Costeo para calcular costos); solo `recetario-cocina@…` y `recetario-cafe@…` pueden escribir, cada una en su sección.
 - **`manuales`**: Gerencia lee y escribe todo (roles, borradores, historial, papelera). Cada persona lee **solo los manuales de sus roles**, y solo mientras figure **activa** en `manuales/personal/{uid}`. Tener una cuenta no alcanza: dar de baja a alguien le corta la lectura en el acto. Ver [Manuales y Recetario](#módulo-manuales-y-recetario).
-- **Recetario para el equipo**: las recetas y fotos del Recetario las pueden **leer** Gerencia y las personas cuyos roles tienen el Recetario: por defecto baristas y cocina (`accesos/recetario`). No pueden escribir, ni ver los borradores de la cocina.
+- **Recetario para el equipo**: las recetas y fotos de cada sección del Recetario las pueden **leer** Gerencia y las personas cuyos roles tienen **esa sección** (`accesos/recetarioAreas/{área}`): Cocina para cocina y baristas, **Café solo para baristas**. Quien tiene el permiso viejo (`accesos/recetario` sin secciones) sigue viendo Cocina. No pueden escribir, ni ver los borradores.
 
 **Verificar:** en una ventana privada, `https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com/recetario.json` tiene que devolver **`Permission denied`**.
+
+### Sección Café (baristas)
+Café ya está sumada (`cafe` en `AREAS_RECETARIO`, en las reglas y en Costeo). Tiene sus categorías (Espresso, Con leche, Fríos, Especiales, Tés e infusiones, Chocolates, Bases) y ahí las recetas se llaman **Bebida** y **Base** (por dentro siguen siendo plato y subreceta, así Costeo las calcula igual). Para usarla:
+1. **Authentication → Users → Add user**: `recetario-cafe@candela-app.com` con la contraseña que va a usar quien cargue las recetas de café.
+2. Publicar `firebase-reglas.json` completo (Realtime Database → Rules → Publicar).
+3. En `/recetario/`, la pantalla de ingreso muestra **🍳 Cocina** y **☕ Café**: se elige Café y se entra con esa contraseña.
+
+En Manuales, cada rol elige **qué secciones del Recetario ve** (Gestionar → Roles). La primera vez que Gerencia entra después de este cambio, al rol **Barista** se le suma Café solo (una única vez: si después se lo sacás, no vuelve).
 
 ### Sumar otra área (Pastelería, Panadería…)
 1. En `recetario/index.html`, agregar el área a `AREAS_RECETARIO` (ej. `pasteleria: { label: "Pastelería", icon: "🎂" }`).
