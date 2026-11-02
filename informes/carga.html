@@ -98,6 +98,16 @@
   .ctlRow .chkRow{margin-top:0}
   .ctlRow .txt{flex:1 1 170px;font-size:14px;line-height:1.35}
   [hidden]{display:none !important}
+
+  /* fotos y videos adjuntos */
+  .adjGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px;margin-top:10px}
+  .adjGrid:empty{display:none}
+  .adj{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-2);aspect-ratio:1}
+  .adj img,.adj video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
+  .adj .tipo{position:absolute;left:5px;bottom:5px;background:rgba(0,0,0,.6);color:#fff;font-size:10.5px;font-weight:700;border-radius:6px;padding:2px 6px}
+  .adj .quitarAdj{position:absolute;top:4px;right:4px;width:28px;height:28px;border:none;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:17px;line-height:1;cursor:pointer}
+  .adj .proc{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;color:var(--ink-soft);background:var(--panel-2)}
+  .btnAdj{display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -181,6 +191,15 @@
       </div>
     </div>
 
+    <div class="card">
+      <span class="eyebrow">Fotos y videos</span>
+      <p class="seccion-sub">Opcional. Sumá lo que ayude a entender lo que pasó: una rotura, un faltante, cómo quedó algo.</p>
+      <label class="btn ghost btnAdj" style="margin-top:4px">📷 Agregar fotos o videos
+        <input type="file" id="fAdj" accept="image/*,video/*" multiple hidden></label>
+      <div class="adjGrid" id="adjGrid"></div>
+      <div id="adjAviso"></div>
+    </div>
+
     <div class="card soloExperto">
       <span class="eyebrow">Reclamos que escalaron</span>
       <p class="seccion-sub">Solo los que no se resolvieron en el mostrador.</p>
@@ -222,6 +241,8 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+// Firebase Storage (para los videos) se carga recién cuando hace falta: un informe sin video no
+// depende de que Storage esté activado.
 
 const firebaseConfig = {
   apiKey: "AIzaSyDtV-TC_GmylUNwwB1n-23u1t44C-ZtNvU",
@@ -235,7 +256,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const APP_VERSION = "2026-10-28 informe-cocina";
+const APP_VERSION = "2026-11-02 fotos-videos";
 document.getElementById("appVersion").textContent = "v" + APP_VERSION;
 
 // ---------------------------------------------------------------------------
@@ -593,6 +614,166 @@ $("compensaciones").addEventListener("click", (ev) => {
 });
 
 // ---------------------------------------------------------------------------
+// FOTOS Y VIDEOS
+// Las fotos se achican en el teléfono (JPEG ~300 KB) y van a la base, en informes/adjuntos —una
+// rama aparte del informe, para que Gerencia no descargue todas las fotos cada vez que abre la
+// lista: se bajan recién al abrir ese informe—. Los videos pesan demasiado para la base y van a
+// Firebase Storage. El informe guarda solo dónde quedó cada archivo.
+// ---------------------------------------------------------------------------
+const MAX_ADJ = 12;
+const MAX_VIDEO_MB = 150;
+let adjuntos = [];   // { id, tipo: "foto"|"video", nombre, bytes, data?, file?, url?, listo, error? }
+let adjSeq = 0;
+
+function comprimirFoto(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const max = 1600;
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(img.width * k)); cv.height = Math.max(1, Math.round(img.height * k));
+      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+      let q = 0.78, out = cv.toDataURL("image/jpeg", q);
+      while (out.length > 420000 && q > 0.4) { q -= 0.08; out = cv.toDataURL("image/jpeg", q); }
+      if (!out.startsWith("data:image/")) return reject(new Error("imagen"));
+      resolve(out);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("imagen")); };
+    img.src = url;
+  });
+}
+
+const esVideo = (f) => (f.type || "").startsWith("video/") || /\.(mov|mp4|m4v|webm|3gp)$/i.test(f.name || "");
+const esFoto = (f) => (f.type || "").startsWith("image/") || /\.(jpe?g|png|heic|heif|webp|gif)$/i.test(f.name || "");
+
+function dibujarAdjuntos() {
+  $("adjGrid").innerHTML = adjuntos.map(a => `<div class="adj" data-id="${a.id}">
+    ${a.tipo === "video"
+      ? `<video src="${a.url}#t=0.1" muted playsinline preload="metadata"></video><span class="tipo">▶ Video</span>`
+      : a.data ? `<img src="${a.data}" alt="">` : `<div class="proc">Preparando…</div>`}
+    <button type="button" class="quitarAdj" title="Quitar">×</button>
+  </div>`).join("");
+}
+
+function avisoAdjuntos(lineas) {
+  $("adjAviso").innerHTML = lineas.length ? `<div class="aviso warn">${lineas.map(esc).join("<br>")}</div>` : "";
+}
+
+$("fAdj").addEventListener("change", async (ev) => {
+  const files = [...(ev.target.files || [])];
+  ev.target.value = "";   // así se puede volver a elegir el mismo archivo
+  const avisos = [];
+  for (const f of files) {
+    if (adjuntos.length >= MAX_ADJ) { avisos.push(`Se pueden adjuntar hasta ${MAX_ADJ} archivos por informe.`); break; }
+    const video = esVideo(f);
+    if (!video && !esFoto(f)) { avisos.push(`“${f.name}” no es una foto ni un video.`); continue; }
+    if (video && f.size > MAX_VIDEO_MB * 1048576) {
+      avisos.push(`El video “${f.name}” pesa ${Math.round(f.size / 1048576)} MB y el máximo es ${MAX_VIDEO_MB} MB. Grabá uno más corto.`);
+      continue;
+    }
+    const a = { id: ++adjSeq, tipo: video ? "video" : "foto", nombre: f.name || "", bytes: f.size };
+    if (video) { a.file = f; a.url = URL.createObjectURL(f); a.listo = Promise.resolve(); }
+    else a.listo = comprimirFoto(f).then(d => { a.data = d; }).catch(() => { a.error = true; });
+    adjuntos.push(a);
+  }
+  dibujarAdjuntos();
+  avisoAdjuntos(avisos);
+  await Promise.all(adjuntos.map(a => a.listo));
+  const rotas = adjuntos.filter(a => a.error);
+  if (rotas.length) {
+    adjuntos = adjuntos.filter(a => !a.error);
+    avisos.push(`No se pudo abrir ${rotas.length === 1 ? "una foto" : rotas.length + " fotos"}. Probá sacarla de nuevo.`);
+    avisoAdjuntos(avisos);
+  }
+  dibujarAdjuntos();
+});
+
+$("adjGrid").addEventListener("click", (ev) => {
+  const b = ev.target.closest(".quitarAdj");
+  if (!b) return;
+  const id = +b.closest(".adj").dataset.id;
+  const a = adjuntos.find(x => x.id === id);
+  if (a?.url) URL.revokeObjectURL(a.url);
+  adjuntos = adjuntos.filter(x => x.id !== id);
+  dibujarAdjuntos();
+});
+
+function limpiarAdjuntos() {
+  for (const a of adjuntos) if (a.url) URL.revokeObjectURL(a.url);
+  adjuntos = [];
+  dibujarAdjuntos();
+  avisoAdjuntos([]);
+}
+
+let _storage = null;
+function storageMod() {
+  if (!_storage) {
+    _storage = import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js").then(m => {
+      const storage = m.getStorage(app);
+      storage.maxUploadRetryTime = 120000;   // si no hay señal, no quedarse reintentando 10 minutos
+      return { ...m, storage };
+    });
+    _storage.catch(() => { _storage = null; });
+  }
+  return _storage;
+}
+
+// Sube todo lo adjuntado. Devuelve lo que quedó guardado (para anotar en el informe) y lo que no.
+async function subirAdjuntos(id, ts, progreso) {
+  const guardados = [], fallidos = [];
+  const fotos = adjuntos.filter(a => a.tipo === "foto" && a.data);
+  for (const [i, a] of fotos.entries()) {
+    progreso(`Subiendo foto ${i + 1} de ${fotos.length}…`);
+    const ruta = `informes/adjuntos/${id}/${ts}/f${i}`;
+    try {
+      await set(ref(db, ruta), { tipo: "foto", data: a.data });
+      guardados.push({ tipo: "foto", ruta });
+    } catch (e) {
+      console.error("foto:", e);
+      fallidos.push({ a, motivo: /permission/i.test(e.code || e.message || "") ? "permiso" : "red" });
+    }
+  }
+  const videos = adjuntos.filter(a => a.tipo === "video" && a.file);
+  if (!videos.length) return { guardados, fallidos };
+  let st;
+  try { st = await storageMod(); }
+  catch (e) { console.error("storage:", e); videos.forEach(a => fallidos.push({ a, motivo: "red" })); return { guardados, fallidos }; }
+  for (const [i, a] of videos.entries()) {
+    const ext = ((a.nombre.match(/\.[a-z0-9]{2,4}$/i) || [""])[0] || ".mp4").toLowerCase();
+    const ruta = `informes/${id}/${ts}/v${i}${ext}`;
+    const tipoMime = a.file.type || (ext === ".mov" ? "video/quicktime" : "video/mp4");
+    try {
+      await new Promise((resolve, reject) => {
+        const tarea = st.uploadBytesResumable(st.ref(st.storage, ruta), a.file, { contentType: tipoMime });
+        tarea.on("state_changed",
+          s => progreso(`Subiendo video ${i + 1} de ${videos.length}… ${s.totalBytes ? Math.round(s.bytesTransferred / s.totalBytes * 100) : 0}%`),
+          reject, resolve);
+      });
+      guardados.push({ tipo: "video", storage: ruta, contentType: tipoMime, bytes: a.bytes });
+    } catch (e) {
+      console.error("video:", e);
+      fallidos.push({ a, motivo: e.code === "storage/retry-limit-exceeded" ? "red" : "storage" });
+    }
+  }
+  return { guardados, fallidos };
+}
+
+function explicarFallidos(fallidos) {
+  const n = fallidos.length;
+  const motivos = new Set(fallidos.map(f => f.motivo));
+  let por = "Revisá la conexión.";
+  if (motivos.has("storage")) por = "Si pasa siempre con los videos, falta activarlos en Firebase: avisale a Gerencia.";
+  else if (motivos.has("permiso")) por = "Falta publicar las reglas nuevas de Firebase: avisale a Gerencia.";
+  return `No se ${n === 1 ? "pudo subir 1 archivo" : `pudieron subir ${n} archivos`}. ${por}`;
+}
+
+let enviando = false;
+window.addEventListener("beforeunload", (ev) => { if (enviando) { ev.preventDefault(); ev.returnValue = ""; } });
+
+// ---------------------------------------------------------------------------
 // AVISOS DE CONTEXTO
 // ---------------------------------------------------------------------------
 function avisoCronograma() {
@@ -734,15 +915,31 @@ async function enviar({ sinNovedades }) {
   btns.forEach(b => b.disabled = true);
   const textoPrevio = $("btnEnviar").textContent;
   $("btnEnviar").textContent = "Enviando…";
+  enviando = true;
 
   try {
     const id = idInforme();
+    const ts = Date.now();
+    // Primero los archivos: el informe anota solo los que quedaron guardados de verdad.
+    let fallidos = [];
+    if (adjuntos.length) {
+      await Promise.all(adjuntos.map(a => a.listo));
+      const r = await subirAdjuntos(id, ts, (msg) => { $("btnEnviar").textContent = msg; });
+      fallidos = r.fallidos;
+      if (fallidos.length && !confirm(`${explicarFallidos(fallidos)}\n\n¿Enviar el informe igual, sin ${fallidos.length === 1 ? "ese archivo" : "esos archivos"}?`)) {
+        mostrarError(explicarFallidos(fallidos));
+        return;
+      }
+      if (r.guardados.length) informe.adjuntos = r.guardados;
+      if (fallidos.length) informe.adjuntosFallidos = fallidos.length;
+      $("btnEnviar").textContent = "Enviando…";
+    }
     // Los envíos son APPEND-ONLY: cada uno va a su propia clave por timestamp y nunca se pisa
     // nada. Un informe es el registro de lo que pasó en un turno; sobrescribirlo sería borrar
     // información. Además así esta página nunca necesita LEER un informe para conservarlo — que
     // es justo lo que las reglas de Firebase le prohíben, porque el contenido lo lee solo
     // Gerencia. El informe vigente de un turno es, simplemente, el envío más reciente de ese id.
-    await set(ref(db, `informes/envios/${id}/${Date.now()}`), informe);
+    await set(ref(db, `informes/envios/${id}/${ts}`), informe);
     // Índice público: lo mínimo para que el próximo Experto sepa que este turno ya informó, sin
     // exponer nada de lo que dice adentro. Va DESPUÉS del envío: si algo falla, es preferible un
     // informe sin índice (se avisa de menos) que un índice sin informe (se avisa de algo que no
@@ -754,12 +951,17 @@ async function enviar({ sinNovedades }) {
     $("formWrap").style.display = "none";
     $("okCard").classList.add("show");
     $("okDetalle").textContent = `${cocina ? "Cocina · " : ""}${LOCALES[loc]} · ${TURNOS[turno]} · ${fecha}`;
-    $("okTs").textContent = "Enviado el " + new Date().toLocaleString("es-AR", { dateStyle: "long", timeStyle: "short" });
+    const nAdj = (informe.adjuntos || []).length;
+    $("okTs").textContent = "Enviado el " + new Date().toLocaleString("es-AR", { dateStyle: "long", timeStyle: "short" })
+      + (nAdj ? ` · ${nAdj} ${nAdj === 1 ? "archivo adjunto" : "archivos adjuntos"}` : "")
+      + (fallidos.length ? ` · ${fallidos.length} sin subir` : "");
+    limpiarAdjuntos();
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (e) {
     console.error(e);
     mostrarError("No se pudo enviar. Revisá tu conexión e intentá de nuevo.");
   } finally {
+    enviando = false;
     btns.forEach(b => b.disabled = false);
     $("btnEnviar").textContent = textoPrevio;
   }
@@ -774,6 +976,7 @@ $("btnOtro").addEventListener("click", () => {
   $("fExperto").value = "";
   $("fIncOtra").value = ""; $("fReclamo").value = ""; $("fSiguiente").value = "";
   $("compensaciones").innerHTML = "";
+  limpiarAdjuntos();
   $("incidencias").querySelectorAll("input:checked").forEach(c => { c.checked = false; c.closest(".inc").classList.remove("on"); });
   llenarChecklist();
   llenarControles();

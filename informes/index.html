@@ -142,6 +142,16 @@
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--negro);color:var(--crema);padding:11px 18px;border-radius:11px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:99}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .footer-note{font-size:11.5px;color:var(--ink-soft);margin-top:14px;text-align:center}
+  .pill.adj{background:var(--chip);color:var(--ink-soft)}
+  .adjGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+  .adjItem{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel);aspect-ratio:1;display:grid;place-items:center;font-size:12px;color:var(--ink-soft);text-align:center;padding:0}
+  .adjItem img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+  .adjItem.vid{aspect-ratio:auto;grid-column:1/-1;background:#000}
+  .adjItem.vid video{width:100%;max-height:70vh;display:block}
+  .adjItem .msg{padding:10px}
+  .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;display:flex;align-items:center;justify-content:center;padding:14px;cursor:zoom-out}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:6px}
+  .lightbox[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -245,10 +255,11 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="lightbox" id="lightbox" hidden><img id="lightboxImg" alt=""></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -264,7 +275,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-const APP_VERSION = "2026-10-28 informe-cocina";
+const APP_VERSION = "2026-11-02 fotos-videos";
 document.getElementById("appVersion").textContent = "v" + APP_VERSION;
 
 const LOCALES = { SLA: "SLA 5.0", SL: "San Luis" };
@@ -520,6 +531,7 @@ function render() {
   renderResumenIncidencias(lista);
   renderResumenPersonas(lista);
   renderLista(lista);
+  cargarAdjuntosAbiertos();
 }
 
 function renderKpis(lista) {
@@ -635,7 +647,8 @@ function infHtml(r) {
     r.sinNovedades && !incidencias.length && !incumplen.length ? `<span class="pill sn">Sin novedades</span>` : "",
     incidencias.length ? `<span class="pill inc">${incidencias.length} incidencia(s)</span>` : "",
     incumplen.length ? `<span class="pill inc">${incumplen.length} no cumplió</span>` : "",
-    controlesMal.length ? `<span class="pill inc">${controlesMal.length} control(es) mal</span>` : ""
+    controlesMal.length ? `<span class="pill inc">${controlesMal.length} control(es) mal</span>` : "",
+    (r.adjuntos || []).length ? `<span class="pill adj">📷 ${r.adjuntos.length}</span>` : ""
   ].filter(Boolean).join(" ");
 
   const bloque = (titulo, html) => html ? `<div class="bloque"><h4>${titulo}</h4>${html}</div>` : "";
@@ -652,6 +665,7 @@ function infHtml(r) {
     ${bloque("Compensaciones", comps.length
       ? `<ul>${comps.map(c => `<li>${esc(c.tipo)}${c.detalle ? " — " + esc(c.detalle) : ""}${c.monto != null ? ` <b>($${Number(c.monto).toLocaleString("es-AR")})</b>` : ""}</li>`).join("")}</ul>` : "")}
     ${bloque("Para el turno siguiente", (r.paraElSiguiente || "").trim() ? `<div class="texto">${esc(r.paraElSiguiente)}</div>` : "")}
+    ${bloque("Fotos y videos", adjuntosHtml(r))}
     <div class="footer-note" style="text-align:left;margin-top:12px">Enviado ${r.enviadoEn ? new Date(r.enviadoEn).toLocaleString("es-AR", { dateStyle: "medium", timeStyle: "short" }) : "—"}${
       r.versiones > 1 ? ` · <b>reemplazó a ${r.versiones - 1} versión(es) anterior(es)</b>: ${(r.anteriores || []).map(a => `${esc(a.experto || "—")} el ${a.enviadoEn ? new Date(a.enviadoEn).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" }) : "—"}`).join(", ")}` : ""
     }</div>`;
@@ -666,6 +680,77 @@ function infHtml(r) {
     <div class="inf-body">${cuerpo}</div>
   </div>`;
 }
+
+// ---------------------------------------------------------------------------
+// FOTOS Y VIDEOS
+// El informe anota dónde quedó cada archivo; el archivo se baja recién al abrir el informe (y una
+// sola vez: queda en `medios`). Fotos: informes/adjuntos/… en la base. Videos: Firebase Storage.
+// ---------------------------------------------------------------------------
+const medios = new Map();   // clave → { src } | { error } | { cargando: true }
+const claveAdj = (a) => a.ruta ? "db:" + a.ruta : "st:" + a.storage;
+
+function adjuntosHtml(r) {
+  const lista = r.adjuntos || [];
+  const fallaron = r.adjuntosFallidos ? `<div class="footer-note" style="text-align:left;margin-top:6px">${r.adjuntosFallidos} archivo(s) no se pudieron subir al enviar.</div>` : "";
+  if (!lista.length) return fallaron;
+  return `<div class="adjGrid">${lista.map(a => {
+    const m = medios.get(claveAdj(a));
+    const k = esc(claveAdj(a));
+    if (a.tipo === "video") {
+      if (m?.src) return `<div class="adjItem vid" data-adj="${k}"><video src="${esc(m.src)}" controls playsinline preload="metadata"></video></div>`;
+      return `<div class="adjItem vid" data-adj="${k}" style="aspect-ratio:16/9"><span class="msg" style="color:#ccc">${m?.error ? esc(m.error) : "Cargando video…"}</span></div>`;
+    }
+    if (m?.src) return `<div class="adjItem" data-adj="${k}"><img src="${esc(m.src)}" alt="Foto del informe" data-zoom="1"></div>`;
+    return `<div class="adjItem" data-adj="${k}"><span class="msg">${m?.error ? esc(m.error) : "Cargando foto…"}</span></div>`;
+  }).join("")}</div>${fallaron}`;
+}
+
+let _storage = null;
+function storageMod() {
+  if (!_storage) {
+    _storage = import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js")
+      .then(m => ({ ...m, storage: m.getStorage(app) }));
+    _storage.catch(() => { _storage = null; });
+  }
+  return _storage;
+}
+
+async function cargarMedio(a) {
+  const clave = claveAdj(a);
+  if (medios.has(clave)) return;
+  medios.set(clave, { cargando: true });
+  try {
+    if (a.ruta) {
+      const v = (await get(ref(db, a.ruta))).val();
+      medios.set(clave, v?.data ? { src: v.data } : { error: "La foto no está." });
+    } else {
+      const st = await storageMod();
+      medios.set(clave, { src: await st.getDownloadURL(st.ref(st.storage, a.storage)) });
+    }
+  } catch (e) {
+    console.error("adjunto:", e);
+    const permiso = /permission|unauthorized/i.test(e.code || e.message || "");
+    medios.set(clave, { error: permiso ? "Sin permiso para verlo: revisá las reglas de Firebase." : "No se pudo cargar." });
+  }
+  // Se actualiza solo ese recuadro: volver a dibujar todo cortaría un video que se está mirando.
+  const html = adjuntosHtml(Object.values(registros).find(r => (r.adjuntos || []).some(x => claveAdj(x) === clave)) || {});
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  const nuevo = [...tmp.querySelectorAll("[data-adj]")].find(el => el.dataset.adj === clave);
+  document.querySelectorAll("[data-adj]").forEach(el => { if (el.dataset.adj === clave && nuevo) el.replaceWith(nuevo.cloneNode(true)); });
+}
+
+function cargarAdjuntosAbiertos() {
+  for (const id of abiertos) for (const a of registros[id]?.adjuntos || []) cargarMedio(a);
+}
+
+$("lista").addEventListener("click", (ev) => {
+  const img = ev.target.closest("img[data-zoom]");
+  if (!img) return;
+  $("lightboxImg").src = img.src;
+  $("lightbox").hidden = false;
+});
+$("lightbox").addEventListener("click", () => { $("lightbox").hidden = true; $("lightboxImg").src = ""; });
 
 // Se dibuja el esqueleto vacío desde el arranque: onAuthStateChanged decide si se muestra, y los
 // datos llegan cuando la sesión está lista.

@@ -36,6 +36,17 @@
           ".write": "newData.exists()",
           ".validate": "newData.hasChildren(['fecha','loc','turno','experto','enviadoEn'])"
         }
+      },
+      "adjuntos": {
+        ".read": "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+        "$turno": {
+          "$ts": {
+            "$n": {
+              ".write": "!data.exists() && newData.exists()",
+              ".validate": "newData.hasChildren(['tipo','data']) && newData.child('data').isString() && newData.child('data').val().beginsWith('data:image/') && newData.child('data').val().length < 1500000"
+            }
+          }
+        }
       }
     },
 

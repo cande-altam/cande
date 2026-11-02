@@ -255,6 +255,21 @@ Es el **mismo formulario**: arriba se elige "⭐ Experto del turno" o "👨‍�
 - Se guarda con `tipo: "cocina"` e id `{fecha}_{local}_{turno}_cocina`, así no pisa ni cuenta como el informe del Experto de ese turno. El jefe va en el campo `experto` (las reglas de Firebase lo piden en todo informe). Los informes viejos, sin `tipo`, son del Experto.
 - En **Informes de turno**, Gerencia filtra por "Quién informa", ve los controles en cada informe y una fila "👨‍🍳 Cocina" en la semana. La cocina **no entra en "turnos sin informe"**: el jefe no está en los cuatro turnos.
 
+### Fotos y videos
+
+En `carga.html` hay un bloque **Fotos y videos** (opcional, en los dos modos): desde el teléfono o el iPad se saca la foto o el video en el momento o se elige de la galería. Hasta 12 archivos por informe; cada video hasta 150 MB.
+
+- **Fotos**: se achican en el mismo teléfono (JPEG de ~1600 px, unos 300 KB) y van a la base, en `informes/adjuntos/{id}/{ts}/f{n}` — una rama **aparte** del informe, para que Gerencia no descargue todas las fotos cada vez que abre la lista. Funcionan apenas se publican las reglas nuevas (las completas, en [Reglas de seguridad](#reglas-de-seguridad-completas), o `firebase-reglas.json`); no hace falta activar nada más.
+- **Videos**: no entran en la base (pesan demasiado), van a **Firebase Storage**, en `informes/{id}/{ts}/v{n}.mov|mp4`. Hay que activarlo una sola vez (ver abajo). Mientras no esté activado, las fotos andan igual y el video avisa que no se pudo subir.
+- Los archivos se suben **antes** que el informe, con el avance en el botón ("Subiendo video 1 de 1… 45%"). El informe anota en `adjuntos` solo lo que quedó guardado; si algo falla, pregunta si enviar igual y lo deja asentado (`adjuntosFallidos`).
+- En **Informes de turno**, el informe muestra 📷 con la cantidad, y al abrirlo aparecen las fotos (tocá una para verla grande) y los videos para reproducir. Solo los ve la cuenta de Gerencia.
+
+#### Activar los videos (Firebase Storage, una sola vez)
+
+1. Consola de Firebase → proyecto **pedidos-de-produccion-ee3cb** → **Storage** → **Comenzar**. Firebase pide pasar el proyecto al plan **Blaze** (pago por uso): incluye 5 GB guardados y 100 GB de descarga por mes sin costo; conviene poner una alerta de presupuesto baja (por ej. USD 1) en Google Cloud → Facturación → Presupuestos.
+2. Ubicación: **`us-central1`, `us-east1` o `us-west1`** — son las que tienen ese uso sin costo.
+3. Pestaña **Rules** → reemplazar todo por el contenido de `storage-reglas.txt` (está en la raíz del repo) → **Publicar**. Permite **subir** videos a cualquiera que cargue un informe (como el informe mismo, sin clave) y **ver** solo a Gerencia.
+
 ### Un turno, un informe
 
 El id del registro es determinístico: `{fecha}_{local}_{turno}`. Eso hace imposible que existan dos informes del mismo turno y convierte "qué turnos faltan" en una pregunta con respuesta exacta. Si se carga un informe donde ya había uno, se avisa **antes** de completar el formulario (enterarse al apretar Enviar es la forma de que el trabajo se haga dos veces) y el anterior se conserva en `informes/history/{id}/{ts}` — un informe es el registro de lo que pasó en un turno, pisarlo sin dejar rastro sería borrar información.
@@ -319,6 +334,17 @@ Ese mail no recibe correo, es solo el identificador de la cuenta. Si preferís u
         "$turno": {
           ".write": "newData.exists()",
           ".validate": "newData.hasChildren(['fecha','loc','turno','experto','enviadoEn'])"
+        }
+      },
+      "adjuntos": {
+        ".read": "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+        "$turno": {
+          "$ts": {
+            "$n": {
+              ".write": "!data.exists() && newData.exists()",
+              ".validate": "newData.hasChildren(['tipo','data']) && newData.child('data').isString() && newData.child('data').val().beginsWith('data:image/') && newData.child('data').val().length < 1500000"
+            }
+          }
         }
       }
     }
@@ -448,6 +474,17 @@ Este bloque **reemplaza** al del paso 3 de Informes. Es el mismo contenido que e
         "$turno": {
           ".write": "newData.exists()",
           ".validate": "newData.hasChildren(['fecha','loc','turno','experto','enviadoEn'])"
+        }
+      },
+      "adjuntos": {
+        ".read": "auth != null && auth.token.email === 'gerencia@candela-app.com'",
+        "$turno": {
+          "$ts": {
+            "$n": {
+              ".write": "!data.exists() && newData.exists()",
+              ".validate": "newData.hasChildren(['tipo','data']) && newData.child('data').isString() && newData.child('data').val().beginsWith('data:image/') && newData.child('data').val().length < 1500000"
+            }
+          }
         }
       }
     },
