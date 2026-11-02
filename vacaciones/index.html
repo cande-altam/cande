@@ -78,7 +78,7 @@
   .syncBanner button:hover{opacity:1}
 
   .layout{display:grid;grid-template-columns:340px 1fr;gap:18px;margin-top:18px;align-items:start}
-  @media (max-width:1000px){.layout{grid-template-columns:1fr;display:flex;flex-direction:column}main{order:1}.rail{order:2}}
+  @media (max-width:1000px),(pointer:coarse) and (max-width:1400px){.layout{grid-template-columns:1fr;display:flex;flex-direction:column}main{order:2}.rail{order:1}}
   /* que las tablas y calendarios anchos scrolleen adentro de su tarjeta, no la página entera */
   main,.rail{min-width:0;max-width:100%}
 
@@ -87,10 +87,10 @@
   .card .sub{font-size:12px;color:var(--ink-soft);padding:2px 16px 0}
   .card-body{padding:14px 16px}
   .rail{display:flex;flex-direction:column;gap:16px;position:sticky;top:88px}
-  @media (max-width:1000px){.rail{position:static}}
+  @media (max-width:1000px),(pointer:coarse) and (max-width:1400px){.rail{position:static}}
   .railToggle{display:none}
   .railBody{display:flex;flex-direction:column;gap:16px}
-  @media (max-width:1000px){
+  @media (max-width:1000px),(pointer:coarse) and (max-width:1400px){
     .railToggle{display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px;font-weight:700;font-size:14px;box-shadow:var(--shadow);cursor:pointer;color:var(--ink)}
     .railToggle .car{transition:transform .15s}
     .railToggle[aria-expanded="true"] .car{transform:rotate(180deg)}
@@ -98,6 +98,20 @@
     .railBody.open{display:flex}
   }
 
+  /* barra de secciones: queda fija arriba al bajar, con deshacer/rehacer a mano */
+  .top{position:static}
+  .secNav{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:6px;margin:10px -4px 0;padding:8px 4px;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow-x:auto;scrollbar-width:none}
+  .secNav::-webkit-scrollbar{display:none}
+  .secNav .ir{border:1px solid var(--line-strong);background:var(--panel);border-radius:20px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--ink);font-family:inherit}
+  .secNav .ir.on{background:var(--negro);border-color:var(--negro);color:var(--crema)}
+  .secNav .ir .n{display:inline-block;min-width:18px;margin-left:4px;padding:0 5px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:11px}
+  .secNav .sep{flex:1}
+  .secNav .icon-btn{flex:none;background:var(--panel)}
+  #alertCard,#planCard,#balCard,#calCard{scroll-margin-top:64px}
+  .alertDet summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-weight:700;font-size:13px;border:1px solid color-mix(in srgb,var(--warn) 30%,transparent)}
+  .alertDet summary::-webkit-details-marker{display:none}
+  .alertDet summary .car{margin-left:auto;transition:transform .15s}
+  .alertDet[open] summary .car{transform:rotate(180deg)}
   .eyebrow{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent-ink);font-weight:700}
   .field{margin-top:12px}
   .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:600}
@@ -316,6 +330,31 @@
     .top{position:static;padding:12px 14px;gap:10px}
     .brand{width:100%}
   }
+  /* con el dedo: botones y chips de tamaño cómodo */
+  @media (pointer:coarse){
+    .btn.sm{padding:9px 12px;font-size:13px}
+    .pl-chip{padding:8px 14px;font-size:13px}
+    .tb-meses button{padding:10px 18px;font-size:20px}
+    .tb-sel{font-size:14px;padding:9px 10px;max-width:230px}
+    .tb-nom{padding-right:40px}
+    .tb-nom .mas{width:32px;height:32px;font-size:18px;border-radius:9px;right:5px}
+    .tb-scroll{max-height:calc(100dvh - 130px)}
+    .railToggle{gap:12px}
+    .cal-op{font-size:13px;padding:6px 0}
+    .cal-op input{width:20px;height:20px}
+    .det .acciones .btn{padding:12px 14px;font-size:14px}
+    .noteCard .noteHead button{font-size:24px;padding:4px 8px}
+  }
+  /* iPad vertical: menos margen y columna de nombres más angosta, para que entre el mes entero */
+  @media (pointer:coarse) and (max-width:900px){
+    .wrap{padding-left:12px;padding-right:12px}
+    .tb{--nom:128px}
+    .tb-nom{padding-right:36px}
+    .tb-nom .largo{display:none}.tb-nom .corto{display:inline}
+    .tb-nom small{font-size:10px;white-space:normal;line-height:1.25}
+    .tb-nom .mas{width:28px;height:28px;right:4px}
+    .tb-area .tb-nom{font-size:9.5px;letter-spacing:.2px;padding-right:6px}
+  }
 </style>
 </head>
 <body>
@@ -339,13 +378,21 @@
         <p>Candela · Café &amp; Patisserie <span class="appVersion" id="appVersion" title="Versión que está corriendo en este navegador."></span></p>
       </div>
     </div>
-    <span id="syncStatus" class="syncStatus" title="Conectando…">☁️</span>
-    <button class="btn ghost icon-btn" id="btnUndo" title="Deshacer el último cambio" disabled>↩️</button>
-    <button class="btn ghost icon-btn" id="btnRedo" title="Rehacer" disabled>↪️</button>
     <button class="btn ghost icon-btn" id="btnHistory" title="Ver versiones anteriores guardadas en la nube">🕐</button>
     <button class="btn ghost icon-btn" id="btnTheme" title="Cambiar tema">◐</button>
     <button class="btn ghost icon-btn" id="btnLogout" title="Cerrar sesión">🚪</button>
   </header>
+
+  <nav class="secNav" id="secNav">
+    <button type="button" class="ir" data-ir="planCard">🗓️ Armado</button>
+    <button type="button" class="ir" data-ir="calCard">📅 Calendario</button>
+    <button type="button" class="ir" data-ir="balCard">📊 Balance</button>
+    <button type="button" class="ir" data-ir="alertCard">⚠️ Pendientes<span class="n" id="navAlertN" hidden></span></button>
+    <span class="sep"></span>
+    <span id="syncStatus" class="syncStatus" title="Conectando…">☁️</span>
+    <button class="btn ghost icon-btn" id="btnUndo" title="Deshacer el último cambio" disabled>↩️</button>
+    <button class="btn ghost icon-btn" id="btnRedo" title="Rehacer" disabled>↪️</button>
+  </nav>
 
   <div class="syncBanner" id="syncBanner">
     <span id="syncBannerMsg">⚠️ No se pudo conectar con la sincronización en la nube. Tus cambios se guardan en este dispositivo, pero no van a verse en otros hasta que vuelva la conexión.</span>
@@ -397,7 +444,7 @@
     </aside>
 
     <main>
-      <section class="card alerts" style="margin-bottom:18px">
+      <section class="card alerts" style="margin-bottom:18px" id="alertCard">
         <h2>Vencidos / a programar</h2>
         <div class="card-body" id="alertList"></div>
       </section>
@@ -434,7 +481,7 @@
         </div>
       </section>
 
-      <section class="card" style="margin-bottom:18px">
+      <section class="card" style="margin-bottom:18px" id="balCard">
         <h2>Balance por persona</h2>
         <p class="sub">Días que corresponden por ley, menos lo ya tomado, por período.</p>
         <div class="tbl-scroll">
@@ -442,7 +489,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" id="calCard">
         <div class="calHead">
           <button class="btn icon-btn" id="calPrev" title="Mes anterior">‹</button>
           <h2 id="calTitle">Calendario</h2>
@@ -560,7 +607,7 @@ window.SolicitudesSync = {
 <script src="calculo.js"></script>
 <script>
 "use strict";
-const APP_VERSION="2026-10-30 mover-pedidos";
+const APP_VERSION="2026-11-02 ipad";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -870,6 +917,7 @@ function renderVacList(){
   }));
 }
 
+let alertasAbiertas=false;
 function renderAlerts(){
   const el=document.getElementById("alertList");
   const anioAct=anioActual();
@@ -880,8 +928,15 @@ function renderAlerts(){
       if(y<anioAct&&s>0)alerts.push({t:"warn",h:p.n,m:`tiene ${s} día${s===1?"":"s"} pendientes del período ${y} sin programar.`});
     });
   });
+  const nav=document.getElementById("navAlertN");
+  const personas=new Set(alerts.map(a=>a.h)).size;
+  if(nav){nav.hidden=!personas;nav.textContent=personas;}
   if(!alerts.length){el.innerHTML=`<div class="alert-empty">✓ Nadie tiene saldo vencido de períodos anteriores.</div>`;return;}
-  el.innerHTML=alerts.map(a=>`<div class="alert ${a.t}"><span class="dot"></span><div><b>${a.h}</b> ${a.m}</div></div>`).join("");
+  const lista=alerts.map(a=>`<div class="alert ${a.t}"><span class="dot"></span><div><b>${a.h}</b> ${a.m}</div></div>`).join("");
+  // Con muchos avisos, la lista se pliega: si no, empuja el armado una pantalla entera hacia abajo.
+  if(alerts.length<=3){el.innerHTML=lista;return;}
+  el.innerHTML=`<details class="alertDet" ${alertasAbiertas?"open":""}><summary>⚠️ ${personas} ${personas===1?"persona tiene":"personas tienen"} días de períodos anteriores sin programar<span class="car">▾</span></summary>${lista}</details>`;
+  el.querySelector("details").addEventListener("toggle",e=>{alertasAbiertas=e.target.open;});
 }
 
 // Pedidos de vacaciones para el año que viene, cargados desde pedido.html (ver evento
@@ -1053,7 +1108,7 @@ function renderPlanificador(){
   // ancho del día: que el mes entre en la pantalla (con un mínimo cómodo para el dedo)
   const sc=document.getElementById("tbScroll");
   const nomPx=parseFloat(getComputedStyle(tb).getPropertyValue("--nom"))||150;
-  tbDia=Math.max(tactil()?22:16,Math.floor((sc.clientWidth-nomPx-4)/tbDias));
+  tbDia=Math.max(tactil()?20:16,Math.floor((sc.clientWidth-nomPx-4)/tbDias));
   // filas: solo quien pidió fechas en este mes o tiene vacaciones (armadas o cargadas) en este mes
   const pedsMes=pedsV.filter(p=>diasEnComun(p,rangoMes)>0);
   const ubicMes=ubicV.filter(u=>diasEnComun(u,rangoMes)>0);
@@ -1626,6 +1681,26 @@ function initControls(){
     document.getElementById("authPass").focus();
   });
   document.getElementById("btnUndo").addEventListener("click",undoLast);
+  // barra de secciones: salta a cada parte y marca en cuál estás
+  const nav=document.getElementById("secNav");
+  nav.addEventListener("click",e=>{
+    const b=e.target.closest(".ir");if(!b)return;
+    const sec=document.getElementById(b.dataset.ir);
+    if(b.dataset.ir==="alertCard"){const d=sec.querySelector("details");if(d&&!d.open){d.open=true;alertasAbiertas=true;}}
+    sec.scrollIntoView({behavior:"smooth",block:"start"});
+  });
+  // marca la sección en la que estás: la última cuyo título ya pasó por debajo de la barra
+  const SECS=["alertCard","planCard","balCard","calCard"];
+  let rafNav=0;
+  const marcarSeccion=()=>{rafNav=0;
+    let actual=null;
+    for(const id of SECS){const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<=120)actual=id;}
+    // al fondo de la página, la última sección aunque su título no llegue arriba
+    if(scrollY>0&&innerHeight+scrollY>=document.documentElement.scrollHeight-4)actual=SECS[SECS.length-1];
+    nav.querySelectorAll(".ir").forEach(b=>b.classList.toggle("on",b.dataset.ir===actual));
+  };
+  addEventListener("scroll",()=>{if(!rafNav)rafNav=requestAnimationFrame(marcarSeccion);},{passive:true});
+  marcarSeccion();
   document.getElementById("btnRedo").addEventListener("click",redoLast);
   document.getElementById("btnHistory").addEventListener("click",openHistoryPanel);
   document.addEventListener("keydown",e=>{
