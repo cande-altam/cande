@@ -121,8 +121,10 @@ function quitarLocalDeUrl(){
   if (localQr) history.replaceState(null, "", location.pathname);
 }
 
-function renderError(msg){
-  app.innerHTML = `<div class="panel center"><div style="font-size:38px">😕</div><h1>Algo salió mal</h1><p class="muted">${esc(msg)}</p><button class="btn" onclick="location.reload()">Reintentar</button></div>`;
+// err (opcional): se muestra el detalle técnico chiquito, para poder diagnosticar con una captura
+function renderError(msg, err){
+  const det = err ? String(err.code || "") + " " + String(err.message || err).slice(0, 160) : "";
+  app.innerHTML = `<div class="panel center"><div style="font-size:38px">😕</div><h1>Algo salió mal</h1><p class="muted">${esc(msg)}</p>${det.trim() ? `<p class="muted" style="font-size:11px;margin-top:10px;word-break:break-all;opacity:.75">Detalle: ${esc(det.trim())}</p>` : ""}<button class="btn" onclick="location.reload()">Reintentar</button></div>`;
 }
 
 // ── Registro ───────────────────────────────────────────────
@@ -197,7 +199,8 @@ async function registrar(ev){
     const codigo = Fidel.generarAlias();
     const conCodigo = { [`tarjetaCodigo/${uid}`]: codigo, [`codigos/${codigo}`]: uid };
     // Se intenta con el alias; si las reglas de Firebase no lo permiten, se registra igual sin él
-    const intentos = [{ ...alta, ...conCodigo }, alta];
+    const { [`pines/${tel}`]: _pin, ...altaSinPin } = alta;
+    const intentos = [{ ...alta, ...conCodigo }, alta, altaSinPin];
     for (let i = 0; i < intentos.length; i++) {
       try { await db.ref("fidelizacion").update(intentos[i]); break; }
       catch (e) { if (i === intentos.length - 1) throw e; console.warn("Registro, reintento:", e && e.message); }
@@ -480,7 +483,8 @@ async function iniciar(user){
     cardUid = uid;
     if (!card) {
       // ¿Este celular está vinculado a una tarjeta con WhatsApp + PIN?
-      const alias = (await db.ref(`fidelizacion/alias/${uid}`).once("value")).val();
+      // (si las reglas publicadas son viejas y no tienen "alias", seguir como cliente nuevo)
+      const alias = await db.ref(`fidelizacion/alias/${uid}`).once("value").then(x => x.val(), () => null);
       if (alias) {
         cardUid = alias.uid;
         card = (await db.ref(`fidelizacion/tarjetas/${cardUid}`).once("value")).val();
@@ -497,7 +501,7 @@ async function iniciar(user){
     escucharTarjeta();
   } catch (err) {
     console.error(err);
-    renderError("No pudimos conectarnos. Revisá tu conexión a internet.");
+    renderError("No pudimos conectarnos. Revisá tu conexión a internet.", err);
   }
 }
 
@@ -510,7 +514,7 @@ firebase.auth().onAuthStateChanged(user => {
   if (!user) {
     firebase.auth().signInAnonymously().catch(err => {
       console.error(err);
-      renderError("No pudimos iniciar tu tarjeta. Revisá tu conexión a internet.");
+      renderError("No pudimos iniciar tu tarjeta. Revisá tu conexión a internet.", err);
     });
     return;
   }
