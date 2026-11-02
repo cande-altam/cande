@@ -301,6 +301,11 @@
   .det .acciones{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
   .det .acciones .btn{flex:1 1 140px;justify-content:center}
   .det .nota{font-style:italic;color:var(--ink-soft);margin-top:6px;font-size:12.5px}
+  .det .divi{margin-top:12px}
+  .det .divi summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--accent-ink);padding:8px 0}
+  .det .divi .mover{margin-top:4px}
+  .det .mover input[type=number]{background:var(--panel);border:1px solid var(--line-strong);border-radius:8px;padding:6px 8px;width:100%}
+  .tb-nom small.salida{color:var(--teal-ink,var(--ok));font-weight:600}
   @media (max-width:640px){.noteOverlay.sheet{align-items:flex-end;padding:0}.noteOverlay.sheet .noteCard{border-radius:16px 16px 0 0;max-height:88vh;overflow:auto}}
 
   .alert{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:10px;margin-top:8px;font-size:12.5px;border:1px solid transparent}
@@ -608,7 +613,7 @@ window.SolicitudesSync = {
 <script src="calculo.js"></script>
 <script>
 "use strict";
-const APP_VERSION="2026-11-02 a-confirmar";
+const APP_VERSION="2026-11-02 salidas";
 /* ---------------- DATOS DEL EQUIPO ---------------- */
 const DAYS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -1142,7 +1147,8 @@ function renderPlanificador(){
     const ops=pedsMes.filter(p=>p.n===n).sort((a,b)=>a.orden-b.orden);
     const mios=ubicMes.filter(u=>u.n===n);
     const otrosMeses=pedsV.filter(p=>p.n===n&&!p.descartada&&!diasEnComun(p,rangoMes)).length;
-    h+=`<div class="tb-fila" data-n="${escH(n)}"><div class="tb-nom" style="--pc:${PUESTO_COLOR[pu]}"><span class="nm"><span class="largo">${escH(nombreCompleto(n))}</span><span class="corto">${escH(n)}</span></span><small class="${quedan<0?"mal":""}">${quedan<0?`se pasa ${-quedan} d`:`le quedan ${quedan} d`}${llegada[n]?` · pidió ${llegada[n]}º`:""}</small>${otrosMeses?`<small class="otros" title="Tiene ${otrosMeses} opción(es) pedida(s) en otros meses">+${otrosMeses} en otro mes</small>`:""}<button type="button" class="mas" data-sumar="${escH(n)}" title="Armar vacaciones para ${escH(n)}">+</button></div><div class="tb-tl">`;
+    const salidasFuera=ubic.filter(u=>u.n===n&&!diasEnComun(u,rangoMes)).sort((a,b)=>a.desde.localeCompare(b.desde));
+    h+=`<div class="tb-fila" data-n="${escH(n)}"><div class="tb-nom" style="--pc:${PUESTO_COLOR[pu]}"><span class="nm"><span class="largo">${escH(nombreCompleto(n))}</span><span class="corto">${escH(n)}</span></span><small class="${quedan<0?"mal":""}">${quedan<0?`se pasa ${-quedan} d`:`le quedan ${quedan} d`}${llegada[n]?` · pidió ${llegada[n]}º`:""}</small>${salidasFuera.length?`<small class="salida" title="También tiene armado: ${salidasFuera.map(u=>`${fmtCorto(u.desde)} al ${fmtCorto(u.hasta)}`).join(", ")}">✂ también ${fmtCorto(salidasFuera[0].desde)}${salidasFuera.length>1?` +${salidasFuera.length-1}`:""}</small>`:otrosMeses?`<small class="otros" title="Tiene ${otrosMeses} opción(es) pedida(s) en otros meses">+${otrosMeses} en otro mes</small>`:""}<button type="button" class="mas" data-sumar="${escH(n)}" title="Armar vacaciones para ${escH(n)}">+</button></div><div class="tb-tl">`;
     for(const o of ops){
       const usada=mios.some(u=>u.desde===o.desde&&u.hasta===o.hasta);
       h+=`<button type="button" class="tb-g op${Math.min(o.orden,3)} ${o.descartada?"desc":""} ${usada?"usada":""} ${corte(o.desde,o.hasta)}" data-op="${escH(o.id)}" style="${pos(o.desde,o.hasta)}" title="Pidió (${etqOpLarga(o)}): ${fmtFecha(o.desde)} al ${fmtFecha(o.hasta)}">${o.desde<tbIni?"← ":""}${o.orden}ª${o.partes>1?` ✂${o.parte}/${o.partes}`:""} · ${fmtCorto(o.desde)} al ${fmtCorto(o.hasta)}</button>`;
@@ -1333,16 +1339,20 @@ function armarOpcionCompleta(o){
   }
   return primero;
 }
-// Gerencia también puede dividir una barra: queda en dos, la segunda arranca al día siguiente de la
-// mitad. Después se arrastra cada una a donde vaya.
-function dividirSeg(id){
+// Vacaciones divididas: Gerencia deja una parte de los días en esta fecha y manda el resto a otro
+// momento del año (otra barra de la misma persona, sin confirmar).
+function dividirSeg(id,diasAca,desdeOtra){
   const p=state.plan&&state.plan[id];if(!p)return null;
-  const dias=rangoDias(p.desde,p.hasta);if(dias<2)return null;
-  const mitad=Math.floor(dias/2);
-  const finA=sumarDiasISO(p.desde,mitad-1);
-  const nuevo=crearSeg(p.n,sumarDiasISO(finA,1),p.hasta);
-  p.hasta=finA;delete p.sugerida;delete p.op;
-  return nuevo;
+  const dias=rangoDias(p.desde,p.hasta);
+  if(!(diasAca>=1&&diasAca<dias)||!desdeOtra)return null;
+  const resto=dias-diasAca;
+  p.hasta=sumarDiasISO(p.desde,diasAca-1);delete p.sugerida;delete p.op;
+  return crearSeg(p.n,desdeOtra,sumarDiasISO(desdeOtra,resto-1));
+}
+// Otra salida para la misma persona, en cualquier momento del año.
+function agregarSalida(n,desde,dias){
+  if(!desde||!(dias>=1))return null;
+  return crearSeg(n,desde,sumarDiasISO(desde,dias-1));
 }
 function sugerir(){
   const peds=pedidosAnio().filter(p=>!p.descartada&&filtraPuesto(p));
@@ -1407,6 +1417,7 @@ function abrirSeg(id){
   const otras=ubic.filter(o=>o.n!==n&&puestoDe(o.n)!==pu&&diasEnComun(seg,o)>0);
   const quedan=leQuedan(n);
   const cargada=seg.tipo==="tk"&&!conf;
+  const salidas=ubic.filter(u=>u.n===n).sort((a,b)=>a.desde.localeCompare(b.desde));
   const estado=conf?"✓ Confirmada":cargada?"⏳ A confirmar":seg.sugerida?"💡 Sugerida":"Sin confirmar";
   const cuerpo=`
     <div class="fechas">${fmtFecha(seg.desde)} al ${fmtFecha(seg.hasta)}</div>
@@ -1428,9 +1439,20 @@ function abrirSeg(id){
     <h4>De ${PUESTOS[pu]} al mismo tiempo</h4>
     ${misma.length?misma.map(o=>lineaCoincide(o,true,`${diasEnComun(seg,o)} d juntos`)).join(""):`<p class="sub" style="padding:0">Nadie de su área. ✓</p>`}
     ${otras.length?`<h4>De otras áreas</h4><p class="sub" style="padding:0">${otras.map(o=>`${escH(o.n)} (${PUESTOS[puestoDe(o.n)]})`).join(" · ")}</p>`:""}
+    ${salidas.length>1?`<h4>Sus salidas · ${salidas.length} · ${salidas.reduce((t,u)=>t+rangoDias(u.desde,u.hasta),0)} días en total</h4>${salidas.map(u=>`<button type="button" class="co ${u.id===seg.id?"mismo":""}" data-acc="ir" data-v="${escH(u.id)}"><span><b>${fmtCorto(u.desde)} al ${fmtCorto(u.hasta)}</b> · ${rangoDias(u.desde,u.hasta)} d${u.id===seg.id?" · <small>esta</small>":""}</span><span class="r">${u.tipo==="tk"&&u.conf?"✓ confirmada":u.tipo==="tk"?"⏳ a confirmar":u.sugerida?"💡 sugerida":"sin confirmar"}</span></button>`).join("")}`:""}
+    ${seg.tipo==="plan"&&dias>=2?`<details class="divi"><summary>✂️ Dividir: llevar parte de los días a otro momento del año</summary>
+      <div class="mover">
+        <div class="row2"><label>Se quedan en esta fecha<input type="number" data-campo="aca" min="1" max="${dias-1}" value="${Math.ceil(dias/2)}" inputmode="numeric"></label><label>El resto (<span class="resto">${dias-Math.ceil(dias/2)}</span> d) sale desde<input type="date" data-campo="otra"></label></div>
+        <button class="btn primary" data-acc="dividir" style="margin-top:10px;width:100%;justify-content:center">✂️ Dividir</button>
+      </div></details>`:""}
+    <details class="divi"><summary>➕ Agregar otra salida para ${escH(n)}</summary>
+      <div class="mover">
+        <div class="row2"><label>Desde<input type="date" data-campo="nueva"></label><label>Días<input type="number" data-campo="nuevaDias" min="1" value="${Math.max(1,Math.min(quedan>0?quedan:7,14))}" inputmode="numeric"></label></div>
+        <button class="btn primary" data-acc="otra" style="margin-top:10px;width:100%;justify-content:center">➕ Agregar salida</button>
+      </div></details>
     <div class="acciones">${conf
       ?`<button class="btn" data-acc="borrar">Borrar</button><button class="btn" data-acc="desconfirmar">Pasar a sin confirmar</button>`
-      :`<button class="btn" data-acc="${seg.tipo==="tk"?"borrar":"quitar"}">${seg.tipo==="tk"?"Borrar":"Quitar del tablero"}</button>${seg.tipo==="plan"&&dias>=2?`<button class="btn" data-acc="dividir" title="La parte en dos; después arrastrá cada una a su fecha">✂️ Dividir en dos</button>`:""}<button class="btn primary" data-acc="confirmar">✓ Confirmar</button>`}</div>`;
+      :`<button class="btn" data-acc="${seg.tipo==="tk"?"borrar":"quitar"}">${seg.tipo==="tk"?"Borrar":"Quitar del tablero"}</button><button class="btn primary" data-acc="confirmar">✓ Confirmar</button>`}</div>`;
   abrirHoja(`${escH(nombreCompleto(n))} · ${PUESTOS[pu]}`,cuerpo,(acc,el)=>{
     const r=refSeg(id);if(!r)return cerrarDetalle();
     const aplicar=(d,h)=>{if(moverSeg(id,d,h)){guardarPlan();irAFecha(d);}abrirSeg(id);};
@@ -1438,12 +1460,32 @@ function abrirSeg(id){
     if(acc==="len"){const nh=sumarDiasISO(r.hasta,+el.dataset.v);if(nh<r.desde)return;return aplicar(r.desde,nh);}
     if(acc==="fecha"){
       const campo=el.dataset.campo;if(!campo||!el.value)return;
+      if(campo==="aca"){const r2=el.closest(".mover")?.querySelector(".resto");const v=parseInt(el.value,10);if(r2)r2.textContent=v>=1&&v<dias?dias-v:"?";return;}
+      if(campo!=="desde"&&campo!=="hasta")return;
       if(campo==="desde")return aplicar(el.value,sumarDiasISO(el.value,difISO(r.desde,r.hasta)));
       if(el.value<r.desde){toast("La fecha 'hasta' no puede ser antes que 'desde'");return abrirSeg(id);}
       return aplicar(r.desde,el.value);
     }
     if(acc==="poner"){const o=pedidosAnio().find(x=>x.id===el.dataset.v);if(!o)return;if(id in (state.plan||{}))state.plan[id].op=o.id;aplicar(o.desde,o.hasta);return;}
-    if(acc==="dividir"){const nid=dividirSeg(id);if(!nid)return;guardarPlan(`${n}: dividida en dos. Arrastrá cada parte a su fecha.`);return abrirSeg(id);}
+    if(acc==="ir"){const u=ubicadas().find(x=>x.id===el.dataset.v);if(u){irAFecha(u.desde,n);abrirSeg(u.id);}return;}
+    const ov=document.getElementById("planOverlay");
+    const campo=c=>ov.querySelector(`[data-campo="${c}"]`);
+    if(acc==="dividir"){
+      const aca=parseInt(campo("aca").value,10),otra=campo("otra").value;
+      if(!(aca>=1&&aca<dias))return toast(`Se pueden dejar entre 1 y ${dias-1} días en esta fecha`);
+      if(!otra)return toast("Elegí desde qué fecha sale el resto");
+      const nid=dividirSeg(id,aca,otra);if(!nid)return;
+      guardarPlan(`${n}: ${aca} d acá y ${dias-aca} d desde el ${fmtCorto(otra)}, sin confirmar`);
+      irAFecha(otra,n);return abrirSeg(nid);
+    }
+    if(acc==="otra"){
+      const desde=campo("nueva").value,nd=parseInt(campo("nuevaDias").value,10);
+      if(!desde)return toast("Elegí desde qué fecha");
+      if(!(nd>=1))return toast("Poné cuántos días");
+      const nid=agregarSalida(n,desde,nd);if(!nid)return;
+      guardarPlan(`${n}: otra salida de ${nd} d desde el ${fmtCorto(desde)}, sin confirmar`);
+      irAFecha(desde,n);return abrirSeg(nid);
+    }
     if(acc==="quitar"){delete state.plan[id];guardarPlan(`Se quitó del tablero`);return cerrarDetalle();}
     if(acc==="borrar"){
       if(!confirm(`¿Borrar las vacaciones de ${n} del ${fmtCorto(r.desde)} al ${fmtCorto(r.hasta)}?`))return;

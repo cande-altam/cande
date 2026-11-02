@@ -41,12 +41,6 @@
   .opcion{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:16px;background:var(--panel-2);position:relative}
   .opcion .num{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--accent-ink)}
   .opcion .quitar{position:absolute;top:10px;right:10px;border:none;background:transparent;color:var(--ink-soft);font-size:17px;cursor:pointer;line-height:1;padding:3px}
-  .parte{position:relative;margin-top:10px}
-  .parte + .parte{border-top:1px dashed var(--line-strong);padding-top:10px}
-  .parte .ptit{display:flex;align-items:center;font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px}
-  .parte .ptit[hidden]{display:none}
-  .parte .quitarParte{margin-left:auto;border:none;background:transparent;color:var(--ink-soft);font-size:12.5px;cursor:pointer;padding:2px 4px;text-decoration:underline}
-  .btnParte{display:inline-block;margin-top:10px;border:none;background:transparent;color:var(--accent-ink);font-weight:700;font-size:13.5px;cursor:pointer;padding:6px 0}
   .btn{border:1px solid var(--line-strong);background:var(--panel);border-radius:9px;padding:11px 16px;cursor:pointer;font-weight:700;font-size:14px;width:100%;color:var(--ink);margin-top:14px}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-size:15px;padding:14px 16px}
   .btn.ghost{background:transparent;border-style:dashed}
@@ -150,7 +144,6 @@ function rangoValido(desde,hasta){return VENTANAS.some(v=>desde>=v.desde&&hasta<
 
 document.getElementById("intro").innerHTML =
   `Contanos qué fechas te gustaría tomarte en ${PERIODO}. Tenés que cargar <b>al menos ${MIN_OPCIONES} opciones</b> de fecha, por si la primera no se puede.`
-  +`<br><br><b>¿Querés dividir tus vacaciones?</b> Dentro de cada opción tocá “✂️ Dividir: agregar otra parte” y cargá cada parte con sus fechas.`
   +`<br><br><b>Meses habilitados para pedir:</b> ${VENTANAS_TXT}. Fuera de esas fechas no se puede pedir.`;
 
 const selPersona=document.getElementById("persona");
@@ -180,13 +173,11 @@ function diasDe(desde,hasta){return desde&&hasta&&hasta>=desde?rangoDias(desde,h
 function actualizarCuentas(){
   const d=disponible();
   opcionesEl.querySelectorAll(".opcion").forEach(op=>{
-    const partes=[...op.querySelectorAll(".parte")].map(p=>diasDe(p.querySelector(".fDesde").value,p.querySelector(".fHasta").value));
-    const n=partes.reduce((a,b)=>a+b,0);
+    const n=diasDe(op.querySelector(".fDesde").value,op.querySelector(".fHasta").value);
     const c=op.querySelector(".cuenta");
     if(!n){c.textContent="";c.classList.remove("mucho");return;}
     const mucho=d&&n>d.total;
-    const detalle=partes.length>1?` en total (${partes.map(x=>x||"?").join(" + ")})`:"";
-    c.textContent=`${n} ${n===1?"día corrido":"días corridos"}${detalle}${mucho?` — son más de los ${d.total} que tenés`:""}`;
+    c.textContent=`${n} ${n===1?"día corrido":"días corridos"}${mucho?` — son más de los ${d.total} que tenés`:""}`;
     c.classList.toggle("mucho",!!mucho);
   });
 }
@@ -201,44 +192,20 @@ function actualizarBotonesQuitar(){
     if(q)q.style.display=filas.length>MIN_OPCIONES?"":"none";
   });
 }
-const MAX_PARTES=4;
-function parteHtml(){
-  return`<div class="parte">
-    <div class="ptit" hidden><span class="pn"></span><button type="button" class="quitarParte">Quitar esta parte</button></div>
-    <div class="row2">
-      <div class="field" style="margin-top:0"><label>Desde</label><input type="date" class="fDesde" min="${VENTANAS[0].desde}" max="${VENTANAS[VENTANAS.length-1].hasta}"></div>
-      <div class="field" style="margin-top:0"><label>Hasta</label><input type="date" class="fHasta" min="${VENTANAS[0].desde}" max="${VENTANAS[VENTANAS.length-1].hasta}"></div>
-    </div>
-  </div>`;
-}
-// Con una sola parte no se ve nada de "partes": es el pedido de siempre.
-function numerarPartes(op){
-  const ps=[...op.querySelectorAll(".parte")];
-  ps.forEach((p,i)=>{const t=p.querySelector(".ptit");t.hidden=ps.length<2;t.querySelector(".pn").textContent=`Parte ${i+1}`;});
-  op.querySelector(".btnParte").hidden=ps.length>=MAX_PARTES;
-}
 function agregarOpcion(){
   opcionN++;
   const div=document.createElement("div");
   div.className="opcion";
   div.innerHTML=`
     <span class="num">Opción ${opcionN}<button type="button" class="quitar" title="Quitar">×</button></span>
-    <div class="partes">${parteHtml()}</div>
-    <button type="button" class="btnParte">✂️ Dividir: agregar otra parte</button>
+    <div class="row2" style="margin-top:8px">
+      <div class="field" style="margin-top:0"><label>Desde</label><input type="date" class="fDesde" min="${VENTANAS[0].desde}" max="${VENTANAS[VENTANAS.length-1].hasta}"></div>
+      <div class="field" style="margin-top:0"><label>Hasta</label><input type="date" class="fHasta" min="${VENTANAS[0].desde}" max="${VENTANAS[VENTANAS.length-1].hasta}"></div>
+    </div>
     <div class="cuenta"></div>`;
   opcionesEl.appendChild(div);
   div.querySelector(".quitar").addEventListener("click",()=>{div.remove();actualizarBotonesQuitar();});
-  div.querySelector(".btnParte").addEventListener("click",()=>{
-    div.querySelector(".partes").insertAdjacentHTML("beforeend",parteHtml());
-    numerarPartes(div);
-    div.querySelector(".parte:last-child .fDesde").focus();
-  });
-  div.addEventListener("click",e=>{
-    if(!e.target.closest(".quitarParte"))return;
-    e.target.closest(".parte").remove();numerarPartes(div);actualizarCuentas();
-  });
-  div.addEventListener("change",e=>{if(e.target.matches("input[type=date]"))actualizarCuentas();});
-  numerarPartes(div);
+  div.querySelectorAll("input[type=date]").forEach(i=>i.addEventListener("change",actualizarCuentas));
   actualizarBotonesQuitar();
 }
 agregarOpcion();
@@ -259,20 +226,13 @@ document.getElementById("btnEnviar").addEventListener("click", async ()=>{
   const filas=[...opcionesEl.querySelectorAll(".opcion")];
   const opciones=[];
   for(const fila of filas){
-    const partes=[];
-    for(const p of fila.querySelectorAll(".parte")){
-      const desde=p.querySelector(".fDesde").value;
-      const hasta=p.querySelector(".fHasta").value;
-      if(!desde&&!hasta)continue;
-      if(!desde||!hasta)return mostrarError("Completá las dos fechas (desde y hasta) de cada opción y de cada parte, o dejala vacía.");
-      if(hasta<desde)return mostrarError('La fecha "hasta" no puede ser anterior a la fecha "desde".');
-      if(!rangoValido(desde,hasta))return mostrarError(`Hay fechas fuera de los meses habilitados (${VENTANAS_TXT}). Revisá las fechas.`);
-      partes.push({desde,hasta});
-    }
-    if(!partes.length)continue;
-    partes.sort((a,b)=>a.desde.localeCompare(b.desde));
-    for(let i=1;i<partes.length;i++)if(partes[i].desde<=partes[i-1].hasta)return mostrarError("Dos partes de la misma opción se pisan. Revisá las fechas.");
-    opciones.push(partes);
+    const desde=fila.querySelector(".fDesde").value;
+    const hasta=fila.querySelector(".fHasta").value;
+    if(!desde&&!hasta)continue;
+    if(!desde||!hasta)return mostrarError("Completá las dos fechas (desde y hasta) de cada opción, o dejá la opción vacía.");
+    if(hasta<desde)return mostrarError('La fecha "hasta" no puede ser anterior a la fecha "desde".');
+    if(!rangoValido(desde,hasta))return mostrarError(`Esa opción cae fuera de los meses habilitados (${VENTANAS_TXT}). Revisá las fechas.`);
+    opciones.push({desde,hasta});
   }
   if(opciones.length<MIN_OPCIONES)return mostrarError(`Tenés que cargar al menos ${MIN_OPCIONES} opciones de fecha (con las dos fechas completas cada una).`);
 
@@ -283,15 +243,13 @@ document.getElementById("btnEnviar").addEventListener("click", async ()=>{
   const enviadoEn=ahora.toISOString();
   const enviadoLegible=ahora.toLocaleString("es-AR",{dateStyle:"long",timeStyle:"short"});
   try{
-    // Cada parte va como un pedido aparte, con la misma opción (orden) y su número de parte.
-    await Promise.all(opciones.flatMap((partes,i)=>partes.map((op,j)=>{
-      const id=`${Date.now()}-${i}-${j}-${Math.round(Math.random()*1e6)}`;
+    await Promise.all(opciones.map((op,i)=>{
+      const id=`${Date.now()}-${i}-${Math.round(Math.random()*1e6)}`;
       return set(ref(db,"vacaciones/solicitudes/"+id),{
         n:persona,periodo:PERIODO,orden:i+1,desde:op.desde,hasta:op.hasta,
-        ...(partes.length>1?{parte:j+1,partes:partes.length}:{}),
-        nota:i===0&&j===0?nota:"",enviadoEn
+        nota:i===0?nota:"",enviadoEn
       });
-    })));
+    }));
     document.getElementById("formCard").style.display="none";
     document.getElementById("okCard").classList.add("show");
     document.getElementById("tsMsg").textContent=`Enviado el ${enviadoLegible}`;
