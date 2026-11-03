@@ -90,7 +90,8 @@
   .footer-note{font-size:11.5px;color:var(--ink-soft);margin-top:8px;text-align:center}
 
   /* quién informa: un solo formulario para el Experto del turno y el jefe de cocina */
-  .quien{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .quien{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  @media (max-width:420px){.quien{grid-template-columns:1fr 1fr}.quien button:last-child{grid-column:1/-1}}
   .quien button{border:2px solid var(--line-strong);background:var(--panel-2);border-radius:11px;padding:12px 8px;cursor:pointer;font-weight:700;font-size:14.5px;color:var(--ink);line-height:1.25}
   .quien button small{display:block;font-weight:400;font-size:11.5px;color:var(--ink-soft);margin-top:3px}
   .quien button.on{border-color:var(--accent);background:var(--crit-soft);color:var(--accent-ink)}
@@ -126,6 +127,7 @@
       <div class="quien" id="quien">
         <button type="button" data-modo="experto">⭐ Experto del turno<small>Caja, salón y barra</small></button>
         <button type="button" data-modo="cocina">👨‍🍳 Jefe de cocina<small>La cocina del local</small></button>
+        <button type="button" data-modo="barra">☕ Jefe de baristas<small>La barra del local</small></button>
       </div>
     </div>
 
@@ -175,7 +177,7 @@
     </div>
 
     <div class="card" id="cardControles" hidden>
-      <span class="eyebrow">Control de la cocina</span>
+      <span class="eyebrow" id="tituloControles">Control de la cocina</span>
       <p class="seccion-sub">Lo que revisaste en el turno. Tocá “No” solo en lo que no estuvo bien.</p>
       <div id="controles"></div>
     </div>
@@ -253,7 +255,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const APP_VERSION = "2026-11-02 fotos";
+const APP_VERSION = "2026-11-03 barra";
 document.getElementById("appVersion").textContent = "v" + APP_VERSION;
 
 // ---------------------------------------------------------------------------
@@ -318,17 +320,46 @@ const INCIDENCIAS_COCINA = [
   "Equipo o instalación que falla",
   "Rotura de vajilla"
 ];
+// INFORME DE BARRA (jefe de baristas). Lo carga cuando lo considera, en cualquier local y turno; no
+// cuenta como "falta". Los controles salen del checklist del manual de Baristas.
+const ROLES_BARRA = [{ key: "barista", label: "Barista", cron: ["barista"] }];
+const CONTROLES_BARRA = [
+  { t: "Cafetera a temperatura y molino calibrado; café de prueba correcto" },
+  { t: "Leche e insumos suficientes; stock de leches cargado en FUDO" },
+  { t: "Portafiltro y lanza limpios después de cada uso" },
+  { t: "Barra seca, ordenada y limpia durante el turno" },
+  { t: "Bebidas despachadas en menos de 7 minutos" },
+  { t: "Cierre: portafiltro, grupos, lanza, bandeja y pileta limpios a fondo" },
+  { t: "Café sellado, leche en heladera y equipos apagados en orden" },
+  { t: "Pedido de insumos cargado" }
+];
+const INCIDENCIAS_BARRA = [
+  "Máquina o molino que falla",
+  "Café que salió mal (sabor o extracción)",
+  "Faltante de leche o insumos",
+  "Demoras en la entrega",
+  "Bebida distinta de la ficha",
+  "Pedido no cargado",
+  "Rotura de vajilla"
+];
+// Jefe de baristas: queda elegido solo (se puede cambiar si un día informa otro). Es el nombre
+// como figura en el cronograma.
+const JEFE_BARRA = "Mariano";
 const MODOS = {
   experto: { quien: "Experto Candela", elegir: "Elegí quién fue el Experto…", roles: ROLES_CHECK, incidencias: INCIDENCIAS,
     siguiente: "Lo que la próxima persona necesita saber al entrar.", ph: "Ej: quedó poco pan de campo, el molino chico hace ruido" },
-  cocina: { quien: "Jefe de cocina", elegir: "Elegí quién está a cargo de la cocina…", roles: ROLES_COCINA, incidencias: INCIDENCIAS_COCINA,
+  barra: { quien: "Jefe de baristas", elegir: "Elegí quién informa…", roles: ROLES_BARRA, incidencias: INCIDENCIAS_BARRA, controles: CONTROLES_BARRA, tituloControles: "Control de la barra",
+    sufijo: "_barra", etiqueta: "Barra",
+    siguiente: "Lo que el barista del turno siguiente necesita saber: qué quedó, qué falta, qué falla.", ph: "Ej: queda poca leche de almendras, el molino 2 está desregulado" },
+  cocina: { quien: "Jefe de cocina", elegir: "Elegí quién está a cargo de la cocina…", roles: ROLES_COCINA, incidencias: INCIDENCIAS_COCINA, controles: CONTROLES_COCINA, tituloControles: "Control de la cocina",
+    sufijo: "_cocina", etiqueta: "Cocina",
     siguiente: "Lo que el cocinero del turno siguiente necesita saber: qué quedó hecho, qué falta, qué cambió.", ph: "Ej: quedan 2 bandejas de base de tarta, falta cortar cebolla" }
 };
 // Se puede entrar directo con ?quien=cocina; si no, se recuerda lo último elegido en este teléfono.
 let modo = (() => {
   const q = new URLSearchParams(location.search).get("quien");
-  if (q === "cocina" || q === "experto") return q;
-  try { return localStorage.getItem("candela-informe-quien") === "cocina" ? "cocina" : "experto"; } catch { return "experto"; }
+  if (q === "cocina" || q === "experto" || q === "barra") return q;
+  try { const g = localStorage.getItem("candela-informe-quien"); return g === "cocina" || g === "barra" ? g : "experto"; } catch { return "experto"; }
 })();
 const M = () => MODOS[modo];
 
@@ -440,8 +471,26 @@ function llenarJefes() {
   if (previo && [...sel.options].some(o => o.value === previo)) sel.value = previo;
 }
 
+function llenarJefeBarra() {
+  const sel = $("fExperto");
+  const previo = sel.value;
+  const enTurno = equipoDelTurno($("fFecha").value, $("fLocal").value, $("fTurno").value)
+    .filter(p => p.rolCron === "barista" && p.nombre !== JEFE_BARRA).map(p => p.nombre);
+  const baristas = gentePorRol(["barista"]).filter(n => n !== JEFE_BARRA && !enTurno.includes(n));
+  const resto = todaLaGente().filter(n => n !== JEFE_BARRA && !enTurno.includes(n) && !baristas.includes(n));
+  const grupo = (label, nombres) => nombres.length
+    ? `<optgroup label="${esc(label)}">${nombres.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}</optgroup>`
+    : "";
+  sel.innerHTML = `<option value="">${esc(M().elegir)}</option>`
+    + grupo("☕ Jefe de baristas", [JEFE_BARRA])
+    + grupo("☕ Baristas en este turno", enTurno)
+    + grupo("☕ Baristas", baristas)
+    + grupo("Resto del equipo", resto);
+  sel.value = previo && [...sel.options].some(o => o.value === previo) ? previo : JEFE_BARRA;
+}
 function llenarExpertos() {
   if (modo === "cocina") return llenarJefes();
+  if (modo === "barra") return llenarJefeBarra();
   const sel = $("fExperto");
   const previo = sel.value;
   const equipo = equipoDelTurno($("fFecha").value, $("fLocal").value, $("fTurno").value).map(p => p.nombre);
@@ -526,10 +575,10 @@ function llenarIncidencias() {
     `<label class="inc" data-i="${i}"><input type="checkbox" value="${esc(t)}"><span>${esc(t)}</span></label>`).join("");
 }
 
-// Controles de la cocina: uno por fila, "Bien" o "No" (con qué pasó).
+// Controles de la cocina o de la barra: uno por fila, "Bien" o "No" (con qué pasó).
 function llenarControles() {
   const previos = Object.fromEntries(leerControles().map(c => [c.item, c]));
-  $("controles").innerHTML = CONTROLES_COCINA
+  $("controles").innerHTML = (M().controles || [])
     .filter(c => !c.soloSL || $("fLocal").value === "SL")
     .map(c => {
       const p = previos[c.t];
@@ -565,8 +614,9 @@ $("controles").addEventListener("click", (ev) => {
 function aplicarModo() {
   document.querySelectorAll("#quien button").forEach(b => b.classList.toggle("on", b.dataset.modo === modo));
   $("lblExperto").textContent = M().quien;
-  $("cardControles").hidden = modo !== "cocina";
-  document.querySelectorAll(".soloExperto").forEach(el => el.hidden = modo === "cocina");
+  $("cardControles").hidden = !M().controles;
+  if (M().tituloControles) $("tituloControles").textContent = M().tituloControles;
+  document.querySelectorAll(".soloExperto").forEach(el => el.hidden = modo !== "experto");
   $("subSiguiente").textContent = M().siguiente;
   $("fSiguiente").placeholder = M().ph;
   $("fExperto").value = "";
@@ -761,7 +811,7 @@ async function chequearExistente() {
     const prev = snap.val();
     if (!prev) return;
     informeExistente = prev;
-    cont.innerHTML = `<div class="aviso warn">Ya hay un informe ${modo === "cocina" ? "de cocina " : ""}cargado para este turno, enviado por <b>${esc(prev.experto || "—")}</b>. Si enviás otro, lo reemplaza (el anterior queda guardado en el historial).</div>`;
+    cont.innerHTML = `<div class="aviso warn">Ya hay un informe ${M().etiqueta ? `de ${M().etiqueta.toLowerCase()} ` : ""}cargado para este turno, enviado por <b>${esc(prev.experto || "—")}</b>. Si enviás otro, lo reemplaza (el anterior queda guardado en el historial).</div>`;
   } catch (e) {
     console.error("No se pudo verificar si el informe ya existe:", e);
   }
@@ -772,7 +822,7 @@ async function chequearExistente() {
 function idInforme() {
   const fecha = $("fFecha").value, loc = $("fLocal").value, turno = $("fTurno").value;
   // El de cocina lleva "_cocina" al final: es otro informe del mismo turno y no pisa al del Experto.
-  return fecha && loc && turno ? `${fecha}_${loc}_${turno}${modo === "cocina" ? "_cocina" : ""}` : "";
+  return fecha && loc && turno ? `${fecha}_${loc}_${turno}${M().sufijo || ""}` : "";
 }
 
 function alCambiarTurno() {
@@ -835,14 +885,14 @@ async function enviar({ sinNovedades }) {
   const fecha = $("fFecha").value, loc = $("fLocal").value, turno = $("fTurno").value;
   const experto = $("fExperto").value;
   if (!fecha) return mostrarError("Elegí la fecha del turno.");
-  if (!experto) return mostrarError(modo === "cocina" ? "Elegí quién está a cargo de la cocina." : "Elegí quién fue el Experto Candela.");
+  if (!experto) return mostrarError(modo === "cocina" ? "Elegí quién está a cargo de la cocina." : modo === "barra" ? "Elegí quién informa por la barra." : "Elegí quién fue el Experto Candela.");
   if (informeExistente && !confirm(`Ya hay un informe de este turno enviado por ${informeExistente.experto || "—"}.\n\n¿Reemplazarlo?`)) return;
 
   const checklist = sinNovedades
     ? leerChecklist().map(p => ({ ...p, cumplio: true, motivo: "" }))
     : leerChecklist();
 
-  const cocina = modo === "cocina";
+  const cocina = modo !== "experto";   // cocina o barra: con controles, sin reclamos ni compensaciones
   // `experto` es quien firma el informe (las reglas de Firebase lo piden): en el de cocina es el
   // jefe de cocina, y `tipo` dice cuál de los dos es.
   const informe = {
@@ -897,7 +947,7 @@ async function enviar({ sinNovedades }) {
     });
     $("formWrap").style.display = "none";
     $("okCard").classList.add("show");
-    $("okDetalle").textContent = `${cocina ? "Cocina · " : ""}${LOCALES[loc]} · ${TURNOS[turno]} · ${fecha}`;
+    $("okDetalle").textContent = `${M().etiqueta ? M().etiqueta + " · " : ""}${LOCALES[loc]} · ${TURNOS[turno]} · ${fecha}`;
     const nAdj = (informe.adjuntos || []).length;
     $("okTs").textContent = "Enviado el " + new Date().toLocaleString("es-AR", { dateStyle: "long", timeStyle: "short" })
       + (nAdj ? ` · ${nAdj} ${nAdj === 1 ? "foto" : "fotos"}` : "")

@@ -198,7 +198,7 @@
           </div>
           <div class="field">
             <label for="fTipo">Quién informa</label>
-            <select id="fTipo"><option value="">Todos</option><option value="experto">⭐ Experto del turno</option><option value="cocina">👨‍🍳 Jefe de cocina</option></select>
+            <select id="fTipo"><option value="">Todos</option><option value="experto">⭐ Experto del turno</option><option value="cocina">👨‍🍳 Jefe de cocina</option><option value="barra">☕ Jefe de baristas</option></select>
           </div>
           <div class="field">
             <label for="fPersona">Persona</label>
@@ -224,7 +224,7 @@
     <main>
       <div class="card">
         <h2>La semana de un vistazo</h2>
-        <p class="sub">Qué turnos informaron y cuáles faltan. Tocá un turno informado para abrirlo. La última fila son los informes del jefe de cocina.</p>
+        <p class="sub">Qué turnos informaron y cuáles faltan. Tocá un turno informado para abrirlo. Las dos últimas filas son los informes del jefe de cocina y del jefe de baristas.</p>
         <div class="sem" id="semana"></div>
       </div>
 
@@ -247,7 +247,7 @@
           <div id="lista"></div>
         </div>
       </div>
-      <p class="footer-note">Los informes los cargan los Expertos Candela y el jefe de cocina desde <b>carga.html</b>. Esta pantalla es de solo lectura.</p>
+      <p class="footer-note">Los informes los cargan los Expertos Candela, el jefe de cocina y el jefe de baristas desde <b>carga.html</b>. Esta pantalla es de solo lectura.</p>
     </main>
   </div>
 </div>
@@ -273,7 +273,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-const APP_VERSION = "2026-11-02 fotos";
+const APP_VERSION = "2026-11-03 barra";
 document.getElementById("appVersion").textContent = "v" + APP_VERSION;
 
 const LOCALES = { SLA: "SLA 5.0", SL: "San Luis" };
@@ -457,7 +457,7 @@ function aplicarFiltros(lista) {
 }
 
 // Los informes viejos no tienen `tipo`: son todos del Experto.
-const tipoDe = (r) => r?.tipo === "cocina" ? "cocina" : "experto";
+const tipoDe = (r) => r?.tipo === "cocina" || r?.tipo === "barra" ? r.tipo : "experto";
 
 ["fDesde", "fHasta", "fLocal", "fTurno", "fPersona", "fIncidencia", "fTipo"].forEach(id =>
   $(id).addEventListener("change", render));
@@ -505,7 +505,7 @@ function yaTermino(fecha, turno) {
 function faltantes() {
   const f = filtros();
   const out = [];
-  if (f.tipo === "cocina") return out;
+  if (f.tipo && f.tipo !== "experto") return out;
   if (!f.desde || !f.hasta || f.desde > f.hasta) return out;
   for (let d = f.desde; d <= f.hasta; d = sumarDias(d, 1)) {
     for (const [loc, turno] of SLOTS) {
@@ -560,8 +560,8 @@ function renderSemana() {
   const dias = Array.from({ length: 7 }, (_, i) => sumarDias(lunes, i));
   const conNovedadDe = (r) => (r.incidencias || []).length || (r.checklist || []).some(c => !c.cumplio)
     || (r.controles || []).some(c => !c.ok) || (r.reclamos || "").trim();
-  const celdaCocina = (fecha) => {
-    const ids = Object.keys(registros).filter(id => id.startsWith(fecha + "_") && tipoDe(registros[id]) === "cocina").sort();
+  const celdaCocina = (fecha, tipo = "cocina") => {
+    const ids = Object.keys(registros).filter(id => id.startsWith(fecha + "_") && tipoDe(registros[id]) === tipo).sort();
     if (!ids.length) return `<div class="est nada">—</div>`;
     const novedad = ids.some(id => conNovedadDe(registros[id]));
     return `<div class="est ${novedad ? "novedad" : "ok"}" data-ir="${esc(ids[0])}" title="${esc(ids.map(id => registros[id].experto || "").join(", "))}">${novedad ? "!" : "✓"}${ids.length > 1 ? ids.length : ""}</div>`;
@@ -581,9 +581,10 @@ function renderSemana() {
       <td>${LOCALES[loc]} · ${TURNOS[turno]}</td>
       ${dias.map(d => `<td>${celda(d, loc, turno)}</td>`).join("")}
     </tr>`).join("")}
-    <tr class="fila-cocina"><td>👨‍🍳 Cocina</td>${dias.map(d => `<td>${celdaCocina(d)}</td>`).join("")}</tr></tbody>
+    <tr class="fila-cocina"><td>👨‍🍳 Cocina</td>${dias.map(d => `<td>${celdaCocina(d)}</td>`).join("")}</tr>
+    <tr><td>☕ Barra</td>${dias.map(d => `<td>${celdaCocina(d, "barra")}</td>`).join("")}</tr></tbody>
   </table>
-  <div class="footer-note" style="text-align:left;margin-top:10px">✓ informado sin novedades · <b style="color:var(--warn)">!</b> informado con algo para mirar · <b style="color:var(--crit)">falta</b> el turno terminó y no informó · · turno que todavía no terminó · <b>—</b> la cocina no informó ese día</div>`;
+  <div class="footer-note" style="text-align:left;margin-top:10px">✓ informado sin novedades · <b style="color:var(--warn)">!</b> informado con algo para mirar · <b style="color:var(--crit)">falta</b> el turno terminó y no informó · · turno que todavía no terminó · <b>—</b> ese día no informó</div>`;
 
   $("semana").querySelectorAll(".est[data-ir]").forEach(el => el.addEventListener("click", () => {
     abiertos.add(el.dataset.ir);
@@ -636,10 +637,10 @@ function infHtml(r) {
   const incidencias = r.incidencias || [];
   const incumplen = (r.checklist || []).filter(c => !c.cumplio);
   const comps = r.compensaciones || [];
-  const cocina = tipoDe(r) === "cocina";
+  const tipo = tipoDe(r), cocina = tipo === "cocina", barra = tipo === "barra";
   const controlesMal = (r.controles || []).filter(c => !c.ok);
   const chips = [
-    cocina ? `<span class="pill coc">👨‍🍳 Cocina</span>` : "",
+    cocina ? `<span class="pill coc">👨‍🍳 Cocina</span>` : barra ? `<span class="pill coc">☕ Barra</span>` : "",
     `<span class="pill loc">${esc(LOCALES[r.loc] || r.loc)}</span>`,
     `<span class="pill turno">${esc(TURNOS[r.turno] || r.turno)}</span>`,
     r.sinNovedades && !incidencias.length && !incumplen.length ? `<span class="pill sn">Sin novedades</span>` : "",
@@ -655,7 +656,7 @@ function infHtml(r) {
     ${bloque("Checklist", (r.checklist || []).length
       ? `<ul>${r.checklist.map(c => `<li>${esc(c.nombre)} <span style="opacity:.6">· ${esc(c.rolLabel || c.rol || "")}</span> — ${c.cumplio ? "cumplió" : `<span class="no-cumplio">no cumplió${c.motivo ? ": " + esc(c.motivo) : ""}</span>`}</li>`).join("")}</ul>`
       : `<div class="empty">Sin checklist cargado.</div>`)}
-    ${bloque("Control de la cocina", (r.controles || []).length
+    ${bloque(barra ? "Control de la barra" : "Control de la cocina", (r.controles || []).length
       ? `<ul>${r.controles.map(c => `<li>${esc(c.item)} — ${c.ok ? "bien" : `<span class="no-cumplio">no${c.motivo ? ": " + esc(c.motivo) : ""}</span>`}</li>`).join("")}</ul>` : "")}
     ${bloque("Incidencias", incidencias.length
       ? `<ul>${incidencias.map(i => `<li>${esc(i.tipo)}${i.detalle ? ": " + esc(i.detalle) : ""}</li>`).join("")}</ul>` : "")}
@@ -672,7 +673,7 @@ function infHtml(r) {
     <div class="inf-head">
       <span class="fecha">${esc(fmtFechaLarga(r.fecha))}</span>
       ${chips}
-      <span class="quien">${cocina ? "👨‍🍳" : "⭐"} ${esc(r.experto || "—")}</span>
+      <span class="quien">${cocina ? "👨‍🍳" : barra ? "☕" : "⭐"} ${esc(r.experto || "—")}</span>
       <span class="flechita">▾</span>
     </div>
     <div class="inf-body">${cuerpo}</div>

@@ -264,6 +264,10 @@ En `carga.html` hay un bloque **Fotos** (opcional, en los dos modos): desde el t
 - En **Informes de turno**, el informe muestra 📷 con la cantidad, y al abrirlo aparecen las fotos (tocá una para verla grande). Solo las ve la cuenta de Gerencia.
 - Videos no: pesan demasiado para esta base y necesitarían Firebase Storage (plan pago por uso).
 
+### Informe de barra (jefe de baristas)
+
+Tercer modo del mismo formulario: "☕ Jefe de baristas" (también `carga.html?quien=barra`). Firma Mariano (constante `JEFE_BARRA`, elegido solo y cambiable), precarga los baristas del turno, tiene 8 controles de la barra (Bien / No) e incidencias propias; sin reclamos ni compensaciones. Se guarda con `tipo: "barra"` e id `{fecha}_{local}_{turno}_barra`. Como el de cocina, se carga cuando el jefe lo considera y **no cuenta como faltante**. En Gerencia: filtro "☕ Jefe de baristas" y fila "☕ Barra" en la semana.
+
 ### Un turno, un informe
 
 El id del registro es determinístico: `{fecha}_{local}_{turno}`. Eso hace imposible que existan dos informes del mismo turno y convierte "qué turnos faltan" en una pregunta con respuesta exacta. Si se carga un informe donde ya había uno, se avisa **antes** de completar el formulario (enterarse al apretar Enviar es la forma de que el trabajo se haga dos veces) y el anterior se conserva en `informes/history/{id}/{ts}` — un informe es el registro de lo que pasó en un turno, pisarlo sin dejar rastro sería borrar información.
