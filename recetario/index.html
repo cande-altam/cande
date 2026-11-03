@@ -1102,19 +1102,119 @@ function lineaEmpaque(l, i) {
   </div>`;
 }
 
+// El recuadro se arma una sola vez y después solo se actualizan la imagen y los botones. Antes se
+// rehacía entero cuando terminaba de bajar la foto guardada: si la galería ya estaba abierta, la foto
+// elegida llegaba al <input> viejo (ya fuera de la página) y se perdía; la segunda vez sí andaba.
 function pintarFotoEditor() {
   const el = document.getElementById("rec-foto-edit");
   if (!el || !draft) return;
-  const cargando = (draft.tieneFoto && !draft.foto && !draft.fotoCambiada) || draft._fotoCargando;
-  el.innerHTML = `
-    ${draft.foto ? `<img src="${draft.foto}" alt="">` : cargando ? `<div class="rec-foto-vacia">Cargando…</div>` : `<div class="rec-foto-vacia">Sin foto</div>`}
+  if (!el.querySelector("#rec-foto-input")) {
+    el.innerHTML = `<div class="rec-foto-prev"></div>
     <div class="rec-actions">
-      <label class="btn btn-ghost btn-sm" style="cursor:pointer">${draft.foto ? "Cambiar foto" : "📷 Subir foto"}
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer"><span class="rec-foto-txt"></span>
         <input type="file" accept="image/*" id="rec-foto-input" hidden></label>
-      ${draft.foto || cargando ? `<button class="btn btn-danger btn-sm" data-act="quitar-foto">Quitar</button>` : ""}
+      <button class="btn btn-ghost btn-sm" data-act="acomodar-foto" hidden>✂️ Acomodar</button>
+      <button class="btn btn-danger btn-sm" data-act="quitar-foto" hidden>Quitar</button>
     </div>`;
+  }
+  const cargando = (draft.tieneFoto && !draft.foto && !draft.fotoCambiada) || draft._fotoCargando || draft._fotoLeyendo;
+  const prev = el.querySelector(".rec-foto-prev");
+  const html = draft.foto ? `<img src="${draft.foto}" alt="">` : `<div class="rec-foto-vacia">${cargando ? "Cargando…" : "Sin foto"}</div>`;
+  if (prev.innerHTML !== html) prev.innerHTML = html;
+  el.querySelector(".rec-foto-txt").textContent = draft.foto ? "Cambiar foto" : "📷 Subir foto";
+  el.querySelector('[data-act="acomodar-foto"]').hidden = !draft.foto;
+  el.querySelector('[data-act="quitar-foto"]').hidden = !(draft.foto || cargando);
 }
 
+// Abre la imagen elegida (achicada a 2000 px como mucho, para que el iPad no se quede sin memoria).
+function leerImagen(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = typeof src === "string" ? src : URL.createObjectURL(src);
+    img.onload = () => {
+      const k = Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight));
+      if (!img.naturalWidth) return reject(new Error("imagen"));
+      // si queda como está, la dirección del archivo sigue viva hasta que se cierra el marco
+      if (k === 1) return resolve(img);
+      if (typeof src !== "string") URL.revokeObjectURL(url);
+      const cv = document.createElement("canvas");
+      cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+      const chica = new Image(); chica.onload = () => resolve(chica); chica.onerror = () => reject(new Error("imagen"));
+      chica.src = cv.toDataURL("image/jpeg", 0.92);
+    };
+    img.onerror = () => { if (typeof src !== "string") URL.revokeObjectURL(url); reject(new Error("imagen")); };
+    img.src = url;
+  });
+}
+// JPEG para la base, ~100-180 KB, igual que antes.
+function jpegLiviano(cv) {
+  let q = 0.75, out = cv.toDataURL("image/jpeg", q);
+  while (out.length > 180000 && q > 0.35) { q -= 0.1; out = cv.toDataURL("image/jpeg", q); }
+  return out;
+}
+// Marco con la forma de la tarjeta (4:3): se mueve con el dedo, zoom con dos dedos / barra / rueda,
+// y se rota de a 90°. Devuelve la foto recortada (1000×750) o null si se cancela.
+function encuadrarFoto(img) {
+  return new Promise(resolve => {
+    const ov = document.createElement("div");
+    ov.className = "rec-encuadre";
+    ov.innerHTML = `<div class="rec-enc-caja">
+      <div class="rec-enc-tit">Acomodá la foto <small>Arrastrala con el dedo · zoom con dos dedos o con la barra</small></div>
+      <div class="rec-enc-marco"><img alt=""></div>
+      <div class="rec-enc-zoom"><span>−</span><input type="range" min="1" max="5" step="0.01" value="1" aria-label="Zoom"><span>+</span></div>
+      <div class="rec-enc-bts"><button type="button" class="btn btn-ghost btn-sm" data-e="rotar">↻ Rotar</button><span style="flex:1"></span>
+        <button type="button" class="btn btn-ghost btn-sm" data-e="cancelar">Cancelar</button><button type="button" class="btn btn-primary btn-sm" data-e="usar">Usar</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    const marco = ov.querySelector(".rec-enc-marco"), vista = marco.querySelector("img"), barra = ov.querySelector('input[type="range"]');
+    vista.src = img.src;
+    const W = img.naturalWidth, H = img.naturalHeight;
+    let rot = 0, zoom = 1, cx = 0, cy = 0;
+    const tam = () => { const r = marco.getBoundingClientRect(); return { fw: r.width, fh: r.height }; };
+    const base = () => { const { fw, fh } = tam(); const rw = rot % 180 ? H : W, rh = rot % 180 ? W : H; return { fw, fh, rw, rh, cover: Math.max(fw / rw, fh / rh) }; };
+    const pintar = () => {
+      const b = base(), sc = b.cover * zoom;
+      const mx = Math.max(0, (b.rw * sc - b.fw) / 2), my = Math.max(0, (b.rh * sc - b.fh) / 2);
+      cx = Math.max(-mx, Math.min(mx, cx)); cy = Math.max(-my, Math.min(my, cy));
+      vista.style.width = W + "px"; vista.style.height = H + "px";
+      vista.style.transform = `translate(-50%,-50%) translate(${cx}px,${cy}px) rotate(${rot}deg) scale(${sc})`;
+      barra.value = zoom;
+    };
+    const zoomA = (z) => { const n = Math.max(1, Math.min(5, z)); cx *= n / zoom; cy *= n / zoom; zoom = n; pintar(); };
+    const ptrs = new Map(); let distIni = 0, zoomIni = 1;
+    marco.addEventListener("pointerdown", e => { marco.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (ptrs.size === 2) { const [a, b2] = [...ptrs.values()]; distIni = Math.hypot(a.x - b2.x, a.y - b2.y); zoomIni = zoom; } });
+    marco.addEventListener("pointermove", e => {
+      const p = ptrs.get(e.pointerId); if (!p) return;
+      if (ptrs.size === 1) { cx += e.clientX - p.x; cy += e.clientY - p.y; }
+      p.x = e.clientX; p.y = e.clientY;
+      if (ptrs.size === 2 && distIni) { const [a, b2] = [...ptrs.values()]; zoomA(zoomIni * Math.hypot(a.x - b2.x, a.y - b2.y) / distIni); return; }
+      pintar();
+    });
+    const soltar = e => { ptrs.delete(e.pointerId); if (ptrs.size < 2) distIni = 0; };
+    marco.addEventListener("pointerup", soltar); marco.addEventListener("pointercancel", soltar);
+    marco.addEventListener("wheel", e => { e.preventDefault(); zoomA(zoom * Math.exp(-e.deltaY * 0.002)); }, { passive: false });
+    barra.addEventListener("input", () => zoomA(+barra.value));
+    const alCambiarTam = () => pintar(); addEventListener("resize", alCambiarTam);
+    const cerrar = v => { removeEventListener("resize", alCambiarTam); ov.remove(); if (img.src.startsWith("blob:")) URL.revokeObjectURL(img.src); resolve(v); };
+    ov.addEventListener("click", e => {
+      const b = e.target.closest("[data-e]"); if (!b) return;
+      if (b.dataset.e === "cancelar") return cerrar(null);
+      if (b.dataset.e === "rotar") { rot = (rot + 90) % 360; zoom = 1; cx = cy = 0; return pintar(); }
+      if (b.dataset.e === "usar") {
+        const bb = base(), sc = bb.cover * zoom, OW = 1000, OH = 750, k = OW / bb.fw;
+        const cv = document.createElement("canvas"); cv.width = OW; cv.height = OH;
+        const ctx = cv.getContext("2d");
+        ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, OW, OH);
+        ctx.translate(OW / 2 + cx * k, OH / 2 + cy * k); ctx.rotate(rot * Math.PI / 180); ctx.scale(sc * k, sc * k);
+        ctx.drawImage(img, -W / 2, -H / 2);
+        cerrar(jpegLiviano(cv));
+      }
+    });
+    requestAnimationFrame(pintar);
+  });
+}
 // Achica la foto para guardarla en la base (JPEG ~100 KB).
 function comprimirFoto(file) {
   return new Promise((resolve, reject) => {
@@ -1348,6 +1448,14 @@ async function onClick(ev) {
       draft[b.dataset.row].splice(+b.dataset.i, 1);
       marcarCambio(); pintar();
       break;
+    case "acomodar-foto": {
+      if (!draft?.foto) break;
+      const d = draft;
+      leerImagen(d.foto).then(encuadrarFoto).then(foto => {
+        if (foto && draft === d) { d.foto = foto; d.fotoCambiada = true; marcarCambio(); pintarFotoEditor(); }
+      }).catch(() => toast("No se pudo abrir la foto para acomodarla", "warn"));
+      break;
+    }
     case "quitar-foto":
       draft.foto = null; draft.fotoCambiada = true; marcarCambio(); pintarFotoEditor();
       break;
@@ -1415,12 +1523,17 @@ async function onChange(ev) {
   if (vista !== "editar" || !draft) return;
   if (el.id === "rec-foto-input") {
     const file = el.files && el.files[0];
+    el.value = "";   // así se puede volver a elegir la misma foto
     if (!file) return;
-    try {
-      draft.foto = await comprimirFoto(file);
-      draft.fotoCambiada = true; marcarCambio();
-      pintarFotoEditor();
-    } catch { toast("No se pudo leer la imagen", "warn"); }
+    const d = draft;
+    d._fotoLeyendo = true; pintarFotoEditor();
+    let img = null;
+    try { img = await leerImagen(file); } catch { toast("No se pudo leer esa imagen. Probá con otra o sacala de nuevo.", "warn"); }
+    d._fotoLeyendo = false;
+    if (!img || draft !== d) { pintarFotoEditor(); return; }
+    const foto = await encuadrarFoto(img);
+    if (foto && draft === d) { d.foto = foto; d.fotoCambiada = true; marcarCambio(); }
+    pintarFotoEditor();
     return;
   }
   if (el.dataset.aler) {
@@ -1848,6 +1961,17 @@ function inyectarCss() {
   .rec-foto-edit{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
   .rec-foto-edit img,.rec-foto-vacia{width:200px;aspect-ratio:4/3;border-radius:10px;object-fit:cover;background:var(--cream)}
   .rec-foto-vacia{display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px}
+  .rec-foto-prev{display:flex}
+  .rec-encuadre{position:fixed;inset:0;z-index:2000;background:rgba(20,18,16,.88);display:flex;align-items:center;justify-content:center;padding:16px}
+  .rec-enc-caja{width:min(560px,100%);background:var(--white);border-radius:16px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .rec-enc-tit{font-weight:700;margin-bottom:10px}
+  .rec-enc-tit small{display:block;font-weight:400;color:var(--gray);font-size:12px;margin-top:2px}
+  .rec-enc-marco{position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:10px;background:#000;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+  .rec-enc-marco img{position:absolute;left:50%;top:50%;max-width:none;transform-origin:center;pointer-events:none;-webkit-user-drag:none}
+  .rec-enc-zoom{display:flex;align-items:center;gap:10px;margin:14px 2px 4px;font-size:20px;color:var(--gray)}
+  .rec-enc-zoom input{flex:1;accent-color:var(--terra)}
+  .rec-enc-bts{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .rec-enc-bts .btn{padding:10px 14px;font-size:14px}
   .rec-alergenos{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
   .rec-check{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--cream-dark);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--white);transition:all .15s}
   .rec-check input{margin-top:2px;accent-color:var(--terra);width:16px;height:16px;flex-shrink:0}
