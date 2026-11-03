@@ -485,8 +485,8 @@ Este bloque **reemplaza** al del paso 3 de Informes. Es el mismo contenido que e
 
     "recetario": {
       "ingredientes": {
-        ".read":  "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'recetario-cafe@candela-app.com' || auth.token.email === 'costeo@candela-app.com')",
-        ".write": "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'recetario-cafe@candela-app.com')",
+        ".read":  "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'recetario-cafe@candela-app.com' || auth.token.email === 'baristas@candela-app.com' || auth.token.email === 'costeo@candela-app.com')",
+        ".write": "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'recetario-cafe@candela-app.com' || auth.token.email === 'baristas@candela-app.com')",
         "$id": {
           ".validate": "newData.hasChildren(['nombre', 'tipo'])",
           "nombre": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" }
@@ -495,8 +495,8 @@ Este bloque **reemplaza** al del paso 3 de Informes. Es el mismo contenido que e
       "areas": {
         ".read": "auth != null && auth.token.email === 'costeo@candela-app.com'",
         "$area": {
-          ".read":  "auth != null && ($area === 'cocina' || $area === 'cafe') && auth.token.email === 'recetario-' + $area + '@candela-app.com'",
-          ".write": "auth != null && ($area === 'cocina' || $area === 'cafe') && auth.token.email === 'recetario-' + $area + '@candela-app.com'",
+          ".read":  "auth != null && ($area === 'cocina' || $area === 'cafe') && (auth.token.email === 'recetario-' + $area + '@candela-app.com' || ($area === 'cafe' && auth.token.email === 'baristas@candela-app.com'))",
+          ".write": "auth != null && ($area === 'cocina' || $area === 'cafe') && (auth.token.email === 'recetario-' + $area + '@candela-app.com' || ($area === 'cafe' && (auth.token.email === 'baristas@candela-app.com' || auth.token.email === 'recetario-cocina@candela-app.com')))",
           "recetas": {
             ".read": "(auth != null && auth.token.email === 'gerencia@candela-app.com') || (auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true && (root.child('manuales/personal').child(auth.uid).child('accesos/recetarioAreas').child($area).val() === true || ($area === 'cocina' && root.child('manuales/personal').child(auth.uid).child('accesos/recetario').val() === true && !root.child('manuales/personal').child(auth.uid).child('accesos/recetarioAreas').exists())))",
             "$id": {
@@ -561,13 +561,15 @@ Tres cosas a tener en cuenta:
 
 **Verificar:** en una ventana privada, `https://pedidos-de-produccion-ee3cb-default-rtdb.firebaseio.com/recetario.json` tiene que devolver **`Permission denied`**.
 
-### Sección Café (baristas)
-Café ya está sumada (`cafe` en `AREAS_RECETARIO`, en las reglas y en Costeo). Tiene sus categorías (Espresso, Con leche, Fríos, Especiales, Tés e infusiones, Chocolates, Bases) y ahí las recetas se llaman **Bebida** y **Base** (por dentro siguen siendo plato y subreceta, así Costeo las calcula igual). Para usarla:
-1. **Authentication → Users → Add user**: `recetario-cafe@candela-app.com` con la contraseña que va a usar quien cargue las recetas de café.
+### Sección Baristas (antes "Café")
+Es el área `cafe` de `AREAS_RECETARIO` (en la pantalla se llama **☕ Baristas**). Tiene sus categorías (Café, Espresso, Con leche, Fríos, Especiales, Tés e infusiones, Chocolates, Bases) y ahí las recetas se llaman **Bebida** y **Base** (por dentro siguen siendo plato y subreceta, así Costeo las calcula igual).
+1. La cuenta es **`baristas@candela-app.com`** (Authentication → Users). La vieja `recetario-cafe@candela-app.com` también se acepta.
 2. Publicar `firebase-reglas.json` completo (Realtime Database → Rules → Publicar).
-3. En `/recetario/`, la pantalla de ingreso muestra **🍳 Cocina** y **☕ Café**: se elige Café y se entra con esa contraseña.
+3. En `/recetario/`, la pantalla de ingreso muestra **🍳 Cocina** y **☕ Baristas**.
 
-En Manuales, cada rol elige **qué secciones del Recetario ve** (Gestionar → Roles). La primera vez que Gerencia entra después de este cambio, al rol **Barista** se le suma Café solo (una única vez: si después se lo sacás, no vuelve).
+**Traspaso desde Cocina:** si en Cocina hay recetas con la categoría "Café", al entrar con la cuenta de Cocina aparece el aviso "Pasar la categoría Café a Baristas". Copia las recetas con su foto a Baristas (categoría "Café") y las bases que usan (Cocina conserva las suyas), y las saca de Cocina. Para eso las reglas dejan que la cuenta de Cocina escriba en `areas/cafe`; una vez hecho el traspaso se puede quitar ese permiso.
+
+En Manuales, el rol **Barista** ve solo la sección Baristas (la primera vez que entra Gerencia se le saca Cocina, una única vez).
 
 ### Sumar otra área (Pastelería, Panadería…)
 1. En `recetario/index.html`, agregar el área a `AREAS_RECETARIO` (ej. `pasteleria: { label: "Pastelería", icon: "🎂" }`).

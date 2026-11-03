@@ -104,9 +104,10 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from
 // crear su cuenta recetario-{clave}@candela-app.com y sumarla a las reglas (ver README).
 const AREAS_RECETARIO = {
   cocina: { label: "Cocina", icon: "🍳" },
-  // Café: de uso exclusivo de los baristas (en Manuales lo ve solo el rol Barista).
-  cafe: { label: "Café", icon: "☕",
-    categorias: ["Espresso", "Con leche", "Fríos", "Especiales", "Tés e infusiones", "Chocolates", "Bases"],
+  // Baristas (clave interna "cafe"): de uso exclusivo de los baristas (en Manuales lo ve solo el rol
+  // Barista). Su cuenta es baristas@candela-app.com; la vieja recetario-cafe@ se sigue aceptando.
+  cafe: { label: "Baristas", icon: "☕", email: "baristas@candela-app.com", otrosEmails: ["recetario-cafe@candela-app.com"],
+    categorias: ["Café", "Espresso", "Con leche", "Fríos", "Especiales", "Tés e infusiones", "Chocolates", "Bases"],
     tipos: { plato: "Bebida", subreceta: "Base" } },
 };
 
@@ -115,7 +116,8 @@ const AREAS_RECETARIO = {
 //   recetario-cocina@candela-app.com, recetario-pasteleria@candela-app.com, …
 // Ese mail no recibe correo; solo identifica la cuenta.
 const DOMINIO_USUARIOS = "candela-app.com";
-const emailDeArea = a => `recetario-${a}@${DOMINIO_USUARIOS}`;
+const emailDeArea = a => AREAS_RECETARIO[a]?.email || `recetario-${a}@${DOMINIO_USUARIOS}`;
+const emailsDeArea = a => [emailDeArea(a), ...(AREAS_RECETARIO[a]?.otrosEmails || [])];
 let areaLogin = Object.keys(AREAS_RECETARIO)[0];
 
 // Alérgenos de declaración obligatoria — Código Alimentario Argentino,
@@ -194,7 +196,7 @@ function init(firebaseConfig, opts = {}) {
     detenerDatos();
     if (user) {
       // La cuenta de cada área es fija (recetario-{área}@candela-app.com): el área sale del email.
-      const a = Object.keys(AREAS_RECETARIO).find(k => emailDeArea(k) === (user.email || "").toLowerCase());
+      const a = Object.keys(AREAS_RECETARIO).find(k => emailsDeArea(k).includes((user.email || "").toLowerCase()));
       if (a) miembro = { nombre: areaLabel(a), areas: { [a]: true } };
       const areas = areasDelMiembro();
       const preferida = [area, areaLogin].find(a => areas.includes(a));
@@ -669,6 +671,7 @@ function pintarLista(c) {
       <button class="btn btn-ghost" data-act="importar">📥 Importar bases de Costeo</button>
       <button class="btn btn-ghost" data-act="imprimir-todo">🖨️ Imprimir ${categoriaActual ? `“${esc(categoriaActual)}”` : "recetario"}</button>
     </div>
+    ${enInicio ? pintarAvisoTraspaso() : ""}
     ${enInicio ? pintarBorradores() : ""}
     <div class="section-block">
       ${categoriaActual ? `<div class="rec-migas"><a href="#" data-act="home">🏠 Recetas</a><span>›</span><b>${iconoCategoria(categoriaActual)} ${esc(categoriaActual)}</b></div>` : ""}
@@ -677,6 +680,48 @@ function pintarLista(c) {
       <div id="rec-tabla"></div>
     </div>`;
   pintarTabla();
+}
+
+// ── Traspaso: la categoría "Café" de Cocina pasa a la sección Baristas ─────────────────────
+// Se copian las recetas (con su foto) a Baristas, en la categoría "Café", y las bases que usan (Cocina
+// conserva las suyas). Después se borran de Cocina las recetas de Café, no las bases.
+const esCategoriaCafe = r => clave((r?.grupo || "").trim()) === "cafe";
+const recetasCafeDeCocina = () => area === "cocina" && AREAS_RECETARIO.cafe ? Object.values(recetas).filter(esCategoriaCafe) : [];
+function pintarAvisoTraspaso() {
+  const n = recetasCafeDeCocina().length;
+  if (!n) return "";
+  return `<div class="section-block" style="border:2px solid var(--turq);background:#eef8f6">
+    <b>☕ La categoría Café es de los baristas</b>
+    <p style="margin:6px 0 10px;font-size:13px">Hay ${n} receta${n === 1 ? "" : "s"} en la categoría Café de Cocina. Pasalas a la sección <b>Baristas</b>: se copian con sus fotos y las bases que usan (Cocina conserva sus bases), y salen de Cocina.</p>
+    <button class="btn btn-primary btn-sm" data-act="traspasar-cafe">Pasar la categoría Café a Baristas (${n})</button></div>`;
+}
+async function traspasarCafe() {
+  const lista = recetasCafeDeCocina(); if (!lista.length) return;
+  const bases = new Map();
+  const visitar = r => (r.ingredientes || []).forEach(l => {
+    const s = l.tipo === "subreceta" && recetas[l.recetaId];
+    if (s && !esCategoriaCafe(s) && !bases.has(s.id)) { bases.set(s.id, s); visitar(s); }
+  });
+  lista.forEach(visitar);
+  if (!confirm(`¿Pasar ${lista.length} receta${lista.length === 1 ? "" : "s"} de Café a la sección Baristas?\n\n${lista.map(r => "• " + r.nombre).join("\n")}${bases.size ? `\n\nSe copian también ${bases.size} base${bases.size === 1 ? "" : "s"} que usan (quedan también en Cocina):\n${[...bases.values()].map(s => "• " + s.nombre).join("\n")}` : ""}\n\nLas recetas de Café salen de Cocina.`)) return;
+  toast("Pasando las recetas…");
+  try {
+    const crudo = async id => (await get(ref(fb.db, `recetario/areas/cocina/recetas/${id}`))).val();
+    const copia = {}, ahora = Date.now();
+    for (const r of [...lista, ...bases.values()]) {
+      const datos = await crudo(r.id); if (!datos) continue;
+      copia[`recetario/areas/cafe/recetas/${r.id}`] = { ...datos, ...(esCategoriaCafe(r) ? { grupo: "Café" } : {}), actualizada: ahora };
+      if (datos.tieneFoto) { const f = await cargarFoto(r.id); if (f) copia[`recetario/areas/cafe/fotos/${r.id}`] = f; }
+    }
+    await update(ref(fb.db), copia);   // primero la copia: si algo falla, Cocina queda como estaba
+    const borrar = {};
+    for (const r of lista) { borrar[`recetario/areas/cocina/recetas/${r.id}`] = null; borrar[`recetario/areas/cocina/fotos/${r.id}`] = null; }
+    await update(ref(fb.db), borrar);
+    toast(`☕ ${lista.length} receta${lista.length === 1 ? "" : "s"} pasaron a Baristas.`);
+  } catch (err) {
+    console.error("traspaso café", err);
+    toast(/permission/i.test(err?.code || err?.message || "") ? "Firebase no dejó escribir en Baristas: falta publicar las reglas nuevas." : "No se pudo completar. No se borró nada de Cocina.", "warn");
+  }
 }
 
 // Recetas sin publicar (se estaban cargando): quedan acá para retomarlas.
@@ -1426,6 +1471,7 @@ async function onClick(ev) {
     }
     case "descartar-editor": descartarBorradorEditor(); break;
     case "nueva": abrirEditor(null); break;
+    case "traspasar-cafe": traspasarCafe(); break;
     case "importar": abrirImportar(); break;
     case "imp-toggle": impToggle(b.dataset.id); break;
     case "imp-todas": impMarcarVisibles(true); break;

@@ -578,7 +578,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, creat
 // El contenido se carga importando el documento de Drive (.docx o .html): se parte en un manual
 // por cada Título 1, agrupados por "Parte N — …". Drive sigue siendo el original: cuando cambia,
 // se vuelve a importar.
-const APP_VERSION = "2026-11-02 tareas-drive-2";
+const APP_VERSION = "2026-11-03 baristas";
 const GERENCIA_EMAIL = "gerencia@candela-app.com";
 const DOMINIO = "candela-app.com";
 const LIBS = {
@@ -1254,7 +1254,7 @@ const ROLES_SUGERIDOS = [
   { id: "experto-del-turno", nombre: "Experto del turno", claves: ["experto del turno"] },
   { id: "cajero", nombre: "Cajero/a", claves: ["cajeros"] },
   { id: "vendedor-mozo", nombre: "Vendedor/a y mozo/a", claves: ["vendedores y mozos"] },
-  { id: "barista", nombre: "Barista", claves: ["baristas"], recetario: { cocina: true, cafe: true } },
+  { id: "barista", nombre: "Barista", claves: ["baristas"], recetario: { cafe: true } },
   { id: "cocina", nombre: "Cocina de locales", claves: ["cocina de locales"], recetario: { cocina: true } },
   { id: "jefe-de-cocina", nombre: "Jefe/a de cocina", claves: ["jefe de cocina", "cocina de locales", "ayudante de cocina"], recetario: { cocina: true } },
   { id: "ayudante-de-cocina", nombre: "Ayudante de cocina", claves: ["ayudante de cocina"], recetario: { cocina: true } },
@@ -1302,7 +1302,8 @@ function accesosDe(roles, rolesDef = S.roles) {
 }
 // La primera vez que entra Gerencia después de sumar la sección Café, el rol Barista la recibe
 // (y se actualizan los accesos de los baristas). Queda marcado: si después se la sacan, no vuelve.
-const MIGRACION_CAFE = "recetario-cafe-baristas";
+// Noviembre: los baristas ven SOLO su sección (Baristas) y ya no Cocina.
+const MIGRACION_CAFE = "recetario-solo-baristas";
 let migrandoCafe = false;
 async function migrarCafeBaristas() {
   if (migrandoCafe || !esGerencia() || !S._rolesOk || !S._metaOk || !S._personalOk) return;
@@ -1311,8 +1312,8 @@ async function migrarCafeBaristas() {
   try {
     const upd = { [`contenido/meta/migraciones/${MIGRACION_CAFE}`]: Date.now() };
     const b = S.roles?.barista;
-    if (b && !b.recetarioAreas?.cafe) {
-      const recetarioAreas = Object.fromEntries([...areasRecetarioDeRol(b), "cafe"].map(a => [a, true]));
+    if (b && !(b.recetarioAreas?.cafe && Object.keys(b.recetarioAreas).filter(a => b.recetarioAreas[a]).length === 1)) {
+      const recetarioAreas = { cafe: true };
       const rol = { ...b, recetario: true, recetarioAreas };
       const rolesDef = { ...S.roles, barista: rol };
       upd["roles/barista"] = rol;
@@ -1320,7 +1321,7 @@ async function migrarCafeBaristas() {
     }
     await update(ref(db, "manuales"), upd);
     S.meta = { ...(S.meta || {}), migraciones: { ...(S.meta?.migraciones || {}), [MIGRACION_CAFE]: Date.now() } };
-    if (upd["roles/barista"]) toast("☕ Los baristas ya ven la sección Café del Recetario.");
+    if (upd["roles/barista"]) toast("☕ Los baristas ahora ven solo la sección Baristas del Recetario.");
   } catch (e) { console.error("migrarCafeBaristas", e); }
   finally { migrandoCafe = false; }
 }
@@ -1801,14 +1802,14 @@ function vistaGerencia() {
         <div class="acciones" style="margin-top:14px"><button class="btn btn-primary">Guardar</button><button type="button" class="btn btn-ghost" data-act="editar-rol" data-rid="">Cancelar</button>${rid ? `<button type="button" class="btn btn-danger" data-act="eliminar-rol" data-rid="${esc(rid)}">Eliminar rol</button>` : ""}</div>
       </form>`;
     cuerpo = `
-      <div class="bloque"><div class="muted" style="font-size:13px">Cada rol define <b>qué manuales ve</b> y <b>qué secciones del Recetario</b> (🍳 Cocina, ☕ Café). A cada persona le asignás uno o más roles en <b>Equipo y accesos</b>, y ve la suma. Las reglas del servidor lo hacen cumplir: no alcanza con saber la dirección de un manual.</div>
+      <div class="bloque"><div class="muted" style="font-size:13px">Cada rol define <b>qué manuales ve</b> y <b>qué secciones del Recetario</b> (🍳 Cocina, ☕ Baristas). A cada persona le asignás uno o más roles en <b>Equipo y accesos</b>, y ve la suma. Las reglas del servidor lo hacen cumplir: no alcanza con saber la dirección de un manual.</div>
         <div class="acciones" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-act="editar-rol" data-rid="__nuevo">➕ Rol nuevo</button>${lista.length ? `<button class="btn btn-ghost btn-sm" data-act="roles-sugeridos">✨ ${rs.length ? "Agregar los roles sugeridos que falten" : "Crear los roles sugeridos"}</button>` : ""}</div></div>
       ${editando === "__nuevo" ? formRol(null, { manuales: Object.fromEntries(lista.filter(esComun).map(m => [m.id, true])) }) : ""}
       ${rs.map(([rid, r]) => editando === rid ? formRol(rid, r) : `<div class="bloque fila-p" style="border-top:none;padding:14px 18px">
           <div style="flex:1;min-width:200px"><div class="n">${esc(r.nombre)} ${chipRecetario(areasRecetarioDeRol(r))}</div>
           <div class="u">${Object.keys(r.manuales || {}).filter(id => S.indice[id]).length} manuales · ${Object.values(S.personal).filter(p => p.activo && p.roles?.[rid]).length} persona(s)</div></div>
           <button class="btn btn-ghost btn-sm" data-act="editar-rol" data-rid="${esc(rid)}">✏️ Editar</button></div>`).join("")}
-      ${!rs.length && editando !== "__nuevo" ? `<div class="bloque muted">Todavía no hay roles.${lista.length ? " Tocá «Crear los roles sugeridos»: arma uno por puesto (cajero, barista, cocina…) con sus manuales y los comunes, y el Recetario solo para baristas y cocina (Café, solo baristas)." : " Primero cargá los manuales."}</div>` : ""}`;
+      ${!rs.length && editando !== "__nuevo" ? `<div class="bloque muted">Todavía no hay roles.${lista.length ? " Tocá «Crear los roles sugeridos»: arma uno por puesto (cajero, barista, cocina…) con sus manuales y los comunes, y el Recetario: Cocina para cocina y Baristas para los baristas." : " Primero cargá los manuales."}</div>` : ""}`;
   } else {
     const imp = S.importacion;
     const todos = manualesVisibles();
@@ -2538,7 +2539,7 @@ function vistaEditor() {
 // solo dejan leer recetas y fotos (no borradores) a quien tiene accesos.recetario.
 const AREAS_RECETARIO = {
   cocina: { label: "Cocina", icon: "🍳", sub: "Fichas técnicas de cocina: ingredientes, cantidades, pasos y alérgenos." },
-  cafe: { label: "Café", icon: "☕", sub: "Recetas de la barra: cantidades, pasos y alérgenos. Solo para baristas.", tipos: { plato: "Bebida", subreceta: "Base" } },
+  cafe: { label: "Baristas", icon: "☕", sub: "Recetas de la barra: cantidades, pasos y alérgenos. Solo para baristas.", tipos: { plato: "Bebida", subreceta: "Base" } },
 };
 const chipRecetario = areas => areas.length ? `<span class="chip chip-ok">📖 ${areas.map(a => `${AREAS_RECETARIO[a].icon} ${AREAS_RECETARIO[a].label}`).join(" · ")}</span>` : "";
 // Secciones que ve quien entró: Gerencia, todas; el resto, las de sus roles.

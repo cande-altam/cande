@@ -52,8 +52,8 @@
 
     "recetario": {
       "ingredientes": {
-        ".read":  "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'recetario-cafe@candela-app.com' || auth.token.email === 'costeo@candela-app.com')",
-        ".write": "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'recetario-cafe@candela-app.com')",
+        ".read":  "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'recetario-cafe@candela-app.com' || auth.token.email === 'baristas@candela-app.com' || auth.token.email === 'costeo@candela-app.com')",
+        ".write": "auth != null && (auth.token.email === 'recetario-cocina@candela-app.com' || auth.token.email === 'recetario-cafe@candela-app.com' || auth.token.email === 'baristas@candela-app.com')",
         "$id": {
           ".validate": "newData.hasChildren(['nombre', 'tipo'])",
           "nombre": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" }
@@ -62,8 +62,8 @@
       "areas": {
         ".read": "auth != null && auth.token.email === 'costeo@candela-app.com'",
         "$area": {
-          ".read":  "auth != null && ($area === 'cocina' || $area === 'cafe') && auth.token.email === 'recetario-' + $area + '@candela-app.com'",
-          ".write": "auth != null && ($area === 'cocina' || $area === 'cafe') && auth.token.email === 'recetario-' + $area + '@candela-app.com'",
+          ".read":  "auth != null && ($area === 'cocina' || $area === 'cafe') && (auth.token.email === 'recetario-' + $area + '@candela-app.com' || ($area === 'cafe' && auth.token.email === 'baristas@candela-app.com'))",
+          ".write": "auth != null && ($area === 'cocina' || $area === 'cafe') && (auth.token.email === 'recetario-' + $area + '@candela-app.com' || ($area === 'cafe' && (auth.token.email === 'baristas@candela-app.com' || auth.token.email === 'recetario-cocina@candela-app.com')))",
           "recetas": {
             ".read": "(auth != null && auth.token.email === 'gerencia@candela-app.com') || (auth != null && root.child('manuales/personal').child(auth.uid).child('activo').val() === true && (root.child('manuales/personal').child(auth.uid).child('accesos/recetarioAreas').child($area).val() === true || ($area === 'cocina' && root.child('manuales/personal').child(auth.uid).child('accesos/recetario').val() === true && !root.child('manuales/personal').child(auth.uid).child('accesos/recetarioAreas').exists())))",
             "$id": {
