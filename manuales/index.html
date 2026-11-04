@@ -578,7 +578,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, creat
 // El contenido se carga importando el documento de Drive (.docx o .html): se parte en un manual
 // por cada Título 1, agrupados por "Parte N — …". Drive sigue siendo el original: cuando cambia,
 // se vuelve a importar.
-const APP_VERSION = "2026-11-03 baristas";
+const APP_VERSION = "2026-11-04 limpieza-cocina";
 const GERENCIA_EMAIL = "gerencia@candela-app.com";
 const DOMINIO = "candela-app.com";
 const LIBS = {
@@ -706,12 +706,12 @@ async function iniciarSesion(user) {
     S.errorGerencia = "";
     const sinReglas = () => { S.errorGerencia = "Entraste como Gerencia, pero Firebase no te deja leer los manuales: las reglas nuevas no están publicadas (o se publicaron otras). Pegá el archivo firebase-reglas.json completo en Realtime Database → Rules → Publicar, y recargá esta página."; pintar(); };
     S._indiceOk = S._bordOk = false;
-    escuchar("manuales/contenido/indice", v => { S.indice = v || {}; S._indiceOk = true; precargarTareas(); pintar(); }, sinReglas);
-    escuchar("manuales/contenido/meta", v => { S.meta = v; S._metaOk = true; migrarCafeBaristas(); precargarTareas(); pintar(); }, sinReglas);
+    escuchar("manuales/contenido/indice", v => { S.indice = v || {}; S._indiceOk = true; precargas(); pintar(); }, sinReglas);
+    escuchar("manuales/contenido/meta", v => { S.meta = v; S._metaOk = true; migrarCafeBaristas(); precargas(); pintar(); }, sinReglas);
     escuchar("manuales/personal", v => { S.personal = v || {}; S._personalOk = true; migrarCafeBaristas(); pintar(); }, sinReglas);
     escuchar("manuales/lecturas", v => { S.lecturasTodas = v || {}; S.lecturas = (v || {})[user.uid] || {}; pintar(); }, sinReglas);
-    escuchar("manuales/roles", v => { S.roles = v || {}; S._rolesOk = true; migrarCafeBaristas(); precargarTareas(); pintar(); }, sinReglas);
-    escuchar("manuales/borradores", v => { S.borradores = v || {}; S._bordOk = true; precargarTareas(); if (S.vista !== "editar") pintar(); }, sinReglas);
+    escuchar("manuales/roles", v => { S.roles = v || {}; S._rolesOk = true; migrarCafeBaristas(); precargas(); pintar(); }, sinReglas);
+    escuchar("manuales/borradores", v => { S.borradores = v || {}; S._bordOk = true; precargas(); if (S.vista !== "editar") pintar(); }, sinReglas);
     escuchar("manuales/papelera", v => { S.papelera = v || {}; pintar(); }, sinReglas);
     escuchar("manuales/invitaciones", v => { S.invitaciones = v || {}; pintar(); }, sinReglas);
     escuchar("manuales/solicitudes", v => { S.solicitudes = v || {}; pintar(); }, sinReglas);
@@ -1552,7 +1552,10 @@ function vistaInicio() {
   const tar = g ? tareasPendientes() : [];
   const avisoTar = tar.length ? `<div class="sugerido"><div class="sg-ico">📋</div><div class="sg-tx"><b>${esc(TAREAS_DRIVE.titulo)}, por puesto</b><span>Están cargadas como borrador en cada manual, bajo “Para revisar” y con el documento de donde salió cada una. Abrí cada manual, borrá lo que no va y publicá: hasta entonces el equipo ve el manual como estaba.</span>
       <div class="sg-lista">${tar.map(x => `<button class="btn btn-primary btn-sm" data-act="tareas" data-id="${esc(x.key)}">${esc(x.destino ? x.destino[1].titulo : x.m.nuevo.titulo + " (manual nuevo)")} · ${x.total}</button>`).join("")}</div></div></div>` : "";
-  const accionesG = g ? `${avisosSug}${avisoTar}${avisoAgr}<div class="acciones" style="margin:-4px 0 14px"><button class="btn btn-primary btn-sm" data-act="nuevo-manual">➕ Nuevo manual</button><button class="btn btn-ghost btn-sm" data-act="gerencia-tab" data-tab="contenido">Ordenar, ocultar e importar</button></div>` : "";
+  const lim = g ? limpiezaPendiente() : [];
+  const avisoLim = lim.length ? `<div class="sugerido"><div class="sg-ico">🧽</div><div class="sg-tx"><b>${esc(LIMPIEZA_COCINA.titulo)}</b><span>Cargado como borrador: calendario (cada cierre, martes, jueves y primer martes del mes), las reglas y los productos, y el checklist con los días nuevos. Revisalo bajo “Para revisar” y publicá.</span>
+      <div class="sg-lista">${lim.map(x => `<button class="btn btn-primary btn-sm" data-act="editar" data-id="${esc(x.destino[0])}">${esc(x.destino[1].titulo)}</button>`).join("")}</div></div></div>` : "";
+  const accionesG = g ? `${avisosSug}${avisoLim}${avisoTar}${avisoAgr}<div class="acciones" style="margin:-4px 0 14px"><button class="btn btn-primary btn-sm" data-act="nuevo-manual">➕ Nuevo manual</button><button class="btn btn-ghost btn-sm" data-act="gerencia-tab" data-tab="contenido">Ordenar, ocultar e importar</button></div>` : "";
   if (!lista.length) {
     return `${barra()}<div class="main"><div class="h-pag">Manuales de procedimiento</div>
       <div class="bloque" style="margin-top:14px">${g
@@ -1964,6 +1967,117 @@ const textoNormal = t => clave(String(t || "")).replace(/[^a-z0-9]+/g, " ").trim
 // Un solo bloque "Para revisar" al final de cada checklist; adentro, una etiqueta en negrita por
 // momento (o "Vendedor 1 · Apertura": en Vendedores y Mozos va primero la persona, y las tareas
 // compartidas están copiadas en cada persona). Las generales van mezcladas en su momento.
+// ── Calendario de limpieza de cocina (noviembre 2026) ───────────────────────────────────────
+// Pedido de Gerencia: el manual de Cocina de locales no tenía un calendario de limpieza. Se arma con lo
+// que ya estaba escrito (cierre, profunda, canastos) y las reglas del manual de Limpieza de Drive, más
+// lo que faltaba (piso, campana, freidora, microondas, tachos, freezer y cámara). La profunda pasa de
+// los lunes a martes y jueves (mitad y mitad) y la mensual al primer martes; la hacen cocinero y
+// ayudante juntos. Se carga como BORRADOR con "Para revisar".
+const LIMPIEZA_COCINA = {
+  clave: "limpieza-cocina-2026-11",
+  titulo: "Calendario de limpieza de cocina",
+  manuales: [{ manual: "cocina de locales", aplicar: h => limpiezaEnCocina(h) }, { manual: "jefe de cocina", aplicar: h => limpiezaEnJefe(h) }],
+};
+const BLOQUE_LIMPIEZA = `<h4 class="para-revisar">Para revisar · calendario de limpieza nuevo</h4>
+<h3>Limpieza de la cocina</h3>
+<div class="cuadro cuadro-regla"><p><b>Las cuatro reglas.</b> 1) Primero se barre, después se moja: nunca se lava sin barrer antes. 2) La lavandina no se usa diluida en baldes: solo con rejilla o microfibra. 3) No se tira nada por bachas ni desagües: los restos van a la basura. 4) La basura sale en bolsas cerradas, sin roturas.</p></div>
+<table><thead><tr><th>Cuándo</th><th>Qué</th><th>Quién</th></tr></thead><tbody>
+<tr><td>Durante el turno</td><td>Herramientas y utensilios lavados después de cada uso, no al final. Bacha sin acumular.</td><td>Cocinero y ayudante</td></tr>
+<tr><td>Cada cierre</td><td>Mesada limpia y despejada. Sartenes o plancha carlitera limpias. Licuadora, exprimidor y tostador limpios, desarmados si corresponde. Todo lo guardado, rotulado. Piso barrido y lavado. Basura afuera en bolsas cerradas.</td><td>Cocinero (con el ayudante, si está)</td></tr>
+<tr><td>Martes</td><td>Heladeras por dentro. Horno. Paredes: remoción de grasa. Repisas y espacios de almacenamiento ordenados.</td><td>Cocinero y ayudante</td></tr>
+<tr><td>Jueves</td><td>Campana y filtro. Freidora. Microondas. Tachos de basura.</td><td>Cocinero y ayudante</td></tr>
+<tr><td>Primer martes del mes</td><td>Freezer descongelado y limpio. Cámara de fermentación (San Luis).</td><td>Cocinero y ayudante</td></tr>
+</tbody></table>
+<p>El jefe de cocina verifica los martes y jueves que se haya hecho en las dos cocinas.</p>
+<h4>Productos</h4>
+<table><thead><tr><th>Producto</th><th>Para qué</th></tr></thead><tbody>
+<tr><td>Desengrasante</td><td>Paredes, mesadas, heladeras, campana y superficies con grasa</td></tr>
+<tr><td>Detergente</td><td>Lavado general</td></tr>
+<tr><td>Desodorante de pisos</td><td>Pisos</td></tr>
+<tr><td>Lavandina</td><td>Uso restringido: solo con rejilla o microfibra</td></tr>
+</tbody></table>
+<div class="cuadro cuadro-prohibido"><p><b>Nunca mezclar productos de limpieza.</b> Sobre todo lavandina con algo que tenga amoníaco o ácido: genera gases tóxicos. Siempre en su envase original, con etiqueta, lejos de los alimentos. Guantes para los químicos y aviso de piso mojado mientras se seca.</p></div>`;
+const CHECK_LIMPIEZA = `<h4 class="para-revisar">Para revisar · limpieza semanal y mensual</h4>
+<h3>Martes</h3><p>☐ Heladeras por dentro · horno · paredes · repisas</p>
+<h3>Jueves</h3><p>☐ Campana y filtro · freidora · microondas · tachos</p>
+<h3>Primer martes del mes</h3><p>☐ Freezer descongelado y limpio · cámara (San Luis)</p>`;
+function limpiezaEnCocina(html) {
+  const d = new DOMParser().parseFromString(`<div>${html || ""}</div>`, "text/html");
+  const raiz = d.body.firstChild;
+  const hs = () => [...raiz.children];
+  const tn = e => textoNormal(e.textContent);
+  if (hs().some(e => e.tagName === "H3" && tn(e) === "limpieza de la cocina")) return { html, cambios: 0 };
+  const quitarSeccion = h3 => { let e = h3.nextElementSibling; while (e && !/^H[23]$/.test(e.tagName)) { const n = e.nextElementSibling; e.remove(); e = n; } const sig = h3.nextElementSibling; h3.remove(); return sig; };
+  const tmp = html => { const t = d.createElement("div"); t.innerHTML = html.trim(); return [...t.childNodes]; };
+  let cambios = 0;
+  // 1) la sección: reemplaza "Dejar la cocina limpia" y "Limpieza profunda — los lunes"
+  const viejas = hs().filter(e => e.tagName === "H3" && /^(dejar la cocina limpia|limpieza profunda)/.test(tn(e)));
+  let antes = null;
+  for (const h of viejas) antes = quitarSeccion(h);   // queda donde estaba la última
+  if (!antes) antes = hs().find(e => e.tagName === "H2" && /^(\d+ )?(pedidos de cocina|indicadores de desempeno|checklist)/.test(tn(e)));
+  for (const n of tmp(BLOQUE_LIMPIEZA)) { if (antes) antes.before(n); else raiz.appendChild(n); }
+  cambios++;
+  // 2) el checklist: piso al cierre y los días nuevos en lugar de "Los lunes"
+  const h2 = hs().find(e => e.tagName === "H2" && tn(e).startsWith("checklist cocina"));
+  if (h2) {
+    let fin = h2; while (fin.nextElementSibling && fin.nextElementSibling.tagName !== "H2") fin = fin.nextElementSibling;
+    const rango = []; for (let e = h2.nextElementSibling; e && e.tagName !== "H2"; e = e.nextElementSibling) rango.push(e);
+    const cierre = rango.find(e => e.tagName === "H3" && /^(al cerrar|cierre)/.test(tn(e)));
+    if (cierre) {
+      let a = cierre; while (a.nextElementSibling && /^\s*☐/.test(a.nextElementSibling.textContent) && a.nextElementSibling.tagName !== "H3") a = a.nextElementSibling;
+      const p = d.createElement("p"); p.textContent = "☐ Piso barrido y lavado; basura afuera en bolsas cerradas"; a.after(p); cambios++;
+    }
+    const lunes = rango.find(e => e.tagName === "H3" && tn(e).startsWith("los lunes"));
+    if (lunes) quitarSeccion(lunes);
+    fin = h2; while (fin.nextElementSibling && fin.nextElementSibling.tagName !== "H2") fin = fin.nextElementSibling;
+    let ancla = fin; for (const n of tmp(CHECK_LIMPIEZA)) { ancla.after(n); ancla = n; }
+    cambios++;
+  }
+  return { html: raiz.innerHTML, cambios };
+}
+function limpiezaEnJefe(html) {
+  const d = new DOMParser().parseFromString(`<div>${html || ""}</div>`, "text/html");
+  const raiz = d.body.firstChild;
+  let cambios = 0;
+  for (const e of raiz.querySelectorAll("p,li")) {
+    if (!/limpieza profunda de los lunes/i.test(e.textContent)) continue;
+    e.innerHTML = `<b>Limpieza de martes y jueves, y la mensual del primer martes:</b> verificá que se haya hecho en las dos cocinas.`;
+    const m = d.createElement("h4"); m.className = "para-revisar"; m.textContent = "Para revisar · limpieza ahora martes y jueves";
+    e.before(m); cambios++;
+  }
+  return { html: raiz.innerHTML, cambios };
+}
+function limpiezaPendiente() {
+  if (!esGerencia() || S.meta?.sugeridos?.[LIMPIEZA_COCINA.clave]) return [];
+  const hechos = S.meta?.agregados?.[LIMPIEZA_COCINA.clave] || {};
+  return LIMPIEZA_COCINA.manuales.map(m => ({ m, destino: buscarManual(m.manual) })).filter(x => x.destino && !hechos[x.destino[0]]);
+}
+async function precargarLimpieza() {
+  if (_precargando || S.rol !== "gerencia" || !S._indiceOk || !S._metaOk || !S._bordOk || !S._rolesOk) return;
+  const C = LIMPIEZA_COCINA, hechas = S.meta?.precargas?.[C.clave] || {};
+  const pend = limpiezaPendiente().filter(x => !hechas[x.destino[0]]);
+  if (!pend.length) return;
+  _precargando = true;
+  try {
+    const upd = {}, ahora = Date.now();
+    for (const x of pend) {
+      const [id, m] = x.destino;
+      upd[`contenido/meta/precargas/${C.clave}/${id}`] = ahora;
+      // el borrador se lee de la base en el momento: puede haberlo escrito recién la carga de tareas
+      const b = (await get(ref(db, `manuales/borradores/${id}`))).val();
+      const base = b && (b.guardadoEn || 0) > (m.editado || S.meta?.editadoEn || S.meta?.importadoEn || 0) ? b : null;
+      const r = x.m.aplicar(base ? base.html : await cargarHtml(id));
+      if (!r.cambios) continue;
+      const roles = Object.fromEntries(Object.entries(S.roles).filter(([, rr]) => rr.manuales?.[id]).map(([rid]) => [rid, true]));
+      upd[`borradores/${id}`] = { id, titulo: base?.titulo || m.titulo, parte: base?.parte || m.parte, nuevaParte: "", version: base?.version ?? (m.version || ""), aplicaA: base?.aplicaA ?? (m.aplicaA || ""),
+        visible: base ? base.visible !== false : m.visible !== false, roles: base?.roles || roles, html: limpiarHtml(r.html), guardadoEn: ahora,
+        ...(base?.agregado ? { agregado: base.agregado } : {}), agregados: { ...(base?.agregados || {}), [C.clave]: true }, ...(base?.origen ? { origen: base.origen } : {}) };
+    }
+    await update(ref(db, "manuales"), upd);
+    anotarPrecargas(upd);
+  } catch (err) { console.error("precarga limpieza:", err); }
+  finally { _precargando = false; }
+}
 const TAREAS_DRIVE = {
   clave: "tareas-drive-2026-11b",
   anterior: "tareas-drive-2026-11",   // primera carga (un bloque por momento): se rehace
@@ -2019,7 +2133,7 @@ function quitarBloquesViejos(html, publicado) {
   const d = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
   const raiz = d.body.firstChild;
   const esEtiqueta = e => e.tagName === "P" && e.children.length === 1 && e.firstElementChild.tagName === "B" && e.textContent.trim() === e.firstElementChild.textContent.trim();
-  for (const h of [...raiz.querySelectorAll(".para-revisar")]) {
+  for (const h of [...raiz.querySelectorAll(".para-revisar")].filter(h => /^para revisar( · otras tareas)?$/i.test(h.textContent.trim()))) {
     let e = h.nextElementSibling;
     while (e && (e.querySelector?.(".fuente-rev") || esEtiqueta(e))) { const sig = e.nextElementSibling; e.remove(); e = sig; }
     h.remove();
@@ -2042,6 +2156,13 @@ function quitarMarcasRevision(html) {
 }
 // Se cargan solas como borrador la primera vez que Gerencia entra (una sola vez por manual).
 let _precargando = false;
+// Lo que ya se precargó queda anotado en memoria en el momento: el aviso de la base puede llegar
+// después de otra señal (por ejemplo, la de borradores) y no hay que volver a cargarlo.
+function anotarPrecargas(upd) {
+  const pre = { ...(S.meta?.precargas || {}) };
+  for (const k of Object.keys(upd)) { const m = k.match(/^contenido\/meta\/precargas\/([^/]+)\/(.+)$/); if (m) pre[m[1]] = { ...(pre[m[1]] || {}), [m[2]]: upd[k] }; }
+  S.meta = { ...(S.meta || {}), precargas: pre };
+}
 async function precargarTareas() {
   if (_precargando || S.rol !== "gerencia" || !S._indiceOk || !S._metaOk || !S._bordOk || !S._rolesOk) return;
   const C = TAREAS_DRIVE, hechas = S.meta?.precargas?.[C.clave] || {};
@@ -2055,14 +2176,14 @@ async function precargarTareas() {
       upd[`contenido/meta/precargas/${C.clave}/${x.key}`] = ahora;
       if (x.destino) {
         const [id, m] = x.destino;
-        const b = S.borradores[id];
+        const b = (await get(ref(db, `manuales/borradores/${id}`))).val();
         const base = b && (b.guardadoEn || 0) > (m.editado || S.meta?.editadoEn || S.meta?.importadoEn || 0) ? b : null;
         const publicado = await cargarHtml(id);
         const r = aplicarTareas(base ? quitarBloquesViejos(base.html, publicado) : publicado, x.m);
         if (!r.hechos.length) continue;
         const roles = Object.fromEntries(Object.entries(S.roles).filter(([, rr]) => rr.manuales?.[id]).map(([rid]) => [rid, true]));
         upd[`borradores/${id}`] = { id, titulo: base?.titulo || m.titulo, parte: base?.parte || m.parte, nuevaParte: "", version: base?.version ?? (m.version || ""), aplicaA: base?.aplicaA ?? (m.aplicaA || ""),
-          visible: base ? base.visible !== false : m.visible !== false, roles: base?.roles || roles, html: limpiarHtml(r.html), guardadoEn: ahora, agregado: C.clave, ...(base?.origen ? { origen: base.origen } : {}) };
+          visible: base ? base.visible !== false : m.visible !== false, roles: base?.roles || roles, html: limpiarHtml(r.html), guardadoEn: ahora, agregado: C.clave, ...(base?.origen ? { origen: base.origen } : {}), ...(base?.agregados ? { agregados: base.agregados } : {}) };
       } else {
         // si ya estaba el de la primera carga, se rehace ese mismo borrador
         const k = Object.keys(S.borradores || {}).find(k => [C.clave, C.anterior].some(c => S.borradores[k]?.origen === c + ":" + x.m.manual)) || "nuevo-" + C.clave + "-" + slug(x.m.manual);
@@ -2074,9 +2195,11 @@ async function precargarTareas() {
       }
     }
     await update(ref(db, "manuales"), upd);
+    anotarPrecargas(upd);
   } catch (err) { console.error("precarga de tareas:", err); }
   finally { _precargando = false; }
 }
+function precargas() { precargarTareas().then(() => precargarLimpieza()); }
 async function abrirTareas(key) {
   const C = TAREAS_DRIVE;
   const x = tareasPendientes().find(y => y.key === key); if (!x) return;
@@ -2239,7 +2362,7 @@ async function guardarBorrador() {
   clearTimeout(_timerBorrador);
   const e = leerEditor(); if (!e || !e.pendiente) return;
   const k = claveBorrador(e);
-  const b = { id: e.id || null, titulo: e.titulo, parte: e.parte, nuevaParte: e.nuevaParte || "", version: e.version, aplicaA: e.aplicaA, visible: e.visible, roles: e.roles, html: limpiarHtml(e.html), guardadoEn: Date.now(), ...(e.origen ? { origen: e.origen } : {}), ...(e.agregado ? { agregado: e.agregado } : {}) };
+  const b = { id: e.id || null, titulo: e.titulo, parte: e.parte, nuevaParte: e.nuevaParte || "", version: e.version, aplicaA: e.aplicaA, visible: e.visible, roles: e.roles, html: limpiarHtml(e.html), guardadoEn: Date.now(), ...(e.origen ? { origen: e.origen } : {}), ...(e.agregado ? { agregado: e.agregado } : {}), ...(e.agregados ? { agregados: e.agregados } : {}) };
   try { localStorage.setItem("manual-borrador-" + k, JSON.stringify(b)); } catch {}
   try {
     await set(ref(db, `manuales/borradores/${k}`), b);
@@ -2284,6 +2407,7 @@ async function publicarEdicion() {
     [`contenido/indice/${id}`]: entrada, [`contenido/html/${id}`]: a.html, [`contenido/texto/${id}`]: a.texto.slice(0, 200000),
     "contenido/meta/editadoEn": ahora, [`borradores/${claveBorrador(e)}`]: null,
     ...(e.agregado ? { [`contenido/meta/agregados/${e.agregado}/${id}`]: ahora } : {}),
+    ...Object.fromEntries(Object.keys(e.agregados || {}).map(c => [`contenido/meta/agregados/${c}/${id}`, ahora])),
   };
   if (previo && previo.hash !== hash) {
     upd[`historial/${id}/${ahora}`] = { titulo: previo.titulo, version: previo.version || "", html: S.html[id] ?? (await cargarHtml(id)), guardadoEn: previo.editado || S.meta?.importadoEn || ahora };
