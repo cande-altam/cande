@@ -1,0 +1,99 @@
+name: 🎂 Cumpleaños Club Candela
+
+on:
+  schedule:
+    # 8:00 AM hora Argentina (UTC-3) = 11:00 AM UTC
+    - cron: '0 11 * * *'
+  workflow_dispatch: # permite ejecutar manualmente desde GitHub
+
+jobs:
+  check-birthdays:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Verificar cumpleaños
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const https = require('https');
+
+            // Fecha de hoy en Argentina (UTC-3)
+            const now = new Date(Date.now() - 3 * 60 * 60 * 1000);
+            const todayMM = String(now.getUTCMonth() + 1).padStart(2, '0');
+            const todayDD = String(now.getUTCDate()).padStart(2, '0');
+            const todayLabel = `${todayDD}/${todayMM}`;
+
+            console.log(`Revisando cumpleaños para hoy: ${todayDD}/${todayMM}`);
+
+            // Fetch Firebase REST API
+            const url = 'https://pedidos-de-clientes-4775b-default-rtdb.firebaseio.com/clients.json?auth=AIzaSyDFqS6RG1fkOZGo1x2-WcfT82am7ERHgyY';
+
+            const data = await new Promise((resolve, reject) => {
+              https.get(url, (res) => {
+                let body = '';
+                res.on('data', chunk => body += chunk);
+                res.on('end', () => {
+                  try { resolve(JSON.parse(body)); }
+                  catch (e) { reject(new Error('Error al parsear Firebase: ' + e.message)); }
+                });
+              }).on('error', reject);
+            });
+
+            if (!data) {
+              console.log('No hay clientes en la base de datos.');
+              return;
+            }
+
+            // Comparar cumpleaños con hoy
+            // El campo club.cumple puede estar en formato MM-DD, DD/MM o DD/MM/YYYY
+            function matchesBirthday(cumple) {
+              if (!cumple) return false;
+              const s = String(cumple).trim();
+              // MM-DD
+              if (/^\d{2}-\d{2}$/.test(s)) {
+                const [mm, dd] = s.split('-');
+                return mm === todayMM && dd === todayDD;
+              }
+              // DD/MM o DD/MM/YYYY
+              if (/^\d{2}\/\d{2}/.test(s)) {
+                const parts = s.split('/');
+                return parts[0] === todayDD && parts[1] === todayMM;
+              }
+              // YYYY-MM-DD
+              if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+                const [, mm, dd] = s.split('-');
+                return mm === todayMM && dd === todayDD;
+              }
+              return false;
+            }
+
+            const cumpleaneros = Object.values(data).filter(c =>
+              c.club && matchesBirthday(c.club.cumple)
+            );
+
+            if (cumpleaneros.length === 0) {
+              console.log(`Sin cumpleaños hoy (${todayLabel}).`);
+              return;
+            }
+
+            // Armar lista
+            const lista = cumpleaneros.map(c => {
+              const tel = c.phone ? `📱 ${c.phone}` : '';
+              const sellos = c.club.sellos !== undefined ? `⭐ ${c.club.sellos} sellos` : '';
+              return `- **${c.name}** ${tel} ${sellos}`.trim();
+            }).join('\n');
+
+            const body = `## 🎂 Socios de Club Candela que cumplen años hoy, ${todayLabel}\n\n${lista}\n\n---\n*Generado automáticamente · Sistema Candela Café & Patisserie*`;
+
+            // Crear issue en GitHub (GitHub envía email automáticamente)
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🎂 Cumpleaños Club Candela · ${todayLabel} · ${cumpleaneros.length} socio${cumpleaneros.length > 1 ? 's' : ''}`,
+              body,
+              labels: ['cumpleaños'],
+            });
+
+            console.log(`Issue creado: ${cumpleaneros.length} cumpleaños hoy.`);
