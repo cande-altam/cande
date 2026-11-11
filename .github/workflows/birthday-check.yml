@@ -9,12 +9,13 @@ on:
 jobs:
   check-birthdays:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
 
     steps:
-      - name: Verificar cumpleaños
+      - name: Verificar cumpleaños y notificar por Telegram
         uses: actions/github-script@v7
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         with:
           script: |
             const https = require('https');
@@ -28,10 +29,10 @@ jobs:
             console.log(`Revisando cumpleaños para hoy: ${todayDD}/${todayMM}`);
 
             // Fetch Firebase REST API
-            const url = 'https://pedidos-de-clientes-4775b-default-rtdb.firebaseio.com/clients.json?auth=AIzaSyDFqS6RG1fkOZGo1x2-WcfT82am7ERHgyY';
+            const firebaseUrl = 'https://pedidos-de-clientes-4775b-default-rtdb.firebaseio.com/clients.json?auth=AIzaSyDFqS6RG1fkOZGo1x2-WcfT82am7ERHgyY';
 
             const data = await new Promise((resolve, reject) => {
-              https.get(url, (res) => {
+              https.get(firebaseUrl, (res) => {
                 let body = '';
                 res.on('data', chunk => body += chunk);
                 res.on('end', () => {
@@ -46,22 +47,17 @@ jobs:
               return;
             }
 
-            // Comparar cumpleaños con hoy
-            // El campo club.cumple puede estar en formato MM-DD, DD/MM o DD/MM/YYYY
             function matchesBirthday(cumple) {
               if (!cumple) return false;
               const s = String(cumple).trim();
-              // MM-DD
               if (/^\d{2}-\d{2}$/.test(s)) {
                 const [mm, dd] = s.split('-');
                 return mm === todayMM && dd === todayDD;
               }
-              // DD/MM o DD/MM/YYYY
               if (/^\d{2}\/\d{2}/.test(s)) {
                 const parts = s.split('/');
                 return parts[0] === todayDD && parts[1] === todayMM;
               }
-              // YYYY-MM-DD
               if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
                 const [, mm, dd] = s.split('-');
                 return mm === todayMM && dd === todayDD;
@@ -78,22 +74,39 @@ jobs:
               return;
             }
 
-            // Armar lista
+            // Armar mensaje Telegram
             const lista = cumpleaneros.map(c => {
-              const tel = c.phone ? `📱 ${c.phone}` : '';
-              const sellos = c.club.sellos !== undefined ? `⭐ ${c.club.sellos} sellos` : '';
-              return `- **${c.name}** ${tel} ${sellos}`.trim();
+              const tel = c.phone ? ` · 📱 ${c.phone}` : '';
+              const sellos = c.club.sellos !== undefined ? ` · ⭐ ${c.club.sellos} sellos` : '';
+              return `• *${c.name}*${tel}${sellos}`;
             }).join('\n');
 
-            const body = `## 🎂 Socios de Club Candela que cumplen años hoy, ${todayLabel}\n\n${lista}\n\n---\n*Generado automáticamente · Sistema Candela Café & Patisserie*`;
+            const mensaje = `🎂 *Cumpleaños Club Candela · ${todayLabel}*\n\n${lista}\n\n_Recordá saludar y ofrecer el beneficio del club_ 🎁`;
 
-            // Crear issue en GitHub (GitHub envía email automáticamente)
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `🎂 Cumpleaños Club Candela · ${todayLabel} · ${cumpleaneros.length} socio${cumpleaneros.length > 1 ? 's' : ''}`,
-              body,
-              labels: ['cumpleaños'],
+            // Enviar mensaje por Telegram
+            const telegramUrl = `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`;
+            const payload = JSON.stringify({
+              chat_id: process.env.TELEGRAM_CHAT_ID,
+              text: mensaje,
+              parse_mode: 'Markdown',
             });
 
-            console.log(`Issue creado: ${cumpleaneros.length} cumpleaños hoy.`);
+            await new Promise((resolve, reject) => {
+              const req = https.request(telegramUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
+              }, (res) => {
+                let body = '';
+                res.on('data', chunk => body += chunk);
+                res.on('end', () => {
+                  const r = JSON.parse(body);
+                  if (r.ok) { console.log('Telegram enviado OK'); resolve(); }
+                  else reject(new Error('Telegram error: ' + JSON.stringify(r)));
+                });
+              });
+              req.on('error', reject);
+              req.write(payload);
+              req.end();
+            });
+
+            console.log(`Notificación enviada: ${cumpleaneros.length} cumpleaños hoy.`);
