@@ -215,6 +215,16 @@
   #moveHint.show{display:flex}
   #moveHint button{margin-left:auto;border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);background:transparent;color:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:5px 10px;border-radius:8px}
   .notebanner{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .feriadoBand{flex-basis:100%;display:flex;gap:8px;flex-wrap:wrap}
+  .feriadoBand:empty{display:none}
+  .fbItem{border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600;border:1px solid}
+  .fbFer{background:var(--crit-soft);color:var(--crit);border-color:color-mix(in srgb,var(--crit) 35%,transparent)}
+  .fbNoLab{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 35%,transparent)}
+  .fbLargo{background:var(--ok-soft);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
+  .avisoSemana{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;background:var(--panel);border:2px solid var(--accent);border-radius:14px;padding:12px 16px;margin-bottom:18px;font-size:13.5px;line-height:1.5;box-shadow:var(--shadow)}
+  .avisoSemana:empty{display:none}
+  .avisoSemana .avTxt{flex:1;min-width:220px;display:flex;flex-direction:column;gap:4px}
+  .avisoSemana .avCrit{color:var(--crit);font-weight:700}
   .notebanner:empty{display:none}
   .notebanner .nb{background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:600}
   .stickyAdd{display:flex;gap:8px;margin-top:4px}
@@ -401,6 +411,7 @@
     <button class="btn ghost icon-btn" id="btnImport" title="Importar datos desde otro dispositivo">📥</button>
     <button class="btn ghost icon-btn" id="btnTheme" title="Cambiar tema">◐</button>
     <button class="btn ghost icon-btn" id="btnLogout" title="Cerrar sesión">🚪</button>
+    <div class="feriadoBand" id="feriadoBand" aria-live="polite"></div>
   </header>
 
   <div class="layout">
@@ -637,6 +648,7 @@
         <span id="moveHintMsg">✥ Modo mover activado: tocá a alguien para levantarlo, después tocá el casillero donde lo querés poner.</span>
         <button type="button" id="moveHintCancel">Salir</button>
       </div>
+      <div class="avisoSemana no-print" id="avisoSemana"></div>
       <section class="card alerts no-print" style="margin-bottom:18px">
         <h2>Auditoría en vivo</h2>
         <div class="counts" id="counts"></div>
@@ -783,14 +795,19 @@ window.CloudSync = makeSyncChannel(configRef, "cloudsync-update"); // config glo
 // que siempre termine escuchando/guardando en la semana correcta, sin coordinación previa.
 let activeWeekChannel = null, activeWeekKey = null;
 window.CloudSyncWeek = {
+  // Escuchar una semana sin subir nada: al abrirla llega lo que hay en la nube (y si no existe,
+  // applyRemoteWeek sube la de este dispositivo). Antes solo se conectaba al primer cambio, así que
+  // una semana recién creada no llegaba a la nube ni se veía en otro dispositivo hasta editarla.
+  watch(weekKey){
+    if(activeWeekKey===weekKey)return;
+    if(activeWeekChannel)activeWeekChannel.stop();
+    activeWeekKey = weekKey;
+    // el detail lleva la key para que quien escucha pueda ignorar ecos tardíos de una semana de
+    // la que ya te fuiste (si saltás rápido de semana en semana, puede llegar una respuesta vieja).
+    activeWeekChannel = makeSyncChannel(ref(db,"cronogramas/weeks/"+weekKey), "weeksync-update", remote=>({key:weekKey,data:remote}));
+  },
   push(weekKey, stateObj){
-    if(activeWeekKey!==weekKey){
-      if(activeWeekChannel)activeWeekChannel.stop();
-      activeWeekKey = weekKey;
-      // el detail lleva la key para que quien escucha pueda ignorar ecos tardíos de una semana de
-      // la que ya te fuiste (si saltás rápido de semana en semana, puede llegar una respuesta vieja).
-      activeWeekChannel = makeSyncChannel(ref(db,"cronogramas/weeks/"+weekKey), "weeksync-update", remote=>({key:weekKey,data:remote}));
-    }
+    this.watch(weekKey);
     activeWeekChannel.push(stateObj);
     // índice liviano para el selector de semanas — no hace falta esperar a que confirme
     set(ref(db,"cronogramas/weekIndex/"+weekKey),{weekStart:stateObj.weekStart||"",label:stateObj.label||""}).catch(()=>{});
@@ -876,7 +893,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-10-23 sync-equipo";
+const APP_VERSION="2026-11-16 semana-nueva";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -917,9 +934,11 @@ function maxTurnoFor(loc,shift,role){
   return MAX_TURNO[role];
 }
 // Feriados nacionales de Argentina (Ley 27.399): "feriado" es de pago obligatorio si se trabaja;
-// "no_laborable" (puente turístico) es opcional para el empleador. Verificado 2026 completo; 2027
-// con los inamovibles/trasladables ya confirmados (los puentes de 2027 todavía no fueron
-// decretados al momento de cargar esto — agregarlos acá cuando se confirmen).
+// "no_laborable" (puente turístico, Jueves Santo) es opcional para el empleador. 2026 verificado con
+// el calendario oficial. 2027: inamovibles y trasladables según la ley (los trasladables de martes y
+// miércoles pasan al lunes anterior; los de jueves y viernes, al lunes siguiente). Los puentes
+// turísticos de 2027 todavía no fueron publicados (nov. 2026): agregarlos acá cuando salgan.
+// Hay que sumar el año siguiente una vez por año.
 const FERIADOS_AR=[
   {fecha:"2026-01-01",nombre:"Año Nuevo",tipo:"feriado"},
   {fecha:"2026-02-16",nombre:"Carnaval",tipo:"feriado"},
@@ -930,6 +949,7 @@ const FERIADOS_AR=[
   {fecha:"2026-04-03",nombre:"Viernes Santo",tipo:"feriado"},
   {fecha:"2026-05-01",nombre:"Día del Trabajador",tipo:"feriado"},
   {fecha:"2026-05-25",nombre:"Día de la Revolución de Mayo",tipo:"feriado"},
+  {fecha:"2026-06-15",nombre:"Paso a la Inmortalidad del Gral. Güemes",tipo:"feriado"},
   {fecha:"2026-06-20",nombre:"Paso a la Inmortalidad del Gral. Belgrano",tipo:"feriado"},
   {fecha:"2026-07-09",nombre:"Día de la Independencia",tipo:"feriado"},
   {fecha:"2026-07-10",nombre:"Puente turístico",tipo:"no_laborable"},
@@ -943,15 +963,17 @@ const FERIADOS_AR=[
   {fecha:"2027-02-08",nombre:"Carnaval",tipo:"feriado"},
   {fecha:"2027-02-09",nombre:"Carnaval",tipo:"feriado"},
   {fecha:"2027-03-24",nombre:"Día Nacional de la Memoria",tipo:"feriado"},
+  {fecha:"2027-03-25",nombre:"Jueves Santo",tipo:"no_laborable"},
   {fecha:"2027-03-26",nombre:"Viernes Santo",tipo:"feriado"},
   {fecha:"2027-04-02",nombre:"Día del Veterano y los Caídos en Malvinas",tipo:"feriado"},
   {fecha:"2027-05-01",nombre:"Día del Trabajador",tipo:"feriado"},
   {fecha:"2027-05-25",nombre:"Día de la Revolución de Mayo",tipo:"feriado"},
   {fecha:"2027-06-20",nombre:"Paso a la Inmortalidad del Gral. Belgrano",tipo:"feriado"},
+  {fecha:"2027-06-21",nombre:"Paso a la Inmortalidad del Gral. Güemes",tipo:"feriado"},
   {fecha:"2027-07-09",nombre:"Día de la Independencia",tipo:"feriado"},
   {fecha:"2027-08-16",nombre:"Paso a la Inmortalidad del Gral. San Martín",tipo:"feriado"},
   {fecha:"2027-10-11",nombre:"Día del Respeto a la Diversidad Cultural",tipo:"feriado"},
-  {fecha:"2027-11-22",nombre:"Día de la Soberanía Nacional",tipo:"feriado"},
+  {fecha:"2027-11-20",nombre:"Día de la Soberanía Nacional",tipo:"feriado"}, // cae sábado: la ley no lo traslada
   {fecha:"2027-12-08",nombre:"Inmaculada Concepción de María",tipo:"feriado"},
   {fecha:"2027-12-25",nombre:"Navidad",tipo:"feriado"},
 ];
@@ -964,6 +986,28 @@ function feriadosEnSemana(){
   }
   return out;
 }
+// Fines de semana largos que tocan la semana cargada: 3 o más días seguidos sin actividad general
+// (sábado, domingo, feriado o no laborable) con al menos un feriado/no laborable en el medio.
+// Puede empezar en la semana anterior o terminar en la siguiente: igual se avisa en esta.
+function esDiaLibre(iso){const g=new Date(iso+"T00:00:00").getDay();return g===0||g===6||FERIADOS_AR.some(f=>f.fecha===iso);}
+function findesLargosEnSemana(){
+  if(!state.weekStart)return[];
+  const out=[],vistos=new Set();
+  for(let d=0;d<7;d++){
+    const iso=isoDe(d);
+    if(!esDiaLibre(iso))continue;
+    let desde=iso,hasta=iso;
+    while(esDiaLibre(addDaysISO(desde,-1)))desde=addDaysISO(desde,-1);
+    while(esDiaLibre(addDaysISO(hasta,1)))hasta=addDaysISO(hasta,1);
+    if(vistos.has(desde))continue;
+    vistos.add(desde);
+    const dias=[];for(let x=desde;x<=hasta;x=addDaysISO(x,1))dias.push(x);
+    const motivos=FERIADOS_AR.filter(f=>dias.includes(f.fecha));
+    if(dias.length>=3&&motivos.length)out.push({desde,hasta,dias:dias.length,motivos});
+  }
+  return out;
+}
+const DIA_CORTO_ISO=iso=>DAYS[(new Date(iso+"T00:00:00").getDay()+6)%7][2].toLowerCase();
 // loc: 'SL' | 'SLA' | 'both'
 // PEOPLE_BASE es la lista fija del código. PEOPLE es la que se usa en todo el resto de la app —
 // se recalcula (rebuildPeople, más abajo) sumándole state.peopleExtra, que es donde vive la gente
@@ -1175,8 +1219,10 @@ function loadWeek(key,seedWeekObj){
   const weekObj=seedWeekObj||localWeeks[key]||blankWeek(key===FALLBACK_WEEK_KEY?"":key);
   Object.assign(state,weekObj); // weekObj siempre trae los 8 campos de WEEK_FIELDS completos
   if(!state.weekStart&&key!==FALLBACK_WEEK_KEY)state.weekStart=key;
-  runMigrations(); // regenera los refuerzos automáticos de medio turno para los días de ESTA semana
+  // primero las ausencias por vacaciones y después las migraciones: así los refuerzos automáticos de
+  // medio turno no se generan para los días en que esa persona está de vacaciones.
   aplicarAusenciasPorVacaciones();
+  runMigrations(); // regenera los refuerzos automáticos de medio turno para los días de ESTA semana
   useHistoryBucket(key);
   fillPersonSelects();
   document.getElementById("weekLabel").value=state.label||"";
@@ -1185,6 +1231,7 @@ function loadWeek(key,seedWeekObj){
   renderMini();render();
   persist();
   suspendHistory=false;
+  if(key!==FALLBACK_WEEK_KEY&&window.CloudSyncWeek&&window.CloudSyncWeek.watch)window.CloudSyncWeek.watch(key);
 }
 // crea una semana nueva para "dateStr" (preguntando si copiar la grilla actual como base) o, si ya
 // existe una semana con esa fecha, simplemente salta a ella — nunca pisa la que ya había.
@@ -1202,7 +1249,7 @@ async function crearOAbrirSemana(dateStr){
   if(!dateStr)return;
   const localWeeks=loadLocalWeeks();
   if(Object.prototype.hasOwnProperty.call(localWeeks,dateStr)){loadWeek(dateStr);toast("Semana abierta");return;}
-  let remoteWeek=null,remoteConfirmed=weekIndexCache&&Object.prototype.hasOwnProperty.call(weekIndexCache,dateStr);
+  let remoteWeek=null,remoteConfirmed=false;
   // hay conexión real con la nube si el módulo de Firebase llegó a cargar (window.CloudSync existe
   // apenas carga, antes de que se resuelva ningún pedido) — si NO hay conexión, seguimos con el
   // criterio local nomás, como el resto de la app sin internet (nada se sube hasta que vuelva la
@@ -1212,7 +1259,9 @@ async function crearOAbrirSemana(dateStr){
   // contra la nube directamente (no alcanza con weekIndexCache: si la página recién cargó, todavía
   // puede no haber llegado). Sin este chequeo, una semana que SÍ existe pero que este dispositivo
   // todavía no vio se trataba como nueva y se pisaba en blanco al guardar — pérdida de datos real.
-  if(!remoteConfirmed&&online&&window.CloudWeekRead){
+  // Siempre se lee la semana de la nube (no alcanza con el índice): si el índice dice que existe pero
+  // no se la trae, se la trataba como nueva y se la volvía a armar encima de la real.
+  if(online&&window.CloudWeekRead){
     try{
       remoteWeek=await window.CloudWeekRead.get(dateStr);
       remoteConfirmed=true;
@@ -1233,7 +1282,10 @@ async function crearOAbrirSemana(dateStr){
   }
   const seed=blankWeek(dateStr);
   const prevKey=addDaysISO(dateStr,-7);
-  const prevWeek=localWeeks[prevKey]||(prevKey===weekKeyOf(state)?weekPart(state):null);
+  toast("Armando la semana nueva…");
+  // la semana anterior: la que está abierta (si es esa), la guardada en este dispositivo o, si se
+  // armó en otro, la de la nube. Antes solo se miraba este dispositivo y arrancaba vacía.
+  const prevWeek=(prevKey===weekKeyOf(state)?weekPart(state):null)||await fetchWeekData(prevKey);
   const copio=!!(prevWeek&&Object.keys(prevWeek.assign||{}).length);
   if(prevWeek){
     seed.assign=JSON.parse(JSON.stringify(prevWeek.assign||{}));
@@ -1243,8 +1295,102 @@ async function crearOAbrirSemana(dateStr){
     // runMigrations→regenerateFixedHalfExtras), copiarlos de acá también los duplicaría.
     seed.ex=JSON.parse(JSON.stringify((prevWeek.ex||[]).filter(e=>!e.auto)));
   }
+  // quien tiene vacaciones confirmadas sale de la grilla y de los refuerzos SOLO esos días; el
+  // lugar queda vacío (cuenta como "sin cubrir") para elegir el reemplazo a mano.
+  const revisado=online?await esperarVacaciones():vacacionesLlegaron;
+  const vac=revisado?vacacionesConfirmadas(dateStr):{};
+  let vaciados=0,refuerzos=0;
+  const quitados=Object.keys(vac).sort((a,b)=>a.localeCompare(b,"es")).map(n=>{
+    const dias=vac[n];
+    Object.keys(seed.assign).forEach(k=>{if(seed.assign[k]===n&&dias.includes(+k.split("|")[0])){delete seed.assign[k];vaciados++;}});
+    const antes=seed.ex.length;
+    seed.ex=seed.ex.filter(e=>!(e.n===n&&dias.includes(e.day)));
+    refuerzos+=antes-seed.ex.length;
+    return{n,dias};
+  });
+  // El aviso queda guardado con la semana (se ve igual desde cualquier dispositivo). Va dentro de
+  // "comments" porque es un campo que todas las versiones del sitio conservan al guardar: un
+  // dispositivo con una copia vieja de la página no lo borra.
+  seed.comments[AVISO_KEY]=JSON.stringify({ts:Date.now(),desde:prevWeek?prevKey:null,copio,revisado,quitados,vaciados,refuerzos,visto:false});
   loadWeek(dateStr,seed);
   toast(copio?"Semana nueva lista (copiada de la semana anterior)":"Semana nueva lista (no había una semana anterior para copiar)");
+}
+
+/* ---------------- AVISO DE SEMANA NUEVA ---------------- */
+const AVISO_KEY="_avisoSemanaNueva";
+let vacacionesLlegaron=false;
+function esperarVacaciones(ms=6000){
+  if(vacacionesLlegaron)return Promise.resolve(true);
+  return new Promise(ok=>{
+    const listo=()=>{clearTimeout(t);window.removeEventListener("vacsync-update",listo);ok(true);};
+    const t=setTimeout(()=>{window.removeEventListener("vacsync-update",listo);ok(false);},ms);
+    window.addEventListener("vacsync-update",listo);
+  });
+}
+function listaVacaciones(){const t=vacacionesCache&&vacacionesCache.taken;return Array.isArray(t)?t:Object.values(t||{});}
+// {nombre:[días 0-6]} de quienes tienen vacaciones CONFIRMADAS en la semana que empieza en weekStart
+// (las "a confirmar" no se tocan; tampoco un día que sacaste a mano de las ausencias).
+function vacacionesConfirmadas(weekStart){
+  const out={};
+  for(let d=0;d<7;d++){
+    const iso=addDaysISO(weekStart,d);
+    listaVacaciones().forEach(t=>{
+      if(!t||t.estado!=="confirmada"||!BY_NAME[t.n])return;
+      if(!(t.desde<=iso&&iso<=t.hasta))return;
+      if(state.ausObviada&&state.ausObviada[t.n+"|"+iso])return;
+      const l=out[t.n]=out[t.n]||[];
+      if(!l.includes(d))l.push(d);
+    });
+  }
+  return out;
+}
+// [0,1,2,4] → "lun a mié, vie"
+function rangoDias(dias){
+  const ds=[...dias].sort((a,b)=>a-b),partes=[];
+  for(let i=0;i<ds.length;){
+    let j=i;while(j+1<ds.length&&ds[j+1]===ds[j]+1)j++;
+    const a=DAYS[ds[i]][2].toLowerCase(),b=DAYS[ds[j]][2].toLowerCase();
+    partes.push(j>i?`${a} a ${b}`:a);
+    i=j+1;
+  }
+  return partes.join(", ");
+}
+function leerAviso(){try{return JSON.parse(state.comments&&state.comments[AVISO_KEY]||"null");}catch(e){return null;}}
+function renderAvisoSemana(){
+  const el=document.getElementById("avisoSemana");if(!el)return;
+  const a=leerAviso();
+  if(!a||a.visto){el.innerHTML="";return;}
+  const fecha=new Date(a.ts).toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"});
+  const lineas=[];
+  lineas.push(a.desde
+    ? `🆕 Semana nueva, copiada de la semana ${fmtWeekRange(a.desde)}${a.copio?"":" (que estaba vacía)"} · creada el ${fecha}.`
+    : `🆕 Semana nueva · creada el ${fecha}. No había una semana anterior para copiar: arrancó vacía.`);
+  if(!a.revisado)lineas.push(`<span class="avCrit">⚠️ No se pudieron revisar las vacaciones (sin conexión con el módulo Vacaciones). Revisá a mano quién está de vacaciones esta semana.</span>`);
+  else if(!a.quitados.length)lineas.push("🏖️ Nadie tiene vacaciones confirmadas esta semana.");
+  else{
+    lineas.push(`🏖️ <b>Se sacaron por vacaciones:</b> ${a.quitados.map(q=>`${escAttr(q.n)} (${rangoDias(q.dias)})`).join(" · ")}.`);
+    const partes=[];
+    if(a.vaciados)partes.push(`${a.vaciados} ${a.vaciados===1?"lugar quedó vacío":"lugares quedaron vacíos"} en la grilla`);
+    if(a.refuerzos)partes.push(`${a.refuerzos} ${a.refuerzos===1?"refuerzo":"refuerzos"} menos`);
+    lineas.push(partes.length?`<span class="avCrit">👉 ${partes.join(" y ")}: elegí los reemplazos.</span>`:"No estaban asignados en la grilla copiada.");
+  }
+  el.innerHTML=`<div class="avTxt">${lineas.map(l=>`<div>${l}</div>`).join("")}</div>
+    <button type="button" class="btn sm" id="avisoListo" title="Ocultar este aviso en todos los dispositivos">✓ Listo, ya lo revisé</button>`;
+  document.getElementById("avisoListo").onclick=()=>{
+    const x=leerAviso();if(!x)return;
+    x.visto=true;state.comments[AVISO_KEY]=JSON.stringify(x);
+    persist();renderAvisoSemana();
+  };
+}
+function renderFeriadoBand(){
+  const el=document.getElementById("feriadoBand");if(!el)return;
+  const items=[];
+  feriadosEnSemana().forEach(f=>items.push(f.tipo==="feriado"
+    ? `<span class="fbItem fbFer">🎉 <b>${DAYS[f.dia][1]} ${fmtFechaCorta(f.fecha)}</b>: ${escAttr(f.nombre)} — feriado nacional</span>`
+    : `<span class="fbItem fbNoLab">🗓️ <b>${DAYS[f.dia][1]} ${fmtFechaCorta(f.fecha)}</b>: ${escAttr(f.nombre)} — no laborable (optativo)</span>`));
+  findesLargosEnSemana().forEach(r=>items.push(
+    `<span class="fbItem fbLargo">🏖️ <b>Fin de semana largo</b>: ${DIA_CORTO_ISO(r.desde)} ${fmtFechaCorta(r.desde)} al ${DIA_CORTO_ISO(r.hasta)} ${fmtFechaCorta(r.hasta)} (${r.dias} días)</span>`));
+  el.innerHTML=items.join("");
 }
 // deshacer/rehacer local: solo tocan los datos de ESTA semana (nunca la config global ni otra
 // semana) — restoreLocalWeekSnapshot no re-suscribe ni cambia qué semana está activa.
@@ -1663,6 +1809,8 @@ function render(){
   renderAlerts(v,empty);
   renderStickyNotes();
   renderNotes();
+  renderFeriadoBand();
+  renderAvisoSemana();
   renderSched(v.worked,empty);
   renderTeam(v);
   renderPairPreview();
@@ -1670,7 +1818,7 @@ function render(){
 function renderNotes(){
   const el=document.getElementById("noteBanner");if(!el)return;
   const items=[];
-  feriadosEnSemana().forEach(f=>items.push(`${f.tipo==="feriado"?"🎉":"🗓️"} ${DAYS[f.dia][1]} ${fmtFechaCorta(f.fecha)}: ${f.nombre}${f.tipo==="no_laborable"?" (no laborable, opcional)":" — feriado nacional"}`));
+  // los feriados y fines de semana largos van en la banda fija de arriba (renderFeriadoBand)
   state.rules.filter(r=>r.type==="cierre").forEach(r=>items.push(`🔒 ${DAYS[r.day][1]} · cierra ${r.shift==="M"?"a la mañana":r.shift==="T"?"a la tarde":"todo el día"} · ${r.loc==="both"?"ambos locales":r.loc==="SL"?"San Luis":"SLA"}`));
   state.rules.filter(r=>r.type==="nota").forEach(r=>items.push(`📌 ${DAYS[r.day][1]}: ${r.text}`));
   el.innerHTML=items.map(t=>`<div class="nb">${t}</div>`).join("");
@@ -3246,7 +3394,7 @@ window.addEventListener("cloudsync-saving",()=>setSyncStatus("saving"));
 window.addEventListener("cloudsync-saved",()=>setSyncStatus("ok"));
 window.addEventListener("cloudsync-error",e=>showSyncError(e.detail));
 window.addEventListener("vacsync-update",e=>{
-  vacacionesCache=e.detail;
+  vacacionesCache=e.detail;vacacionesLlegaron=true;
   if(aplicarAusenciasPorVacaciones()){renderMini();render();persist();toast("Ausencias por vacaciones actualizadas 🏖️");}
 });
 document.getElementById("syncBannerClose").addEventListener("click",()=>document.getElementById("syncBanner").classList.remove("show"));
