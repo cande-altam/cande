@@ -1912,7 +1912,7 @@ const CSS_FICHA = `
   @page{size:A4;margin:0}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body{font-family:Helvetica,Arial,sans-serif;color:#22201F;font-size:10.5pt;background:#fff}
-  .ficha{padding:14mm 15mm 12mm;min-height:297mm;position:relative;page-break-after:always;break-after:page}
+  .ficha{padding:14mm 15mm 12mm;page-break-after:always;break-after:page}
   .ficha:last-child{page-break-after:auto;break-after:auto}
   header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #E15D46;padding-bottom:8px;margin-bottom:16px}
   .marca{display:flex;align-items:center;gap:8px}.marca img{height:30px}
@@ -1945,8 +1945,8 @@ const CSS_FICHA = `
   .aler i{width:12px;height:12px;border:1.3px solid #ccc9b5;border-radius:2px;font-style:normal;font-size:8pt;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .aler .on i{background:#E15D46;border-color:#E15D46;color:#fff}
   .contiene{margin-top:8px;font-size:9pt}.contiene span{display:block;color:#9a9888;font-size:7.5pt;margin-top:2px}
-  footer{position:absolute;left:15mm;right:15mm;bottom:8mm;display:flex;justify-content:space-between;font-size:7.5pt;color:#9a9888;border-top:1px solid #e5e1cc;padding-top:4px}
-  @media screen{body{background:#e9e7df}.ficha{background:#fff;width:210mm;margin:12px auto;box-shadow:0 2px 12px rgba(0,0,0,.12)}}
+  footer{margin-top:14px;display:flex;page-break-inside:avoid;justify-content:space-between;font-size:7.5pt;color:#9a9888;border-top:1px solid #e5e1cc;padding-top:4px}
+  @media screen{body{background:#e9e7df}.ficha{background:#fff;width:210mm;min-height:297mm;margin:12px auto;box-shadow:0 2px 12px rgba(0,0,0,.12)}}
 `;
 
 // ── Estilos de la vista ──────────────────────────────────────
