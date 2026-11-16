@@ -669,7 +669,7 @@ function pintarLista(c) {
     <div class="rec-actions" style="margin:20px 0 16px">
       <button class="btn btn-primary" data-act="nueva">＋ Nueva receta</button>
       <button class="btn btn-ghost" data-act="importar">📥 Importar bases de Costeo</button>
-      <button class="btn btn-ghost" data-act="imprimir-todo">🖨️ Imprimir ${categoriaActual ? `“${esc(categoriaActual)}”` : "recetario"}</button>
+      <button class="btn btn-ghost" data-act="imprimir-todo">⬇️ Descargar ${categoriaActual ? `“${esc(categoriaActual)}”` : "recetario"} (PDF)</button>
     </div>
     ${enInicio ? pintarAvisoTraspaso() : ""}
     ${enInicio ? pintarBorradores() : ""}
@@ -1505,11 +1505,14 @@ async function onClick(ev) {
     case "quitar-foto":
       draft.foto = null; draft.fotoCambiada = true; marcarCambio(); pintarFotoEditor();
       break;
-    case "pdf": imprimirFichas([b.dataset.id]); break;
+    case "pdf": descargarPdf([b.dataset.id]); break;
     case "imprimir-todo": {
-      const ids = recetasFiltradas().map(r => r.id);
-      if (!ids.length) return toast("No hay recetas para imprimir", "warn");
-      imprimirFichas(ids);
+      // Mismo orden que el inicio del recetario: por categoría y, dentro de cada una, alfabético.
+      const ids = recetasFiltradas()
+        .sort((a, b) => compararCategorias(categoriaDe(a), categoriaDe(b)) || (a.nombre || "").localeCompare(b.nombre || "", "es"))
+        .map(r => r.id);
+      if (!ids.length) return toast("No hay recetas para descargar", "warn");
+      descargarPdf(ids, { categoria: categoriaActual });
       break;
     }
   }
@@ -1830,6 +1833,307 @@ async function impConfirmar() {
 }
 
 // ── 4. Ficha técnica (PDF) ───────────────────────────────────
+// El PDF se arma acá mismo (pdfmake) y se descarga como archivo. Imprimiendo la página, Safari
+// (iPad) le agregaba el título, el link del sitio y la fecha en cada hoja, y eso no se puede apagar
+// desde la página. imprimirFichas() queda como respaldo si la librería no carga (sin internet).
+const PDFMAKE_BASES = ["https://cdn.jsdelivr.net/npm/pdfmake@0.2.20/build/", "https://unpkg.com/pdfmake@0.2.20/build/"];
+let _pdfMake = null;
+function cargarPdfMake() {
+  if (_pdfMake) return _pdfMake;
+  const script = src => new Promise((ok, mal) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = ok;
+    s.onerror = () => { s.remove(); mal(new Error("No se pudo cargar " + src)); };
+    document.head.appendChild(s);
+  });
+  _pdfMake = PDFMAKE_BASES.reduce((p, base) => p.catch(async () => {
+    if (!window.pdfMake?.createPdf) await script(base + "pdfmake.min.js");
+    await script(base + "vfs_fonts.js");
+    if (!window.pdfMake?.createPdf) throw new Error("pdfmake vacío");
+    return window.pdfMake;
+  }), Promise.reject(new Error("inicio")));
+  _pdfMake.catch(() => { _pdfMake = null; });
+  return _pdfMake;
+}
+
+// pdfmake solo acepta JPEG o PNG en data URL: lo demás (otro formato, una URL) pasa por un canvas.
+function imagenParaPdf(src, tipo = "jpeg") {
+  if (!src) return Promise.resolve(null);
+  if (/^data:image\/(jpeg|jpg|png);/i.test(src)) return Promise.resolve(src);
+  return new Promise(ok => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const cv = document.createElement("canvas");
+        cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+        cv.getContext("2d").drawImage(img, 0, 0);
+        ok(cv.toDataURL("image/" + tipo, 0.88));
+      } catch { ok(null); }
+    };
+    img.onerror = () => ok(null);
+    img.src = src;
+  });
+}
+
+function nombreArchivoPdf(rs, categoria) {
+  const limpio = t => String(t || "").replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim();
+  if (rs.length === 1) return `Ficha ${limpio(rs[0].nombre)}.pdf`;
+  return `Recetario ${limpio(areaLabel(area))}${categoria ? " - " + limpio(categoria) : ""}.pdf`;
+}
+
+let _pdfTicket = null;
+let _pdfUrl = null;
+function modalPdf(html) {
+  let m = document.getElementById("rec-pdf-modal");
+  if (!m) {
+    m = document.createElement("div");
+    m.id = "rec-pdf-modal"; m.className = "rec-pdf-modal";
+    m.addEventListener("click", ev => {
+      if (ev.target === m || ev.target.closest('[data-pdf="cerrar"]')) cerrarModalPdf();
+      const imp = ev.target.closest('[data-pdf="imprimir"]');
+      if (imp) { cerrarModalPdf(); imprimirFichas(JSON.parse(imp.dataset.ids)); }
+    });
+    document.body.appendChild(m);
+  }
+  m.innerHTML = `<div class="rec-pdf-box">${html}</div>`;
+  return m;
+}
+function cerrarModalPdf() {
+  _pdfTicket = null;
+  document.getElementById("rec-pdf-modal")?.remove();
+  // El link se suelta un rato después: en el iPad la descarga puede seguir leyendo el archivo.
+  if (_pdfUrl) { const u = _pdfUrl; _pdfUrl = null; setTimeout(() => URL.revokeObjectURL(u), 60000); }
+}
+
+async function descargarPdf(ids, { categoria = "" } = {}) {
+  const rs = ids.map(id => recetas[id]).filter(Boolean);
+  if (!rs.length) return;
+  cerrarModalPdf();
+  const ticket = {}; _pdfTicket = ticket;
+  const nombre = nombreArchivoPdf(rs, categoria);
+  modalPdf(`<div class="rec-pdf-tit">Preparando el PDF…</div>
+    <div class="rec-help">${esc(nombre)} · ${rs.length} ${rs.length === 1 ? "receta" : "recetas"}. Puede tardar unos segundos.</div>
+    <div class="rec-actions" style="margin-top:14px"><button class="btn btn-ghost btn-sm" data-pdf="cerrar">Cancelar</button></div>`);
+  try {
+    const [pdfMake] = await Promise.all([cargarPdfMake(), ...rs.filter(r => r.tieneFoto).map(r => cargarFoto(r.id))]);
+    const imgs = {};
+    await Promise.all(rs.filter(r => r.tieneFoto).map(async r => { imgs[r.id] = await imagenParaPdf(fotos[r.id], "jpeg"); }));
+    const logo = await imagenParaPdf(logoComoDataUrl() || "logo.png", "png");
+    const info = { paginas: 0 };
+    const dd = documentoPdf(rs, { logo, imgs, portada: rs.length > 1, categoria, info });
+    const blob = await new Promise((ok, mal) => { try { pdfMake.createPdf(dd).getBlob(ok); } catch (e) { mal(e); } });
+    if (_pdfTicket !== ticket) return;   // lo cancelaron mientras se armaba
+    _pdfUrl = URL.createObjectURL(blob);
+    modalPdf(`<div class="rec-pdf-tit">✓ PDF listo</div>
+      <div class="rec-help">${esc(nombre)} · ${info.paginas} ${info.paginas === 1 ? "página" : "páginas"}</div>
+      <div class="rec-actions" style="margin-top:14px">
+        <a class="btn btn-primary" href="${_pdfUrl}" download="${esc(nombre)}" id="rec-pdf-link">⬇️ Descargar PDF</a>
+        <button class="btn btn-ghost btn-sm" data-pdf="cerrar">Cerrar</button>
+      </div>`);
+  } catch (e) {
+    console.error(e);
+    if (_pdfTicket !== ticket) return;
+    modalPdf(`<div class="rec-pdf-tit">No se pudo armar el PDF</div>
+      <div class="rec-help">Revisá la conexión a internet y probá de nuevo. Mientras tanto podés imprimir con el formato anterior.</div>
+      <div class="rec-actions" style="margin-top:14px">
+        <button class="btn btn-primary btn-sm" data-pdf="imprimir" data-ids="${esc(JSON.stringify(rs.map(r => r.id)))}">🖨️ Imprimir</button>
+        <button class="btn btn-ghost btn-sm" data-pdf="cerrar">Cerrar</button>
+      </div>`);
+  }
+}
+
+// ── Diseño del PDF (mismo que la ficha impresa) ──
+const PDF = {
+  rojo: "#E15D46", texto: "#22201F", gris: "#9a9888", meta: "#6b6a5e", linea: "#e5e1cc", crema: "#faf9f3",
+  ancho: 595.28 - 2 * 42.5,   // A4 menos márgenes de 15 mm
+};
+const pdfLinea = (color = PDF.linea, grosor = 1, ancho = PDF.ancho) =>
+  ({ canvas: [{ type: "line", x1: 0, y1: 0, x2: ancho, y2: 0, lineWidth: grosor, lineColor: color }] });
+
+function documentoPdf(rs, { logo, imgs, portada, categoria, info }) {
+  const areaTxt = areaLabel(area);
+  const content = [];
+  if (portada) content.push(...portadaPdf(rs, logo, categoria));
+  let catAnterior = null;
+  rs.forEach((r, i) => {
+    const cat = categoriaDe(r);
+    const primeraDeCat = portada && cat !== catAnterior;
+    catAnterior = cat;
+    content.push({ stack: fichaPdf(r, logo, imgs[r.id], { portada, primeraDeCat, cat }), pageBreak: portada || i > 0 ? "before" : undefined });
+  });
+  return {
+    pageSize: "A4",
+    pageMargins: [42.5, 40, 42.5, 40],
+    info: { title: portada ? `Recetario ${areaTxt}${categoria ? " - " + categoria : ""}` : `Ficha técnica — ${rs[0].nombre}`, author: "Candela" },
+    defaultStyle: { font: "Roboto", fontSize: 10.5, color: PDF.texto },
+    content,
+    footer: (pag, total) => {
+      info.paginas = total;
+      return {
+        margin: [42.5, 8, 42.5, 0],
+        stack: [
+          pdfLinea(),
+          { columns: [
+            { text: portada && pag === 1 ? `Candela · Recetario de ${areaTxt.toLowerCase()}` : `Candela · Ficha técnica de ${areaTxt.toLowerCase()}` },
+            { text: `Página ${pag} de ${total}`, alignment: "right" },
+          ], fontSize: 7.5, color: PDF.gris, margin: [0, 4, 0, 0] },
+        ],
+      };
+    },
+    // Un título de sección no queda solo al pie de una hoja.
+    pageBreakBefore: (nodo, siguientes) => nodo.headlineLevel === 1 && siguientes.length <= 2,
+  };
+}
+
+function portadaPdf(rs, logo, categoria) {
+  const cats = new Set(rs.map(categoriaDe));
+  return [
+    logo ? { image: logo, fit: [70, 70], alignment: "center", margin: [0, 30, 0, 10] } : { text: "", margin: [0, 30, 0, 0] },
+    { text: "Candela", fontSize: 24, bold: true, alignment: "center" },
+    { text: "CAFÉ & PATISSERIE", fontSize: 8, color: PDF.gris, characterSpacing: 2, alignment: "center", margin: [0, 2, 0, 18] },
+    { canvas: [{ type: "line", x1: PDF.ancho / 2 - 30, y1: 0, x2: PDF.ancho / 2 + 30, y2: 0, lineWidth: 2, lineColor: PDF.rojo }] },
+    { text: `Recetario · ${areaLabel(area)}${categoria ? " · " + categoria : ""}`, fontSize: 20, bold: true, alignment: "center", margin: [0, 18, 0, 4] },
+    { text: `Fichas técnicas · ${rs.length} recetas${cats.size > 1 ? ` en ${cats.size} categorías` : ""}`, fontSize: 10, color: PDF.meta, alignment: "center", margin: [0, 0, 0, 26] },
+    { toc: {
+        id: "indice",
+        title: { stack: [{ text: "ÍNDICE", fontSize: 8.5, bold: true, color: PDF.rojo, characterSpacing: 1.2, margin: [0, 0, 0, 3] }, pdfLinea(), { text: "", margin: [0, 0, 0, 4] }] },
+        textStyle: { fontSize: 10 },
+        numberStyle: { fontSize: 10, color: PDF.meta },
+    } },
+  ];
+}
+
+function cabeceraPdf(logo) {
+  return [
+    { columns: [
+      { width: "auto", columns: [
+        logo ? { image: logo, fit: [26, 26], width: 26 } : { text: "", width: 0 },
+        { width: "auto", stack: [
+          { text: "Candela", fontSize: 14, bold: true },
+          { text: "CAFÉ & PATISSERIE", fontSize: 7, color: PDF.gris, characterSpacing: 1.5 },
+        ], margin: [logo ? 6 : 0, 0, 0, 0] },
+      ] },
+      { width: "*", text: `Recetario · ${areaLabel(area)}`, fontSize: 9, bold: true, alignment: "right", margin: [0, 9, 0, 0] },
+    ] },
+    { ...pdfLinea(PDF.rojo, 2), margin: [0, 6, 0, 14] },
+  ];
+}
+
+function seccionPdf(titulo) {
+  return { headlineLevel: 1, stack: [
+    { text: titulo.toUpperCase(), fontSize: 8.5, bold: true, color: PDF.rojo, characterSpacing: 1.2, margin: [0, 14, 0, 3] },
+    { ...pdfLinea(), margin: [0, 0, 0, 6] },
+  ] };
+}
+
+const tablaPdfLayout = {
+  hLineWidth: i => (i === 0 ? 0 : 1),
+  vLineWidth: () => 0,
+  hLineColor: i => (i === 1 ? "#dedad8" : "#f0eee4"),
+  paddingLeft: () => 5, paddingRight: () => 5, paddingTop: () => 4, paddingBottom: () => 4,
+};
+
+function tablaPdf(cols, lineas, conMerma) {
+  const th = (t, der) => ({ text: t.toUpperCase(), fontSize: 7.5, bold: true, color: PDF.gris, characterSpacing: .6, alignment: der ? "right" : "left" });
+  const nombre = l => ({ text: [
+    ...(l.tipo === "subreceta" ? [{ text: " SUBRECETA ", fontSize: 7, background: "#EEEBD7", color: PDF.meta }, "  "] : []),
+    nombreLinea(l),
+  ] });
+  const der = t => ({ text: t, alignment: "right", noWrap: true });
+  return {
+    table: {
+      headerRows: 1, dontBreakRows: true,
+      widths: conMerma ? ["*", "auto", "auto", "auto"] : ["*", "auto"],
+      body: [
+        cols.map((c, i) => th(c, i > 0)),
+        ...lineas.map(l => conMerma
+          ? [nombre(l), der(fmtCant(l.cantidad, l.unidad)), der(l.merma ? fmt(l.merma) + " %" : "—"), der(fmtCant(cantidadBruta(l.cantidad, l.merma), l.unidad))]
+          : [nombre(l), der(fmtCant(l.cantidad, l.unidad))]),
+      ],
+    },
+    layout: tablaPdfLayout, fontSize: 9.5,
+  };
+}
+
+function tarjetaPdf(etiqueta, valor, destacada) {
+  return {
+    table: { widths: ["*"], body: [[{
+      stack: [
+        { text: etiqueta.toUpperCase(), fontSize: 7, characterSpacing: .8, color: destacada ? "#fbe0da" : PDF.gris, margin: [0, 0, 0, 3] },
+        { text: valor, fontSize: 12.5, bold: true, color: destacada ? "#ffffff" : PDF.texto },
+      ],
+      fillColor: destacada ? PDF.rojo : PDF.crema, margin: [3, 2, 3, 2],
+    }]] },
+    layout: { hLineColor: () => (destacada ? PDF.rojo : PDF.linea), vLineColor: () => (destacada ? PDF.rojo : PDF.linea), hLineWidth: () => 1, vLineWidth: () => 1 },
+  };
+}
+
+function fichaPdf(r, logo, foto, { portada, primeraDeCat, cat }) {
+  const efectivos = alergenosEfectivos(r);
+  const contiene = ALERGENOS.filter(a => efectivos[a.k]);
+  const pp = porPorcion(r);
+  const out = [];
+  // En el índice, la categoría va como título antes de su primera receta (el texto acá no se ve).
+  if (primeraDeCat) out.push({ text: cat.toUpperCase(), fontSize: 1, color: "#ffffff", tocItem: "indice",
+    tocStyle: { fontSize: 8.5, bold: true, color: PDF.rojo, characterSpacing: 1.2 }, tocMargin: [0, 10, 0, 3], tocNumberStyle: { color: "#ffffff", fontSize: 8.5 } });
+  out.push(...cabeceraPdf(logo));
+  out.push({ text: r.nombre, fontSize: 21, bold: true, margin: [0, 0, 0, 3], ...(portada ? { tocItem: "indice", tocMargin: [10, 1, 0, 1] } : {}) });
+  out.push({ text: [tipoLabel(r.tipo), descRendimiento(r), nombreCategoria(r.grupo), r.codigo ? `Ref. ${r.codigo}` : ""].filter(Boolean).join(" · "),
+    fontSize: 9.5, color: PDF.meta, margin: [0, 0, 0, 12] });
+  const tarjetas = { columns: [
+    tarjetaPdf("Rendimiento", r.rendimiento != null ? fmtCant(r.rendimiento, r.unidadRendimiento) : "—", true),
+    tarjetaPdf("Porciones", r.porciones ? fmt(r.porciones) : "—"),
+    tarjetaPdf("Por porción", pp || "—"),
+  ], columnGap: 6 };
+  out.push(foto
+    ? { columns: [{ width: "*", stack: [tarjetas] }, { width: 176, image: foto, fit: [176, 125], alignment: "right" }], columnGap: 12, margin: [0, 0, 0, 4] }
+    : { ...tarjetas, margin: [0, 0, 0, 4] });
+
+  out.push(seccionPdf("Ingredientes"));
+  out.push(r.ingredientes.length
+    ? tablaPdf(["Componente", "Cant. neta", "Merma", "Cant. bruta"], r.ingredientes, true)
+    : { text: "Sin ingredientes cargados.", italics: true, color: PDF.gris });
+  if (r.empaque.length) {
+    out.push(seccionPdf("Empaque"));
+    out.push(tablaPdf(["Envase / etiqueta", "Cantidad"], r.empaque, false));
+  }
+
+  out.push(seccionPdf("Preparación"));
+  if (r.pasos.length) {
+    r.pasos.forEach((p, i) => out.push({ unbreakable: true, margin: [0, 2, 0, 4], columns: [
+      { width: 14, stack: [
+        { canvas: [{ type: "ellipse", x: 6.5, y: 7.5, r1: 6.5, r2: 6.5, color: PDF.rojo }] },
+        { text: String(i + 1), fontSize: 7.5, bold: true, color: "#ffffff", alignment: "center", margin: [0, -12, 1, 0] },
+      ] },
+      { width: "*", text: p, lineHeight: 1.25 },
+    ], columnGap: 7 }));
+  } else out.push({ text: "Sin pasos cargados.", italics: true, color: PDF.gris });
+
+  if (r.observaciones) {
+    out.push(seccionPdf("Observaciones"));
+    out.push({ text: r.observaciones, lineHeight: 1.25, preserveLeadingSpaces: true });
+  }
+
+  const casilla = on => ({ width: 9, canvas: [
+    { type: "rect", x: 0, y: 1.5, w: 8, h: 8, r: 1.5, lineWidth: 1, lineColor: on ? PDF.rojo : "#ccc9b5", ...(on ? { color: PDF.rojo } : {}) },
+    ...(on ? [{ type: "polyline", points: [{ x: 1.8, y: 5.7 }, { x: 3.4, y: 7.4 }, { x: 6.4, y: 3.8 }], lineWidth: 1.2, lineColor: "#ffffff" }] : []),
+  ] });
+  const filasAler = [];
+  for (let i = 0; i < ALERGENOS.length; i += 3) {
+    filasAler.push(ALERGENOS.slice(i, i + 3).map(a => ({ columns: [casilla(!!efectivos[a.k]),
+      { width: "*", text: a.l, fontSize: 9, color: efectivos[a.k] ? PDF.texto : PDF.gris, bold: !!efectivos[a.k] }], columnGap: 5 })));
+    while (filasAler[filasAler.length - 1].length < 3) filasAler[filasAler.length - 1].push({ text: "" });
+  }
+  out.push({ unbreakable: true, stack: [
+    seccionPdf("Alérgenos"),
+    { table: { widths: ["*", "*", "*"], body: filasAler }, layout: { defaultBorder: false, paddingLeft: () => 0, paddingRight: () => 8, paddingTop: () => 1.5, paddingBottom: () => 1.5 } },
+    { text: contiene.length ? [{ text: "Contiene: ", bold: true }, contiene.map(a => a.l).join(", ") + "."] : "No contiene alérgenos de declaración obligatoria.",
+      fontSize: 9, margin: [0, 7, 0, 1] },
+    { text: "Según Código Alimentario Argentino, art. 235 séptimo (ANMAT).", fontSize: 7.5, color: PDF.gris },
+  ] });
+  return out;
+}
+
 async function imprimirFichas(ids) {
   // La ventana se abre en el mismo clic para que el navegador no la bloquee.
   const win = window.open("", "_blank");
@@ -1839,7 +2143,7 @@ async function imprimirFichas(ids) {
   await Promise.all(rs.filter(r => r.tieneFoto).map(r => cargarFoto(r.id)));
   const logo = logoComoDataUrl();
   const hoy = new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
-  const titulo = rs.length === 1 ? `Ficha técnica — ${rs[0].nombre}` : `Recetario ${areaLabel(area)} — ${hoy}`;
+  const titulo = rs.length === 1 ? `Ficha técnica — ${rs[0].nombre}` : `Recetario ${areaLabel(area)}`;
   win.document.open();
   win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${esc(titulo)}</title>
     <style>${CSS_FICHA}</style></head><body>
@@ -1877,7 +2181,7 @@ function fichaHtml(r, logo, hoy) {
   return `<section class="ficha">
     <header>
       <div class="marca">${logo ? `<img src="${logo}" alt="">` : ""}<div><b>Candela</b><span>Café &amp; Patisserie</span></div></div>
-      <div class="emi"><b>Recetario · ${esc(areaLabel(area))}</b><span>Impreso ${hoy}</span></div>
+      <div class="emi"><b>Recetario · ${esc(areaLabel(area))}</b></div>
     </header>
     <h1>${esc(r.nombre)}</h1>
     <div class="meta">${esc([tipoLabel(r.tipo), descRendimiento(r), nombreCategoria(r.grupo), r.codigo ? `Ref. ${r.codigo}` : ""].filter(Boolean).join(" · "))}</div>
@@ -1904,7 +2208,7 @@ function fichaHtml(r, logo, hoy) {
     <p class="contiene">${contiene.length ? `<b>Contiene:</b> ${esc(contiene.map(a => a.l).join(", "))}.` : "No contiene alérgenos de declaración obligatoria."}
       <span>Según Código Alimentario Argentino, art. 235 séptimo (ANMAT).</span></p>
 
-    <footer><span>Candela · Ficha técnica de ${esc(areaLabel(area).toLowerCase())}</span><span>Actualizada ${fmtFecha(r.actualizada)}${r.actualizadaPor ? ` por ${esc(r.actualizadaPor)}` : ""}</span></footer>
+    <footer><span>Candela · Ficha técnica de ${esc(areaLabel(area).toLowerCase())}</span></footer>
   </section>`;
 }
 
@@ -1956,6 +2260,10 @@ function inyectarCss() {
   s.id = "rec-css";
   s.textContent = `
   .rec-bar{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+  .rec-pdf-modal{position:fixed;inset:0;background:rgba(34,32,31,.45);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+  .rec-pdf-box{background:#fff;border-radius:12px;padding:20px 22px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+  .rec-pdf-tit{font-weight:700;font-size:17px;margin-bottom:6px}
+  .rec-pdf-box a.btn{text-decoration:none}
   .rec-user{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .rec-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .rec-filtros{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
