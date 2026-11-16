@@ -404,6 +404,7 @@
     <button class="btn ghost icon-btn" id="btnRedo" title="Rehacer" disabled>↪️</button>
     <button class="btn ghost icon-btn" id="btnHistory" title="Ver versiones anteriores guardadas en la nube">🕐</button>
     <button class="btn ghost" id="btnNew" title="Arranca una semana nueva copiando ésta como base">↻ Nueva semana</button>
+    <button class="btn ghost" id="btnRebuild" title="Vuelve a armar esta semana copiando la anterior y sacando a quienes tienen vacaciones confirmadas">🔁 Rearmar semana</button>
     <button class="btn ghost icon-btn" id="btnMover" title="Mover personas de un casillero a otro tocando origen y destino">✥</button>
     <button class="btn ghost icon-btn" id="btnPrint" title="Ver imagen del cronograma para guardar">⬇️</button>
     <button class="btn ghost icon-btn" id="btnMonthView" title="Ver el mes completo (todas las semanas ya cargadas juntas, de solo lectura)">📅</button>
@@ -893,7 +894,7 @@ onValue(vacacionesRef, snap=>{
 // (se ve en el encabezado). Un dispositivo con una copia guardada vieja del HTML no tiene
 // el código de sincronización nuevo aunque el deploy ya haya salido — pasó, costó horas de
 // diagnóstico en otro módulo de este sitio. Actualizar a mano en cada cambio importante.
-const APP_VERSION="2026-11-16 semana-nueva";
+const APP_VERSION="2026-11-16 rearmar";
 /* ---------------- DATA MODEL ---------------- */
 const DAYS=[["lun","Lunes","Lun"],["mar","Martes","Mar"],["mie","Miércoles","Mié"],["jue","Jueves","Jue"],["vie","Viernes","Vie"],["sab","Sábado","Sáb"],["dom","Domingo","Dom"]];
 const ROLE_LABEL={barista:"Barista",cocina:"Cocina",ayudante:"Bacha/Envíos",cajero:"Cajero",atencion:"Atención",compras:"Compras"};
@@ -1280,12 +1281,20 @@ async function crearOAbrirSemana(dateStr){
     document.getElementById("weekStart").value=state.weekStart||"";
     return;
   }
+  toast("Armando la semana nueva…");
+  const seed=await armarSemana(dateStr,online,false);
+  loadWeek(dateStr,seed);
+  toast(leerAviso()?.copio?"Semana nueva lista (copiada de la semana anterior)":"Semana nueva lista (no había una semana anterior para copiar)");
+}
+
+// Arma una semana a partir de la anterior: copia grilla y refuerzos manuales, saca a quienes tienen
+// vacaciones confirmadas esos días y deja el aviso con el resumen. Lo usan "semana nueva" y "Rearmar".
+async function armarSemana(dateStr,online,rearmada){
   const seed=blankWeek(dateStr);
   const prevKey=addDaysISO(dateStr,-7);
-  toast("Armando la semana nueva…");
   // la semana anterior: la que está abierta (si es esa), la guardada en este dispositivo o, si se
   // armó en otro, la de la nube. Antes solo se miraba este dispositivo y arrancaba vacía.
-  const prevWeek=(prevKey===weekKeyOf(state)?weekPart(state):null)||await fetchWeekData(prevKey);
+  const prevWeek=(prevKey===weekKeyOf(state)?weekPart(state):null)||await semanaGuardada(prevKey,online);
   const copio=!!(prevWeek&&Object.keys(prevWeek.assign||{}).length);
   if(prevWeek){
     seed.assign=JSON.parse(JSON.stringify(prevWeek.assign||{}));
@@ -1311,9 +1320,35 @@ async function crearOAbrirSemana(dateStr){
   // El aviso queda guardado con la semana (se ve igual desde cualquier dispositivo). Va dentro de
   // "comments" porque es un campo que todas las versiones del sitio conservan al guardar: un
   // dispositivo con una copia vieja de la página no lo borra.
-  seed.comments[AVISO_KEY]=JSON.stringify({ts:Date.now(),desde:prevWeek?prevKey:null,copio,revisado,quitados,vaciados,refuerzos,visto:false});
-  loadWeek(dateStr,seed);
-  toast(copio?"Semana nueva lista (copiada de la semana anterior)":"Semana nueva lista (no había una semana anterior para copiar)");
+  seed.comments[AVISO_KEY]=JSON.stringify({ts:Date.now(),desde:prevWeek?prevKey:null,copio,revisado,quitados,vaciados,refuerzos,rearmada,visto:false});
+  return seed;
+}
+// La versión más nueva de una semana guardada: la de la nube si hay conexión; si no, la de este dispositivo.
+async function semanaGuardada(key,online){
+  if(online&&window.CloudWeekRead){
+    try{const r=await window.CloudWeekRead.get(key);if(r)return r;}catch(e){console.error("semana "+key,e);}
+  }
+  return loadLocalWeeks()[key]||null;
+}
+// "Rearmar esta semana": la vuelve a armar desde la anterior con las reglas de semana nueva. Es un
+// cambio común (se deshace con ↩️, queda en el historial y llega solo a los otros dispositivos).
+async function rearmarSemana(){
+  const ws=state.weekStart;
+  if(!ws){toast("Primero elegí la fecha de la semana");return;}
+  const prev=addDaysISO(ws,-7);
+  if(!confirm(`¿Rearmar la semana ${fmtWeekRange(ws)}?\n\nSe reemplaza todo lo cargado en esta semana (grilla, refuerzos, ausencias, comentarios y reglas de la semana) por una copia de la semana ${fmtWeekRange(prev)}, sacando a quienes tienen vacaciones confirmadas.\n\nSe puede deshacer con ↩️.`))return;
+  const online=!!(window.CloudSync&&window.CloudSyncWeek);
+  toast("Rearmando la semana…");
+  const seed=await armarSemana(ws,online,true);
+  if(state.weekStart!==ws)return; // cambiaste de semana mientras se armaba
+  seed.label=state.label||"";
+  Object.assign(state,seed);
+  aplicarAusenciasPorVacaciones();
+  runMigrations();
+  fillPersonSelects();renderMini();render();
+  persist();
+  window.scrollTo({top:0,behavior:"smooth"});
+  toast("Semana rearmada ✅");
 }
 
 /* ---------------- AVISO DE SEMANA NUEVA ---------------- */
@@ -1362,9 +1397,10 @@ function renderAvisoSemana(){
   if(!a||a.visto){el.innerHTML="";return;}
   const fecha=new Date(a.ts).toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"});
   const lineas=[];
+  const que=a.rearmada?"🔁 Semana rearmada":"🆕 Semana nueva";
   lineas.push(a.desde
-    ? `🆕 Semana nueva, copiada de la semana ${fmtWeekRange(a.desde)}${a.copio?"":" (que estaba vacía)"} · creada el ${fecha}.`
-    : `🆕 Semana nueva · creada el ${fecha}. No había una semana anterior para copiar: arrancó vacía.`);
+    ? `${que}, copiada de la semana ${fmtWeekRange(a.desde)}${a.copio?"":" (que estaba vacía)"} · ${a.rearmada?"rearmada":"creada"} el ${fecha}.`
+    : `${que} · ${a.rearmada?"rearmada":"creada"} el ${fecha}. No había una semana anterior para copiar: quedó vacía.`);
   if(!a.revisado)lineas.push(`<span class="avCrit">⚠️ No se pudieron revisar las vacaciones (sin conexión con el módulo Vacaciones). Revisá a mano quién está de vacaciones esta semana.</span>`);
   else if(!a.quitados.length)lineas.push("🏖️ Nadie tiene vacaciones confirmadas esta semana.");
   else{
@@ -3020,6 +3056,7 @@ function initControls(){
     if(e.key==="z"&&!e.shiftKey){e.preventDefault();undoLast();}
     else if(e.key==="y"||(e.key==="z"&&e.shiftKey)){e.preventDefault();redoLast();}
   });
+  document.getElementById("btnRebuild").addEventListener("click",rearmarSemana);
   document.getElementById("btnNew").addEventListener("click",()=>{
     // avanza 7 días desde la semana actual (o desde hoy si todavía no había fecha) y abre/crea esa
     // semana — crearOAbrirSemana ya se encarga de copiarla de la semana anterior como base.
